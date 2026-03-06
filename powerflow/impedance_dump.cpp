@@ -19,8 +19,10 @@
 
 CLASS *impedance_dump::oclass = nullptr;
 
-impedance_dump::impedance_dump(MODULE *mod) {
-  if (oclass == nullptr) {
+impedance_dump::impedance_dump(MODULE *mod)
+{
+  if (oclass == nullptr)
+  {
     // register the class definition
     oclass = gl_register_class(mod, "impedance_dump", sizeof(impedance_dump),
                                PC_AUTOLOCK);
@@ -41,13 +43,15 @@ impedance_dump::impedance_dump(MODULE *mod) {
   }
 }
 
-int impedance_dump::create(void) {
+int impedance_dump::create(void)
+{
   group.erase();
   runcount = 0;
   return 1;
 }
 
-int impedance_dump::init(OBJECT *parent) {
+int impedance_dump::init(OBJECT *parent)
+{
   OBJECT *obj_this = object_header(this);
 
 #ifdef __APPLE__
@@ -55,7 +59,8 @@ int impedance_dump::init(OBJECT *parent) {
       obj_this
           ->parent; // AppleClang seems to have an issue with the parent pointer
 #endif
-  if (filename[0] == '\0') {
+  if (filename[0] == '\0')
+  {
     gl_error("No filename was specified. Unable to open file for righting.");
     return 0;
     /* TROUBLESHOOT
@@ -67,18 +72,21 @@ int impedance_dump::init(OBJECT *parent) {
   return 1;
 }
 
-int impedance_dump::isa(const char *classname) {
+int impedance_dump::isa(const char *classname)
+{
   return strcmp(classname, "impedance_dump") == 0;
 }
 
-gld::complex *impedance_dump::get_complex(OBJECT *obj, const char *name) {
+gld::complex *impedance_dump::get_complex(OBJECT *obj, const char *name)
+{
   PROPERTY *p = gl_get_property(obj, name);
   if (p == nullptr || p->ptype != PT_complex)
     return nullptr;
   return (gld::complex *)get_addr(obj, p);
 }
 
-int impedance_dump::dump(TIMESTAMP t) {
+int impedance_dump::dump(TIMESTAMP t)
+{
   FINDLIST *capacitors, *fuses, *ohlines, *reclosers, *regulators, *relays,
       *sectionalizers, *series_reactors, *switches, *transformers, *tplines,
       *uglines;
@@ -94,7 +102,8 @@ int impedance_dump::dump(TIMESTAMP t) {
   PROPERTY *xfmrconfig;
 
   // find the link objects
-  if (group[0] == '\0') {
+  if (group[0] == '\0')
+  {
     fuses = gl_find_objects(FL_NEW, FT_CLASS, SAME, "fuse",
                             FT_END); // find all fuses
     ohlines = gl_find_objects(FL_NEW, FT_CLASS, SAME, "overhead_line",
@@ -118,7 +127,9 @@ int impedance_dump::dump(TIMESTAMP t) {
     uglines = gl_find_objects(FL_NEW, FT_CLASS, SAME, "underground_line",
                               FT_END); // find all underground_lines
     capacitors = gl_find_objects(FL_NEW, FT_CLASS, SAME, "capacitor", FT_END);
-  } else {
+  }
+  else
+  {
     fuses = gl_find_objects(FL_NEW, FT_CLASS, SAME, "fuse", AND, FT_GROUPID,
                             SAME, group.get_string(), FT_END);
     ohlines = gl_find_objects(FL_NEW, FT_CLASS, SAME, "overhead_line", AND,
@@ -150,7 +161,8 @@ int impedance_dump::dump(TIMESTAMP t) {
   if (fuses == nullptr && ohlines == nullptr && reclosers == nullptr &&
       regulators == nullptr && relays == nullptr && sectionalizers == nullptr &&
       series_reactors == nullptr && switches == nullptr &&
-      transformers == nullptr && tplines == nullptr && uglines == nullptr) {
+      transformers == nullptr && tplines == nullptr && uglines == nullptr)
+  {
     gl_error("No link objects were found.");
     return 0;
     /* TROUBLESHOOT
@@ -161,7 +173,8 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   // open file for writing
   fn = fopen(filename, "w");
-  if (fn == nullptr) {
+  if (fn == nullptr)
+  {
     gl_error("Unable to open %s for writing.", (char *)(&filename));
     return 0;
   }
@@ -176,18 +189,23 @@ int impedance_dump::dump(TIMESTAMP t) {
   gl_printtime(t, timestr, 64);
   fprintf(fn, "\t<Time>%s</Time>\n", timestr);
   // write fuses
-  if (fuses != nullptr) {
+  if (fuses != nullptr)
+  {
     pFuse = (link_object **)gl_malloc(fuses->hit_count * sizeof(link_object *));
-    if (pFuse == nullptr) {
+    if (pFuse == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(fuses, obj)) {
-      if (index >= fuses->hit_count) {
+    while (obj = gl_find_next(fuses, obj))
+    {
+      if (index >= fuses->hit_count)
+      {
         break;
       }
       pFuse[index] = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
-      if (pFuse[index] == nullptr) {
+      if (pFuse[index] == nullptr)
+      {
         gl_error("Unable to map object as a link object.");
         return 0;
       }
@@ -196,9 +214,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<fuse>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -206,33 +227,45 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>fuse:%d</id>\n", obj->id);
 
       // write the from name
-      if (pFuse[index]->from->name != nullptr) {
+      if (pFuse[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pFuse[index]->from->oclass->name, pFuse[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pFuse[index]->from->oclass->name, pFuse[index]->from->id);
       }
 
       // write the to name
-      if (pFuse[index]->to->name != nullptr) {
+      if (pFuse[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pFuse[index]->to->oclass->name, pFuse[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pFuse[index]->to->oclass->name, pFuse[index]->to->id);
       }
 
       // write the from node's voltage
-      if (pFuse[index]->has_phase(PHASE_A)) {
+      if (pFuse[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pFuse[index]->from, "voltage_A");
-      } else if (pFuse[index]->has_phase(PHASE_B)) {
+      }
+      else if (pFuse[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pFuse[index]->from, "voltage_B");
-      } else if (pFuse[index]->has_phase(PHASE_C)) {
+      }
+      else if (pFuse[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pFuse[index]->from, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -240,15 +273,21 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<from_voltage>%f</from_voltage>\n", node_voltage->Mag());
 
       // write the to node's voltage
-      if (pFuse[index]->has_phase(PHASE_A)) {
+      if (pFuse[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pFuse[index]->to, "voltage_A");
-      } else if (pFuse[index]->has_phase(PHASE_B)) {
+      }
+      else if (pFuse[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pFuse[index]->to, "voltage_B");
-      } else if (pFuse[index]->has_phase(PHASE_C)) {
+      }
+      else if (pFuse[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pFuse[index]->to, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -256,65 +295,85 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<to_voltage>%f</to_voltage>\n", node_voltage->Mag());
 
       // write the phases
-      if (pFuse[index]->phases == 0x0001) { // A
+      if (pFuse[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0002) { // B
+      if (pFuse[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0004) { // C
+      if (pFuse[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0009) { // AN
+      if (pFuse[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pFuse[index]->phases == 0x000a) { // BN
+      if (pFuse[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pFuse[index]->phases == 0x000c) { // CN
+      if (pFuse[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0071) { // AS
+      if (pFuse[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0072) { // BS
+      if (pFuse[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0074) { // CS
+      if (pFuse[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0003) { // AB
+      if (pFuse[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0006) { // BC
+      if (pFuse[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0005) { // AC
+      if (pFuse[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pFuse[index]->phases == 0x000b) { // ABN
+      if (pFuse[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pFuse[index]->phases == 0x000e) { // BCN
+      if (pFuse[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pFuse[index]->phases == 0x000d) { // ACN
+      if (pFuse[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0007) { // ABC
+      if (pFuse[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pFuse[index]->phases == 0x000f) { // ABCN
+      if (pFuse[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pFuse[index]->phases == 0x0107) { // ABCD
+      if (pFuse[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pFuse[index]->a_mat[x][y].Re(),
                   pFuse[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -324,8 +383,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pFuse[index]->b_mat[x][y].Re(),
                   pFuse[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -335,8 +396,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pFuse[index]->c_mat[x][y].Re(),
                   pFuse[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -346,8 +409,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pFuse[index]->d_mat[x][y].Re(),
                   pFuse[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -357,8 +422,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pFuse[index]->A_mat[x][y].Re(),
                   pFuse[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -368,8 +435,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pFuse[index]->B_mat[x][y].Re(),
                   pFuse[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -385,18 +454,23 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write the overhead_lines
-  if (ohlines != nullptr) {
+  if (ohlines != nullptr)
+  {
     pOhLine = (line **)gl_malloc(ohlines->hit_count * sizeof(line *));
-    if (pOhLine == nullptr) {
+    if (pOhLine == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(ohlines, obj)) {
-      if (index >= ohlines->hit_count) {
+    while (obj = gl_find_next(ohlines, obj))
+    {
+      if (index >= ohlines->hit_count)
+      {
         break;
       }
       pOhLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
-      if (pOhLine[index] == nullptr) {
+      if (pOhLine[index] == nullptr)
+      {
         gl_error("Unable to map object as overhead_line object.");
         return 0;
       }
@@ -405,9 +479,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<overhead_line>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -415,33 +492,45 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>overhead_line:%d</id>\n", obj->id);
 
       // write the from name
-      if (pOhLine[index]->from->name != nullptr) {
+      if (pOhLine[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pOhLine[index]->from->oclass->name, pOhLine[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pOhLine[index]->from->oclass->name, pOhLine[index]->from->id);
       }
 
       // write the to name
-      if (pOhLine[index]->to->name != nullptr) {
+      if (pOhLine[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pOhLine[index]->to->oclass->name, pOhLine[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pOhLine[index]->to->oclass->name, pOhLine[index]->to->id);
       }
 
       // write the from node's voltage
-      if (pOhLine[index]->has_phase(PHASE_A)) {
+      if (pOhLine[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pOhLine[index]->from, "voltage_A");
-      } else if (pOhLine[index]->has_phase(PHASE_B)) {
+      }
+      else if (pOhLine[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pOhLine[index]->from, "voltage_B");
-      } else if (pOhLine[index]->has_phase(PHASE_C)) {
+      }
+      else if (pOhLine[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pOhLine[index]->from, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -449,15 +538,21 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<from_voltage>%f</from_voltage>\n", node_voltage->Mag());
 
       // write the to node's voltage
-      if (pOhLine[index]->has_phase(PHASE_A)) {
+      if (pOhLine[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pOhLine[index]->to, "voltage_A");
-      } else if (pOhLine[index]->has_phase(PHASE_B)) {
+      }
+      else if (pOhLine[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pOhLine[index]->to, "voltage_B");
-      } else if (pOhLine[index]->has_phase(PHASE_C)) {
+      }
+      else if (pOhLine[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pOhLine[index]->to, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -465,58 +560,76 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<to_voltage>%f</to_voltage>\n", node_voltage->Mag());
 
       // write the phases
-      if (pOhLine[index]->phases == 0x0001) { // A
+      if (pOhLine[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0002) { // B
+      if (pOhLine[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0004) { // C
+      if (pOhLine[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0009) { // AN
+      if (pOhLine[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x000a) { // BN
+      if (pOhLine[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x000c) { // CN
+      if (pOhLine[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0071) { // AS
+      if (pOhLine[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0072) { // BS
+      if (pOhLine[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0074) { // CS
+      if (pOhLine[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0003) { // AB
+      if (pOhLine[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0006) { // BC
+      if (pOhLine[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0005) { // AC
+      if (pOhLine[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x000b) { // ABN
+      if (pOhLine[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x000e) { // BCN
+      if (pOhLine[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x000d) { // ACN
+      if (pOhLine[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0007) { // ABC
+      if (pOhLine[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x000f) { // ABCN
+      if (pOhLine[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pOhLine[index]->phases == 0x0107) { // ABCD
+      if (pOhLine[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
@@ -525,8 +638,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pOhLine[index]->a_mat[x][y].Re(),
                   pOhLine[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -536,8 +651,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pOhLine[index]->b_mat[x][y].Re(),
                   pOhLine[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -547,8 +664,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pOhLine[index]->c_mat[x][y].Re(),
                   pOhLine[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -558,8 +677,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pOhLine[index]->d_mat[x][y].Re(),
                   pOhLine[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -569,8 +690,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pOhLine[index]->A_mat[x][y].Re(),
                   pOhLine[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -580,8 +703,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pOhLine[index]->B_mat[x][y].Re(),
                   pOhLine[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -597,19 +722,24 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write reclosers
-  if (reclosers != nullptr) {
+  if (reclosers != nullptr)
+  {
     pRecloser =
         (link_object **)gl_malloc(reclosers->hit_count * sizeof(link_object *));
-    if (pRecloser == nullptr) {
+    if (pRecloser == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(reclosers, obj)) {
-      if (index >= reclosers->hit_count) {
+    while (obj = gl_find_next(reclosers, obj))
+    {
+      if (index >= reclosers->hit_count)
+      {
         break;
       }
       pRecloser[index] = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
-      if (pRecloser[index] == nullptr) {
+      if (pRecloser[index] == nullptr)
+      {
         gl_error("Unable to map object as a link object.");
         return 0;
       }
@@ -618,9 +748,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<recloser>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -628,35 +761,47 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>recloser:%d</id>\n", obj->id);
 
       // write the from name
-      if (pRecloser[index]->from->name != nullptr) {
+      if (pRecloser[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pRecloser[index]->from->oclass->name,
                 pRecloser[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pRecloser[index]->from->oclass->name,
                 pRecloser[index]->from->id);
       }
 
       // write the to name
-      if (pRecloser[index]->to->name != nullptr) {
+      if (pRecloser[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pRecloser[index]->to->oclass->name, pRecloser[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pRecloser[index]->to->oclass->name, pRecloser[index]->to->id);
       }
 
       // write the from node's voltage
-      if (pRecloser[index]->has_phase(PHASE_A)) {
+      if (pRecloser[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pRecloser[index]->from, "voltage_A");
-      } else if (pRecloser[index]->has_phase(PHASE_B)) {
+      }
+      else if (pRecloser[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pRecloser[index]->from, "voltage_B");
-      } else if (pRecloser[index]->has_phase(PHASE_C)) {
+      }
+      else if (pRecloser[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pRecloser[index]->from, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -664,15 +809,21 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<from_voltage>%f</from_voltage>\n", node_voltage->Mag());
 
       // write the to node's voltage
-      if (pRecloser[index]->has_phase(PHASE_A)) {
+      if (pRecloser[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pRecloser[index]->to, "voltage_A");
-      } else if (pRecloser[index]->has_phase(PHASE_B)) {
+      }
+      else if (pRecloser[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pRecloser[index]->to, "voltage_B");
-      } else if (pRecloser[index]->has_phase(PHASE_C)) {
+      }
+      else if (pRecloser[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pRecloser[index]->to, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -680,65 +831,85 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<to_voltage>%f</to_voltage>\n", node_voltage->Mag());
 
       // write the phases
-      if (pRecloser[index]->phases == 0x0001) { // A
+      if (pRecloser[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0002) { // B
+      if (pRecloser[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0004) { // C
+      if (pRecloser[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0009) { // AN
+      if (pRecloser[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x000a) { // BN
+      if (pRecloser[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x000c) { // CN
+      if (pRecloser[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0071) { // AS
+      if (pRecloser[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0072) { // BS
+      if (pRecloser[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0074) { // CS
+      if (pRecloser[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0003) { // AB
+      if (pRecloser[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0006) { // BC
+      if (pRecloser[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0005) { // AC
+      if (pRecloser[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x000b) { // ABN
+      if (pRecloser[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x000e) { // BCN
+      if (pRecloser[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x000d) { // ACN
+      if (pRecloser[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0007) { // ABC
+      if (pRecloser[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x000f) { // ABCN
+      if (pRecloser[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pRecloser[index]->phases == 0x0107) { // ABCD
+      if (pRecloser[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pRecloser[index]->a_mat[x][y].Re(),
                   pRecloser[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -748,8 +919,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pRecloser[index]->b_mat[x][y].Re(),
                   pRecloser[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -759,8 +932,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pRecloser[index]->c_mat[x][y].Re(),
                   pRecloser[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -770,8 +945,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pRecloser[index]->d_mat[x][y].Re(),
                   pRecloser[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -781,8 +958,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pRecloser[index]->A_mat[x][y].Re(),
                   pRecloser[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -792,8 +971,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pRecloser[index]->B_mat[x][y].Re(),
                   pRecloser[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -809,19 +990,24 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write regulators
-  if (regulators != nullptr) {
+  if (regulators != nullptr)
+  {
     pRegulator =
         (regulator **)gl_malloc(regulators->hit_count * sizeof(regulator *));
-    if (pRegulator == nullptr) {
+    if (pRegulator == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(regulators, obj)) {
-      if (index >= regulators->hit_count) {
+    while (obj = gl_find_next(regulators, obj))
+    {
+      if (index >= regulators->hit_count)
+      {
         break;
       }
       pRegulator[index] = /*OBJECTDATA(obj,<>)*/ object_data<regulator>(obj);
-      if (pRegulator[index] == nullptr) {
+      if (pRegulator[index] == nullptr)
+      {
         gl_error("Unable to map object as a link object.");
         return 0;
       }
@@ -830,9 +1016,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<regulator>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -840,36 +1029,48 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>regulator:%d</id>\n", obj->id);
 
       // write the from name
-      if (pRegulator[index]->from->name != nullptr) {
+      if (pRegulator[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pRegulator[index]->from->oclass->name,
                 pRegulator[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pRegulator[index]->from->oclass->name,
                 pRegulator[index]->from->id);
       }
 
       // write the to name
-      if (pRegulator[index]->to->name != nullptr) {
+      if (pRegulator[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pRegulator[index]->to->oclass->name,
                 pRegulator[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pRegulator[index]->to->oclass->name, pRegulator[index]->to->id);
       }
 
       // write the from node's voltage
-      if (pRegulator[index]->has_phase(PHASE_A)) {
+      if (pRegulator[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pRegulator[index]->from, "voltage_A");
-      } else if (pRegulator[index]->has_phase(PHASE_B)) {
+      }
+      else if (pRegulator[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pRegulator[index]->from, "voltage_B");
-      } else if (pRegulator[index]->has_phase(PHASE_C)) {
+      }
+      else if (pRegulator[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pRegulator[index]->from, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -877,15 +1078,21 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<from_voltage>%f</from_voltage>\n", node_voltage->Mag());
 
       // write the to node's voltage
-      if (pRegulator[index]->has_phase(PHASE_A)) {
+      if (pRegulator[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pRegulator[index]->to, "voltage_A");
-      } else if (pRegulator[index]->has_phase(PHASE_B)) {
+      }
+      else if (pRegulator[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pRegulator[index]->to, "voltage_B");
-      } else if (pRegulator[index]->has_phase(PHASE_C)) {
+      }
+      else if (pRegulator[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pRegulator[index]->to, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -893,58 +1100,76 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<to_voltage>%f</to_voltage>\n", node_voltage->Mag());
 
       // write the phases
-      if (pRegulator[index]->phases == 0x0001) { // A
+      if (pRegulator[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0002) { // B
+      if (pRegulator[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0004) { // C
+      if (pRegulator[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0009) { // AN
+      if (pRegulator[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x000a) { // BN
+      if (pRegulator[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x000c) { // CN
+      if (pRegulator[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0071) { // AS
+      if (pRegulator[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0072) { // BS
+      if (pRegulator[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0074) { // CS
+      if (pRegulator[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0003) { // AB
+      if (pRegulator[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0006) { // BC
+      if (pRegulator[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0005) { // AC
+      if (pRegulator[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x000b) { // ABN
+      if (pRegulator[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x000e) { // BCN
+      if (pRegulator[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x000d) { // ACN
+      if (pRegulator[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0007) { // ABC
+      if (pRegulator[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x000f) { // ABCN
+      if (pRegulator[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pRegulator[index]->phases == 0x0107) { // ABCD
+      if (pRegulator[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
@@ -954,8 +1179,10 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<tapC>%d</tapC>\n", pRegulator[index]->tap[2]);
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pRegulator[index]->a_mat[x][y].Re(),
                   pRegulator[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -965,8 +1192,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pRegulator[index]->b_mat[x][y].Re(),
                   pRegulator[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -976,8 +1205,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pRegulator[index]->c_mat[x][y].Re(),
                   pRegulator[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -987,8 +1218,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pRegulator[index]->d_mat[x][y].Re(),
                   pRegulator[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -998,8 +1231,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pRegulator[index]->A_mat[x][y].Re(),
                   pRegulator[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -1009,8 +1244,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pRegulator[index]->B_mat[x][y].Re(),
                   pRegulator[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -1026,19 +1263,24 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write relays
-  if (relays != nullptr) {
+  if (relays != nullptr)
+  {
     pRelay =
         (link_object **)gl_malloc(relays->hit_count * sizeof(link_object *));
-    if (pRelay == nullptr) {
+    if (pRelay == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(relays, obj)) {
-      if (index >= relays->hit_count) {
+    while (obj = gl_find_next(relays, obj))
+    {
+      if (index >= relays->hit_count)
+      {
         break;
       }
       pRelay[index] = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
-      if (pRelay[index] == nullptr) {
+      if (pRelay[index] == nullptr)
+      {
         gl_error("Unable to map object as a link object.");
         return 0;
       }
@@ -1047,9 +1289,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<relay>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -1057,33 +1302,45 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>relay:%d</id>\n", obj->id);
 
       // write the from name
-      if (pRelay[index]->from->name != nullptr) {
+      if (pRelay[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pRelay[index]->from->oclass->name, pRelay[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pRelay[index]->from->oclass->name, pRelay[index]->from->id);
       }
 
       // write the to name
-      if (pRelay[index]->to->name != nullptr) {
+      if (pRelay[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pRelay[index]->to->oclass->name, pRelay[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pRelay[index]->to->oclass->name, pRelay[index]->to->id);
       }
 
       // write the from node's voltage
-      if (pRelay[index]->has_phase(PHASE_A)) {
+      if (pRelay[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pRelay[index]->from, "voltage_A");
-      } else if (pRelay[index]->has_phase(PHASE_B)) {
+      }
+      else if (pRelay[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pRelay[index]->from, "voltage_B");
-      } else if (pRelay[index]->has_phase(PHASE_C)) {
+      }
+      else if (pRelay[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pRelay[index]->from, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -1091,15 +1348,21 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<from_voltage>%f</from_voltage>\n", node_voltage->Mag());
 
       // write the to node's voltage
-      if (pRelay[index]->has_phase(PHASE_A)) {
+      if (pRelay[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pRelay[index]->to, "voltage_A");
-      } else if (pRelay[index]->has_phase(PHASE_B)) {
+      }
+      else if (pRelay[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pRelay[index]->to, "voltage_B");
-      } else if (pRelay[index]->has_phase(PHASE_C)) {
+      }
+      else if (pRelay[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pRelay[index]->to, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -1107,65 +1370,85 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<to_voltage>%f</to_voltage>\n", node_voltage->Mag());
 
       // write the phases
-      if (pRelay[index]->phases == 0x0001) { // A
+      if (pRelay[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0002) { // B
+      if (pRelay[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0004) { // C
+      if (pRelay[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0009) { // AN
+      if (pRelay[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pRelay[index]->phases == 0x000a) { // BN
+      if (pRelay[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pRelay[index]->phases == 0x000c) { // CN
+      if (pRelay[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0071) { // AS
+      if (pRelay[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0072) { // BS
+      if (pRelay[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0074) { // CS
+      if (pRelay[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0003) { // AB
+      if (pRelay[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0006) { // BC
+      if (pRelay[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0005) { // AC
+      if (pRelay[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pRelay[index]->phases == 0x000b) { // ABN
+      if (pRelay[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pRelay[index]->phases == 0x000e) { // BCN
+      if (pRelay[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pRelay[index]->phases == 0x000d) { // ACN
+      if (pRelay[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0007) { // ABC
+      if (pRelay[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pRelay[index]->phases == 0x000f) { // ABCN
+      if (pRelay[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pRelay[index]->phases == 0x0107) { // ABCD
+      if (pRelay[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pRelay[index]->a_mat[x][y].Re(),
                   pRelay[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -1175,8 +1458,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pRelay[index]->b_mat[x][y].Re(),
                   pRelay[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -1186,8 +1471,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pRelay[index]->c_mat[x][y].Re(),
                   pRelay[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -1197,8 +1484,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pRelay[index]->d_mat[x][y].Re(),
                   pRelay[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -1208,8 +1497,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pRelay[index]->A_mat[x][y].Re(),
                   pRelay[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -1219,8 +1510,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pRelay[index]->B_mat[x][y].Re(),
                   pRelay[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -1236,20 +1529,25 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write sectionalizers
-  if (sectionalizers != nullptr) {
+  if (sectionalizers != nullptr)
+  {
     pSectionalizer = (link_object **)gl_malloc(sectionalizers->hit_count *
                                                sizeof(link_object *));
-    if (pSectionalizer == nullptr) {
+    if (pSectionalizer == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(sectionalizers, obj)) {
-      if (index >= sectionalizers->hit_count) {
+    while (obj = gl_find_next(sectionalizers, obj))
+    {
+      if (index >= sectionalizers->hit_count)
+      {
         break;
       }
       pSectionalizer[index] =
           /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
-      if (pSectionalizer[index] == nullptr) {
+      if (pSectionalizer[index] == nullptr)
+      {
         gl_error("Unable to map object as a link object.");
         return 0;
       }
@@ -1258,9 +1556,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<sectionalizer>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -1268,37 +1569,49 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>sectionalizer:%d</id>\n", obj->id);
 
       // write the from name
-      if (pSectionalizer[index]->from->name != nullptr) {
+      if (pSectionalizer[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pSectionalizer[index]->from->oclass->name,
                 pSectionalizer[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pSectionalizer[index]->from->oclass->name,
                 pSectionalizer[index]->from->id);
       }
 
       // write the to name
-      if (pSectionalizer[index]->to->name != nullptr) {
+      if (pSectionalizer[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pSectionalizer[index]->to->oclass->name,
                 pSectionalizer[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pSectionalizer[index]->to->oclass->name,
                 pSectionalizer[index]->to->id);
       }
 
       // write the from node's voltage
-      if (pSectionalizer[index]->has_phase(PHASE_A)) {
+      if (pSectionalizer[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pSectionalizer[index]->from, "voltage_A");
-      } else if (pSectionalizer[index]->has_phase(PHASE_B)) {
+      }
+      else if (pSectionalizer[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pSectionalizer[index]->from, "voltage_B");
-      } else if (pSectionalizer[index]->has_phase(PHASE_C)) {
+      }
+      else if (pSectionalizer[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pSectionalizer[index]->from, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -1306,15 +1619,21 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<from_voltage>%f</from_voltage>\n", node_voltage->Mag());
 
       // write the to node's voltage
-      if (pSectionalizer[index]->has_phase(PHASE_A)) {
+      if (pSectionalizer[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pSectionalizer[index]->to, "voltage_A");
-      } else if (pSectionalizer[index]->has_phase(PHASE_B)) {
+      }
+      else if (pSectionalizer[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pSectionalizer[index]->to, "voltage_B");
-      } else if (pSectionalizer[index]->has_phase(PHASE_C)) {
+      }
+      else if (pSectionalizer[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pSectionalizer[index]->to, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -1322,65 +1641,85 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<to_voltage>%f</to_voltage>\n", node_voltage->Mag());
 
       // write the phases
-      if (pSectionalizer[index]->phases == 0x0001) { // A
+      if (pSectionalizer[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0002) { // B
+      if (pSectionalizer[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0004) { // C
+      if (pSectionalizer[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0009) { // AN
+      if (pSectionalizer[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x000a) { // BN
+      if (pSectionalizer[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x000c) { // CN
+      if (pSectionalizer[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0071) { // AS
+      if (pSectionalizer[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0072) { // BS
+      if (pSectionalizer[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0074) { // CS
+      if (pSectionalizer[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0003) { // AB
+      if (pSectionalizer[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0006) { // BC
+      if (pSectionalizer[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0005) { // AC
+      if (pSectionalizer[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x000b) { // ABN
+      if (pSectionalizer[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x000e) { // BCN
+      if (pSectionalizer[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x000d) { // ACN
+      if (pSectionalizer[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0007) { // ABC
+      if (pSectionalizer[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x000f) { // ABCN
+      if (pSectionalizer[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pSectionalizer[index]->phases == 0x0107) { // ABCD
+      if (pSectionalizer[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pSectionalizer[index]->a_mat[x][y].Re(),
                   pSectionalizer[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -1390,8 +1729,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pSectionalizer[index]->b_mat[x][y].Re(),
                   pSectionalizer[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -1401,8 +1742,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pSectionalizer[index]->c_mat[x][y].Re(),
                   pSectionalizer[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -1412,8 +1755,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pSectionalizer[index]->d_mat[x][y].Re(),
                   pSectionalizer[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -1423,8 +1768,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pSectionalizer[index]->A_mat[x][y].Re(),
                   pSectionalizer[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -1434,8 +1781,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pSectionalizer[index]->B_mat[x][y].Re(),
                   pSectionalizer[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -1451,20 +1800,25 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write series reactors
-  if (series_reactors != nullptr) {
+  if (series_reactors != nullptr)
+  {
     pSeriesReactor = (link_object **)gl_malloc(series_reactors->hit_count *
                                                sizeof(link_object *));
-    if (pSeriesReactor == nullptr) {
+    if (pSeriesReactor == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(series_reactors, obj)) {
-      if (index >= series_reactors->hit_count) {
+    while (obj = gl_find_next(series_reactors, obj))
+    {
+      if (index >= series_reactors->hit_count)
+      {
         break;
       }
       pSeriesReactor[index] =
           /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
-      if (pSeriesReactor[index] == nullptr) {
+      if (pSeriesReactor[index] == nullptr)
+      {
         gl_error("Unable to map object as a link object.");
         return 0;
       }
@@ -1473,9 +1827,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<series reactor>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -1483,37 +1840,49 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>series_reactor:%d</id>\n", obj->id);
 
       // write the from name
-      if (pSeriesReactor[index]->from->name != nullptr) {
+      if (pSeriesReactor[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pSeriesReactor[index]->from->oclass->name,
                 pSeriesReactor[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pSeriesReactor[index]->from->oclass->name,
                 pSeriesReactor[index]->from->id);
       }
 
       // write the to name
-      if (pSeriesReactor[index]->to->name != nullptr) {
+      if (pSeriesReactor[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pSeriesReactor[index]->to->oclass->name,
                 pSeriesReactor[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pSeriesReactor[index]->to->oclass->name,
                 pSeriesReactor[index]->to->id);
       }
 
       // write the from node's voltage
-      if (pSeriesReactor[index]->has_phase(PHASE_A)) {
+      if (pSeriesReactor[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pSeriesReactor[index]->from, "voltage_A");
-      } else if (pSeriesReactor[index]->has_phase(PHASE_B)) {
+      }
+      else if (pSeriesReactor[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pSeriesReactor[index]->from, "voltage_B");
-      } else if (pSeriesReactor[index]->has_phase(PHASE_C)) {
+      }
+      else if (pSeriesReactor[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pSeriesReactor[index]->from, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -1521,15 +1890,21 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<from_voltage>%f</from_voltage>\n", node_voltage->Mag());
 
       // write the to node's voltage
-      if (pSeriesReactor[index]->has_phase(PHASE_A)) {
+      if (pSeriesReactor[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pSeriesReactor[index]->to, "voltage_A");
-      } else if (pSeriesReactor[index]->has_phase(PHASE_B)) {
+      }
+      else if (pSeriesReactor[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pSeriesReactor[index]->to, "voltage_B");
-      } else if (pSeriesReactor[index]->has_phase(PHASE_C)) {
+      }
+      else if (pSeriesReactor[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pSeriesReactor[index]->to, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -1537,65 +1912,85 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<to_voltage>%f</to_voltage>\n", node_voltage->Mag());
 
       // write the phases
-      if (pSeriesReactor[index]->phases == 0x0001) { // A
+      if (pSeriesReactor[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0002) { // B
+      if (pSeriesReactor[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0004) { // C
+      if (pSeriesReactor[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0009) { // AN
+      if (pSeriesReactor[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x000a) { // BN
+      if (pSeriesReactor[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x000c) { // CN
+      if (pSeriesReactor[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0071) { // AS
+      if (pSeriesReactor[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0072) { // BS
+      if (pSeriesReactor[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0074) { // CS
+      if (pSeriesReactor[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0003) { // AB
+      if (pSeriesReactor[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0006) { // BC
+      if (pSeriesReactor[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0005) { // AC
+      if (pSeriesReactor[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x000b) { // ABN
+      if (pSeriesReactor[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x000e) { // BCN
+      if (pSeriesReactor[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x000d) { // ACN
+      if (pSeriesReactor[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0007) { // ABC
+      if (pSeriesReactor[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x000f) { // ABCN
+      if (pSeriesReactor[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pSeriesReactor[index]->phases == 0x0107) { // ABCD
+      if (pSeriesReactor[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pSeriesReactor[index]->a_mat[x][y].Re(),
                   pSeriesReactor[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -1605,8 +2000,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pSeriesReactor[index]->b_mat[x][y].Re(),
                   pSeriesReactor[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -1616,8 +2013,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pSeriesReactor[index]->c_mat[x][y].Re(),
                   pSeriesReactor[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -1627,8 +2026,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pSeriesReactor[index]->d_mat[x][y].Re(),
                   pSeriesReactor[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -1638,8 +2039,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pSeriesReactor[index]->A_mat[x][y].Re(),
                   pSeriesReactor[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -1649,8 +2052,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pSeriesReactor[index]->B_mat[x][y].Re(),
                   pSeriesReactor[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -1666,31 +2071,40 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write switches
-  if (switches != nullptr) {
+  if (switches != nullptr)
+  {
     pSwitch = (switch_object **)gl_malloc(switches->hit_count *
                                           sizeof(switch_object *));
-    if (pSwitch == nullptr) {
+    if (pSwitch == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(switches, obj)) {
-      if (index >= switches->hit_count) {
+    while (obj = gl_find_next(switches, obj))
+    {
+      if (index >= switches->hit_count)
+      {
         break;
       }
       pSwitch[index] = /*OBJECTDATA(obj,<>)*/ object_data<switch_object>(obj);
-      if (pSwitch[index] == nullptr) {
+      if (pSwitch[index] == nullptr)
+      {
         gl_error("Unable to map object as a link object.");
         return 0;
       }
 
       // write the switch
-      if (pSwitch[index]->phase_A_state == 1) {
+      if (pSwitch[index]->phase_A_state == 1)
+      {
         fprintf(fn, "\t<switch>\n");
 
         // write the name
-        if (obj->name != nullptr) {
+        if (obj->name != nullptr)
+        {
           fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-        } else {
+        }
+        else
+        {
           fprintf(fn, "\t\t<name>NA</name>\n");
         }
 
@@ -1698,34 +2112,46 @@ int impedance_dump::dump(TIMESTAMP t) {
         fprintf(fn, "\t\t<id>switch:%d</id>\n", obj->id);
 
         // write the from name
-        if (pSwitch[index]->from->name != nullptr) {
+        if (pSwitch[index]->from->name != nullptr)
+        {
           fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                   pSwitch[index]->from->oclass->name,
                   pSwitch[index]->from->name);
-        } else {
+        }
+        else
+        {
           fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                   pSwitch[index]->from->oclass->name, pSwitch[index]->from->id);
         }
 
         // write the to name
-        if (pSwitch[index]->to->name != nullptr) {
+        if (pSwitch[index]->to->name != nullptr)
+        {
           fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                   pSwitch[index]->to->oclass->name, pSwitch[index]->to->name);
-        } else {
+        }
+        else
+        {
           fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                   pSwitch[index]->to->oclass->name, pSwitch[index]->to->id);
         }
 
         // write the from node's voltage
-        if (pSwitch[index]->has_phase(PHASE_A)) {
+        if (pSwitch[index]->has_phase(PHASE_A))
+        {
           node_voltage = get_complex(pSwitch[index]->from, "voltage_A");
-        } else if (pSwitch[index]->has_phase(PHASE_B)) {
+        }
+        else if (pSwitch[index]->has_phase(PHASE_B))
+        {
           node_voltage = get_complex(pSwitch[index]->from, "voltage_B");
-        } else if (pSwitch[index]->has_phase(PHASE_C)) {
+        }
+        else if (pSwitch[index]->has_phase(PHASE_C))
+        {
           node_voltage = get_complex(pSwitch[index]->from, "voltage_C");
         }
 
-        if (node_voltage == nullptr) {
+        if (node_voltage == nullptr)
+        {
           gl_error("From node has no voltage.");
           return 0;
         }
@@ -1734,15 +2160,21 @@ int impedance_dump::dump(TIMESTAMP t) {
                 node_voltage->Mag());
 
         // write the to node's voltage
-        if (pSwitch[index]->has_phase(PHASE_A)) {
+        if (pSwitch[index]->has_phase(PHASE_A))
+        {
           node_voltage = get_complex(pSwitch[index]->to, "voltage_A");
-        } else if (pSwitch[index]->has_phase(PHASE_B)) {
+        }
+        else if (pSwitch[index]->has_phase(PHASE_B))
+        {
           node_voltage = get_complex(pSwitch[index]->to, "voltage_B");
-        } else if (pSwitch[index]->has_phase(PHASE_C)) {
+        }
+        else if (pSwitch[index]->has_phase(PHASE_C))
+        {
           node_voltage = get_complex(pSwitch[index]->to, "voltage_C");
         }
 
-        if (node_voltage == nullptr) {
+        if (node_voltage == nullptr)
+        {
           gl_error("From node has no voltage.");
           return 0;
         }
@@ -1750,65 +2182,85 @@ int impedance_dump::dump(TIMESTAMP t) {
         fprintf(fn, "\t\t<to_voltage>%f</to_voltage>\n", node_voltage->Mag());
 
         // write the phases
-        if (pSwitch[index]->phases == 0x0001) { // A
+        if (pSwitch[index]->phases == 0x0001)
+        { // A
           fprintf(fn, "\t\t<phases>A</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0002) { // B
+        if (pSwitch[index]->phases == 0x0002)
+        { // B
           fprintf(fn, "\t\t<phases>B</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0004) { // C
+        if (pSwitch[index]->phases == 0x0004)
+        { // C
           fprintf(fn, "\t\t<phases>C</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0009) { // AN
+        if (pSwitch[index]->phases == 0x0009)
+        { // AN
           fprintf(fn, "\t\t<phases>AN</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x000a) { // BN
+        if (pSwitch[index]->phases == 0x000a)
+        { // BN
           fprintf(fn, "\t\t<phases>BN</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x000c) { // CN
+        if (pSwitch[index]->phases == 0x000c)
+        { // CN
           fprintf(fn, "\t\t<phases>CN</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0071) { // AS
+        if (pSwitch[index]->phases == 0x0071)
+        { // AS
           fprintf(fn, "\t\t<phases>AS</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0072) { // BS
+        if (pSwitch[index]->phases == 0x0072)
+        { // BS
           fprintf(fn, "\t\t<phases>BS</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0074) { // CS
+        if (pSwitch[index]->phases == 0x0074)
+        { // CS
           fprintf(fn, "\t\t<phases>CS</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0003) { // AB
+        if (pSwitch[index]->phases == 0x0003)
+        { // AB
           fprintf(fn, "\t\t<phases>AB</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0006) { // BC
+        if (pSwitch[index]->phases == 0x0006)
+        { // BC
           fprintf(fn, "\t\t<phases>BC</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0005) { // AC
+        if (pSwitch[index]->phases == 0x0005)
+        { // AC
           fprintf(fn, "\t\t<phases>AC</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x000b) { // ABN
+        if (pSwitch[index]->phases == 0x000b)
+        { // ABN
           fprintf(fn, "\t\t<phases>ABN</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x000e) { // BCN
+        if (pSwitch[index]->phases == 0x000e)
+        { // BCN
           fprintf(fn, "\t\t<phases>BCN</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x000d) { // ACN
+        if (pSwitch[index]->phases == 0x000d)
+        { // ACN
           fprintf(fn, "\t\t<phases>ACN</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0007) { // ABC
+        if (pSwitch[index]->phases == 0x0007)
+        { // ABC
           fprintf(fn, "\t\t<phases>ABC</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x000f) { // ABCN
+        if (pSwitch[index]->phases == 0x000f)
+        { // ABCN
           fprintf(fn, "\t\t<phases>ABCN</phases>\n");
         }
-        if (pSwitch[index]->phases == 0x0107) { // ABCD
+        if (pSwitch[index]->phases == 0x0107)
+        { // ABCD
           fprintf(fn, "\t\t<phases>ABCD</phases>\n");
         }
 
         // write a_mat
         fprintf(fn, "\t\t<a_matrix>\n");
-        for (x = 0; x < 3; x++) {
-          for (y = 0; y < 3; y++) {
+        for (x = 0; x < 3; x++)
+        {
+          for (y = 0; y < 3; y++)
+          {
             fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                     pSwitch[index]->a_mat[x][y].Re(),
                     pSwitch[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -1818,8 +2270,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
         // write b_mat
         fprintf(fn, "\t\t<b_matrix>\n");
-        for (x = 0; x < 3; x++) {
-          for (y = 0; y < 3; y++) {
+        for (x = 0; x < 3; x++)
+        {
+          for (y = 0; y < 3; y++)
+          {
             fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                     pSwitch[index]->b_mat[x][y].Re(),
                     pSwitch[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -1829,8 +2283,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
         // write c_mat
         fprintf(fn, "\t\t<c_matrix>\n");
-        for (x = 0; x < 3; x++) {
-          for (y = 0; y < 3; y++) {
+        for (x = 0; x < 3; x++)
+        {
+          for (y = 0; y < 3; y++)
+          {
             fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                     pSwitch[index]->c_mat[x][y].Re(),
                     pSwitch[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -1840,8 +2296,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
         // write d_mat
         fprintf(fn, "\t\t<d_matrix>\n");
-        for (x = 0; x < 3; x++) {
-          for (y = 0; y < 3; y++) {
+        for (x = 0; x < 3; x++)
+        {
+          for (y = 0; y < 3; y++)
+          {
             fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                     pSwitch[index]->d_mat[x][y].Re(),
                     pSwitch[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -1851,8 +2309,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
         // write A_mat
         fprintf(fn, "\t\t<A_matrix>\n");
-        for (x = 0; x < 3; x++) {
-          for (y = 0; y < 3; y++) {
+        for (x = 0; x < 3; x++)
+        {
+          for (y = 0; y < 3; y++)
+          {
             fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                     pSwitch[index]->A_mat[x][y].Re(),
                     pSwitch[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -1862,8 +2322,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
         // write B_mat
         fprintf(fn, "\t\t<B_matrix>\n");
-        for (x = 0; x < 3; x++) {
-          for (y = 0; y < 3; y++) {
+        for (x = 0; x < 3; x++)
+        {
+          for (y = 0; y < 3; y++)
+          {
             fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                     pSwitch[index]->B_mat[x][y].Re(),
                     pSwitch[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -1880,20 +2342,25 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write transformers
-  if (transformers != nullptr) {
+  if (transformers != nullptr)
+  {
     pTransformer = (transformer **)gl_malloc(transformers->hit_count *
                                              sizeof(transformer *));
-    if (pTransformer == nullptr) {
+    if (pTransformer == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(transformers, obj)) {
-      if (index >= transformers->hit_count) {
+    while (obj = gl_find_next(transformers, obj))
+    {
+      if (index >= transformers->hit_count)
+      {
         break;
       }
       pTransformer[index] =
           /*OBJECTDATA(obj,<>)*/ object_data<transformer>(obj);
-      if (pTransformer[index] == nullptr) {
+      if (pTransformer[index] == nullptr)
+      {
         gl_error("Unable to map object as a link object.");
         return 0;
       }
@@ -1902,9 +2369,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<transformer>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -1912,22 +2382,28 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>transformer:%d</id>\n", obj->id);
 
       // write the from name
-      if (pTransformer[index]->from->name != nullptr) {
+      if (pTransformer[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pTransformer[index]->from->oclass->name,
                 pTransformer[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pTransformer[index]->from->oclass->name,
                 pTransformer[index]->from->id);
       }
 
       // write the to name
-      if (pTransformer[index]->to->name != nullptr) {
+      if (pTransformer[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pTransformer[index]->to->oclass->name,
                 pTransformer[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pTransformer[index]->to->oclass->name,
                 pTransformer[index]->to->id);
@@ -1935,15 +2411,21 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write the from node's voltage
 
-      if (pTransformer[index]->has_phase(PHASE_A)) {
+      if (pTransformer[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pTransformer[index]->from, "voltage_A");
-      } else if (pTransformer[index]->has_phase(PHASE_B)) {
+      }
+      else if (pTransformer[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pTransformer[index]->from, "voltage_B");
-      } else if (pTransformer[index]->has_phase(PHASE_C)) {
+      }
+      else if (pTransformer[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pTransformer[index]->from, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node %s has no voltage.",
                  pTransformer[index]->from->name);
         return 0;
@@ -1952,19 +2434,28 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<from_voltage>%f</from_voltage>\n", node_voltage->Mag());
 
       // write the to node's
-      if (pTransformer[index]->SpecialLnk == SPLITPHASE) {
+      if (pTransformer[index]->SpecialLnk == SPLITPHASE)
+      {
         node_voltage = get_complex(pTransformer[index]->to, "voltage_12");
-      } else {
-        if (pTransformer[index]->has_phase(PHASE_A)) {
+      }
+      else
+      {
+        if (pTransformer[index]->has_phase(PHASE_A))
+        {
           node_voltage = get_complex(pTransformer[index]->to, "voltage_A");
-        } else if (pTransformer[index]->has_phase(PHASE_B)) {
+        }
+        else if (pTransformer[index]->has_phase(PHASE_B))
+        {
           node_voltage = get_complex(pTransformer[index]->to, "voltage_B");
-        } else if (pTransformer[index]->has_phase(PHASE_C)) {
+        }
+        else if (pTransformer[index]->has_phase(PHASE_C))
+        {
           node_voltage = get_complex(pTransformer[index]->to, "voltage_C");
         }
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("To node %s has no voltage.", pTransformer[index]->to->name);
         return 0;
       }
@@ -1977,80 +2468,103 @@ int impedance_dump::dump(TIMESTAMP t) {
               pTransformer[index]->config->connect_type);
 
       // write the phases
-      if (pTransformer[index]->phases == 0x0001) { // A
+      if (pTransformer[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0002) { // B
+      if (pTransformer[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0004) { // C
+      if (pTransformer[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0009) { // AN
+      if (pTransformer[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x000a) { // BN
+      if (pTransformer[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x000c) { // CN
+      if (pTransformer[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0071) { // AS
+      if (pTransformer[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0072) { // BS
+      if (pTransformer[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0074) { // CS
+      if (pTransformer[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0003) { // AB
+      if (pTransformer[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0006) { // BC
+      if (pTransformer[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0005) { // AC
+      if (pTransformer[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x000b) { // ABN
+      if (pTransformer[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x000e) { // BCN
+      if (pTransformer[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x000d) { // ACN
+      if (pTransformer[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0007) { // ABC
+      if (pTransformer[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x000f) { // ABCN
+      if (pTransformer[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pTransformer[index]->phases == 0x0107) { // ABCD
+      if (pTransformer[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
       // write power rating
-      if (pTransformer[index]->config->kVA_rating != 0.0) {
+      if (pTransformer[index]->config->kVA_rating != 0.0)
+      {
         fprintf(fn, "\t\t<power_rating>%.6f</power_rating>\n",
                 pTransformer[index]->config->kVA_rating);
       }
 
       // write impedance
-      if (pTransformer[index]->config->impedance.Re() != 0.0) {
+      if (pTransformer[index]->config->impedance.Re() != 0.0)
+      {
         fprintf(fn, "\t\t<resistance>%.6f</resistance>\n",
                 pTransformer[index]->config->impedance.Re());
       }
-      if (pTransformer[index]->config->impedance.Im() != 0.0) {
+      if (pTransformer[index]->config->impedance.Im() != 0.0)
+      {
         fprintf(fn, "\t\t<reactance>%.6f</reactance>\n",
                 pTransformer[index]->config->impedance.Im());
       }
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pTransformer[index]->a_mat[x][y].Re(),
                   pTransformer[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -2060,8 +2574,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pTransformer[index]->b_mat[x][y].Re(),
                   pTransformer[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -2071,8 +2587,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pTransformer[index]->c_mat[x][y].Re(),
                   pTransformer[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -2082,8 +2600,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pTransformer[index]->d_mat[x][y].Re(),
                   pTransformer[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -2093,8 +2613,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pTransformer[index]->A_mat[x][y].Re(),
                   pTransformer[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -2104,8 +2626,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pTransformer[index]->B_mat[x][y].Re(),
                   pTransformer[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -2121,18 +2645,23 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write the triplex_lines
-  if (tplines != nullptr) {
+  if (tplines != nullptr)
+  {
     pTpLine = (line **)gl_malloc(tplines->hit_count * sizeof(line *));
-    if (pTpLine == nullptr) {
+    if (pTpLine == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(tplines, obj)) {
-      if (index >= tplines->hit_count) {
+    while (obj = gl_find_next(tplines, obj))
+    {
+      if (index >= tplines->hit_count)
+      {
         break;
       }
       pTpLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
-      if (pTpLine[index] == nullptr) {
+      if (pTpLine[index] == nullptr)
+      {
         gl_error("Unable to map object as overhead_line object.");
         return 0;
       }
@@ -2141,9 +2670,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<triplex_line>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -2151,19 +2683,25 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>triplex_line:%d</id>\n", obj->id);
 
       // write the from name
-      if (pTpLine[index]->from->name != nullptr) {
+      if (pTpLine[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pTpLine[index]->from->oclass->name, pTpLine[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pTpLine[index]->from->oclass->name, pTpLine[index]->from->id);
       }
 
       // write the to name
-      if (pTpLine[index]->to->name != nullptr) {
+      if (pTpLine[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pTpLine[index]->to->oclass->name, pTpLine[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pTpLine[index]->to->oclass->name, pTpLine[index]->to->id);
       }
@@ -2175,58 +2713,76 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<to_voltage>%d</to_voltage>\n", 120);
 
       // write the phases
-      if (pTpLine[index]->phases == 0x0001) { // A
+      if (pTpLine[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0002) { // B
+      if (pTpLine[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0004) { // C
+      if (pTpLine[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0009) { // AN
+      if (pTpLine[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x000a) { // BN
+      if (pTpLine[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x000c) { // CN
+      if (pTpLine[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0071) { // AS
+      if (pTpLine[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0072) { // BS
+      if (pTpLine[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0074) { // CS
+      if (pTpLine[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0003) { // AB
+      if (pTpLine[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0006) { // BC
+      if (pTpLine[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0005) { // AC
+      if (pTpLine[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x000b) { // ABN
+      if (pTpLine[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x000e) { // BCN
+      if (pTpLine[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x000d) { // ACN
+      if (pTpLine[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0007) { // ABC
+      if (pTpLine[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x000f) { // ABCN
+      if (pTpLine[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pTpLine[index]->phases == 0x0107) { // ABCD
+      if (pTpLine[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
@@ -2235,8 +2791,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pTpLine[index]->a_mat[x][y].Re(),
                   pTpLine[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -2246,8 +2804,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pTpLine[index]->b_mat[x][y].Re(),
                   pTpLine[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -2257,8 +2817,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pTpLine[index]->c_mat[x][y].Re(),
                   pTpLine[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -2268,8 +2830,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pTpLine[index]->d_mat[x][y].Re(),
                   pTpLine[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -2279,8 +2843,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pTpLine[index]->A_mat[x][y].Re(),
                   pTpLine[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -2290,8 +2856,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pTpLine[index]->B_mat[x][y].Re(),
                   pTpLine[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -2307,18 +2875,23 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write the underground_lines
-  if (uglines != nullptr) {
+  if (uglines != nullptr)
+  {
     pUgLine = (line **)gl_malloc(uglines->hit_count * sizeof(line *));
-    if (pUgLine == nullptr) {
+    if (pUgLine == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(uglines, obj)) {
-      if (index >= uglines->hit_count) {
+    while (obj = gl_find_next(uglines, obj))
+    {
+      if (index >= uglines->hit_count)
+      {
         break;
       }
       pUgLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
-      if (pUgLine[index] == nullptr) {
+      if (pUgLine[index] == nullptr)
+      {
         gl_error("Unable to map object as overhead_line object.");
         return 0;
       }
@@ -2327,9 +2900,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<underground_line>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -2337,33 +2913,45 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>underground_line:%d</id>\n", obj->id);
 
       // write the from name
-      if (pUgLine[index]->from->name != nullptr) {
+      if (pUgLine[index]->from->name != nullptr)
+      {
         fprintf(fn, "\t\t<from_node>%s:%s</from_node>\n",
                 pUgLine[index]->from->oclass->name, pUgLine[index]->from->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<from_node>%s:%d</from_node>\n",
                 pUgLine[index]->from->oclass->name, pUgLine[index]->from->id);
       }
 
       // write the to name
-      if (pUgLine[index]->to->name != nullptr) {
+      if (pUgLine[index]->to->name != nullptr)
+      {
         fprintf(fn, "\t\t<to_node>%s:%s</to_node>\n",
                 pUgLine[index]->to->oclass->name, pUgLine[index]->to->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<to_node>%s:%d</to_node>\n",
                 pUgLine[index]->to->oclass->name, pUgLine[index]->to->id);
       }
 
       // write the from node's voltage
-      if (pUgLine[index]->has_phase(PHASE_A)) {
+      if (pUgLine[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pUgLine[index]->from, "voltage_A");
-      } else if (pUgLine[index]->has_phase(PHASE_B)) {
+      }
+      else if (pUgLine[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pUgLine[index]->from, "voltage_B");
-      } else if (pUgLine[index]->has_phase(PHASE_C)) {
+      }
+      else if (pUgLine[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pUgLine[index]->from, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -2371,15 +2959,21 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<from_voltage>%f</from_voltage>\n", node_voltage->Mag());
 
       // write the to node's voltage
-      if (pUgLine[index]->has_phase(PHASE_A)) {
+      if (pUgLine[index]->has_phase(PHASE_A))
+      {
         node_voltage = get_complex(pUgLine[index]->to, "voltage_A");
-      } else if (pUgLine[index]->has_phase(PHASE_B)) {
+      }
+      else if (pUgLine[index]->has_phase(PHASE_B))
+      {
         node_voltage = get_complex(pUgLine[index]->to, "voltage_B");
-      } else if (pUgLine[index]->has_phase(PHASE_C)) {
+      }
+      else if (pUgLine[index]->has_phase(PHASE_C))
+      {
         node_voltage = get_complex(pUgLine[index]->to, "voltage_C");
       }
 
-      if (node_voltage == nullptr) {
+      if (node_voltage == nullptr)
+      {
         gl_error("From node has no voltage.");
         return 0;
       }
@@ -2387,58 +2981,76 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<to_voltage>%f</to_voltage>\n", node_voltage->Mag());
 
       // write the phases
-      if (pUgLine[index]->phases == 0x0001) { // A
+      if (pUgLine[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0002) { // B
+      if (pUgLine[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0004) { // C
+      if (pUgLine[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0009) { // AN
+      if (pUgLine[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x000a) { // BN
+      if (pUgLine[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x000c) { // CN
+      if (pUgLine[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0071) { // AS
+      if (pUgLine[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0072) { // BS
+      if (pUgLine[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0074) { // CS
+      if (pUgLine[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0003) { // AB
+      if (pUgLine[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0006) { // BC
+      if (pUgLine[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0005) { // AC
+      if (pUgLine[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x000b) { // ABN
+      if (pUgLine[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x000e) { // BCN
+      if (pUgLine[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x000d) { // ACN
+      if (pUgLine[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0007) { // ABC
+      if (pUgLine[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x000f) { // ABCN
+      if (pUgLine[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pUgLine[index]->phases == 0x0107) { // ABCD
+      if (pUgLine[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
@@ -2447,8 +3059,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write a_mat
       fprintf(fn, "\t\t<a_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<a%d%d>%+.15f%+.15fj</a%d%d>\n", x + 1, y + 1,
                   pUgLine[index]->a_mat[x][y].Re(),
                   pUgLine[index]->a_mat[x][y].Im(), x + 1, y + 1);
@@ -2458,8 +3072,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write b_mat
       fprintf(fn, "\t\t<b_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<b%d%d>%+.15f%+.15fj</b%d%d>\n", x + 1, y + 1,
                   pUgLine[index]->b_mat[x][y].Re(),
                   pUgLine[index]->b_mat[x][y].Im(), x + 1, y + 1);
@@ -2469,8 +3085,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write c_mat
       fprintf(fn, "\t\t<c_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<c%d%d>%+.15f%+.15fj</c%d%d>\n", x + 1, y + 1,
                   pUgLine[index]->c_mat[x][y].Re(),
                   pUgLine[index]->c_mat[x][y].Im(), x + 1, y + 1);
@@ -2480,8 +3098,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write d_mat
       fprintf(fn, "\t\t<d_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<d%d%d>%+.15f%+.15fj</d%d%d>\n", x + 1, y + 1,
                   pUgLine[index]->d_mat[x][y].Re(),
                   pUgLine[index]->d_mat[x][y].Im(), x + 1, y + 1);
@@ -2491,8 +3111,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write A_mat
       fprintf(fn, "\t\t<A_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<A%d%d>%+.15f%+.15fj</A%d%d>\n", x + 1, y + 1,
                   pUgLine[index]->A_mat[x][y].Re(),
                   pUgLine[index]->A_mat[x][y].Im(), x + 1, y + 1);
@@ -2502,8 +3124,10 @@ int impedance_dump::dump(TIMESTAMP t) {
 
       // write B_mat
       fprintf(fn, "\t\t<B_matrix>\n");
-      for (x = 0; x < 3; x++) {
-        for (y = 0; y < 3; y++) {
+      for (x = 0; x < 3; x++)
+      {
+        for (y = 0; y < 3; y++)
+        {
           fprintf(fn, "\t\t\t<B%d%d>%+.15f%+.15fj</B%d%d>\n", x + 1, y + 1,
                   pUgLine[index]->B_mat[x][y].Re(),
                   pUgLine[index]->B_mat[x][y].Im(), x + 1, y + 1);
@@ -2519,19 +3143,24 @@ int impedance_dump::dump(TIMESTAMP t) {
 
   index = 0;
   // write capacitor
-  if (capacitors != nullptr) {
+  if (capacitors != nullptr)
+  {
     pCapacitor =
         (capacitor **)gl_malloc(capacitors->hit_count * sizeof(capacitor *));
-    if (pCapacitor == nullptr) {
+    if (pCapacitor == nullptr)
+    {
       gl_error("Failed to allocate fuse array.");
       return TS_NEVER;
     }
-    while (obj = gl_find_next(capacitors, obj)) {
-      if (index >= capacitors->hit_count) {
+    while (obj = gl_find_next(capacitors, obj))
+    {
+      if (index >= capacitors->hit_count)
+      {
         break;
       }
       pCapacitor[index] = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
-      if (pCapacitor[index] == nullptr) {
+      if (pCapacitor[index] == nullptr)
+      {
         gl_error("Unable to map object as a link object.");
         return 0;
       }
@@ -2540,9 +3169,12 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t<capacitor>\n");
 
       // write the name
-      if (obj->name != nullptr) {
+      if (obj->name != nullptr)
+      {
         fprintf(fn, "\t\t<name>%s</name>\n", obj->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<name>NA</name>\n");
       }
 
@@ -2550,67 +3182,88 @@ int impedance_dump::dump(TIMESTAMP t) {
       fprintf(fn, "\t\t<id>cap:%d</id>\n", obj->id);
 
       // write the bus name
-      if (obj->parent->name != nullptr) {
+      if (obj->parent->name != nullptr)
+      {
         fprintf(fn, "\t\t<node>%s:%s</node>\n", pCapacitor[index]->pclass->name,
                 obj->parent->name);
-      } else {
+      }
+      else
+      {
         fprintf(fn, "\t\t<node>%s:%d</node>\n", pCapacitor[index]->pclass->name,
                 obj->parent->id);
       }
 
       // write the phases
-      if (pCapacitor[index]->phases == 0x0001) { // A
+      if (pCapacitor[index]->phases == 0x0001)
+      { // A
         fprintf(fn, "\t\t<phases>A</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0002) { // B
+      if (pCapacitor[index]->phases == 0x0002)
+      { // B
         fprintf(fn, "\t\t<phases>B</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0004) { // C
+      if (pCapacitor[index]->phases == 0x0004)
+      { // C
         fprintf(fn, "\t\t<phases>C</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0009) { // AN
+      if (pCapacitor[index]->phases == 0x0009)
+      { // AN
         fprintf(fn, "\t\t<phases>AN</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x000a) { // BN
+      if (pCapacitor[index]->phases == 0x000a)
+      { // BN
         fprintf(fn, "\t\t<phases>BN</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x000c) { // CN
+      if (pCapacitor[index]->phases == 0x000c)
+      { // CN
         fprintf(fn, "\t\t<phases>CN</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0071) { // AS
+      if (pCapacitor[index]->phases == 0x0071)
+      { // AS
         fprintf(fn, "\t\t<phases>AS</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0072) { // BS
+      if (pCapacitor[index]->phases == 0x0072)
+      { // BS
         fprintf(fn, "\t\t<phases>BS</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0074) { // CS
+      if (pCapacitor[index]->phases == 0x0074)
+      { // CS
         fprintf(fn, "\t\t<phases>CS</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0003) { // AB
+      if (pCapacitor[index]->phases == 0x0003)
+      { // AB
         fprintf(fn, "\t\t<phases>AB</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0006) { // BC
+      if (pCapacitor[index]->phases == 0x0006)
+      { // BC
         fprintf(fn, "\t\t<phases>BC</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0005) { // AC
+      if (pCapacitor[index]->phases == 0x0005)
+      { // AC
         fprintf(fn, "\t\t<phases>AC</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x000b) { // ABN
+      if (pCapacitor[index]->phases == 0x000b)
+      { // ABN
         fprintf(fn, "\t\t<phases>ABN</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x000e) { // BCN
+      if (pCapacitor[index]->phases == 0x000e)
+      { // BCN
         fprintf(fn, "\t\t<phases>BCN</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x000d) { // ACN
+      if (pCapacitor[index]->phases == 0x000d)
+      { // ACN
         fprintf(fn, "\t\t<phases>ACN</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0007) { // ABC
+      if (pCapacitor[index]->phases == 0x0007)
+      { // ABC
         fprintf(fn, "\t\t<phases>ABC</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x000f) { // ABCN
+      if (pCapacitor[index]->phases == 0x000f)
+      { // ABCN
         fprintf(fn, "\t\t<phases>ABCN</phases>\n");
       }
-      if (pCapacitor[index]->phases == 0x0107) { // ABCD
+      if (pCapacitor[index]->phases == 0x0107)
+      { // ABCD
         fprintf(fn, "\t\t<phases>ABCD</phases>\n");
       }
 
@@ -2630,22 +3283,31 @@ int impedance_dump::dump(TIMESTAMP t) {
   return 1;
 }
 
-TIMESTAMP impedance_dump::commit(TIMESTAMP t) {
-  if (runtime == 0) {
+TIMESTAMP impedance_dump::commit(TIMESTAMP t)
+{
+  if (runtime == 0)
+  {
     runtime = t;
   }
-  if ((t == runtime || runtime == TS_NEVER) && (runcount < 1)) {
+  if ((t == runtime || runtime == TS_NEVER) && (runcount < 1))
+  {
     /* dump */
     int rv = dump(t);
     ++runcount;
-    if (rv == 0) {
+    if (rv == 0)
+    {
       return TS_INVALID;
     }
     return TS_NEVER;
-  } else {
-    if (t < runtime) {
+  }
+  else
+  {
+    if (t < runtime)
+    {
       return runtime;
-    } else {
+    }
+    else
+    {
       return TS_NEVER;
     }
   }
@@ -2662,34 +3324,45 @@ TIMESTAMP impedance_dump::commit(TIMESTAMP t) {
  * @param parent a pointer to the parent of this object
  * @return 1 for a successfully created object, 0 for error
  */
-EXPORT int create_impedance_dump(OBJECT **obj, OBJECT *parent) {
-  try {
+EXPORT int create_impedance_dump(OBJECT **obj, OBJECT *parent)
+{
+  try
+  {
     *obj = gl_create_object(impedance_dump::oclass);
-    if (*obj != nullptr) {
+    if (*obj != nullptr)
+    {
       impedance_dump *my =
           /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(*obj);
-      gl_set_parent(*obj, parent);
+      // gl_set_parent(*obj, parent);
       return my->create();
     }
-  } catch (const char *msg) {
+  }
+  catch (const char *msg)
+  {
     gl_error("create_impedance_dump: %s", msg);
   }
   return 0;
 }
 
-EXPORT int init_impedance_dump(OBJECT *obj) {
+EXPORT int init_impedance_dump(OBJECT *obj)
+{
   impedance_dump *my = /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(obj);
-  try {
+  try
+  {
     return my->init(obj->parent);
-  } catch (const char *msg) {
+  }
+  catch (const char *msg)
+  {
     gl_error("%s (impedance_dump:%d): %s", obj->name, obj->id, msg);
     return 0;
   }
 }
 
 static TIMESTAMP sync_impedance_dum_impl(OBJECT *obj, TIMESTAMP t1,
-                                         PASSCONFIG pass) {
-  try {
+                                         PASSCONFIG pass)
+{
+  try
+  {
     impedance_dump *my =
         /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(obj);
     TIMESTAMP rv;
@@ -2702,11 +3375,13 @@ static TIMESTAMP sync_impedance_dum_impl(OBJECT *obj, TIMESTAMP t1,
 
 #ifndef __APPLE__
 extern "C" MODULE_API TIMESTAMP sync_impedance_dump(OBJECT *obj, TIMESTAMP t1,
-                                                    PASSCONFIG pass) {
+                                                    PASSCONFIG pass)
+{
   return sync_impedance_dum_impl(obj, t1, pass);
 }
 #else
-extern "C" MODULE_API TIMESTAMP sync_impedance_dump(OBJECT *obj, ...) {
+extern "C" MODULE_API TIMESTAMP sync_impedance_dump(OBJECT *obj, ...)
+{
   va_list args;
   va_start(args, obj);
   TIMESTAMP t1 = va_arg(args, TIMESTAMP);
@@ -2717,8 +3392,10 @@ extern "C" MODULE_API TIMESTAMP sync_impedance_dump(OBJECT *obj, ...) {
 #endif
 
 EXPORT TIMESTAMP commit_impedance_dump(OBJECT *obj, TIMESTAMP t1,
-                                       TIMESTAMP t2) {
-  try {
+                                       TIMESTAMP t2)
+{
+  try
+  {
     impedance_dump *my =
         /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(obj);
     return my->commit(t1);
@@ -2726,7 +3403,8 @@ EXPORT TIMESTAMP commit_impedance_dump(OBJECT *obj, TIMESTAMP t1,
   I_CATCHALL(commit, impedance_dump);
 }
 
-EXPORT int isa_impedance_dump(OBJECT *obj, char *classname) {
+EXPORT int isa_impedance_dump(OBJECT *obj, char *classname)
+{
   return /*OBJECTDATA(obj,<>)*/ object_data<impedance_dump>(obj)->isa(
       classname);
 }

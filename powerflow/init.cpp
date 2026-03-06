@@ -51,7 +51,9 @@
 
 std::vector<std::pair<gld_object *, std::string>> allocated_objects;
 
-template <typename T> void register_object(MODULE *module) {
+template <typename T>
+void register_object(MODULE *module)
+{
 
   // static_assert(std::is_base_of<powerflow_object, T>::value, "T must derive
   // from powerflow_object"); std::cout << "Attempting to register type: " <<
@@ -65,26 +67,34 @@ template <typename T> void register_object(MODULE *module) {
   // << obj << std::endl;
 }
 
-void cleanup_tracked_objects() {
+void cleanup_tracked_objects()
+{
   // std::cout << "=== CLEANUP CALLED ===" << std::endl;
   // std::cout << "Number of tracked objects: " << allocated_objects.size() <<
   // std::endl;
 
-  for (const auto &obj_pair : allocated_objects) {
+  for (const auto &obj_pair : allocated_objects)
+  {
     // std::cout << "Deleting object of type: " << obj_pair.second
     //<< " at: " << obj_pair.first << std::endl;
 
-    try {
+    try
+    {
       // Dynamically cast to the base type
       gld_object *obj =
           dynamic_cast<gld_object *>(static_cast<gld_object *>(obj_pair.first));
-      if (obj) {
+      if (obj)
+      {
         delete obj; // Safe deletion
                     // std::cout << "Object deleted successfully." << std::endl;
-      } else {
+      }
+      else
+      {
         std::cerr << "Failed to match type for object deletion!" << std::endl;
       }
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception &e)
+    {
       std::cerr << "Error deleting object of type: " << obj_pair.second
                 << " at: " << obj_pair.first << " - " << e.what() << std::endl;
     }
@@ -93,9 +103,11 @@ void cleanup_tracked_objects() {
   // std::cout << "Cleanup completed!" << std::endl;
 }
 
-EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]) {
+EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
+{
 
-  if (!set_callback(fntable)) {
+  if (!set_callback(fntable))
+  {
     errno = EINVAL;
     return nullptr;
   }
@@ -335,7 +347,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]) {
   register_object<sync_check>(module);
 
   static bool cleanup_registered = false;
-  if (!cleanup_registered) {
+  if (!cleanup_registered)
+  {
     atexit(cleanup_tracked_objects);
     cleanup_registered = true;
   }
@@ -345,14 +358,17 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]) {
 }
 
 // Call function for scheduling deltamode
-void schedule_deltamode_start(TIMESTAMP tstart) {
+void schedule_deltamode_start(TIMESTAMP tstart)
+{
   if (enable_subsecond_models) // Make sure the overall mode is enabled
   {
     if ((tstart < deltamode_starttime) &&
         ((tstart - gl_globalclock) <
          0x7fffffff))               // cannot exceed 31 bit integer
       deltamode_starttime = tstart; // Smaller and valid, store it
-  } else {
+  }
+  else
+  {
     GL_THROW("powerflow: a call was made to deltamode functions, but subsecond "
              "models are not enabled!");
     /*  TROUBLESHOOT
@@ -372,14 +388,16 @@ void schedule_deltamode_start(TIMESTAMP tstart) {
 // Returns time to next deltamode in integers seconds.
 // i.e., 0 = deltamode now, 1 = deltamode 1 second from the current simulation
 // time Return DT_INFINITY for no deltamode desired
-EXPORT unsigned long deltamode_desired(int *flags) {
+EXPORT unsigned long deltamode_desired(int *flags)
+{
   unsigned long dt_val;
 
   if (enable_subsecond_models) // Make sure we even want to run deltamode
   {
     // See if the value is worth storing, or irrelevant at this time
     if ((deltamode_starttime >= gl_globalclock) &&
-        (deltamode_starttime < TS_NEVER)) {
+        (deltamode_starttime < TS_NEVER))
+    {
       // Set the flag to do a soft deltamode transition
       *flags |= DMF_SOFTEVENT;
 
@@ -388,11 +406,15 @@ EXPORT unsigned long deltamode_desired(int *flags) {
 
       gl_debug("powerflow: deltamode desired in %d", dt_val);
       return dt_val;
-    } else {
+    }
+    else
+    {
       // No scheduled deltamode, or it wasn't a valid value
       return DT_INFINITY;
     }
-  } else {
+  }
+  else
+  {
     return DT_INFINITY;
   }
 }
@@ -402,9 +424,12 @@ EXPORT unsigned long deltamode_desired(int *flags) {
 // Returns the timestep this module requires - to be used to determine minimimum
 // detamode simulation stepsize
 EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0,
-                               unsigned int64 dt) {
-  if (enable_subsecond_models) {
-    if (deltamode_timestep_publish <= 0.0) {
+                               unsigned int64 dt)
+{
+  if (enable_subsecond_models)
+  {
+    if (deltamode_timestep_publish <= 0.0)
+    {
       gl_error(
           "powerflow::deltamode_timestep must be a positive, non-zero number!");
       /*  TROUBLESHOOT
@@ -414,14 +439,17 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0,
       */
 
       return DT_INVALID;
-    } else {
+    }
+    else
+    {
       // Cast in the published value
       deltamode_timestep = (unsigned long)(deltamode_timestep_publish + 0.5);
 
       // Return it
       return deltamode_timestep;
     }
-  } else // Not desired, just return an arbitrarily large value
+  }
+  else // Not desired, just return an arbitrarily large value
   {
     return DT_INFINITY;
   }
@@ -434,7 +462,8 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0,
 // SM_DELTA_ITER, SM_EVENT, or SM_ERROR
 EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
                                   unsigned int64 delta_time, unsigned long dt,
-                                  unsigned int iteration_count_val) {
+                                  unsigned int iteration_count_val)
+{
   int curr_object_number;
   SIMULATIONMODE function_status = SM_EVENT;
   bool event_driven = true;
@@ -452,10 +481,12 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
   limit_minus_one = NR_delta_iteration_limit - 1;
   error_state = false;
 
-  if (enable_subsecond_models) {
+  if (enable_subsecond_models)
+  {
     // See if this is the first instance -- if so, update the timestep (if
     // in-rush enabled)
-    if (deltatimestep_running < 0.0) {
+    if (deltatimestep_running < 0.0)
+    {
       // Set the powerflow global -- technically the same as dt, but in double
       // precision (less divides)
       deltatimestep_running = (double)((double)dt / (double)DT_SECOND);
@@ -469,42 +500,53 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
       // Loop through the object list and call the updates - loop forward,
       // otherwise parent/child code doesn't work right
       for (curr_object_number = 0; curr_object_number < pwr_object_count;
-           curr_object_number++) {
+           curr_object_number++)
+      {
         // See if we're in service or not
         if ((delta_objects[curr_object_number]->in_svc_double <=
              gl_globaldeltaclock) &&
             (delta_objects[curr_object_number]->out_svc_double >=
-             gl_globaldeltaclock)) {
-          if (delta_functions[curr_object_number] != nullptr) {
+             gl_globaldeltaclock))
+        {
+          if (delta_functions[curr_object_number] != nullptr)
+          {
             // Try/catch for any GL_T.rows() that may be called
-            try {
+            try
+            {
               // Call the actual function
               function_status = ((SIMULATIONMODE (*)(
                   OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(
                   *delta_functions[curr_object_number]))(
                   delta_objects[curr_object_number], delta_time, dt,
                   iteration_count_val, false);
-            } catch (const char *msg) {
+            }
+            catch (const char *msg)
+            {
               gl_error("powerflow:interupdate - pre-pass function call: %s",
                        msg);
               error_state = true;
               function_status = SM_ERROR; // Flag as an error too
-            } catch (...) {
+            }
+            catch (...)
+            {
               gl_error("powerflow:interupdate - pre-pass function call: "
                        "unknown exception");
               error_state = true;
               function_status = SM_ERROR; // Flag as an error too
             }
-          } else // No functional call for this, skip it
+          }
+          else // No functional call for this, skip it
           {
             function_status =
                 SM_EVENT; // Just put something here, mainly for error checks
           }
-        } else // Not in service - just pass
+        }
+        else // Not in service - just pass
           function_status = SM_DELTA;
 
         // Just make sure we didn't error
-        if (function_status == SM_ERROR) {
+        if (function_status == SM_ERROR)
+        {
           gl_error(
               "Powerflow object:%s - deltamode function returned an error!",
               delta_objects[curr_object_number]->name);
@@ -518,7 +560,8 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
 
       // Check for error states -- no sense trying to solve a powerflow if we're
       // already angry
-      if (error_state || (function_status == SM_ERROR)) {
+      if (error_state || (function_status == SM_ERROR))
+      {
         // Break out of this while
         break;
       }
@@ -528,7 +571,8 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
 
       // Put in try/catch, since GL_T.rows() inside solver_nr tend to be a
       // little upsetting
-      try {
+      try
+      {
         // Call solver_nr
 #ifndef GLD_USE_EIGEN
         pf_result =
@@ -541,10 +585,14 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
             &NR_powerflow, powerflow_type, nullptr, &bad_computation);
         ;
 #endif
-      } catch (const char *msg) {
+      }
+      catch (const char *msg)
+      {
         gl_error("powerflow:interupdate - solver_nr call: %s", msg);
         error_state = true;
-      } catch (...) {
+      }
+      catch (...)
+      {
         gl_error("powerflow:interupdate - solver_nr call: unknown exception");
         error_state = true;
       }
@@ -553,7 +601,8 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
       NR_admit_change = false;
 
       // Check the status
-      if (bad_computation) {
+      if (bad_computation)
+      {
         gl_error("Newton-Raphson method is unable to converge the dynamic "
                  "powerflow to a solution at this operation point");
         /*  TROUBLESHOOT
@@ -564,10 +613,11 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
         */
         error_state = true;
         break;
-      } else if ((pf_result < 0) &&
-                 (simple_iter_test ==
-                  limit_minus_one)) // Failure to converge - this is a failure
-                                    // in dynamic mode for now
+      }
+      else if ((pf_result < 0) &&
+               (simple_iter_test ==
+                limit_minus_one)) // Failure to converge - this is a failure
+                                  // in dynamic mode for now
       {
         gl_error("Newton-Raphson failed to converge the dynamic powerflow, "
                  "sticking at same iteration.");
@@ -579,7 +629,8 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
 
         error_state = true;
         break;
-      } else if (error_state) // Some other, unspecified error
+      }
+      else if (error_state) // Some other, unspecified error
       {
         break; // Get out of the while loop
       }
@@ -587,43 +638,54 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
       // Loop through the object list and call the updates - loop forward for
       // SWING first, to replicate "postsync"-like order
       for (curr_object_number = 0; curr_object_number < pwr_object_count;
-           curr_object_number++) {
+           curr_object_number++)
+      {
         // See if we're in service or not
         if ((delta_objects[curr_object_number]->in_svc_double <=
              gl_globaldeltaclock) &&
             (delta_objects[curr_object_number]->out_svc_double >=
-             gl_globaldeltaclock)) {
-          if (delta_functions[curr_object_number] != nullptr) {
+             gl_globaldeltaclock))
+        {
+          if (delta_functions[curr_object_number] != nullptr)
+          {
             // Try/catch for any GL_T.rows() that may be called
-            try {
+            try
+            {
               // Call the actual function
               function_status = ((SIMULATIONMODE (*)(
                   OBJECT *, unsigned int64, unsigned long, unsigned int, bool))(
                   *delta_functions[curr_object_number]))(
                   delta_objects[curr_object_number], delta_time, dt,
                   iteration_count_val, true);
-            } catch (const char *msg) {
+            }
+            catch (const char *msg)
+            {
               gl_error("powerflow:interupdate - post-pass function call: %s",
                        msg);
               error_state = true;
               function_status = SM_ERROR; // Flag as an error too
-            } catch (...) {
+            }
+            catch (...)
+            {
               gl_error("powerflow:interupdate - post-pass function call: "
                        "unknown exception");
               error_state = true;
               function_status = SM_ERROR; // Flag as an error too
             }
-          } else // Doesn't have a function, either intentionally, or "lack of
-                 // supportly"
+          }
+          else // Doesn't have a function, either intentionally, or "lack of
+               // supportly"
           {
             function_status = SM_EVENT; // No function present, just assume we
                                         // only like events
           }
-        } else // Not in service - just pass
+        }
+        else // Not in service - just pass
           function_status = SM_EVENT;
 
         // Determine what our return is
-        if (function_status == SM_DELTA) {
+        if (function_status == SM_DELTA)
+        {
           gl_verbose(
               "Powerflow object:%d - %s - requested deltamode to continue",
               delta_objects[curr_object_number]->id,
@@ -632,7 +694,9 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
                    : "Unnamed"));
 
           event_driven = false;
-        } else if (function_status == SM_DELTA_ITER) {
+        }
+        else if (function_status == SM_DELTA_ITER)
+        {
           gl_verbose(
               "Powerflow object:%d - %s - requested a deltamode reiteration",
               delta_objects[curr_object_number]->id,
@@ -642,7 +706,9 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
 
           event_driven = false;
           delta_iter = true;
-        } else if (function_status == SM_ERROR) {
+        }
+        else if (function_status == SM_ERROR)
+        {
           gl_error("Powerflow object:%d - %s - deltamode function returned an "
                    "error!",
                    delta_objects[curr_object_number]->id,
@@ -657,7 +723,8 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
           */
           error_state = true;
           break;
-        } else // SM_EVENT - just put here for verbose messaging
+        }
+        else // SM_EVENT - just put here for verbose messaging
         {
           gl_verbose(
               "Powerflow object:%d - %s - requested exit to event-driven mode",
@@ -670,33 +737,41 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
 
       // Check for error states -- blocks the reiteration if something was
       // already angry
-      if (error_state || (function_status == SM_ERROR)) {
+      if (error_state || (function_status == SM_ERROR))
+      {
         // Break out of this while
         break;
-      } else if (pf_result < 0) // Check and see if we should even consider
-                                // reiterating or not
+      }
+      else if (pf_result < 0) // Check and see if we should even consider
+                              // reiterating or not
       {
         // Increment the iteration counter
         simple_iter_test++;
-      } else {
+      }
+      else
+      {
         break; // Theoretically done
       }
     } // End iteration while
 
     // See if we got out here due to an error
-    if (error_state || (function_status == SM_ERROR)) {
+    if (error_state || (function_status == SM_ERROR))
+    {
       return SM_ERROR;
     }
 
     // Determine how to exit - event or delta driven
-    if (!event_driven) {
+    if (!event_driven)
+    {
       if (delta_iter)
         return SM_DELTA_ITER;
       else
         return SM_DELTA;
-    } else
+    }
+    else
       return SM_EVENT;
-  } else // deltamode not desired
+  }
+  else // deltamode not desired
   {
     return SM_EVENT; // Just event mode
   }
@@ -705,12 +780,14 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
 // postupdate function of deltamode
 // Executes after all objects in the simulation agree to go back to event-driven
 // mode Return value is a SUCCESS/FAILURE
-EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt) {
+EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
+{
   unsigned int64 seconds_advance, temp_time;
   int curr_object_number;
   STATUS function_status;
 
-  if (enable_subsecond_models) {
+  if (enable_subsecond_models)
+  {
     // Final item of transitioning out is resetting the next timestep so a
     // smaller one can take its place
     deltamode_starttime = TS_NEVER;
@@ -741,32 +818,42 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt) {
     // Loop through delta objects and update the execution times - at this
     // point, mostly just a "call for the sake of a call" function
     for (curr_object_number = 0; curr_object_number < pwr_object_count;
-         curr_object_number++) {
+         curr_object_number++)
+    {
       // See if it has a post-update function
-      if (post_delta_functions[curr_object_number] != nullptr) {
+      if (post_delta_functions[curr_object_number] != nullptr)
+      {
         // See if we're in service or not
         if ((delta_objects[curr_object_number]->in_svc_double <=
              gl_globaldeltaclock) &&
             (delta_objects[curr_object_number]->out_svc_double >=
-             gl_globaldeltaclock)) {
+             gl_globaldeltaclock))
+        {
           // Try/catch for any GL_T.rows() that may be called
-          try {
+          try
+          {
             // Call the actual function
             function_status = ((STATUS (*)(OBJECT *))(
                 *post_delta_functions[curr_object_number]))(
                 delta_objects[curr_object_number]);
-          } catch (const char *msg) {
+          }
+          catch (const char *msg)
+          {
             gl_error("powerflow:postupdate function call: %s", msg);
             function_status = FAILED;
-          } catch (...) {
+          }
+          catch (...)
+          {
             gl_error("powerflow:postupdate function call: unknown exception");
             function_status = FAILED;
           }
-        } else // Not in service
+        }
+        else // Not in service
           function_status = SUCCESS;
 
         // Make sure we worked
-        if (function_status == FAILED) {
+        if (function_status == FAILED)
+        {
           gl_error("Powerflow object:%s - failed post-deltamode update",
                    delta_objects[curr_object_number]->name);
           /*  TROUBLESHOOT
@@ -783,23 +870,27 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt) {
 
     // We always succeed from this, just because (unless we failed above)
     return SUCCESS;
-  } else // Deltamode not needed -- no idea how we even got here
-  { // Not sure how it would ever get here, but just jump out if that's the case
+  }
+  else // Deltamode not needed -- no idea how we even got here
+  {    // Not sure how it would ever get here, but just jump out if that's the case
     return SUCCESS;
   }
 }
 
-CDECL int do_kill() {
+CDECL int do_kill()
+{
   /* if global memory needs to be released, this is a good time to do it */
   return 0;
 }
 
-typedef struct s_pflist {
+typedef struct s_pflist
+{
   OBJECT *ptr;
   s_pflist *next;
 } PFLIST;
 
-EXPORT int check() {
+EXPORT int check()
+{
   /* check each link to make sure it has a node at either end */
   FINDLIST *list =
       gl_find_objects(FL_NEW, FT_MODULE, SAME, "powerflow", nullptr);
@@ -833,19 +924,24 @@ EXPORT int check() {
   /* per-object checks */
 
   /* check from/to info on links */
-  while (obj = gl_find_next(list, obj)) {
-    if (gl_object_isa(obj, "node")) {
+  while (obj = gl_find_next(list, obj))
+  {
+    if (gl_object_isa(obj, "node"))
+    {
       /* add to node map */
       nodemap[obj->id] += 1;
       /* if no parent, then add to anchor list */
-      if (obj->parent == nullptr) {
+      if (obj->parent == nullptr)
+      {
         tlist = (PFLIST *)malloc(sizeof(PFLIST));
         tlist->ptr = obj;
         tlist->next = anchor.next;
         anchor.next = tlist;
         tlist = nullptr;
       }
-    } else if (gl_object_isa(obj, "link")) {
+    }
+    else if (gl_object_isa(obj, "link"))
+    {
       link_object *pLink = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
       OBJECT *from = pLink->from;
       OBJECT *to = pLink->to;
@@ -854,31 +950,42 @@ EXPORT int check() {
       /* count 'to' reference */
       tomap[to->id]++;
       /* check link connections */
-      if (from == nullptr) {
+      if (from == nullptr)
+      {
         gl_error("link %s (%s:%d) from object is not specified",
                  pLink->get_name(), pLink->oclass->name, pLink->get_id());
         ++errcount;
-      } else if (!gl_object_isa(from, "node")) {
+      }
+      else if (!gl_object_isa(from, "node"))
+      {
         gl_error("link %s (%s:%d) from object is not a node", pLink->get_name(),
                  pLink->oclass->name, pLink->get_id());
         ++errcount;
-      } else {               /* is a "from" and it isa(node) */
+      }
+      else
+      {                      /* is a "from" and it isa(node) */
         linkmap[from->id]++; /* mark that this node has a link from it */
       }
-      if (to == nullptr) {
+      if (to == nullptr)
+      {
         gl_error("link %s (%s:%d) to object is not specified",
                  pLink->get_name(), pLink->oclass->name, pLink->get_id());
         ++errcount;
-      } else if (!gl_object_isa(to, "node")) {
+      }
+      else if (!gl_object_isa(to, "node"))
+      {
         gl_error("link %s (%s:%d) to object is not a node", pLink->get_name(),
                  pLink->oclass->name, pLink->get_id());
         ++errcount;
-      } else {             /* is a "to" and it isa(node) */
+      }
+      else
+      {                    /* is a "to" and it isa(node) */
         linkmap[to->id]++; /* mark that this node has links to it */
       }
       /* add link to heap? */
       if ((from != nullptr) && (to != nullptr) && (linkmap[from->id] > 0) &&
-          (linkmap[to->id] > 0)) {
+          (linkmap[to->id] > 0))
+      {
         linklist[queuect] = pLink;
         queuect++;
       }
@@ -919,18 +1026,18 @@ EXPORT int check() {
 
   // Old Island check code - doesn't handle parented objects and may be missing
   // other stuff.  NR does these type of check by default (solver fails if an
-  //island is present)
+  // island is present)
 
   // for(i = 0; i < objct; ++i){ /* locate unlinked nodes */
   //	if(nodemap[i] != 0){
   //		if(linkmap[i] * nodemap[i] > 0){ /* there is a node at [i] and
-  //links to it*/
+  // links to it*/
   //			;
   //		} else if(linkmap[i] == 1){ /* either a feeder or an endpoint */
   //			;
   //		} else { /* unattached node */
   //			gl_error("node:%i: node with no links to or from it",
-  //i); 			nodemap[i] *= -1; /* mark as unlinked */
+  // i); 			nodemap[i] *= -1; /* mark as unlinked */
   //			++errcount;
   //		}
   //	}
@@ -953,13 +1060,13 @@ EXPORT int check() {
   //	while(queuef < queueb){
   //		/* expand this island */
   //		linkmap[linkqueue[queuef]->to->id] =
-  //linkmap[linkqueue[queuef]->from->id];
+  // linkmap[linkqueue[queuef]->from->id];
   //		/* capture the adjacent nodes */
   //		for(j = 0; j < queuect; ++j){
   //			if(linklist[j] != nullptr){
   //				if(linklist[j]->from->id ==
-  //linkqueue[queuef]->to->id){ 					linkqueue[queueb] = linklist[j]; 					linklist[j] =
-  //nullptr;
+  // linkqueue[queuef]->to->id){ 					linkqueue[queueb] = linklist[j]; 					linklist[j] =
+  // nullptr;
   //					++queueb;
   //				}
   //			}
@@ -980,7 +1087,7 @@ EXPORT int check() {
   //		OBJECT *moo = gl_find_next(cow, nullptr);
   //		char grass[64];
   //		gl_output("object #%i, \'%s\', has more than one link feeding to
-  //it (this will diverge)", i, gl_name(moo, grass, 64));
+  // it (this will diverge)", i, gl_name(moo, grass, 64));
   //	}
   // }
   // gl_output("Found %i islands", islandct);
@@ -995,19 +1102,24 @@ EXPORT int check() {
    *	if the root node has been defined on the command line.
    *	-d3p988 */
   gvroot = gl_global_find("powerflow::rootnode");
-  if (gvroot != nullptr) {
+  if (gvroot != nullptr)
+  {
     PFLIST *front = nullptr, *back = nullptr, *del = nullptr; /* node queue */
     OBJECT *_node = gl_get_object((char *)gvroot->prop->addr);
     OBJECT *_link = nullptr;
     int *rankmap = (int *)malloc((size_t)(objct * sizeof(int)));
     int bct = 0;
-    if (_node == nullptr) {
+    if (_node == nullptr)
+    {
       gl_error("powerflow check(): Unable to do directionality check, root "
                "node name not found.");
-    } else {
+    }
+    else
+    {
       gl_testmsg("Powerflow Check ~ Backward Links:");
     }
-    for (int i = 0; i < objct; ++i) {
+    for (int i = 0; i < objct; ++i)
+    {
       rankmap[i] = objct;
     }
     rankmap[_node->id] = 0;
@@ -1015,22 +1127,31 @@ EXPORT int check() {
     front->next = nullptr;
     front->ptr = _node;
     back = front;
-    while (front != nullptr) {
+    while (front != nullptr)
+    {
       // find all links from the node
       for (OBJECT *now = gl_find_next(list, nullptr); now != nullptr;
-           now = gl_find_next(list, now)) {
+           now = gl_find_next(list, now))
+      {
         link_object *l;
         if (!gl_object_isa(now, "link"))
           continue;
         l = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(now);
-        if ((l->from != front->ptr) && (l->to != front->ptr)) {
+        if ((l->from != front->ptr) && (l->to != front->ptr))
+        {
           continue;
-        } else if (rankmap[l->from->id] < objct && rankmap[l->to->id] < objct) {
+        }
+        else if (rankmap[l->from->id] < objct && rankmap[l->to->id] < objct)
+        {
           continue;
-        } else if (rankmap[l->from->id] < rankmap[l->to->id]) {
+        }
+        else if (rankmap[l->from->id] < rankmap[l->to->id])
+        {
           /* mark */
           rankmap[l->to->id] = rankmap[l->from->id] + 1;
-        } else if (rankmap[l->from->id] > rankmap[l->to->id]) {
+        }
+        else if (rankmap[l->from->id] > rankmap[l->to->id])
+        {
           /* swap & mark */
           OBJECT *t = l->from;
           gl_testmsg("reversed link: %s goes from %s to %s", now->name,
@@ -1060,7 +1181,8 @@ EXPORT int check() {
 
   // Also ensure all PFLIST structures are freed
   PFLIST *current = anchor.next;
-  while (current != nullptr) {
+  while (current != nullptr)
+  {
     PFLIST *temp = current;
     current = current->next;
     free(temp);

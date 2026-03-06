@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.13)
 
+
+set(CMAKE_CXX_VISIBILITY_PRESET default)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
+
+
+if(APPLE)
+  set(CMAKE_MACOSX_RPATH ON)
+endif()
+
+
 # Set the architecture BEFORE project() on Windows
 if(MSVC OR CMAKE_GENERATOR MATCHES "Visual Studio")
     # Ensure we have a valid platform
@@ -179,6 +189,26 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/${GLD_PACKAGE}")
 # which point to directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 option(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
+
+
+##
+## Portable RPATH helper (NON-intrusive for Windows; applied per-target on UNIX)
+## - macOS: @loader_path resolves to the directory of the loading binary or module
+## - Linux: $ORIGIN resolves to the directory of the loading binary or module
+##
+function(set_portable_rpath tgt)
+  if(APPLE)
+    set_target_properties(${tgt} PROPERTIES
+      BUILD_RPATH "$<TARGET_FILE_DIR:gldapi>"
+      INSTALL_RPATH "@loader_path"
+    )
+  elseif(UNIX)  # excludes Windows
+    set_target_properties(${tgt} PROPERTIES
+      BUILD_RPATH "$<TARGET_FILE_DIR:gldapi>"
+      INSTALL_RPATH "$ORIGIN"
+    )
+  endif()
+endfunction()
 
 # Forces certain warnings to trigger errors.
 if (NOT MSVC)
@@ -458,6 +488,35 @@ add_subdirectory(gldcore)
 add_executable(test_gldapi gldcore/test_gldapi.cpp)
 target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} Threads::Threads)
 add_dependencies(test_gldapi gldapi)  
+
+
+
+##
+## Apply portable RPATH and ensure modules link to the shared core
+## (SAFE: no effect on Windows RPATH; additional PRIVATE links to gldapi are additive)
+##
+
+# Core + host:
+if(TARGET gldapi)
+  set_portable_rpath(gldapi)
+endif()
+if(TARGET gridlabd)
+  set_portable_rpath(gridlabd)
+endif()
+
+# Test host:
+set_portable_rpath(test_gldapi)
+
+# Modules: bind to shared core and apply portable RPATH (if targets exist)
+foreach(mod ${GLD_MODULES})
+  if(TARGET ${mod})
+    # Ensure the module resolves symbols from the single shared core library
+    target_link_libraries(${mod} PRIVATE gldapi)
+    # Ensure the loader finds the shared core next to the module/exe on UNIX
+    set_portable_rpath(${mod})
+  endif()
+endforeach()
+
 
 
 set_source_files_properties(
