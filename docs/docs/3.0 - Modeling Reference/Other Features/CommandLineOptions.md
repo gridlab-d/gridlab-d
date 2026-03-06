@@ -47,21 +47,21 @@ The command line usage is:
   
 * To enable warn mode use the option   
     
-      host% gridlabd -D runcheck=1
+        host% gridlabd -D runcheck=1
     
 * To disable warn mode use the option 
     
-      host% gridlabd -D runcheck=0
+        host% gridlabd -D runcheck=0
 
 In a GLM file:
 
 * To enable check mode use the directive   
     
-      #set runcheck=1
+        #set runcheck=1
     
 * To disable check mode use the directive 
 
-      #set runcheck=0
+        #set runcheck=0
 
 Example:
 
@@ -176,28 +176,28 @@ The **dumpall** option produces a model dump output from GridLAB-D when the simu
 
 * To toggle dumpall mode use the option 
     
-      host% gridlabd --dumpall
+        host% gridlabd --dumpall
     
 
 * To enable dumpall mode use the option    
     
-      host% gridlabd -D dumpall=1
+        host% gridlabd -D dumpall=1
     
 
 * To disable dumpall mode use the option 
      
-      host% gridlabd -D dumpall=0
+        host% gridlabd -D dumpall=0
 
 In **the glm**:
 
 * To enable dumpall mode use the directive 
      
-      #set dumpall=1
+        #set dumpall=1
     
 
 * To disable dumpall mode use the directive 
     
-      #set dumpall=0
+        #set dumpall=0
 
 
 ## Error
@@ -799,7 +799,7 @@ Note that when random_number_generator global variable is set to RNG2 random num
 
 ## Realtime Metric
 
-The realtime_metric global variable is used to monitor the performance of the realtime simulation. The value of the metric is calculated using the infinite impulse response (IIR) filter $realtime\_metric = 0.9 realtime\_metric + 0.1 (1 - t_{update})$ where $t_{update}$ is the time required to make a single 1 second update of the simulation. This value is updated every second. The IIR filter has unit step response of about 30 seconds to reach 95% of the steady state value.
+The `realtime_metric` global variable is used to monitor the performance of the realtime simulation. The value of the metric is calculated using the infinite impulse response (IIR) filter $realtime\_metric = 0.9 realtime\_metric + 0.1 (1 - t_{update})$ where $t_{update}$ is the time required to make a single 1 second update of the simulation. This value is updated every second. The IIR filter has unit step response of about 30 seconds to reach 95% of the steady state value.
 
 A value near 1 indicates that the simulation has plenty of spare time to complete each update. A value near 0 indicates that the simulation is very little time available to complete each update.
 
@@ -919,25 +919,25 @@ From the command line,
 
 * To toggle check mode use the option
 
-    host% gridlabd --check
+        host% gridlabd --check
 
 * To enable warn mode use the option
 
-    host% gridlabd -D runcheck=1
+        host% gridlabd -D runcheck=1
 
 * To disable warn mode use the option
 
-    host% gridlabd -D runcheck=0
+        host% gridlabd -D runcheck=0
 
 From the glm,
 
 * To enable check mode use the directive
 
-    #set runcheck=1
+        #set runcheck=1
 
 * To disable check mode use the directive
 
-    #set runcheck=0
+        #set runcheck=0
 
 The **runchecks** global variable instructs GridLAB-D to call all the modules' check routines after initialization.
 
@@ -1179,7 +1179,7 @@ Execute a command asynchronously in an operating system shell. The shell execute
 
 # Strictnames
 
-The strictnames global variable enforces rules that prevent implicit creation of variable using the #set directive. By default strict naming rules are enabled.
+The strictnames global variable enforces rules that prevent implicit creation of variable using the `#set` directive. By default strict naming rules are enabled.
 
 From the command line,
 
@@ -1512,3 +1512,115 @@ To generate an XSL document for a set of modules, use the syntax
     host% gridlabd --xsl module_1,module_2,...,module_N
 
 The output will be written to a file entitled "gridlabd-major_minor.xls", where **major** is the major version of GridLAB-D and **minor** is the minor version of GridLAB-D.
+
+
+# Global Variables
+
+To get a list of global variables:
+
+    gridlabd --globals
+
+!!! note
+
+    GridLAB-D defines the following global variables:
+
+      * APPLE = varies
+      * allow_reinclude = FALSE
+      * browser = { "iexplore", "safari", "firefox" }
+      * check_version = 0
+      * checkpoint_file = ""
+      * checkpoint_interval = 0
+      * checkpoint_keepall = 0
+      * checkpoint_seqnum = 0
+      * checkpoint_type = NONE
+      * clean = Undefined
+      * clock = INIT
+      * command_line = "CMD "
+      * compileonly = 0
+      * complex_format = "%+lg%+lg%c"
+      * complex_output_format = DEFAULT
+      * dateformat = ISO
+      * debug = 0
+      * debugger = 0
+      * delta_current_clock = 0.0
+      * deltaclock = 0
+      * deltamode_forced_extra_timesteps = 0
+      * deltamode_forced_always = FALSE
+      * deltamode_iteration_limit = 10
+      * deltamode_maximumtime = 3600000000000 (1 hr)
+      * deltamode_preferred_module_order = TRUE
+      * deltamode_timestep = 10000000 (10 ms)
+      * deltamode_updateorder = ""
+      * double_format = "%+lg"
+      * dumpall = 0
+      * dumpfile = "gridlabd.xml"
+      * environment = "batch"
+      * execdir = "EXE "
+      * event_trace = NONE
+      * event_trace_filter = ""
+      * force_compile = 0
+      * gdb = 0
+      * gdb_window = 0
+      * GUID = varies
+      * include = ""
+      * infourl = "http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Special:Search/"
+      * init_sequence = DEFERRED
+      * init_max_defer = 0
+      * inline_block_size = 1048576
+      * iteration_limit = 100
+      * kmlfile = ""
+      * LINUX = varies
+      * mailto = undefined
+      * mainloop_state = INIT
+      * MATLAB = varies
+      * maximum_synctime = 60
+      * minimum_timestep = 1
+      * modelname = ""
+      * module_compiler_flags = NONE;
+      * mt_profile = 0;
+      * MYSQL = varies
+      * no_deprecate = 0
+      * nolocks = 0
+      * NOW = varies
+      * object_format = "%s:%d"
+      * object_scan = "%[^:]:%d"
+      * object_tree_balance = FALSE
+      * pauseat = NEVER
+      * pauseatexit = 0
+      * platform = LINUX
+      * profiler = 0
+      * quiet = 0
+      * random_number_generator = RNG3
+      * randomseed = 0
+      * relax_naming_rules = 0
+      * return_code = 0
+      * RUN = varies
+      * run_realtime = 0
+      * runchecks = 0
+      * savefile = ""
+      * server_portnum = 6267
+      * server_quit_on_close = 0
+      * show_progress = 1
+      * skipsafe = 0
+      * starttime = 'YYYY-MM-DD hh:mm:ss ZZZ'
+      * stoptime = NEVER
+      * streaming_io = 0
+      * strictnames = TRUE
+      * suppress_repeat_messages = 1
+      * technology_readiness_level = UNKNOWN
+      * test = 0
+      * testoutputfile = "test.txt"
+      * threadcount = 1
+      * tmp = "TMP "
+      * trace = ""
+      * urlbase = "http://www.gridlabd.org/"
+      * validate = TSTD|RALL
+      * validate_report = undefined
+      * verbose = 0
+      * version.major = 3
+      * version.minor = 0
+      * warn = 1
+      * website = "http://www.gridlabd.org/"
+      * WINDOWS = varies
+      * workdir = "CWD "
+      * xml_encoding = 8

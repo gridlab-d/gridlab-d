@@ -116,6 +116,20 @@ Note that you can double click a word or variable to highlight the entire text, 
 
 ![Image](https://avatars.githubusercontent.com/u/21207639?s=200&v=4)
 
+### Local Page References
+
+It may be useful to point readers to a specific page for more information or context. Those references work the same way an image or link reference does. For example:
+
+[Command Line Options](../../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md)
+
+Points to the page "Command Line Options"
+
+It maybe even more useful to have a link go to a *specific header* within a file. To do that, just add the `#Header` immediately following the `.md` part of the link. If there are spaces within the file name, you must use `-` in their place.
+
+For example, to point specifically to Global Variables section of the previous file:
+
+[Global Variables](../../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md#Global-Variables)
+
 
 ### Bulleted Lists
 
