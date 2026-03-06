@@ -1,8 +1,8 @@
 /** $Id: weather_reader.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2009 Battelle Memorial Institute
-	@file weather_reader.h
-	@addtogroup climate
-	@ingroup modules
+        Copyright (C) 2009 Battelle Memorial Institute
+        @file weather_reader.h
+        @addtogroup climate
+        @ingroup modules
  @{
  **/
 
@@ -16,24 +16,25 @@
 
 /* move this to climate.h */
 typedef struct s_records {
-		double low;
-		double low_day;
-		double high;
-		double high_day;
-		double solar;
+  double low;
+  double low_day;
+  double high;
+  double high_day;
+  double solar;
 } RECORDS;
 
-class weather_reader: public gld_object {
+class weather_reader : public gld_object {
 private:
 protected:
-	FILE *infile;
-	weather *data_head;
-	weather *data_tail;
-public:
-	weather_reader();
-	~weather_reader();
+  FILE *infile;
+  weather *data_head;
+  weather *data_tail;
 
-	RECORDS record;
+public:
+  weather_reader();
+  ~weather_reader();
+
+  RECORDS record;
 };
 
 #endif

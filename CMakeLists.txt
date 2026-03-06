@@ -1,5 +1,39 @@
-cmake_minimum_required(VERSION 3.13)
-project(GridLAB-D)
+cmake_minimum_required(VERSION 3.15)
+
+
+set(CMAKE_CXX_VISIBILITY_PRESET default)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
+
+
+
+# --- Global MSVC settings to eliminate C1041 ---
+if (MSVC)
+  # Use embedded debug info in Debug and RelWithDebInfo (/Z7)
+  add_compile_options(
+    $<$<CONFIG:Debug>:/Z7>
+    $<$<CONFIG:RelWithDebInfo>:/Z7>
+  )
+
+  # Force synchronous PDB writes as extra safety (/FS)
+  add_compile_options(
+    $<$<CONFIG:Debug>:/FS>
+    $<$<CONFIG:RelWithDebInfo>:/FS>
+  )
+endif ()
+
+
+if(APPLE)
+  set(CMAKE_MACOSX_RPATH ON)
+endif()
+
+
+# Set the architecture BEFORE project() on Windows
+if(MSVC OR CMAKE_GENERATOR MATCHES "Visual Studio")
+    # Ensure we have a valid platform
+    if(NOT CMAKE_GENERATOR_PLATFORM)
+        set(CMAKE_GENERATOR_PLATFORM "x64" CACHE STRING "Generator platform" FORCE)
+    endif()
+endif()
 
 
 if(MSVC)
@@ -9,18 +43,40 @@ if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
   # If you prefer static runtime, uncomment the next line:
   # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+  # Ensure architecture macros are defined
+    # This shouldn't be necessary normally, but helps with edge cases
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        add_compile_definitions(_AMD64_ AMD64)
+    else()
+        add_compile_definitions(_X86_ _WIN32)
+    endif()
+    
 endif()
+project(GridLAB-D)
+
+
 
 
 if(WIN32)
     # Avoid legacy includes and macro collisions from Windows headers
     add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX)
+    # Ensure _WIN32 is defined (should be automatic, but be explicit)
+    if(MSVC)
+        add_compile_definitions(_WINDOWS)
+    endif()
 endif()
 
 set(CMAKE_CXX_STANDARD 23) # Or 14, 11 if 17 is not supported
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_definitions(EIGEN_HAS_STD_RESULT_OF=0)
+
+
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 
 # Include FetchContent module
 include(FetchContent)
@@ -68,8 +124,6 @@ else ()
     endif ()
 endif ()
 
-set(CMAKE_CXX_STANDARD 23) 
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLD_PACKAGE gridlabd)
 set(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION OFF) # This shouldn't be needed, but seems to fix issues
@@ -85,7 +139,6 @@ include(CheckIncludeFiles)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 include(CMakeDependentOption)
-include(FetchContent)
 
 # Clean up remnant files from the old autotools build system
 include(cmake/Cleanup.cmake)
@@ -133,7 +186,10 @@ if(UNIX)
 endif()
 
 # Link required libraries for symbol checks
+
+if (NOT MSVC)
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+endif ()
 
 configure_file(gldcore/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/config.h @ONLY)
 configure_file(gldcore/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h @ONLY)
@@ -154,13 +210,35 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/${GLD_PACKAGE}")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 option(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
+
+##
+## Portable RPATH helper (NON-intrusive for Windows; applied per-target on UNIX)
+## - macOS: @loader_path resolves to the directory of the loading binary or module
+## - Linux: $ORIGIN resolves to the directory of the loading binary or module
+##
+function(set_portable_rpath tgt)
+  if(APPLE)
+    set_target_properties(${tgt} PROPERTIES
+      BUILD_RPATH "$<TARGET_FILE_DIR:gldapi>"
+      INSTALL_RPATH "@loader_path"
+    )
+  elseif(UNIX)  # excludes Windows
+    set_target_properties(${tgt} PROPERTIES
+      BUILD_RPATH "$<TARGET_FILE_DIR:gldapi>"
+      INSTALL_RPATH "$ORIGIN"
+    )
+  endif()
+endfunction()
+
 # Forces certain warnings to trigger errors.
 if (NOT MSVC)
     set(FORCE_ERROR "-Werror=return-type" "-Werror=write-strings")
 endif ()
 
-# Compiler/Linker flags for all build types
-add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
+if (NOT MSVC)
+    # Compiler/Linker flags for all build types
+    add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
+endif ()
 
 ## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
@@ -168,6 +246,7 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
              dlfcn-win32
              GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
              GIT_TAG v1.4.2
+             DOWNLOAD_EXTRACT_TIMESTAMP true
      )
      FetchContent_MakeAvailable(dlfcn-win32)
      include_directories(${dlfcn-win32_SOURCE_DIR}/src)
@@ -373,8 +452,20 @@ if (GLD_USE_SUPERLU)
     set(enable_examples OFF CACHE BOOL "Build SuperLU examples" FORCE)
     set(enable_tests OFF CACHE BOOL "Build SuperLU tests" FORCE)
 
+
     include_directories(third_party/SuperLU/SRC)
+
+    #Choose 64-bit indices for SuperLU at configure time
+    set(XSDK_INDEX_SIZE 32 CACHE STRING "SuperLU index size" FORCE)
+
     add_subdirectory(third_party/SuperLU)
+
+
+    target_include_directories(superlu BEFORE PRIVATE
+        ${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC
+        ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC  # if superlu_config.h is generated here
+    )
+
     set(SUPERLU_LIB superlu)
 endif ()
 
@@ -418,6 +509,41 @@ add_subdirectory(gldcore)
 add_executable(test_gldapi gldcore/test_gldapi.cpp)
 target_link_libraries(test_gldapi PRIVATE gldapi ${DL_LIB} ${JSONCPP_LIB} ${SUPERLU_LIB} Threads::Threads)
 add_dependencies(test_gldapi gldapi)  
+
+
+
+##
+## Apply portable RPATH and ensure modules link to the shared core
+## (SAFE: no effect on Windows RPATH; additional PRIVATE links to gldapi are additive)
+##
+
+# Core + host:
+if(TARGET gldapi)
+  set_portable_rpath(gldapi)
+endif()
+if(TARGET gridlabd)
+  set_portable_rpath(gridlabd)
+endif()
+
+# Test host:
+set_portable_rpath(test_gldapi)
+
+# Modules: bind to shared core and apply portable RPATH (if targets exist)
+foreach(mod ${GLD_MODULES})
+  if(TARGET ${mod})
+    # Ensure the module resolves symbols from the single shared core library
+    target_link_libraries(${mod} PRIVATE gldapi)
+    # Ensure the loader finds the shared core next to the module/exe on UNIX
+    set_portable_rpath(${mod})
+  endif()
+endforeach()
+
+
+
+set_source_files_properties(
+  ${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC/slu_util.c
+  PROPERTIES LANGUAGE C
+)
 
 if(MSVC)
     set_target_properties(gldapi PROPERTIES

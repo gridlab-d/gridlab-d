@@ -6,29 +6,29 @@
 
 #include "powerflow.h"
 
-class billdump : public gld_object
-{
+class billdump : public gld_object {
 public:
-	TIMESTAMP runtime;
-	char32 group;
-	char256 filename;
-	int32 runcount;
-	typedef enum {
-		METER_TP,		
-		METER_3P,		
-	} METERTYPE;
-	enumeration meter_type;
-public:
-	static CLASS *oclass;
-public:
-	billdump(MODULE *mod);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP commit(TIMESTAMP t);
-	int isa(char *classname);
+  TIMESTAMP runtime;
+  char32 group;
+  char256 filename;
+  int32 runcount;
+  typedef enum {
+    METER_TP,
+    METER_3P,
+  } METERTYPE;
+  enumeration meter_type;
 
-	void dump(TIMESTAMP t);
+public:
+  static CLASS *oclass;
+
+public:
+  billdump(MODULE *mod);
+  int create(void);
+  int init(OBJECT *parent);
+  TIMESTAMP commit(TIMESTAMP t);
+  int isa(char *classname);
+
+  void dump(TIMESTAMP t);
 };
 
 #endif // _BILLDUMP_H
-

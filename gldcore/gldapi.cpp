@@ -731,7 +731,8 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
 
   // If selected_timestep is 0, use default event-driven behavior (single step)
   if (selected_timestep == 0) {
-    output_verbose("Using default event-driven stepping (selected_timestep = 0)");
+    output_verbose(
+        "Using default event-driven stepping (selected_timestep = 0)");
     TIMESTAMP prev_clock = global_clock;
 
     STATUS result = exec_step();
@@ -757,8 +758,9 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
     target_clock = global_stoptime;
   }
 
-  output_verbose("Stepping from time %.2f to target %.2f (step size: %d seconds)",
-                 (double)start_clock, (double)target_clock, selected_timestep);
+  output_verbose(
+      "Stepping from time %.2f to target %.2f (step size: %d seconds)",
+      (double)start_clock, (double)target_clock, selected_timestep);
 
   // Cap the next event time so exec_step doesn't overshoot the target.
   global_step_time = target_clock;
@@ -801,8 +803,8 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
   // Update the simulation time
   simulation_time = (double)global_clock;
 
-  output_verbose("Completed step: advanced from %.2f to %.2f", (double)start_clock,
-         simulation_time);
+  output_verbose("Completed step: advanced from %.2f to %.2f",
+                 (double)start_clock, simulation_time);
 
   return GLD_SUCCESS;
 }
@@ -1041,10 +1043,9 @@ GLDErrorCode GridLabD::get_property(const std::string &object_name,
 
 // Get property metadata (type, units, description)
 GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
-                                        const std::string &property_name,
-                                        int &prop_type,
-                                        std::string &unit_str,
-                                        std::string &description) {
+                                         const std::string &property_name,
+                                         int &prop_type, std::string &unit_str,
+                                         std::string &description) {
   // Find the object by name
   OBJECT *obj = nullptr;
 
@@ -1067,7 +1068,7 @@ GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
 
   // Find the property
   PROPERTY *prop = object_get_property(obj, property_name.c_str(), nullptr);
-  
+
   if (prop == nullptr) {
     output_error("Property '%s' not found on object '%s'",
                  property_name.c_str(), object_name.c_str());
@@ -1232,8 +1233,9 @@ GridLabD::get_properties_by_class(const std::string &class_name,
     obj = object_get_next(obj);
   }
 
-  output_verbose("Retrieved property '%s.%s' from %zu objects", class_name.c_str(),
-                 property_name.c_str(), property_map.size());
+  output_verbose("Retrieved property '%s.%s' from %zu objects",
+                 class_name.c_str(), property_name.c_str(),
+                 property_map.size());
 
   return property_map;
 }

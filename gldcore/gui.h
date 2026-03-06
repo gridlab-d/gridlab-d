@@ -10,71 +10,78 @@
 #ifndef _GUI_H
 #define _GUI_H
 
+#include "object.h"
+
 typedef enum {
-	GUI_UNKNOWN=0,
+  GUI_UNKNOWN = 0,
 
-	/* DO NOT CHANGE THE ORDER OF THE GROUPS!!! */
-	GUI_ROW, // a row group
-	GUI_TAB, // a tab group (includes tabs at top)
-	GUI_PAGE, // a page group (includes navigation |< < > >| buttons at top)
-	GUI_GROUP, // a group of entities with a labeled border around it
-	GUI_SPAN, // a group of entities that are not in columns
-	_GUI_GROUPING_END, // end of grouping entities
+  /* DO NOT CHANGE THE ORDER OF THE GROUPS!!! */
+  GUI_ROW,   // a row group
+  GUI_TAB,   // a tab group (includes tabs at top)
+  GUI_PAGE,  // a page group (includes navigation |< < > >| buttons at top)
+  GUI_GROUP, // a group of entities with a labeled border around it
+  GUI_SPAN,  // a group of entities that are not in columns
+  _GUI_GROUPING_END, // end of grouping entities
 
-	GUI_TITLE, // the title of the page, tab, or block
-	GUI_STATUS, // the status message of the page
-	GUI_TEXT, // a plain text entity 
-	_GUI_LABELING_END, // end of labeling entities
+  GUI_TITLE,         // the title of the page, tab, or block
+  GUI_STATUS,        // the status message of the page
+  GUI_TEXT,          // a plain text entity
+  _GUI_LABELING_END, // end of labeling entities
 
-	GUI_INPUT, // an input textbox
-	GUI_CHECK, // a check box (set)
-	GUI_RADIO, // a radio button (enumeration)
-	GUI_SELECT, // a select drop down (enumeration)
-	_GUI_INPUT_END, // end of input entities
+  GUI_INPUT,      // an input textbox
+  GUI_CHECK,      // a check box (set)
+  GUI_RADIO,      // a radio button (enumeration)
+  GUI_SELECT,     // a select drop down (enumeration)
+  _GUI_INPUT_END, // end of input entities
 
-	GUI_BROWSE, // a text browsing entity
-	GUI_TABLE, // a tabulate presentation
-	GUI_GRAPH, // a graphing presentation
-	_GUI_OUTPUT_END, // end of output entities
+  GUI_BROWSE,      // a text browsing entity
+  GUI_TABLE,       // a tabulate presentation
+  GUI_GRAPH,       // a graphing presentation
+  _GUI_OUTPUT_END, // end of output entities
 
-	GUI_ACTION, // an action button
-	_GUI_ACTION_END, // end of action entities
+  GUI_ACTION,      // an action button
+  _GUI_ACTION_END, // end of action entities
 
 } GUIENTITYTYPE;
-typedef enum {GUIACT_NONE=0, GUIACT_WAITING=1, GUIACT_PENDING=2, GUIACT_HALT=3} GUIACTIONSTATUS;
+typedef enum {
+  GUIACT_NONE = 0,
+  GUIACT_WAITING = 1,
+  GUIACT_PENDING = 2,
+  GUIACT_HALT = 3
+} GUIACTIONSTATUS;
 
 typedef struct s_guientity {
-	GUIENTITYTYPE type;	// gui entity type (see GE_*)
-	char srcref[1024]; // reference to source file location
-	char value[1024]; // value (if provided)
-	char globalname[64]; // ref to variable
-	char objectname[64]; // ref object
-	char propertyname[64]; // ref property
-	char action[64]; // action value
-	int gui_span; // col span
-	int size; // size spec
-	int height; // height spec
-	int width; // width spec
-	GUIACTIONSTATUS action_status;
-	char wait_for[64];
-	char source[1024]; // source file for data (output only)
-	char options[1024]; // options for output
-	char gnuplot[4096];	// gnuplot script
-	int hold; // gui will remain on at the end of the simulation
-	struct s_guientity *next;
-	struct s_guientity *parent;
-	/* internal variables */
-	GLOBALVAR *var;
-	char *env;
-	OBJECT *obj;
-	PROPERTY *prop;
-	void *data;
-	UNIT *unit;
+  GUIENTITYTYPE type;    // gui entity type (see GE_*)
+  char srcref[1024];     // reference to source file location
+  char value[1024];      // value (if provided)
+  char globalname[64];   // ref to variable
+  char objectname[64];   // ref object
+  char propertyname[64]; // ref property
+  char action[64];       // action value
+  int gui_span;          // col span
+  int size;              // size spec
+  int height;            // height spec
+  int width;             // width spec
+  GUIACTIONSTATUS action_status;
+  char wait_for[64];
+  char source[1024];  // source file for data (output only)
+  char options[1024]; // options for output
+  char gnuplot[4096]; // gnuplot script
+  int hold;           // gui will remain on at the end of the simulation
+  struct s_guientity *next;
+  struct s_guientity *parent;
+  /* internal variables */
+  GLOBALVAR *var;
+  char *env;
+  OBJECT *obj;
+  PROPERTY *prop;
+  void *data;
+  UNIT *unit;
 } GUIENTITY;
 
 GUIENTITY *gui_create_entity();
-typedef  int (*GUISTREAMFN)(void*,const char*,...);
-void gui_set_html_stream(void *ref,GUISTREAMFN stream);
+typedef int (*GUISTREAMFN)(void *, const char *, ...);
+void gui_set_html_stream(void *ref, GUISTREAMFN stream);
 
 void gui_set_srcref(GUIENTITY *entity, char *filename, int linenum);
 void gui_set_type(GUIENTITY *entity, GUIENTITYTYPE type);
@@ -129,4 +136,3 @@ size_t gui_glm_write_all(FILE *fp);
 int gui_wait(void);
 
 #endif
-

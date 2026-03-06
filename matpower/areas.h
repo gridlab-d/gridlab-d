@@ -1,8 +1,8 @@
 /** $Id: areas.h 4738 2014-07-03 00:55:39Z dchassin $
-	@file areas.h
-	@addtogroup areas
-	@ingroup MODULENAME
-	author: Kyle Anderson, kyle.anderson@stanford.edu	
+        @file areas.h
+        @addtogroup areas
+        @ingroup MODULENAME
+        author: Kyle Anderson, kyle.anderson@stanford.edu
 
  @{
  **/
@@ -16,29 +16,31 @@
 
 class areas {
 private:
-	/* TODO: put private variables here */
+  /* TODO: put private variables here */
 protected:
-	/* TODO: put unpublished but inherited variables */
+  /* TODO: put unpublished but inherited variables */
 public:
-	/* TODO: put published variables here */
+  /* TODO: put published variables here */
 public:
-	/* required implementations */
-	areas(MODULE *module);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-public:
-	static CLASS *oclass;
-	static areas *defaults;
+  /* required implementations */
+  areas(MODULE *module);
+  int create(void);
+  int init(OBJECT *parent);
+  TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
+  TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
+  TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
-	//variable
-	int AREA;
-	int REFBUS;
+public:
+  static CLASS *oclass;
+  static areas *defaults;
+
+  // variable
+  int AREA;
+  int REFBUS;
 #ifdef OPTIONAL
-	static CLASS *pclass; /**< defines the parent class */
-	TIMESTAMP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
+  static CLASS *pclass; /**< defines the parent class */
+  TIMESTAMP plc(TIMESTAMP t0,
+                TIMESTAMP t1); /**< defines the default PLC code */
 #endif
 };
 

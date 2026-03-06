@@ -1,7 +1,7 @@
-//#include<Eigen/Dense>
+// #include<Eigen/Dense>
 
 using namespace gld;
-//using Eigen;
+// using Eigen;
 
 stream_type(double);
 stream_type(complex);
@@ -17,8 +17,8 @@ stream_type(char1024);
 stream_type(object);
 stream_type(bool);
 stream_type(TIMESTAMP);
-//stream_type(MatrixXd);
-//stream_type(MatrixXcd);
+// stream_type(MatrixXd);
+// stream_type(MatrixXcd);
 stream_type(float);
 stream_type(real_type);
 stream_type(loadshape);
@@ -31,4 +31,3 @@ stream_type(uchar);
 stream_type(uint16);
 stream_type(uint32);
 stream_type(uint64);
-

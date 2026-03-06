@@ -1,9 +1,9 @@
 // $Id: billdump.cpp 4738 2014-07-03 00:55:39Z dchassin $
 /**	Copyright (C) 2008 Battelle Memorial Institute
 
-	@file billdump.cpp
+        @file billdump.cpp
 
-	@{
+        @{
 */
 
 #include <cerrno>
@@ -19,222 +19,212 @@
 
 CLASS *billdump::oclass = nullptr;
 
-billdump::billdump(MODULE *mod)
-{
-	if (oclass == nullptr)
-	{
-		// register the class definition
-		oclass = gl_register_class(mod, "billdump", sizeof(billdump), PC_BOTTOMUP | PC_AUTOLOCK);
-		if (oclass == nullptr)
-			throw "unable to register class billdump";
-		else
-			oclass->trl = TRL_QUALIFIED;
+billdump::billdump(MODULE *mod) {
+  if (oclass == nullptr) {
+    // register the class definition
+    oclass = gl_register_class(mod, "billdump", sizeof(billdump),
+                               PC_BOTTOMUP | PC_AUTOLOCK);
+    if (oclass == nullptr)
+      throw "unable to register class billdump";
+    else
+      oclass->trl = TRL_QUALIFIED;
 
-		// publish the class properties
-		if (gl_publish_variable(oclass,
-								PT_char32, "group", PADDR(group), PT_DESCRIPTION, "the group ID to output data for (all nodes if empty)",
-								PT_timestamp, "runtime", PADDR(runtime), PT_DESCRIPTION, "the time to check voltage data",
-								PT_char256, "filename", PADDR(filename), PT_DESCRIPTION, "the file to dump the voltage data into",
-								PT_int32, "runcount", PADDR(runcount), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the number of times the file has been written to",
-								PT_enumeration, "meter_type", PADDR(meter_type), PT_DESCRIPTION, "describes whether to collect from 3-phase or S-phase meters",
-								PT_KEYWORD, "TRIPLEX_METER", (enumeration)METER_TP,
-								PT_KEYWORD, "METER", (enumeration)METER_3P,
-								nullptr) < 1)
-			GL_THROW("unable to publish properties in %s", __FILE__);
-	}
+    // publish the class properties
+    if (gl_publish_variable(
+            oclass, PT_char32, "group", PADDR(group), PT_DESCRIPTION,
+            "the group ID to output data for (all nodes if empty)",
+            PT_timestamp, "runtime", PADDR(runtime), PT_DESCRIPTION,
+            "the time to check voltage data", PT_char256, "filename",
+            PADDR(filename), PT_DESCRIPTION,
+            "the file to dump the voltage data into", PT_int32, "runcount",
+            PADDR(runcount), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION,
+            "the number of times the file has been written to", PT_enumeration,
+            "meter_type", PADDR(meter_type), PT_DESCRIPTION,
+            "describes whether to collect from 3-phase or S-phase meters",
+            PT_KEYWORD, "TRIPLEX_METER", (enumeration)METER_TP, PT_KEYWORD,
+            "METER", (enumeration)METER_3P, nullptr) < 1)
+      GL_THROW("unable to publish properties in %s", __FILE__);
+  }
 }
 
-int billdump::create(void)
-{
-	group.erase();
-	runtime = TS_NEVER;
-	runcount = 0;
-	meter_type = METER_TP;
-	return 1;
+int billdump::create(void) {
+  group.erase();
+  runtime = TS_NEVER;
+  runcount = 0;
+  meter_type = METER_TP;
+  return 1;
 }
 
-int billdump::init(OBJECT *parent)
-{
-	return 1;
+int billdump::init(OBJECT *parent) { return 1; }
+
+int billdump::isa(char *classname) {
+  return strcmp(classname, "billdump") == 0;
 }
 
-int billdump::isa(char *classname)
-{
-	return strcmp(classname, "billdump") == 0;
+void billdump::dump(TIMESTAMP t) {
+  char namestr[128];
+  char timestr[128];
+  FINDLIST *nodes = nullptr;
+  OBJECT *obj = nullptr;
+  FILE *outfile = nullptr;
+  gld_property *node_monthly_bill;
+  gld_property *node_monthly_energy;
+  double node_prev_monthly_bill, node_prev_monthly_energy;
+
+  //	CLASS *nodeclass = nullptr;
+  //	PROPERTY *vA, *vB, *vC;
+
+  if (meter_type == METER_TP) {
+    if (group[0] == 0) {
+      nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "triplex_meter", FT_END);
+    } else {
+      nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "triplex_meter", AND,
+                              FT_GROUPID, SAME, group.get_string(), FT_END);
+    }
+  } else {
+    if (group[0] == 0) {
+      nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "meter", FT_END);
+    } else {
+      nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "meter", AND, FT_GROUPID,
+                              SAME, group.get_string(), FT_END);
+    }
+  }
+
+  if (nodes == nullptr) {
+    gl_warning("no nodes were found to dump");
+    return;
+  }
+
+  outfile = fopen(filename, "w");
+  if (outfile == nullptr) {
+    gl_error("billdump unable to open %s for output", filename.get_string());
+    return;
+  }
+
+  // nodeclass = node::oclass;
+  // vA=gl_find_property(nodeclass, "
+
+  if (meter_type == METER_TP) {
+    /* print column names */
+    gl_printtime(t, timestr, 64);
+    fprintf(outfile, "# %s run at %s on %i triplex meters\n",
+            filename.get_string(), timestr, nodes->hit_count);
+    fprintf(outfile,
+            "meter_name,previous_monthly_bill,previous_monthly_energy\n");
+    while (obj = gl_find_next(nodes, obj)) {
+      if (gl_object_isa(obj, "triplex_meter", "powerflow")) {
+
+        // Map the properties of interest - bill
+        node_monthly_bill = new gld_property(obj, "previous_monthly_bill");
+
+        // Check it
+        if (!node_monthly_bill->is_valid() || !node_monthly_bill->is_double()) {
+          GL_THROW("billdump - Unable to map billing property of "
+                   "triplex_meter:%d - %s",
+                   obj->id, (obj->name ? obj->name : "Unnamed"));
+          /*  TROUBLESHOOT
+          While the billdump object attempted to map the previous_monthly_bill
+          or previous_monthly_energy properties, an error occurred.  Please try
+          again.  If the error persists, please submit your code via the
+          ticketing and issues system.
+          */
+        }
+
+        // Map the other one - energy
+        node_monthly_energy = new gld_property(obj, "previous_monthly_energy");
+
+        // Check it
+        if (!node_monthly_energy->is_valid() ||
+            !node_monthly_energy->is_double()) {
+          GL_THROW("billdump - Unable to map billing property of "
+                   "triplex_meter:%d - %s",
+                   obj->id, (obj->name ? obj->name : "Unnamed"));
+          // Defined above
+        }
+
+        // Pull the values
+        node_prev_monthly_bill = node_monthly_bill->get_double();
+        node_prev_monthly_energy = node_monthly_energy->get_double();
+
+        if (obj->name == nullptr) {
+          sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
+        }
+        fprintf(outfile, "%s,%f,%f\n", (obj->name ? obj->name : namestr),
+                node_prev_monthly_bill, node_prev_monthly_energy);
+
+        // Clear the properties
+        delete node_monthly_bill;
+        delete node_monthly_energy;
+      }
+    }
+  } else {
+    /* print column names */
+    gl_printtime(t, timestr, 64);
+    fprintf(outfile, "# %s run at %s on %i meters\n", filename.get_string(),
+            timestr, nodes->hit_count);
+    fprintf(outfile,
+            "meter_name,previous_monthly_bill,previous_monthly_energy\n");
+    while (obj = gl_find_next(nodes, obj)) {
+      if (gl_object_isa(obj, "meter", "powerflow")) {
+
+        // Map the properties of interest - bill
+        node_monthly_bill = new gld_property(obj, "previous_monthly_bill");
+
+        // Check it
+        if (!node_monthly_bill->is_valid() || !node_monthly_bill->is_double()) {
+          GL_THROW("billdump - Unable to map billing property of meter:%d - %s",
+                   obj->id, (obj->name ? obj->name : "Unnamed"));
+          /*  TROUBLESHOOT
+          While the billdump object attempted to map the previous_monthly_bill
+          or previous_monthly_energy properties, an error occurred.  Please try
+          again.  If the error persists, please submit your code via the
+          ticketing and issues system.
+          */
+        }
+
+        // Map the other one - energy
+        node_monthly_energy = new gld_property(obj, "previous_monthly_energy");
+
+        // Check it
+        if (!node_monthly_energy->is_valid() ||
+            !node_monthly_energy->is_double()) {
+          GL_THROW("billdump - Unable to map billing property of meter:%d - %s",
+                   obj->id, (obj->name ? obj->name : "Unnamed"));
+          // Defined above
+        }
+
+        // Pull the values
+        node_prev_monthly_bill = node_monthly_bill->get_double();
+        node_prev_monthly_energy = node_monthly_energy->get_double();
+
+        if (obj->name == nullptr) {
+          sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
+        }
+        fprintf(outfile, "%s,%f,%f\n", (obj->name ? obj->name : namestr),
+                node_prev_monthly_bill, node_prev_monthly_energy);
+
+        // Clear the properties
+        delete node_monthly_bill;
+        delete node_monthly_energy;
+      }
+    }
+  }
+  fclose(outfile);
+
+  // Free the findlist
+  gl_free((void **)&nodes);
 }
 
-void billdump::dump(TIMESTAMP t)
-{
-	char namestr[128];
-	char timestr[128];
-	FINDLIST *nodes = nullptr;
-	OBJECT *obj = nullptr;
-	FILE *outfile = nullptr;
-	gld_property *node_monthly_bill;
-	gld_property *node_monthly_energy;
-	double node_prev_monthly_bill, node_prev_monthly_energy;
-
-	//	CLASS *nodeclass = nullptr;
-	//	PROPERTY *vA, *vB, *vC;
-
-	if (meter_type == METER_TP)
-	{
-		if (group[0] == 0)
-		{
-			nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "triplex_meter", FT_END);
-		}
-		else
-		{
-			nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "triplex_meter", AND, FT_GROUPID, SAME, group.get_string(), FT_END);
-		}
-	}
-	else
-	{
-		if (group[0] == 0)
-		{
-			nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "meter", FT_END);
-		}
-		else
-		{
-			nodes = gl_find_objects(FL_NEW, FT_CLASS, SAME, "meter", AND, FT_GROUPID, SAME, group.get_string(), FT_END);
-		}
-	}
-
-	if (nodes == nullptr)
-	{
-		gl_warning("no nodes were found to dump");
-		return;
-	}
-
-	outfile = fopen(filename, "w");
-	if (outfile == nullptr)
-	{
-		gl_error("billdump unable to open %s for output", filename.get_string());
-		return;
-	}
-
-	// nodeclass = node::oclass;
-	// vA=gl_find_property(nodeclass, "
-
-	if (meter_type == METER_TP)
-	{
-		/* print column names */
-		gl_printtime(t, timestr, 64);
-		fprintf(outfile, "# %s run at %s on %i triplex meters\n", filename.get_string(), timestr, nodes->hit_count);
-		fprintf(outfile, "meter_name,previous_monthly_bill,previous_monthly_energy\n");
-		while (obj = gl_find_next(nodes, obj))
-		{
-			if (gl_object_isa(obj, "triplex_meter", "powerflow"))
-			{
-
-				// Map the properties of interest - bill
-				node_monthly_bill = new gld_property(obj, "previous_monthly_bill");
-
-				// Check it
-				if (!node_monthly_bill->is_valid() || !node_monthly_bill->is_double())
-				{
-					GL_THROW("billdump - Unable to map billing property of triplex_meter:%d - %s", obj->id, (obj->name ? obj->name : "Unnamed"));
-					/*  TROUBLESHOOT
-					While the billdump object attempted to map the previous_monthly_bill or previous_monthly_energy properties, an error
-					occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
-					*/
-				}
-
-				// Map the other one - energy
-				node_monthly_energy = new gld_property(obj, "previous_monthly_energy");
-
-				// Check it
-				if (!node_monthly_energy->is_valid() || !node_monthly_energy->is_double())
-				{
-					GL_THROW("billdump - Unable to map billing property of triplex_meter:%d - %s", obj->id, (obj->name ? obj->name : "Unnamed"));
-					// Defined above
-				}
-
-				// Pull the values
-				node_prev_monthly_bill = node_monthly_bill->get_double();
-				node_prev_monthly_energy = node_monthly_energy->get_double();
-
-				if (obj->name == nullptr)
-				{
-					sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
-				}
-				fprintf(outfile, "%s,%f,%f\n", (obj->name ? obj->name : namestr), node_prev_monthly_bill, node_prev_monthly_energy);
-
-				// Clear the properties
-				delete node_monthly_bill;
-				delete node_monthly_energy;
-			}
-		}
-	}
-	else
-	{
-		/* print column names */
-		gl_printtime(t, timestr, 64);
-		fprintf(outfile, "# %s run at %s on %i meters\n", filename.get_string(), timestr, nodes->hit_count);
-		fprintf(outfile, "meter_name,previous_monthly_bill,previous_monthly_energy\n");
-		while (obj = gl_find_next(nodes, obj))
-		{
-			if (gl_object_isa(obj, "meter", "powerflow"))
-			{
-
-				// Map the properties of interest - bill
-				node_monthly_bill = new gld_property(obj, "previous_monthly_bill");
-
-				// Check it
-				if (!node_monthly_bill->is_valid() || !node_monthly_bill->is_double())
-				{
-					GL_THROW("billdump - Unable to map billing property of meter:%d - %s", obj->id, (obj->name ? obj->name : "Unnamed"));
-					/*  TROUBLESHOOT
-					While the billdump object attempted to map the previous_monthly_bill or previous_monthly_energy properties, an error
-					occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
-					*/
-				}
-
-				// Map the other one - energy
-				node_monthly_energy = new gld_property(obj, "previous_monthly_energy");
-
-				// Check it
-				if (!node_monthly_energy->is_valid() || !node_monthly_energy->is_double())
-				{
-					GL_THROW("billdump - Unable to map billing property of meter:%d - %s", obj->id, (obj->name ? obj->name : "Unnamed"));
-					// Defined above
-				}
-
-				// Pull the values
-				node_prev_monthly_bill = node_monthly_bill->get_double();
-				node_prev_monthly_energy = node_monthly_energy->get_double();
-
-				if (obj->name == nullptr)
-				{
-					sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
-				}
-				fprintf(outfile, "%s,%f,%f\n", (obj->name ? obj->name : namestr), node_prev_monthly_bill, node_prev_monthly_energy);
-
-				// Clear the properties
-				delete node_monthly_bill;
-				delete node_monthly_energy;
-			}
-		}
-	}
-	fclose(outfile);
-
-	// Free the findlist
-	gl_free((void **)&nodes);
-}
-
-TIMESTAMP billdump::commit(TIMESTAMP t)
-{
-	if (runtime == 0)
-	{
-		runtime = t;
-	}
-	if ((t >= runtime || runtime == TS_NEVER) && (runcount < 1))
-	{
-		/* dump */
-		dump(t);
-		++runcount;
-	}
-	return TS_NEVER;
+TIMESTAMP billdump::commit(TIMESTAMP t) {
+  if (runtime == 0) {
+    runtime = t;
+  }
+  if ((t >= runtime || runtime == TS_NEVER) && (runcount < 1)) {
+    /* dump */
+    dump(t);
+    ++runcount;
+  }
+  return TS_NEVER;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -248,76 +238,65 @@ TIMESTAMP billdump::commit(TIMESTAMP t)
  * @param parent a pointer to the parent of this object
  * @return 1 for a successfully created object, 0 for error
  */
-EXPORT int create_billdump(OBJECT **obj, OBJECT *parent)
-{
-	try
-	{
-		*obj = gl_create_object(billdump::oclass);
-		if (*obj != nullptr)
-		{
-			billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(*obj);
-			// gl_set_parent(*obj, parent);
-			return my->create();
-		}
-		else
-			return 0;
-	}
-	CREATE_CATCHALL(billdump);
+EXPORT int create_billdump(OBJECT **obj, OBJECT *parent) {
+  try {
+    *obj = gl_create_object(billdump::oclass);
+    if (*obj != nullptr) {
+      billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(*obj);
+      // gl_set_parent(*obj, parent);
+      return my->create();
+    } else
+      return 0;
+  }
+  CREATE_CATCHALL(billdump);
 }
 
-EXPORT int init_billdump(OBJECT *obj)
-{
-	try
-	{
-		billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
-		return my->init(obj->parent);
-	}
-	INIT_CATCHALL(billdump);
+EXPORT int init_billdump(OBJECT *obj) {
+  try {
+    billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
+    return my->init(obj->parent);
+  }
+  INIT_CATCHALL(billdump);
 }
 
-static TIMESTAMP sync_billdump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
-{
-	try
-	{
-		billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
-		TIMESTAMP rv;
-		obj->clock = t1;
-		rv = my->runtime > t1 ? my->runtime : TS_NEVER;
-		return rv;
-	}
-	SYNC_CATCHALL(billdump);
+static TIMESTAMP sync_billdump_impl(OBJECT *obj, TIMESTAMP t1,
+                                    PASSCONFIG pass) {
+  try {
+    billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
+    TIMESTAMP rv;
+    obj->clock = t1;
+    rv = my->runtime > t1 ? my->runtime : TS_NEVER;
+    return rv;
+  }
+  SYNC_CATCHALL(billdump);
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
-{
-	return sync_billdump_impl(obj, t1, pass);
+extern "C" MODULE_API TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1,
+                                              PASSCONFIG pass) {
+  return sync_billdump_impl(obj, t1, pass);
 }
 #else
-extern "C" MODULE_API TIMESTAMP sync_billdump(OBJECT *obj, ...)
-{
-	va_list args;
-	va_start(args, obj);
-	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
-	PASSCONFIG pass = va_arg(args, PASSCONFIG);
-	va_end(args);
-	return sync_billdump_impl(obj, t1, pass);
+extern "C" MODULE_API TIMESTAMP sync_billdump(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_billdump_impl(obj, t1, pass);
 }
 #endif
 
-EXPORT TIMESTAMP commit_billdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
-{
-	try
-	{
-		billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
-		return my->commit(t1);
-	}
-	I_CATCHALL(commit, billdump);
+EXPORT TIMESTAMP commit_billdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) {
+  try {
+    billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
+    return my->commit(t1);
+  }
+  I_CATCHALL(commit, billdump);
 }
 
-EXPORT int isa_billdump(OBJECT *obj, char *classname)
-{
-	return /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj)->isa(classname);
+EXPORT int isa_billdump(OBJECT *obj, char *classname) {
+  return /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj)->isa(classname);
 }
 
 /**@}*/

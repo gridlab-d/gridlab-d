@@ -1108,7 +1108,7 @@ static int info(int argc, char *argv[]) {
 //	strncpy(global_master,host,sizeof(global_master)-1);
 //	if ( strcmp(global_master,"localhost")==0 ){
 //		sscanf(port,"%" FMT_INT64 "x",&global_master_port); /* port is
-//actual mmap/shmem */ 		global_multirun_connection = MRC_MEM;
+// actual mmap/shmem */ 		global_multirun_connection = MRC_MEM;
 //	}
 //	else
 //	{
@@ -1119,12 +1119,13 @@ static int info(int argc, char *argv[]) {
 //	if ( FAILED == instance_slave_init() )
 //	{
 //		output_error("slave instance init failed for master '%s'
-//connection '%" FMT_INT64 "x'", global_master, global_master_port); 		return
-//CMDERR;
+// connection '%" FMT_INT64 "x'", global_master, global_master_port);
+// return CMDERR;
 //	}
 //
 //	output_verbose("slave instance for master '%s' using connection '%"
-//FMT_INT64 "x' started ok", global_master, global_master_port); 	return 1;
+// FMT_INT64 "x' started ok", global_master, global_master_port); 	return
+// 1;
 // }
 // static int slavenode(int argc, char *argv[])
 //{
@@ -1417,10 +1418,10 @@ static CMDARG main_cmd[] = {
     //{"slave",		nullptr,	slave,			"<master>",
     //"Enables slave mode under master"},
     //{"slavenode",	nullptr,	slavenode,		nullptr, "Sets a
-    //listener for a remote GridLAB-D call to run in slave mode"},
+    // listener for a remote GridLAB-D call to run in slave mode"},
     //{"id",			nullptr,	slave_id,
     //"<idnum>", "Sets the ID number for the slave to inform its using to the
-    //master"},
+    // master"},
 };
 
 int cmdarg_runoption(const char *value) {
