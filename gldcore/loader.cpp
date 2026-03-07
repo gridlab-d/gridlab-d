@@ -719,6 +719,17 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             id++;
         }
     }
+
+    // Override rng_state with name (if present) and randomseed (if present) based hash
+	if(global_randomseed > 0)
+	{
+		std::hash<std::string> hasher;
+        if (obj->name == nullptr)
+		    obj->rng_state = hasher(std::to_string(global_randomseed));
+        else
+		    obj->rng_state = hasher(obj->name + std::to_string(global_randomseed));
+	}
+
     return rv;
 }
 
@@ -1146,7 +1157,7 @@ STATUS loader::loadSchedules()
                         if (schedule_block == "")
                         {
                             schedule_block += "{";
-                        } 
+                        }
                         else
                         {
                             schedule_block += " {";
@@ -1198,7 +1209,7 @@ STATUS loader::loadSchedules()
 STATUS loader::loadJsonFile(filesystem::path filename)
 {
     if (this->open_file(filename))
-    {   
+    {
         if (this->filename.empty() || this->filename != filename)
         {
             this->filename = filename;
@@ -1237,7 +1248,7 @@ STATUS loader::loadJsonFile(filesystem::path filename)
         {
             return FAILED;
         }
-    } 
+    }
     else
     {
         return FAILED;

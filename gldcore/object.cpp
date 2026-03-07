@@ -405,26 +405,7 @@ OBJECT *object_create_single(CLASS *oclass)
 	obj->space = object_current_namespace();
 	obj->flags = OF_NONE;
 	obj->heartbeat = 0;
-
-	if(global_randomseed > 0)
-	{
-		std::hash<std::string> hasher;
-		obj->rng_state = hasher(oclass->name + std::to_string(global_randomseed));
-	}
-	else
-	{
-		obj->rng_state = randwarn(nullptr);
-	}
-
-	if(global_randomseed > 0)
-	{
-		std::hash<std::string> hasher;
-		obj->rng_state = hasher(oclass->name + std::to_string(global_randomseed));
-	}
-	else
-	{
-		obj->rng_state = randwarn(nullptr);
-	}
+	obj->rng_state = randwarn(nullptr);
 
 	for (prop = obj->oclass->pmap; prop != nullptr; prop = (prop->next ? prop->next : (prop->oclass->parent ? prop->oclass->parent->pmap : nullptr)))
 		property_create(prop, (void *)((char *)(obj + 1) + (int64)(prop->addr)));
