@@ -49,9 +49,9 @@ $$\displaystyle{}Q_{INV}=\frac{\frac{Q_i}{1+T_s}}{S_B}\tag{8}$$
 
 $$\displaystyle{}V_{INV}=\frac{\frac{V_{gi}}{1+T_s}}{S_B}\tag{9}$$
   
-### Transition between Quasi-Steady State Time Series Simulation and Delta Mode Simulation
+### Transition between Quasi-Steady State Time Series Simulation and transient mode Simulation
 
-#### Transition from QSTS to delta mode
+#### Transition from QSTS to transient mode
 
   * Calculate present output power/current at the terminals.
   * Adjust current for any Norton-equivalence issues
@@ -60,7 +60,7 @@ $$\displaystyle{}V_{INV}=\frac{\frac{V_{gi}}{1+T_s}}{S_B}\tag{9}$$
   * Back-populate any intermediate state variables (reference angle, current frequency, etc.)
   * No iterations should be required, since it should start at a “last know good state”
 
-#### Transition from delta mode to QSTS
+#### Transition from transient mode to QSTS
 
   * No updates on the transition, but updates to maintain voltage and/or power output (power may be tied to voltage) should be formulated. This may be as simple as updating the internal voltage source, so long as any inverter limits are not exceeded.
   
@@ -72,7 +72,7 @@ $$\displaystyle{}V_{INV}=\frac{\frac{V_{gi}}{1+T_s}}{S_B}\tag{9}$$
   * While under SWING conditions, update on each powerflow solution, potentially through a direct call.
   * Once powerflow stabilizes, release the SWING constraints and convert the bus to a normal PQ
   * After SWING release, iterate through predictor/corrector differential equations with the powerflow until things stabilize (or limit reached).
-  * If starting in QSTS mode, the “deltamode to QSTS start” transition steps probably need to occur.
+  * If starting in QSTS mode, the “transient mode to QSTS start” transition steps probably need to occur.
 
 ### Definition of Parameters
 
@@ -130,7 +130,7 @@ This is an example that effectively has an infinite DC bus
     	rated_power 100 kW;	 // full rated power (not per-phase)
     	flags DELTAMODE;
     	control_mode GRID_FORMING;
-    											//Criterion to exit deltamode
+    											//Criterion to exit transient mode
     	frequency_convergence_criterion 1e-9;  //Convergence criterion (rad/s)
     	voltage_convergence_criterion 1e-3;	   //Convergence criterion (V)
     
@@ -219,9 +219,9 @@ $$\displaystyle{}\textrm{Re}\left(E_i\angle{\delta_i}\right)=\left(e_{di}\cos{\d
 
 $$\displaystyle{}\textrm{Im}\left(E_i\angle{\delta_i}\right)=\left(e_{di}\sin{\delta_{PLLi}}+e_{qi}\cos{\delta_{PLLi}}\right)U_B\tag{18}$$
   
-### Transition between QSTS and Delta Mode Simulation
+### Transition between QSTS and transient mode Simulation
 
-#### Transition from QSSTS to deltamode
+#### Transition from QSSTS to transient mode
 
   * Calculate present output power/current at the terminals
   * Adjust the terminal currents, if necessary, for Norton-equivalent impedance/admittance
@@ -229,12 +229,12 @@ $$\displaystyle{}\textrm{Im}\left(E_i\angle{\delta_i}\right)=\left(e_{di}\sin{\d
   * Force populate state variables with final values (PLL angle, PLL frequency)
   * Back-calculate any intermediate variables (frequency deviation, angle difference)
   * Should be starting from a “known good” state, so just proceed with differential equations.
-#### Transition from deltamode to QSTS
+#### Transition from transient mode to QSTS
 
   * Theoretically, nothing should need to be done (just keep using same terminal currents) – system should be in a “known good state”
 ### Initialization
 
-#### deltamode start
+#### transient mode start
 
   * Determine terminal currents based on ($P_{ref}$,$Q_{ref}$) and current terminal voltages
   * Adjust terminal currents, if necessary, for Norton-equivalent impedance/admittance

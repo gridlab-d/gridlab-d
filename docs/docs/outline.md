@@ -61,8 +61,8 @@ Showing off the popular integrated models and the interaction between the device
 ## 3.0 Modeler Guide
 - Who is a “modeler” and what does this guide intends to provide?
     - By the time folks have gotten to this section, we assume they have reviewed the installation instructions and the key attributes of GLD (Chapters 1-2 in original wiki tutorial)
-  - Where does delta mode fit? Where is it first introduced, where is the bulk of the content?
-    - consult with dev team about role of delta mode
+  - Where does transient mode fit? Where is it first introduced, where is the bulk of the content?
+    - consult with dev team about role of transient mode
 
 ### Intro to Modeling
  - 3.1.1 Basic Distribution System Modeling
@@ -108,7 +108,7 @@ Showing off the popular integrated models and the interaction between the device
 
 ### Modeling Reference
 - Debugging and Validation
-- Delta Mode and Timing
+- transient mode and Timing
 
 ## 4.0 Developer 
 Who is a “developer” and what this guide intends to provide 

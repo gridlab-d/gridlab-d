@@ -118,15 +118,15 @@ sys_nom_freq_hz  | Double  | Hz  | The power system nominal frequency
   
 # Methodology of quasi-steady state time series (QSTS)
 
-No explicit functions are performed in the QSTS mode. The sync_ctrl will perform all behavior in deltamode, under the assumption the call to deltamode was triggered by either the device arming the sync_ctrl object, or by something elsewhere in the system making the adjustments for synchronization to occur. 
+No explicit functions are performed in the QSTS mode. The sync_ctrl will perform all behavior in transient mode, under the assumption the call to transient mode was triggered by either the device arming the sync_ctrl object, or by something elsewhere in the system making the adjustments for synchronization to occur. 
 
-# Methodology of deltamode
+# Methodology of transient mode
 
 ## Flowchart
 
 TODO - Update - Review flowchart for accuracy and update
 
-The flowchart for sync_ctrl in deltamode is shown as follows. In mode A, the sync_ctrl adjusts the voltage and frequency settings of the controlled generation unit actively. In mode B, it monitors the voltage magnitudes and frequency and counts a timer, determining to switch to mode A if needed. 
+The flowchart for sync_ctrl in transient mode is shown as follows. In mode A, the sync_ctrl adjusts the voltage and frequency settings of the controlled generation unit actively. In mode B, it monitors the voltage magnitudes and frequency and counts a timer, determining to switch to mode A if needed. 
 
 ![Sync ctrl flowchart.png](../../../../../../images/700px-Sync_ctrl_flowchart.png) 
 

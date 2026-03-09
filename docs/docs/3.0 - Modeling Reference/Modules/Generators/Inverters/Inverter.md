@@ -4,7 +4,7 @@
 
     The droop inverter model is a very early steady-state model, which has been succeeded by the [inverter_dyn](../Inverters/Spec_inverter_dyn.md) model.
 
-This document describes GridLAB-D™ implementation of the **CONSTANT_PQ** mode inverter with droops. The implementation is based on the existing inverter **CONSTANT_PQ** mode source codes. In the original **CONSTANT_PQ** mode inverter, during event mode simulation, the inverter current outputs are computed based on the reference power values and the terminal voltage values; During delta mode simulation, the inverter real and reactive power outputs are compared with the reference values in each delta time step, and a PI controller is connected after the comparison, for the calculation of the updated current injection `Iout` from inverter. 
+This document describes GridLAB-D™ implementation of the **CONSTANT_PQ** mode inverter with droops. The implementation is based on the existing inverter **CONSTANT_PQ** mode source codes. In the original **CONSTANT_PQ** mode inverter, during event mode simulation, the inverter current outputs are computed based on the reference power values and the terminal voltage values; During transient mode simulation, the inverter real and reactive power outputs are compared with the reference values in each delta time step, and a PI controller is connected after the comparison, for the calculation of the updated current injection `Iout` from inverter. 
 
 ![caption](../../../../../images/Inverter_PI_control_original.png)
 ##### Figure 1. Inverter PI Control
@@ -17,7 +17,7 @@ With the droop mode inverter implemented inside the **CONSTANT_PQ** mode inverte
 ##### Figure 2. Invert p/f (TOP) and q/v (BOTTOM) droop control. 
 
 
-The capability to run in delta mode is implemented in battery object. The battery can be attached to the droop inverter. 
+The capability to run in transient mode is implemented in battery object. The battery can be attached to the droop inverter. 
 
 ## GridLAB-D™ implementation
 

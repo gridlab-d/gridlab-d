@@ -70,7 +70,7 @@ This is the same as the Feedback PID Ouput except that the integrator output is 
 
 ## Requirements/Limitations
 
-  1. The secondary control object operates in deltamode only, but will transition back to QSTS.
+  1. The secondary control object operates in transient mode only, but will transition back to QSTS.
   2. Currently only inverter_dyn and diesel_dg are supported as generators. Any power flow link object can be used as an inter-tie.
   3. The frequency is currently only measured at the parent node of the secondary controller object.
 

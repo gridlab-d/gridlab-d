@@ -17,7 +17,7 @@ voltage_tolerance  | eps_volt  | Double  | The user-specified tolerance in per u
 voltage_magnitude_tolerance  | eps_mag_volt  | Double  | The user-specified tolerance in per unit for the difference in voltage magnitudes for checking the voltage metric. Used only by the `SEP_DIFF` mode of `volt_compare_mode`.   
 voltage_angle_tolerance  | eps_ang_volt  | Double  | The user-specified tolerance in degrees for the difference in voltage angles for checking the voltage metric. Used only by the `SEP_DIFF` mode of `volt_compare_mode`.   
 metrics_period  | t_ud  | Double  | The user-defined period when both metrics are satisfied. Used by both `volt_compare_mode` types.   
-delta_trigger_mult  | delta_trigger_mult  | Double  | Multiplier of the appropriate voltage/frequency tolerances to trigger deltamode. e.g., in `MAG_DIFF` mode, `voltage_tolerance` and `frequency_tolerance` will be multiplied by this value, and if current conditions are within that band (and `sync_check` is armed), deltamode will be triggered/maintained until either a close action occurs, or the band is exited.   
+delta_trigger_mult  | delta_trigger_mult  | Double  | Multiplier of the appropriate voltage/frequency tolerances to trigger transient mode. e.g., in `MAG_DIFF` mode, `voltage_tolerance` and `frequency_tolerance` will be multiplied by this value, and if current conditions are within that band (and `sync_check` is armed), transient mode will be triggered/maintained until either a close action occurs, or the band is exited.   
   
 Two sample sync_check objects defined in the glm file are shown as follows. 
 
@@ -86,20 +86,20 @@ eps_volt  | Double  | pu  | The user-specified tolerance for checking the magnit
 eps_mag_volt  | Double  | pu  | The user-specified tolerance for checking the magnitude of the difference of voltage magnitudes. Used for the `SEP_DIFF` mode of operation   
 eps_angle_volt  | Double  | deg  | The user-specified tolerance for checking the magnitude of the difference of voltage angles. Used for the `SEP_DIFF` mode of operation   
 t_ud  | Double  | sec  | The user-defined period when both metrics are satisfied   
-delta_trigger_mult  | Double  | N/A  | User-defined multiplier for the appropriate tolerances to trigger/maintain deltamode   
+delta_trigger_mult  | Double  | N/A  | User-defined multiplier for the appropriate tolerances to trigger/maintain transient mode   
 Timer   
 t_sat  | Double  | sec  | The total period (initialized as 0) during which both metrics have been satisfied continuously   
-dt_dm  | Double  | sec  | Current deltamode timestep   
+dt_dm  | Double  | sec  | Current transient mode timestep   
   
 # Methodology
 
 ### Quasi-Steady State Time Series (QSTS)
 
-In QSTS mode, the sync_check object will check current voltage and frequency metrics against the appropriate tolerance values, but multiplied by the `deltamode_trigger_mult` variable. If they are within this expanded range and the sync_check is armed, deltamode will be triggered. 
+In QSTS mode, the sync_check object will check current voltage and frequency metrics against the appropriate tolerance values, but multiplied by the `deltamode_trigger_mult` variable. If they are within this expanded range and the sync_check is armed, transient mode will be triggered. 
 
-### Deltamode
+### Transient Mode
 
-Paralleling will only occur when the grid-alignment conditions are met. While the voltage and frequency metrics are within the multiple of `deltamode_trigger_mult` and the appropriate tolerances, deltamode will continue to be requested (`SM_DELTA`). e.g., if in `MAG_DIFF` mode, the sync_check is armed, and the magnitude of the voltage difference is less than `deltamode_trigger_mult` * `eps_volt`, a request to stay in deltamode will be sent. 
+Paralleling will only occur when the grid-alignment conditions are met. While the voltage and frequency metrics are within the multiple of `deltamode_trigger_mult` and the appropriate tolerances, transient mode will continue to be requested (`SM_DELTA`). e.g., if in `MAG_DIFF` mode, the sync_check is armed, and the magnitude of the voltage difference is less than `deltamode_trigger_mult` * `eps_volt`, a request to stay in transient mode will be sent. 
 
 # Validation
 

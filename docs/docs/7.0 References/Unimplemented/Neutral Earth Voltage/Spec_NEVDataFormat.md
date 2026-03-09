@@ -50,7 +50,7 @@ The elements of the node/bus structures are defined in Table 2. Node data will b
 `Link_Table` | `int*` | Pointer to integer array that tracks link objects electrically connected to this node. This will include child-connected link objects. Entries refer to the corresponding index of the `NEVbranchdata` structure.   
 `Link_Table_Size` | `unsigned int` | Integer count of number of connected link objects in the `Link_Table` entry.   
 `max_volt_error` | `double` | Value of maximum voltage error allowed (convergence criterion)   
-`dynamics_enabled` | `bool *` | Pointer to deltamode indicator for node object to determine if special dynamics code needs to be enacted.   
+`dynamics_enabled` | `bool *` | Pointer to transient mode indicator for node object to determine if special dynamics code needs to be enacted.   
 `Y_matrix_self` | `complex *` | Pointer to complex self-admittance matrix of this particular node. Expected size is the number of terminals squared (terminal count by terminal count square matrix).   
 **`matrix_association`** | `int` | Index of associated matrix in the solver. Utilized by the solver for implementing multiple islands in the same GLM.   
 **`matrix_index`** | `unsigned int` | Starting index of this object's place in all matrices   

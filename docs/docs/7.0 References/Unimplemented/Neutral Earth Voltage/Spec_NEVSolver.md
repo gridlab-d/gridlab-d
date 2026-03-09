@@ -63,7 +63,7 @@ The NEV solver will include the capability to have multiple islanded systems wit
 
   * Connection to a source 
     * SWING bus -- multiple SWINGs may exist
-    * Distributed generation, especially in deltamode+. This will be determined with the `HAS_SOURCE` flag that already exists within `node` objects.
+    * Distributed generation, especially in transient mode+. This will be determined with the `HAS_SOURCE` flag that already exists within `node` objects.
   * Pure support checks will be conducted via the `fault_check` object to see which objects have a connection to at least one source. This will require a slight modification to the connection determination inside ticket 767.
   * Unsupported objects will be placed into a state where they are excluded from current powerflow values. This will be indicated by a lack of information in the `terminals` field in NEVBUSDATA and `terminals_from` and `terminals_to` fields in the NEVBRANCHDATA structures.
 +Note that while islands will solve individual powerflow sets, the current implementation of "failure to converge results in a failed simulation" will still apply to the whole system/set of system. i.e., if two islands are present and one fails to converge, the entire GridLAB-D™ instance will terminate, not just the divergent island. This condition is expected to be mitigated through object-level and user-level controls. 

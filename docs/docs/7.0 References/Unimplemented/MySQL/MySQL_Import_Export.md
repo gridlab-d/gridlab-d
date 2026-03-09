@@ -181,7 +181,7 @@ Object flags  Value | Description
 0x0008 | Object recalculation is pending   
 0x0010 | External memory (allocated in memory that cannot be freed by the core)   
 0x0020 | Skipping updates is safe   
-0x0040 | Object is currently operating in delta mode   
+0x0040 | Object is currently operating in transient mode   
 0x0080 | Object supports forecasting   
 0x0100 | Object initiatlization was successful   
 0x4000 | Reranking flag (internal core use only)   

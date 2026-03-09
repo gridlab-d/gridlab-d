@@ -30,7 +30,7 @@ The droop mode VSI includes two droops: $f/p$ and $v/q$. Based on measured (dela
 
 #### Figure 3. VSI Droop
 
-The slew rate limits for both real and reactive power have been implemented in the droop mode VSI. Similar to the implementation for the isochronous mode VSI, the real power slew rate check is executed in each power flow iteration. In addition, the real and reactive power changes are examined in each delta mode time step in `inter_deltaupdate` function.  
+The slew rate limits for both real and reactive power have been implemented in the droop mode VSI. Similar to the implementation for the isochronous mode VSI, the real power slew rate check is executed in each power flow iteration. In addition, the real and reactive power changes are examined in each transient mode time step in `inter_deltaupdate` function.  
 
 To be noticed, both real and reactive power slew rate check cannot be enabled in the same time with more than one VSI in the feeder, or power flow converge problem will appear.
 
@@ -42,7 +42,7 @@ Battery is required to be attached to VSI with enough energy stored. Simulations
 
 This inverter object is a VSI in isochronous mode. The VSI is implemented under the inverter type `FOUR_QUADRANT`. The droop mode VSI is chosen by selecting `four_quadrant_control_mode` as `VOLTAGE_SOURCE`, `VSI_mode` as `VSI_ISOCHRONOUS` (by default `VSI_mode` is `VSI_ISOCHRONOUS` for VSI objects), `use_multipoint_efficiency` as FALSE, generator_status as ONLINE. The `dynamic_model_mode` is always given as PI for VSI objects.  
   
-The isochronous mode VSI is placed on a SWINGbus. The power rating per phase given for this VSI is 1 MVA. At the first time step of the simulation, the real and reactive power outputs from the VSI are calculated based on power flow solutions, rather than based on the P_Out and Q_Out given. After entering into the delta mode, the **e_source** angle is kept constant, and magnitude is adjusted using a PI voltage controller, with the integrator gain `ki_Vterminal` given as 0.01, and the proportional gain `kp_Vterminal` given as 0.1. The default filter impedance of the VSI is given as 0.0025 + j0.06 p.u..   
+The isochronous mode VSI is placed on a SWINGbus. The power rating per phase given for this VSI is 1 MVA. At the first time step of the simulation, the real and reactive power outputs from the VSI are calculated based on power flow solutions, rather than based on the P_Out and Q_Out given. After entering into the transient mode, the **e_source** angle is kept constant, and magnitude is adjusted using a PI voltage controller, with the integrator gain `ki_Vterminal` given as 0.01, and the proportional gain `kp_Vterminal` given as 0.1. The default filter impedance of the VSI is given as 0.0025 + j0.06 p.u..   
   
 The real power slew rate is enabled in this example, with maximum ramp down rate defined as 25 MW/s, and maximum ramp up rate given as 30 MW/s. 
 
@@ -83,7 +83,7 @@ The real power slew rate is enabled in this example, with maximum ramp down rate
 
 This inverter object is a VSI in droop mode. The VSI is implemented under the inverter type `FOUR_QUADRANT`. The droop mode VSI is chosen by selecting `four_quadrant_control_mode` as `VOLTAGE_SOURCE`, VSI_mode as `VSI_DROOP`, `use_multipoint_efficiency` as FALSE, `generator_status` as ONLINE. The `dynamic_model_mode` is always given as PI for VSI objects.   
   
-The power rating per phase given for this VSI is 1000 kVA. Before entering the delta mode, the real and reactive power outputs from the VSI are equal to the given P_Out and Q_Out values, which are 1 MW and 1MVar respectively. After entering into the delta mode, the power outputs will be based on the droop curve parameters defined. The filter impedance of the VSI is given as 0.0025 + j0.06 p.u..   
+The power rating per phase given for this VSI is 1000 kVA. Before entering the transient mode, the real and reactive power outputs from the VSI are equal to the given P_Out and Q_Out values, which are 1 MW and 1MVar respectively. After entering into the transient mode, the power outputs will be based on the droop curve parameters defined. The filter impedance of the VSI is given as 0.0025 + j0.06 p.u..   
   
 The reactive power slew rate is enabled in this example, with both maximum ramp down rate and maximum ramp up rate given as 20 MW/s or MVAr/s. 
 
@@ -139,9 +139,9 @@ Property name | Type | Unit | Description
 **Q_Out** | double | [VAr] | Value to output in four quadrant control mode CONSTANT_PQ and VOLTAGE_SOURCE  
 **V_In** | complex | [V] | DC voltage passed in by the DC object (e.g. solar panel or battery)   
 **I_In** | complex | [A] | DC current passed in by the DC object (e.g. solar panel or battery)   
-**flags** | unit32 | none | Object flag to be used for indication of delta mode inclusion   
-**dynamic_model_mode** | enumeration | none | DELTAMODE: Underlying model to use for deltamode control   
-**inverter_convergence_criterion** | double | none | The maximum change in error threshold for exiting deltamode   
+**flags** | unit32 | none | Object flag to be used for indication of transient mode inclusion   
+**dynamic_model_mode** | enumeration | none | DELTAMODE: Underlying model to use for transient mode control   
+**inverter_convergence_criterion** | double | none | The maximum change in error threshold for exiting transient mode   
 **VSI_Rfilter** | double | none | VSI filter resistance (p.u.). Default value is 0.03 p.u.   
 **VSI_Xfilter** | double | none | VSI filter inductance (p.u.). Default value is 0.3 p.u.   
 **enable_ramp_rates_real** | bool | none | Flag indicating whether the ramp rate check for real power is enabled   

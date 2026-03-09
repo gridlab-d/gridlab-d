@@ -59,7 +59,7 @@ $$\begin{bmatrix}I_{ds}^{R} + j I_{ds}^{I} \\ I_{qs}^{R} + j I_{qs}^{I} \end{bma
 
 # Motor Object
 
-The motor model is divided into two portions, a steady state model and a delta mode model. Both models are obtained from the above mentioned equations. The steady state model is an iterative model solving the dynamic phasor equation at each time step. This model is valid for time steps greater than 0.3 milliseconds. The delta mode model also uses the dynamic phasor equations and is valid for time steps below 0.3 milliseconds. Switching between the model is handled by user specified settings for the speed and voltage of the motor. These properties can be found below. A minimalist motor could be created with 
+The motor model is divided into two portions, a steady state model and a transient mode model. Both models are obtained from the above mentioned equations. The steady state model is an iterative model solving the dynamic phasor equation at each time step. This model is valid for time steps greater than 0.3 milliseconds. The transient mode model also uses the dynamic phasor equations and is valid for time steps below 0.3 milliseconds. Switching between the model is handled by user specified settings for the speed and voltage of the motor. These properties can be found below. A minimalist motor could be created with 
     
     
        object motor {
@@ -131,10 +131,10 @@ trip_time  | double  | Seconds  | The time a motor can stay stalled before it tr
 reconnect_time  | double  | Seconds  | The time before a tripped motor tries to reconnect.   
 mechanical_torque  | double  | Pu  | The mechanical torque applied to the motor.   
 iteration_count  | double  | N/A  | Maximum number of iterations for the steady state model.   
-delta_mode_voltage_trigger  | double  | Percent  | Percentage voltage of nominal when delta mode is triggered.   
-delta_mode_rotor_speed_trigger  | double  | Percent  | Percentage speed of nominal when delta mode is triggered.   
-delta_mode_rotor_speed_exit  | double  | Percent  | Percentage speed of nominal to exit delta mode.   
-delta_mode_voltage_exit  | double  | Percent  | Percentage voltage of nominal to exit delta mode.   
+delta_mode_voltage_trigger  | double  | Percent  | Percentage voltage of nominal when transient mode is triggered.   
+delta_mode_rotor_speed_trigger  | double  | Percent  | Percentage speed of nominal when transient mode is triggered.   
+delta_mode_rotor_speed_exit  | double  | Percent  | Percentage speed of nominal to exit transient mode.   
+delta_mode_voltage_exit  | double  | Percent  | Percentage voltage of nominal to exit transient mode.   
 maximum_speed_error  | double  | N/A  | Variable to set the maximum speed error in the steady state model.   
 wr  | double  | rad/sec  | The speed of the rotor.   
 motor_status  | enumeration  | N/A  | The current status of the motor. <br/> - `RUNNING`, the motor is running <br/> - `STALLED`, the motor is stalled <br/> - `TRIPPED`, the motor is tripped <br/> - `OFF`, the motor is off  
@@ -142,7 +142,7 @@ motor_override  | enumeration  | N/A  | The current status of the motor. <br/> -
   
 ## Motor Model Verification
 
-In order to verify that the motor model works as intended it was subjected to a voltage ramp signal as seen in Fig. 1. It is expected, as the voltage magnitude drops below ~0.6 pu, that the motor will stall, as it does in this simulation. From the data it can also be verified that the object switches into delta mode in order to capture the stall and out again when the motor is running with nominal voltage and rotor speed. After the motor is stalled it trips of at ~38 seconds due to thermal overload. The motor tries to reconnect again at ~58 seconds. The motor remains stalled until ~77 seconds where the voltage has recovered enough for the motor to start. The full simulation can be seen in Fig. 1 and 2. 
+In order to verify that the motor model works as intended it was subjected to a voltage ramp signal as seen in Fig. 1. It is expected, as the voltage magnitude drops below ~0.6 pu, that the motor will stall, as it does in this simulation. From the data it can also be verified that the object switches into transient mode in order to capture the stall and out again when the motor is running with nominal voltage and rotor speed. After the motor is stalled it trips of at ~38 seconds due to thermal overload. The motor tries to reconnect again at ~58 seconds. The motor remains stalled until ~77 seconds where the voltage has recovered enough for the motor to start. The full simulation can be seen in Fig. 1 and 2. 
 
 [![Top plot is the rotor speed of the motor. Middle plot is the electrical torque on the motor, and the bottom plot is the mechanical torque applied to the motor.](../../../../../images/400px-SPIM_plot_1.png)]
 

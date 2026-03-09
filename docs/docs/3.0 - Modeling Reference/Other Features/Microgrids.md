@@ -665,10 +665,10 @@ Capabilities have slowly been evolving. This section documents what milestones c
 
 ## Version 2.3 - Grizzly
 
-  * Delta mode capabilities - ability to transition to simulation timesteps as small as one nanosecond, then transition back into traditional, event-driven GridLAB-D mode.
-  * Player capabilities - the ability to play in subsecond data to influence objects during delta mode execution.
-  * Recorder capabilities - the ability to record subsecond data during delta mode operations.
-  * Powerflow capabilities - basic support for three-phase, unbalanced powerflow operations in delta mode and in isolated operation
+  * transient mode capabilities - ability to transition to simulation timesteps as small as one nanosecond, then transition back into traditional, event-driven GridLAB-D mode.
+  * Player capabilities - the ability to play in subsecond data to influence objects during transient mode execution.
+  * Recorder capabilities - the ability to record subsecond data during transient mode operations.
+  * Powerflow capabilities - basic support for three-phase, unbalanced powerflow operations in transient mode and in isolated operation
   * Diesel_dg capabilities - Initial implementation of a three-phase, unbalanced dynamics-capable diesel generator
 
 
@@ -685,10 +685,10 @@ Capabilities have slowly been evolving. This section documents what milestones c
   * Diesel_dg model validated against EMTP-type solver
   * Inverter capabilities - Initial implementation of transient-level (~10 ms) dynamics of a three-phase inverter system
   * Grid-connected dynamic support
-  * Assert capabilities - the ability to check values and execute unit testing in delta mode
-  * Powerflow integration - full support for delta mode operations by all powerflow objects
+  * Assert capabilities - the ability to check values and execute unit testing in transient mode
+  * Powerflow integration - full support for transient mode operations by all powerflow objects
   * Powerflow dynamics - transient-level impacts of line charging and transformer in-rush currents
-  * Frequency measurement - localized frequency measurements during delta mode
+  * Frequency measurement - localized frequency measurements during transient mode
   * Reliability capabilities - the ability to induce events at a subsecond time level (metrics not supported yet)
 
 

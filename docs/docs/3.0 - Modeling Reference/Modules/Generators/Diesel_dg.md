@@ -1,6 +1,6 @@
 # Diesel dg
 
-The **diesel_dg** object represents a synchronous distributed generation. The model supports both a QSTS-only model and subsecond (deltamode) modes of operation. 
+The **diesel_dg** object represents a synchronous distributed generation. The model supports both a QSTS-only model and subsecond (transient mode) modes of operation. 
 
 # Properties
 
@@ -12,7 +12,7 @@ The properties are divided into the QSTS and subsecond sets. This mode of operat
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
-**Gen_type**  | enumeration  | none  | Selects the overall mode of operation for the **diesel_dg** object. Valid selections include: <br/> - `CONSTANT_PQ` \- QSTS-only mode diesel generator <br/> - `DYN_SYNCHRONOUS` \- QSTS and deltamode-compatible diesel generator
+**Gen_type**  | enumeration  | none  | Selects the overall mode of operation for the **diesel_dg** object. Valid selections include: <br/> - `CONSTANT_PQ` \- QSTS-only mode diesel generator <br/> - `DYN_SYNCHRONOUS` \- QSTS and transient mode-compatible diesel generator
 
 # PQ CONSTANT mode diesel dg
 
@@ -66,11 +66,11 @@ By selecting `Exciter_Q_constant_mode` as true, the constant Q mode is selected.
          inertia 2.5;
          // PI controller parameters of P_CONSTANT mode
          P_CONSTANT_Pref 0.5; // Set P reference, p.u. 
-         P_CONSTANT_kp 0;  // ki for the PI controller implemented in P constant delta mode
-         P_CONSTANT_ki 0.05;  // kp for the PI controller implemented in P constant delta mode
+         P_CONSTANT_kp 0;  // ki for the PI controller implemented in P constant transient mode
+         P_CONSTANT_ki 0.05;  // kp for the PI controller implemented in P constant transient mode
          Exciter_Q_constant_Qref 0.6; // Set Q reference, p.u. 
          Exciter_Q_constant_mode true; // Flag indicating whether the diesel generator exciter is operating based on Qref given
-         Exciter_Q_constant_kp 0.01;  // ki for the PI controller implemented in Q constant delta mode
+         Exciter_Q_constant_kp 0.01;  // ki for the PI controller implemented in Q constant transient mode
 
 } 
 
@@ -81,7 +81,7 @@ This table lists the properties related to diesel generator in PQ constant mode.
 Property name | Type | Unit | Description   
 ---|---|---|---  
 **Gen_type** | enumeration | none | Defines type of diesel generator (INDUCTION  , SYNCHRONOUS, DYN_SYNCHRONOUS). <br/> Should choose DYN_SYNCHRONOUS for diesel generator in PQ constant mode.   
-**rotor_speed_convergence** | double | rad | Convergence criterion on rotor speed used to determine when to exit deltamode   
+**rotor_speed_convergence** | double | rad | Convergence criterion on rotor speed used to determine when to exit transient mode   
 **Exciter_type** | enumeration | none | Exciter model for dynamics-capable implementation (NO_EXC , SEXS). <br/> Should choose diesel_dg_type|SEXS for this diesel generator in PQ constant mode.   
 **Governor_type** | enumeration | none | Governor model for dynamics-capable implementation (NO_GOV , DEGOV1, GAST, GGOV1_OLD, GGOV1, P_CONSTANT). <br/> Should choose P_CONSTANTfor this diesel generator in PQ constant mode.   
 Parameters related to P constant mode 
@@ -135,7 +135,7 @@ Property  | Type  | Unit  | Description
   
 ## Deltamode
 
-For deltamode-enabled simulations, the following variables are commonly available, or enable the specific controls detailed later: 
+For transient mode-enabled simulations, the following variables are commonly available, or enable the specific controls detailed later: 
 
 ##### Table 3 - Deltamode Base/Common Parameters  
 
@@ -143,7 +143,7 @@ Property  | Type  | Unit  | Description
 ---|---|---|---  
 **Rated_VA**  | double  | VA  | Nominal power rating of generator   
 **Rated_V**  | double  | V  | Nominal line-to-line voltage rating. Will pull from attached parent, if not populated.   
-**deltamode_only_changes**  | bool  | N/A  | Dynamic equations are only initialized once, on the first QSTS-to-deltamode transition. Assumes all changes occur in deltamode.   
+**transient mode_only_changes**  | bool  | N/A  | Dynamic equations are only initialized once, on the first QSTS-to-transient mode transition. Assumes all changes occur in transient mode.   
 **current_out_A**  | complex  | A  | Output current of phase A   
 **current_out_B**  | complex  | A  | Output current of phase B   
 **current_out_C**  | complex  | A  | Output current of phase C   
@@ -151,9 +151,9 @@ Property  | Type  | Unit  | Description
 **power_out_B**  | complex  | VA  | Output power of phase B   
 **power_out_C**  | complex  | VA  | Output power of phase C   
 **Convergence criteria variables**  
-**rotor_speed_convergence**  | double  | rad/s  | Convergence criterion on rotor speed between deltamode timesteps - must be satisfied (if enabled) to return to QSTS   
+**rotor_speed_convergence**  | double  | rad/s  | Convergence criterion on rotor speed between transient mode timesteps - must be satisfied (if enabled) to return to QSTS   
 **rotor_speed_convergence_enabled**  | bool  | N/A  | Enables the checking of the `rotor_speed_convergence` variable   
-**voltage_convergence**  | double  | V  | Convergence criterion on terminal voltage magnitude between deltamode timesteps - must be satisfied (if enabled) to return to QSTS   
+**voltage_convergence**  | double  | V  | Convergence criterion on terminal voltage magnitude between transient mode timesteps - must be satisfied (if enabled) to return to QSTS   
 **voltage_magnitude_convergence_enabled**  | bool  | N/A  | Enables the checking of the `voltage_convergence` variable   
 **General governor variables**  
 **Governor_type**  | enumeration  | N/A  | Selects the governor control model applied to the diesel generator. Valid options are: <br/> - `NO_GOV` \- No governor <br/> -  `DEGOV1` \- DEGOV1 Woodward Diesel Governor <br/> - `GAST` \- GAST Gas Turbine Governor <br/> - `GGOV1` \- GGOV1 Governor Model <br/> - `P_CONSTANT` \- P_CONSTANT mode Governor Model 

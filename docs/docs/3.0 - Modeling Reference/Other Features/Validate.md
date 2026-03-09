@@ -175,7 +175,7 @@ The following tests are current performed on the GridLAB-D.
 
 * **test_core_schedules_positive_err** -  Verify that the positive flag detects a schedule with a zero or negative values.
 
-* **test_deltamode** -  Verify basic deltamode operation.
+* **test_transient mode** -  Verify basic transient mode operation.
 
 * **test_double_array** -  Verify basic double_array operations in a runtime class.
 
