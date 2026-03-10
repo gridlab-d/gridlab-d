@@ -1,0 +1,110 @@
+#set profiler=1
+#set threadcount=1;
+#set randomseed=1;
+#set relax_naming_rules=1;
+#define stylesheet=http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/gridlabd-2_0
+
+clock {
+	timezone PST+8PDT;
+	timestamp '2000-04-24 10:00:00';
+	stoptime '2000-04-24 10:09:59';
+}
+
+module tape;
+module generators;
+module assert;
+
+module powerflow{
+	solver_method FBS;
+	default_maximum_voltage_error 1e-9;
+	line_limits FALSE;
+};
+
+module climate;
+
+module residential {
+	implicit_enduses NONE;
+	ANSI_voltage_check FALSE;
+};
+
+
+object climate {
+	name "Yakima";
+	tmyfile "../WA-Yakima.tmy2";
+	cloud_model "CUMULUS";
+	interpolate "QUADRATIC";
+	cloud_opacity 0.50;
+}
+
+
+object triplex_meter {     
+      name R1-12-47-1_tm_21;     
+      phases AS;     
+      voltage_1 120;     
+      voltage_2 120;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+} 
+object triplex_node {     
+      name R1-12-47-1_tn_619;     
+      phases AS;     
+      parent R1-12-47-1_tm_21;     
+      voltage_1 120;     
+      voltage_2 120;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+} 
+object triplex_meter {
+      phases AS;
+      name tpm2_R1-12-47-1_tm_21;
+      parent R1-12-47-1_tm_21;
+      nominal_voltage 120;
+}
+
+object house {
+	name myHouse;
+	parent tpm2_R1-12-47-1_tm_21;
+	floor_area random.normal(1750,400);
+	heating_setpoint 70;
+	cooling_setpoint 78;
+	air_temperature 79;
+}
+
+object inverter {
+	name DHHL_3_inv;
+	phases AS;
+	parent tpm2_R1-12-47-1_tm_21;
+	rated_power 2500000;
+}
+object solar {
+	name DHHL_3_PV;
+	parent DHHL_3_inv;
+	area 141.76 ft^2;
+	tilt_angle 90.0;
+	efficiency 0.05;
+	orientation_azimuth 180; //equator-facing (South)
+	orientation DEFAULT;
+	SOLAR_TILT_MODEL SOLPOS;
+	SOLAR_POWER_MODEL FLATPLATE;
+	latitude 46.626490;
+	longitude -120.511097;
+	object double_assert {
+		target Insolation;
+		within 0.01;
+		object player {
+			property value;
+			file ../cloud_insolation_tmy2.player;
+			loop 1;
+		};
+	};
+}
+
+
+
+
+object multi_recorder {
+	property DHHL_3_PV:Insolation;
+	file tmy2_solar_insolation.csv;
+    interval 60;
+	limit 6000000;
+}
