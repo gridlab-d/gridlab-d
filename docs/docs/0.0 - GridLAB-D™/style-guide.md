@@ -148,7 +148,7 @@ For example, to point specifically to Global Variables section of the previous f
 Below are a few options for making a list. All are acceptable options.
 
 stars | dashes | numbers
--- | --| --|
+-- | -- | -- 
 \* List | \- List | 1. list
 
 Note that markdown requires a blank line between text to distinguish paragraphs. A return alone  will place the text together.

@@ -22,6 +22,7 @@ theme:
       quote: octicons/quote-16
 plugins:
   - search
+  - mermaid2
   - mkdocstrings:
       handlers:
         python:
