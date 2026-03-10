@@ -154,10 +154,8 @@ nav:
     - 4.1 - Introduction - TBD: docs/4.0 Developing Reference/4.1 - Introduction.md
     - 4.2 - Building from Source:
       - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.1 - Building_from_Source.md
-      - Setting-Up MSYS2 for Windows: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.2 - Setting-Up_MSYS2_for_Windows.md
       - Setting-Up WSL for Windows: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.3 - Setting-Up_WSL_for_Windows.md
       - Setting-Up the VS Code IDE: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.4 - Setting-Up_VS_Code.md
-      - Dev:mysql: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.5 - Building with mysql.md
     - 4.3 - Software Architecture and Design:
       - Introduction - TBD: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.0 - Introduction.md
       - gldcore: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.1 - gldcore.md
@@ -187,66 +185,65 @@ nav:
       - Runtime/gl_* Output  Functions: docs/4.0 Developing Reference/4.5 - Testing and Debugging/runtime-functions.md
     - 4.6 - Style Guide: docs/4.0 Developing Reference/4.6 - Style_guide.md
     - 4.7 - GridLAB-D Release Process: docs/4.0 Developing Reference/4.7 - Release_Process.md
-  - 5.0 Integration:
-    - Interfacing with External Software: docs/5.0 Integration/Interfacing_with_External_Software.md
-    - Intro to Integration: docs/5.0 Integration/intro-to-integration.md
-  - 6.0 Examples:
-    - Placeholder: docs/6.0 Examples/placeholder.md
-  - 7.0 References:
+  - 5.0 Examples:
+    - Placeholder: docs/5.0 Examples/placeholder.md
+  - 6.0 References:
     - Unimplemented:
-      - Introduction: docs/7.0 References/Unimplemented/1.0 - Introduction.md
-      - Aggregate Demand Response Model: docs/7.0 References/Unimplemented/Aggregate_demand_response_model.md
+      - Introduction: docs/6.0 References/Unimplemented/1.0 - Introduction.md
+      - Aggregate Demand Response Model: docs/6.0 References/Unimplemented/Aggregate_demand_response_model.md
       - Commercial:
-        - Commercial Module: docs/7.0 References/Unimplemented/Commercial/1.0 - Tech_Commercial.md
-        - Commercial User Guide: docs/7.0 References/Unimplemented/Commercial/Commercial_User_Guide.md
+        - Commercial Module: docs/6.0 References/Unimplemented/Commercial/1.0 - Tech_Commercial.md
+        - Commercial User Guide: docs/6.0 References/Unimplemented/Commercial/Commercial_User_Guide.md
       - Connection:
-        - Connection: docs/7.0 References/Unimplemented/Connection/1.0 - Connection.md
-        - fncs msg: docs/7.0 References/Unimplemented/Connection/Connection_fncs_msg.md
-        - helics msg: docs/7.0 References/Unimplemented/Connection/Connection_helics_msg.md
-        - json: docs/7.0 References/Unimplemented/Connection/Connection_json.md
-        - link: docs/7.0 References/Unimplemented/Connection/Connection_link.md
-        - security: docs/7.0 References/Unimplemented/Connection/Connection_security.md
-        - xml: docs/7.0 References/Unimplemented/Connection/Connection_xml.md
+        - Connection: docs/6.0 References/Unimplemented/Connection/1.0 - Connection.md
+        - fncs msg: docs/6.0 References/Unimplemented/Connection/Connection_fncs_msg.md
+        - helics msg: docs/6.0 References/Unimplemented/Connection/Connection_helics_msg.md
+        - json: docs/6.0 References/Unimplemented/Connection/Connection_json.md
+        - link: docs/6.0 References/Unimplemented/Connection/Connection_link.md
+        - security: docs/6.0 References/Unimplemented/Connection/Connection_security.md
+        - xml: docs/6.0 References/Unimplemented/Connection/Connection_xml.md
       - End Use Loads:
-        - Residential End Uses: docs/7.0 References/Unimplemented/End Use Loads/1.0 - Residential_End_Use.md
-        - Hybrid Electric Vehicle Chargers: docs/7.0 References/Unimplemented/End Use Loads/Hybrid_Electric_Vehicle_Chargers.md
-        - Lights: docs/7.0 References/Unimplemented/End Use Loads/Lights.md
-        - Microwave: docs/7.0 References/Unimplemented/End Use Loads/Microwave.md
-        - Range: docs/7.0 References/Unimplemented/End Use Loads/Range.md
-        - Refrigerator: docs/7.0 References/Unimplemented/End Use Loads/Refrigerator.md
-        - Spec:Dishwasher: docs/7.0 References/Unimplemented/End Use Loads/Spec_Dishwasher.md
-        - Spec:Range: docs/7.0 References/Unimplemented/End Use Loads/Spec_Range.md
+        - Residential End Uses: docs/6.0 References/Unimplemented/End Use Loads/1.0 - Residential_End_Use.md
+        - Hybrid Electric Vehicle Chargers: docs/6.0 References/Unimplemented/End Use Loads/Hybrid_Electric_Vehicle_Chargers.md
+        - Lights: docs/6.0 References/Unimplemented/End Use Loads/Lights.md
+        - Microwave: docs/6.0 References/Unimplemented/End Use Loads/Microwave.md
+        - Range: docs/6.0 References/Unimplemented/End Use Loads/Range.md
+        - Refrigerator: docs/6.0 References/Unimplemented/End Use Loads/Refrigerator.md
+        - Spec:Dishwasher: docs/6.0 References/Unimplemented/End Use Loads/Spec_Dishwasher.md
+        - Spec:Range: docs/6.0 References/Unimplemented/End Use Loads/Spec_Range.md
+      - Interfacing with External Software: docs/6.0 References/Unimplemented/Interfacing_with_External_Software.md
       - Link:
-        - Link (directive): docs/7.0 References/Unimplemented/Link/Link_(directive).md
-        - Matlab link: docs/7.0 References/Unimplemented/Link/Matlab_link.md
-      - Macros: docs/7.0 References/Unimplemented/Macros.md
+        - Link (directive): docs/6.0 References/Unimplemented/Link/Link_(directive).md
+        - Matlab link: docs/6.0 References/Unimplemented/Link/Matlab_link.md
+      - Macros: docs/6.0 References/Unimplemented/Macros.md
       - Market:
-        - Market User Guide: docs/7.0 References/Unimplemented/Market/1.0 - Market_User_Guide.md
-        - Market Auction: docs/7.0 References/Unimplemented/Market/Market_Auction.md
-        - Transactive Controller: docs/7.0 References/Unimplemented/Market/TransactiveController.md
-      - Model Debugging: docs/7.0 References/Unimplemented/Model_Debugging.md
+        - Market User Guide: docs/6.0 References/Unimplemented/Market/1.0 - Market_User_Guide.md
+        - Market Auction: docs/6.0 References/Unimplemented/Market/Market_Auction.md
+        - Transactive Controller: docs/6.0 References/Unimplemented/Market/TransactiveController.md
+      - Model Debugging: docs/6.0 References/Unimplemented/Model_Debugging.md
       - MySQL:
-        - Mysql: docs/7.0 References/Unimplemented/MySQL/Mysql#username.md
-        - Database: docs/7.0 References/Unimplemented/MySQL/Database.md
-        - HowTo:mysql: docs/7.0 References/Unimplemented/MySQL/HowTo_mysql.md
-        - MySQL Import/Export: docs/7.0 References/Unimplemented/MySQL/MySQL_Import_Export.md
-        - Player (mysql): docs/7.0 References/Unimplemented/MySQL/Player_(mysql).md
-        - Recorder (mysql): docs/7.0 References/Unimplemented/MySQL/Recorder_(mysql).md
+        - Mysql: docs/6.0 References/Unimplemented/MySQL/Mysql#username.md
+        - Building with MySQL: docs/6.0 References/Unimplemented/MySQL/4.2.5 - Building with mysql.md
+        - Database: docs/6.0 References/Unimplemented/MySQL/Database.md
+        - HowTo:mysql: docs/6.0 References/Unimplemented/MySQL/HowTo_mysql.md
+        - MySQL Import/Export: docs/6.0 References/Unimplemented/MySQL/MySQL_Import_Export.md
+        - Player (mysql): docs/6.0 References/Unimplemented/MySQL/Player_(mysql).md
+        - Recorder (mysql): docs/6.0 References/Unimplemented/MySQL/Recorder_(mysql).md
       - Network:
-        - Network: docs/7.0 References/Unimplemented/Network/Network_Flow_Solver.md
-        - Network Flow Guide: docs/7.0 References/Unimplemented/Network/Network_Flow_Guide.md
-        - Transmission: docs/7.0 References/Unimplemented/Network/TDIntegration.md
+        - Network: docs/6.0 References/Unimplemented/Network/Network_Flow_Solver.md
+        - Network Flow Guide: docs/6.0 References/Unimplemented/Network/Network_Flow_Guide.md
+        - Transmission: docs/6.0 References/Unimplemented/Network/TDIntegration.md
       - Neutral Earth Voltage:
-        - Neutral Earth Voltage (NEV): docs/7.0 References/Unimplemented/Neutral Earth Voltage/NEV.md
-        - Introduction: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEV.md
-        - Spec:NEVArray: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVArray.md
-        - Spec:NEVDataFormat: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVDataFormat.md
-        - Spec:NEVLink: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVLink.md
-        - Spec:NEVModules: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVModules.md
-        - Spec:NEVNode: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVNode.md
-        - Spec:NEVSolver: docs/7.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVSolver.md
-      - Transmission: docs/7.0 References/Unimplemented/Transmission.md
-    - python_api: docs/7.0 References/python_api.md
+        - Neutral Earth Voltage (NEV): docs/6.0 References/Unimplemented/Neutral Earth Voltage/NEV.md
+        - Introduction: docs/6.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEV.md
+        - Spec:NEVArray: docs/6.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVArray.md
+        - Spec:NEVDataFormat: docs/6.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVDataFormat.md
+        - Spec:NEVLink: docs/6.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVLink.md
+        - Spec:NEVModules: docs/6.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVModules.md
+        - Spec:NEVNode: docs/6.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVNode.md
+        - Spec:NEVSolver: docs/6.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVSolver.md
+      - Transmission: docs/6.0 References/Unimplemented/Transmission.md
+    - Base Python API: docs/6.0 References/python_api.md
   - reference:
     - ReadMeConfig:
       - authentication: reference/ReadMeConfig/authentication.md
