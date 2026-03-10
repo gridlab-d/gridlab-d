@@ -1,7 +1,3 @@
-
-import os
-print(f"[validate_gld.py] __file__={__file__}", flush=True)
-
 from argparse import ArgumentParser
 from pathlib import Path
 import math
@@ -13,18 +9,6 @@ import time
 
 autotestFiles = []
 gldBinary = None
-
-
-def _run_one(args):   
-    """Unpack a (autotestFile, binFile) tuple and run the test."""
-    try:
-        return runAutotest(*args)
-    except Exception as e:
-        # Log minimal info and mark as failure (rv=1)
-        autotestFile, _ = args
-        print(f"[worker-error] {autotestFile}: {e}", flush=True)
-        return 1
-
 
 
 def getGLDBinary():
@@ -79,15 +63,15 @@ def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
                     autotestDir.resolve()
                     if not autotestDir.exists():
                         autotestDir.mkdir()
-                    # shutil.copy(autotestChild, autotestDir)
+                    shutil.copy(autotestChild, autotestDir)
 
 
 
-def runAutotest(autotestFile: Path, binFile: str) -> int:
+def runAutotest(args: tuple[Path, str]) -> tuple[int, Path]:
     """
     Run a single autotest file using GridLAB-D.
     """
-    print(f"Running autotest: {autotestFile}", flush=True)
+    autotestFile, binFile = args
 
     # Parent directory that holds the model and all its assets (players, CSVs, etc.)
     src_dir = autotestFile.parent                 # e.g., .../<module>/autotest
@@ -99,12 +83,12 @@ def runAutotest(autotestFile: Path, binFile: str) -> int:
         work_dir.mkdir()
 
     # Compose command: run from parent directory, write outputs into work_dir
-    command = [binFile, "-W", str(work_dir), autotestFile.name]
+    command = [binFile, autotestFile.name]
 
     # Capture raw bytes to avoid UnicodeDecodeError
     result = subprocess.run(
         command,
-        cwd=src_dir,
+        cwd=work_dir,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=False,  # <-- CRITICAL: captures bytes, no decoding
@@ -120,7 +104,7 @@ def runAutotest(autotestFile: Path, binFile: str) -> int:
         rv = 1
     elif result.returncode == 0 and "_err" in autotestFile.stem:
         rv = 2
-    return rv
+    return (rv, work_dir / autotestFile.name)
 
 def getGLDVersionInfo() -> str:
     """
@@ -133,7 +117,7 @@ def getGLDVersionInfo() -> str:
     return "Unknown GridLAB-D version"
 
 
-def processResults(results: list[int], resultsFile: Path, testPerformance: int) -> int:
+def processResults(results: list[tuple], resultsFile: Path, testPerformance: int) -> int:
     """
     Process the results of the autotest runs and output to validate.txt.
     """
@@ -146,17 +130,30 @@ def processResults(results: list[int], resultsFile: Path, testPerformance: int) 
         passCount = 0
         failCount = 0
         unexpectedPassCount = 0
-        for i, result in enumerate(results):
-            autotestFile = autotestFiles[i]
+        passingTests = []
+        failingTests1 = []
+        failingTests2 = []
+        for resultTuple in results:
+            result, autotestFile = resultTuple
             if result == 0:
                 passCount += 1
-                f.write(f"\t[PASS]\t{autotestFile[0]}\n")
+                passingTests.append(autotestFile)
             elif result == 1:
                 failCount += 1
-                f.write(f"\t[FAIL]\t{autotestFile[0]} - Expected to pass but failed.\n")
+                failingTests1.append(autotestFile)
             elif result == 2:
                 unexpectedPassCount += 1
-                f.write(f"\t[FAIL]\t{autotestFile[0]} - Expected to fail but passed.\n")
+                failingTests2.append(autotestFile)
+        if passCount > 0:
+            f.write(f"\tPassing Tests:")
+            for test in passingTests:
+                f.write(f"\n\t\t[PASS]\t{test}")
+        if failCount > 0 or unexpectedPassCount > 0:
+            f.write(f"\n\tFailing Tests:")
+            for test in failingTests1:
+                f.write(f"\n\t\t[FAIL]\t{test}...failed to run but was expected to pass.")
+            for test in failingTests2:
+                f.write(f"\n\t\t[FAIL]\t{test}...ran successfully but was expected to fail.")
         f.write("\nResults Summary:\n")
         f.write(f"\tTotal Tests Run: {len(results)}.\n")
         f.write(f"\tTotal Tests Pass: {passCount}.\n")
@@ -216,20 +213,24 @@ def main(module: str, runOptionalTests: bool, threads: int):
         procs = min(procs, len(autotestFiles))
         results = []
         startTime = time.perf_counter_ns()
-        
-        with multiprocessing.Pool(procs) as p:
-            # results = p.starmap(runAutotest, autotestFiles)
-            done = 0
-            total = len(autotestFiles)
-            for rv in p.imap_unordered(_run_one, autotestFiles):  # <-- no lambda here
-                results.append(rv)
+        done = 0
+        total = len(autotestFiles)
+        if procs > 1:
+            with multiprocessing.Pool(procs) as p:
+                # results = p.starmap(runAutotest, autotestFiles)
+                for rv in p.imap_unordered(runAutotest, autotestFiles):  # <-- no lambda here
+                    results.append(rv)
+                    done += 1
+                    percentDone = math.floor((float(done) / float(total)) * 100.0)
+                    # Emit progress every few completions (and at the end)
+                    print(f"[progress] {percentDone}% autotests completed...", flush=True, end="\r")
+        else:
+            for tup in autotestFiles:
+                results.append(runAutotest(tup[0], tup[1]))
                 done += 1
+                percentDone = math.floor((float(done) / float(total)) * 100.0)
                 # Emit progress every few completions (and at the end)
-                if done % 5 == 0 or done == total:
-                    print(
-                        f"[progress] {done}/{total} autotests completed...", flush=True
-                    )
-
+                print(f"[progress] {percentDone}% autotests completed...", flush=True, end="\r")
         endTime = time.perf_counter_ns()
         testPerformance = math.ceil((endTime - startTime) / 1.0e9)
         rv = processResults(results, resultsFile, testPerformance)
