@@ -226,7 +226,7 @@ def main(module: str, runOptionalTests: bool, threads: int):
                     print(f"[progress] {percentDone}% autotests completed...", flush=True, end="\r")
         else:
             for tup in autotestFiles:
-                results.append(runAutotest(tup[0], tup[1]))
+                results.append(runAutotest(tup))
                 done += 1
                 percentDone = math.floor((float(done) / float(total)) * 100.0)
                 # Emit progress every few completions (and at the end)
