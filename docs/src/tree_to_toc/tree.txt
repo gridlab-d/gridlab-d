@@ -14,12 +14,8 @@
   - Troubleshooting: docs/2.0 - New Users/2.3 - Troubleshooting.md
   - Tutorial:
     - Gridlab-D™ Overview: docs/2.0 - New Users/Tutorial/2.2.1 - Overview.md
-    - What is a GridLAB-D™ Model?: docs/2.0 - New Users/Tutorial/2.2.2 - Models.md
-    - Running GridLAB-D™: docs/2.0 - New Users/Tutorial/2.2.3 - Running a Model.md
-    - Generating populations: docs/2.0 - New Users/Tutorial/2.2.5 - Model Options.md
-    - Generating output: docs/2.0 - New Users/Tutorial/2.2.6 - Output.md
     - Basic Distribution System Modeling: docs/2.0 - New Users/Tutorial/2.5.1 - Basic Distribution System Modeling.md
-    - GLM Models: docs/2.0 - New Users/Tutorial/2.5.2 - GLM Models.md
+    - What is a GridLAB-D™ model?: docs/2.0 - New Users/Tutorial/2.5.2 - GLM Models.md
     - Modules: docs/2.0 - New Users/Tutorial/2.5.3 - Modules.md
     - Simulation time: docs/2.0 - New Users/Tutorial/2.5.3.1 - SimulationTime.md
     - Recorders and Players: docs/2.0 - New Users/Tutorial/2.5.4 - Recorders and Players.md
@@ -86,6 +82,7 @@
     - Command Line Options: docs/3.0 - Modeling Reference/Other Features/CommandLineOptions.md
     - Complex Numbers: docs/3.0 - Modeling Reference/Other Features/ComplexNumbers.md
     - Microgrids: docs/3.0 - Modeling Reference/Other Features/Microgrids.md
+    - Options: docs/3.0 - Modeling Reference/Other Features/Options.md
     - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
     - Simulation Options: docs/3.0 - Modeling Reference/Other Features/Simulation Options.md
     - Sync Check: docs/3.0 - Modeling Reference/Other Features/Spec_sync_check.md

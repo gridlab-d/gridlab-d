@@ -59,6 +59,18 @@ Mention of variables or code-snippbits within documentation text should contain 
 
 Note that **house_e** is the name of the model, but not a variable. To avoid confusion, it is placed in bold. This also makes it stand out visually and should aid in comprehension. The parameters described in the model, `heating_setpoint` and `cooling_setpoint` are both in back-ticks. It is also acceptable to refer to the heating and cooling setpoint as you would in prose text; in that case, because the parameters are not referenced directly using their variable names, they do not get back-ticks.
 
+## File names
+
+Referenced file names should be in quotes and italics, like:
+
+"Please refer to the "*helper_file.txt*" for more information."
+
+Keep this format even when linking files, for example:
+
+"Navigate to the respository to check out ["*sample_file.glm*"](path) as an example."
+
+Remember that both an asterix and an underscore will italicize text, and both may be used in this documentation.
+
 ## Avoid Biased Language
 
 To maintain a welcoming learning environment, avoid biased language in writing. These seemingly small changes ensure that everyone has a seat at the table. Additionally, use of some of the more dated, biased terms that have largely left the zeitgeist can be jarring and pull people out of their learning immersion.
