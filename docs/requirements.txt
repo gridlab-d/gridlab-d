@@ -20,6 +20,7 @@ mkdocs-autorefs==1.4.2
 mkdocs-get-deps==0.2.0
 mkdocstrings==0.29.1
 mkdocstrings-python==1.16.12
+mkdocs-mermaid2-plugin>=1.2.3
 mkdoxy==1.2.7
 packaging==25.0
 pathspec==0.12.1
