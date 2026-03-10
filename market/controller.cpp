@@ -565,7 +565,8 @@ int controller::init(OBJECT *parent)
         return 0;
       }
       gld_property *marketunit2;
-      if (fetch_property(&pClearingType2, "unit", pMarket2) == 0)
+      // if (fetch_property(&pClearingType2, "unit", pMarket2) == 0)
+      if (fetch_property(&marketunit2, "unit", pMarket2) == 0)
       {
         return 0;
       }
@@ -1044,11 +1045,19 @@ int controller::init(OBJECT *parent)
     PS_UNKNOWN = powerstate_prop.find_keyword("UNKNOWN");
     if (PS_OFF == nullptr || PS_ON == nullptr || PS_UNKNOWN == nullptr)
     {
-      gl_error("state property '%s' of object '%s' does not published all "
+      gl_error("state property '%s' of object '%s' does not publish all "
                "required keywords OFF, ON, and UNKNOWN",
                state, get_object(parent)->get_name());
+      return 0; // **do not continue**
     }
-    last_pState = *PS_UNKNOWN;
+
+    // Cache the numeric values once; compare integers later
+    ENUM_OFF = (PS_OFF ? (enumeration)(*PS_OFF) : 0);
+    ENUM_ON = (PS_ON ? (enumeration)(*PS_ON) : 0);
+    ENUM_UNKNOWN = (PS_UNKNOWN ? (enumeration)(*PS_UNKNOWN) : ENUM_OFF);
+    last_pState = ENUM_UNKNOWN;
+    // last_pState = *PS_UNKNOWN;
+    // return 0; // **do not continue**
   }
 
   if (heating_state[0] != 0)
@@ -1567,10 +1576,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 
   /* short circuit if the state variable doesn't change during the specified
    * interval */
-  enumeration ps =
-      -1; // ps==-1 means the powerstate is not found -- -1 should never be used
-  if (powerstate_prop.is_valid())
-    powerstate_prop.getp(ps);
+  enumeration ps_val = ENUM_UNKNOWN;
+  bool have_powerstate = powerstate_prop.is_valid();
+  if (have_powerstate)
+    powerstate_prop.getp(ps_val);
+
   if ((t1 < next_run) && (marketId == lastmkt_id))
   {
     if (t1 <= next_run - bid_delay)
@@ -1597,7 +1607,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
           else
             return next_run;
         }
-        else if (ps == last_pState)
+        else if (ps_val == last_pState)
         { // *pState == last_pState)
           if (control_mode == CN_DEV_LEVEL)
             return fast_reg_run;
@@ -1633,7 +1643,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
           {
             return fast_reg_run;
           }
-          else if (ps == last_pState)
+          else if (ps_val == last_pState)
           {
             return fast_reg_run;
           }
@@ -1739,20 +1749,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
     {
       if (use_predictive_bidding == true)
       {
-        if (ps == *PS_OFF && monitor > (max - deadband_shift))
+        if (ps_val == ENUM_OFF && monitor > (max - deadband_shift))
         {
           bid = pCap;
         }
-        else if (ps != *PS_OFF && monitor < (min + deadband_shift))
+        else if (ps_val != ENUM_OFF && monitor < (min + deadband_shift))
         {
           bid = 0.0;
           no_bid = 1;
         }
-        else if (ps != *PS_OFF && monitor > max)
+        else if (ps_val != ENUM_OFF && monitor > max)
         {
           bid = pCap;
         }
-        else if (ps == *PS_OFF && monitor < min)
+        else if (ps_val == ENUM_OFF && monitor < min)
         {
           bid = 0.0;
           no_bid = 1;
@@ -1775,20 +1785,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
     {
       if (use_predictive_bidding == true)
       {
-        if (ps == *PS_OFF && monitor < (min + deadband_shift))
+        if (ps_val == ENUM_OFF && monitor < (min + deadband_shift))
         {
           bid = pCap;
         }
-        else if (ps != *PS_OFF && monitor > (max - deadband_shift))
+        else if (ps_val != ENUM_OFF && monitor > (max - deadband_shift))
         {
           bid = 0.0;
           no_bid = 1;
         }
-        else if (ps != *PS_OFF && monitor < min)
+        else if (ps_val != ENUM_OFF && monitor < min)
         {
           bid = pCap;
         }
-        else if (ps == *PS_OFF && monitor > max)
+        else if (ps_val == ENUM_OFF && monitor > max)
         {
           bid = 0.0;
           no_bid = 1;
@@ -1816,13 +1826,13 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
           gl_error("the variable direction did not get set correctly.");
         }
         else if ((monitor > max + deadband_shift ||
-                  (ps != *PS_OFF && monitor > min - deadband_shift)) &&
+                  (ps_val != ENUM_OFF && monitor > min - deadband_shift)) &&
                  direction > 0)
         {
           bid = pCap;
         }
         else if ((monitor < min - deadband_shift ||
-                  (ps != *PS_OFF && monitor < max + deadband_shift)) &&
+                  (ps_val != ENUM_OFF && monitor < max + deadband_shift)) &&
                  direction < 0)
         {
           bid = pCap;
@@ -1907,7 +1917,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
       controller_bid.quantity = -last_q;
       if (powerstate_prop.is_valid())
       {
-        if (ps == *PS_ON)
+        if (ps_val == ENUM_ON)
         {
           controller_bid.state = BS_ON;
         }
@@ -2114,20 +2124,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
     {
       if (use_predictive_bidding == true)
       {
-        if (ps == *PS_OFF && monitor > (max - deadband_shift))
+        if (ps_val == ENUM_OFF && monitor > (max - deadband_shift))
         {
           bid = pCap;
         }
-        else if (ps != *PS_OFF && monitor < (min + deadband_shift))
+        else if (ps_val != ENUM_OFF && monitor < (min + deadband_shift))
         {
           bid = 0.0;
           no_bid = 1;
         }
-        else if (ps != *PS_OFF && monitor > max)
+        else if (ps_val != ENUM_OFF && monitor > max)
         {
           bid = pCap;
         }
-        else if (ps == *PS_OFF && monitor < min)
+        else if (ps_val == ENUM_OFF && monitor < min)
         {
           bid = 0.0;
           no_bid = 1;
@@ -2150,20 +2160,20 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
     {
       if (use_predictive_bidding == true)
       {
-        if (ps == *PS_OFF && monitor < (min + deadband_shift))
+        if (ps_val == ENUM_OFF && monitor < (min + deadband_shift))
         {
           bid = pCap;
         }
-        else if (ps != *PS_OFF && monitor > (max - deadband_shift))
+        else if (ps_val != ENUM_OFF && monitor > (max - deadband_shift))
         {
           bid = 0.0;
           no_bid = 1;
         }
-        else if (ps != *PS_OFF && monitor < min)
+        else if (ps_val != ENUM_OFF && monitor < min)
         {
           bid = pCap;
         }
-        else if (ps == *PS_OFF && monitor > max)
+        else if (ps_val == ENUM_OFF && monitor > max)
         {
           bid = 0.0;
           no_bid = 1;
@@ -2191,13 +2201,13 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
           gl_error("the variable direction did not get set correctly.");
         }
         else if ((monitor > max + deadband_shift ||
-                  (ps != *PS_OFF && monitor > min - deadband_shift)) &&
+                  (ps_val != ENUM_OFF && monitor > min - deadband_shift)) &&
                  direction > 0)
         {
           bid = pCap;
         }
         else if ((monitor < min - deadband_shift ||
-                  (ps != *PS_OFF && monitor < max + deadband_shift)) &&
+                  (ps_val != ENUM_OFF && monitor < max + deadband_shift)) &&
                  direction < 0)
         {
           bid = pCap;
@@ -2267,7 +2277,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
       last_p = bid;
       last_q = demandP;
 
-      if (ps == *PS_ON)
+      if (ps_val == ENUM_ON)
       {
         if (0 != strcmp(market_unit2, ""))
         {
@@ -2319,7 +2329,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
           }
         }
       }
-      else if (ps == *PS_OFF)
+      else if (ps_val == ENUM_OFF)
       {
         if (0 != strcmp(market_unit, ""))
         {
@@ -2690,7 +2700,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
     {
       if (powerstate_prop.is_valid())
       {
-        if (ps == *PS_ON)
+        if (ps_val == ENUM_ON)
         {
           controller_bid.state = BS_ON;
         }
@@ -2720,14 +2730,14 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
     }
     else
     {
-      if (last_pState != ps)
+      if (last_pState != ps_val)
       {
         KEY bid = (KEY)(lastmkt_id == marketId ? lastbid_id : -1);
         double my_bid = -pCap;
-        if (ps != *PS_OFF)
+        if (ps_val != ENUM_OFF)
           my_bid = last_p;
 
-        if (ps == *PS_ON)
+        if (ps_val == ENUM_ON)
         {
           controller_bid.state = BS_ON;
         }
@@ -2777,7 +2787,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1)
   }
 
   if (powerstate_prop.is_valid())
-    last_pState = ps;
+    last_pState = ps_val;
 
   char timebuf[128];
   gl_printtime(t1, timebuf, 127);
@@ -2815,14 +2825,14 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1)
       extern double bid_offset;
       double b_offset_DP = 1e-9;
       double demandP = 0.0;
-      enumeration ps = -1; // ps==-1 means the powerstate is not found -- -1
-                           // should never be used
+      enumeration ps_val = ENUM_UNKNOWN;
       OBJECT *hdr = object_header(this);
       char ctrname[1024];
       double loadP = 0.0;
 
-      if (powerstate_prop.is_valid())
-        powerstate_prop.getp(ps);
+      bool have_powerstate = powerstate_prop.is_valid();
+      if (have_powerstate)
+        powerstate_prop.getp(ps_val);
 
       if (bidmode != BM_PROXY)
       {
@@ -2848,30 +2858,30 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
       doubleTemp[0] = 0.0;
       doubleTemp[1] = 0.0;
-      doubleTemp[0] = calcTemp1_double_price(monitor, dBand, ps);
+      doubleTemp[0] = calcTemp1_double_price(monitor, dBand, ps_val);
       doubleTemp[1] = calcTemp2_double_price(
           pUa, pHm, pCa, pCm, pMassInternalGainFraction, pMassSolarGainFraction,
-          pQi, pQs, pQh, pTout, monitor, pTmass, dBand, ps);
+          pQi, pQs, pQh, pTout, monitor, pTmass, dBand, ps_val);
       monitor = (doubleTemp[0] + doubleTemp[1]) / 2;
 
       if (dir > 0)
       {
         if (use_predictive_bidding == true)
         {
-          if (ps == *PS_OFF && monitor > (max - deadband_shift))
+          if (ps_val == ENUM_OFF && monitor > (max - deadband_shift))
           {
             bid = pCap;
           }
-          else if (ps != *PS_OFF && monitor < (min + deadband_shift))
+          else if (ps_val != ENUM_OFF && monitor < (min + deadband_shift))
           {
             bid = 0.0;
             no_bid = 1;
           }
-          else if (ps != *PS_OFF && monitor > max)
+          else if (ps_val != ENUM_OFF && monitor > max)
           {
             bid = pCap;
           }
-          else if (ps == *PS_OFF && monitor < min)
+          else if (ps_val == ENUM_OFF && monitor < min)
           {
             bid = 0.0;
             no_bid = 1;
@@ -2894,20 +2904,20 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1)
       {
         if (use_predictive_bidding == true)
         {
-          if (ps == *PS_OFF && monitor < (min + deadband_shift))
+          if (ps_val == ENUM_OFF && monitor < (min + deadband_shift))
           {
             bid = pCap;
           }
-          else if (ps != *PS_OFF && monitor > (max - deadband_shift))
+          else if (ps_val != ENUM_OFF && monitor > (max - deadband_shift))
           {
             bid = 0.0;
             no_bid = 1;
           }
-          else if (ps != *PS_OFF && monitor < min)
+          else if (ps_val != ENUM_OFF && monitor < min)
           {
             bid = pCap;
           }
-          else if (ps == *PS_OFF && monitor > max)
+          else if (ps_val == ENUM_OFF && monitor > max)
           {
             bid = 0.0;
             no_bid = 1;
@@ -2935,13 +2945,13 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1)
             gl_error("the variable direction did not get set correctly.");
           }
           else if ((monitor > max + deadband_shift ||
-                    (ps != *PS_OFF && monitor > min - deadband_shift)) &&
+                    (ps_val != ENUM_OFF && monitor > min - deadband_shift)) &&
                    direction > 0)
           {
             bid = pCap;
           }
           else if ((monitor < min - deadband_shift ||
-                    (ps != *PS_OFF && monitor < max + deadband_shift)) &&
+                    (ps_val != ENUM_OFF && monitor < max + deadband_shift)) &&
                    direction < 0)
           {
             bid = pCap;
@@ -3053,7 +3063,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1)
       controller_bid.quantity = -last_q;
       if (powerstate_prop.is_valid())
       {
-        if (ps == *PS_ON)
+        if (ps_val == ENUM_ON)
         {
           controller_bid.state = BS_ON;
         }
