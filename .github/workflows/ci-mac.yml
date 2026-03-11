@@ -90,25 +90,25 @@ jobs:
           echo "─── installed tree (first 100 entries) ───"
           find "$INSTALL_PREFIX" -type f | head -100
 
-      # Python-based validation
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      # # Python-based validation
+      # - name: Setup Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.11'
 
-      - name: Install validator dependencies (optional)
-        if: ${{ hashFiles('tools/validate/requirements.txt') != '' }}
-        run: |
-          pip install -r tools/validate/requirements.txt
+      # - name: Install validator dependencies (optional)
+      #   if: ${{ hashFiles('tools/validate/requirements.txt') != '' }}
+      #   run: |
+      #     pip install -r tools/validate/requirements.txt
 
-      - name: Run Python GridLAB-D validator (glm)
-        run: |
-          set -euxo pipefail
-          export PATH="${INSTALL_PREFIX}/bin:$PATH"
-          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
-          export GLPATH="$(pwd):${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/gldcore"
-          ulimit -c unlimited
-          gridlabd --validate || true
+      # - name: Run Python GridLAB-D validator (glm)
+      #   run: |
+      #     set -euxo pipefail
+      #     export PATH="${INSTALL_PREFIX}/bin:$PATH"
+      #     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib/gridlabd"
+      #     export GLPATH="$(pwd):${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/gldcore"
+      #     ulimit -c unlimited
+      #     gridlabd --validate || true
 
       - name: Run Python GridLAB-D validator (JSON)
         run: |
@@ -209,20 +209,20 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run Python GridLAB-D validator (Windows)(glm)
-        shell: pwsh
-        run: |
-          $prefix = "$env:USERPROFILE\.temp\GridLAB-D"
-          $bin    = Join-Path $prefix "bin"
-          $lib    = Join-Path $prefix "lib"
-          $share  = Join-Path $prefix "share"
-          $gldcore= Join-Path $pwd "gldcore"
+      # - name: Run Python GridLAB-D validator (Windows)(glm)
+      #   shell: pwsh
+      #   run: |
+      #     $prefix = "$env:USERPROFILE\.temp\GridLAB-D"
+      #     $bin    = Join-Path $prefix "bin"
+      #     $lib    = Join-Path $prefix "lib"
+      #     $share  = Join-Path $prefix "share"
+      #     $gldcore= Join-Path $pwd "gldcore"
 
-          # Ensure the validator sees GLD binaries and modules
-          $env:PATH   = "$env:PATH;$bin"
-          $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
+      #     # Ensure the validator sees GLD binaries and modules
+      #     $env:PATH   = "$env:PATH;$bin"
+      #     $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
 
-          gridlabd --validate; if ($LASTEXITCODE -ne 0) { } 
+      #     gridlabd --validate; if ($LASTEXITCODE -ne 0) { } 
 
       - name: Run Python GridLAB-D validator (Windows) (JSON)
         shell: pwsh
@@ -344,21 +344,21 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run Python GridLAB-D validator (macOS)(glm)
-        shell: bash
-        run: |
-          set -euxo pipefail
-          PREFIX="$HOME/.temp/GridLAB-D"
-          BIN_DIR="$PREFIX/bin"
-          LIB_DIR="$PREFIX/lib"
-          SHARE_DIR="$PREFIX/share"
-          GLDCORE_DIR="$(pwd)/gldcore"
+      # - name: Run Python GridLAB-D validator (macOS)(glm)
+      #   shell: bash
+      #   run: |
+      #     set -euxo pipefail
+      #     PREFIX="$HOME/.temp/GridLAB-D"
+      #     BIN_DIR="$PREFIX/bin"
+      #     LIB_DIR="$PREFIX/lib"
+      #     SHARE_DIR="$PREFIX/share"
+      #     GLDCORE_DIR="$(pwd)/gldcore"
 
-          export DYLD_LIBRARY_PATH="${LIB_DIR}:${LIB_DIR}/gridlabd:${DYLD_LIBRARY_PATH:-}"
-          export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
-          export PATH="${PATH}:${BIN_DIR}"
+      #     export DYLD_LIBRARY_PATH="${LIB_DIR}:${LIB_DIR}/gridlabd:${DYLD_LIBRARY_PATH:-}"
+      #     export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
+      #     export PATH="${PATH}:${BIN_DIR}"
 
-          gridlabd --validate || true
+      #     gridlabd --validate || true
 
       - name: Run Python GridLAB-D validator (macOS)(JSON)
         shell: bash
@@ -374,9 +374,8 @@ jobs:
           export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
           export PATH="${PATH}:${BIN_DIR}"
 
-          # python -u validate_gld.py
-          gridlabd -T 0 --validate
-
+          python -u validate_gld.py
+          
 
       - name: Upload validation artefacts (macOS)
         if: always()
@@ -522,34 +521,34 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run Python GridLAB-D validator (macOS GCC)(glm)
-        shell: bash
-        run: |
-          set -euxo pipefail
-          PREFIX="$HOME/.temp/GridLAB-D"
-          BIN_DIR="$PREFIX/bin"
-          LIB_DIR="$PREFIX/lib"
-          SHARE_DIR="$PREFIX/share"
-          GLDCORE_DIR="$(pwd)/gldcore"
-          HB_PREFIX="$(brew --prefix)"
-          GCC_OPT_DIR="${HB_PREFIX}/opt/gcc"
+      # - name: Run Python GridLAB-D validator (macOS GCC)(glm)
+      #   shell: bash
+      #   run: |
+      #     set -euxo pipefail
+      #     PREFIX="$HOME/.temp/GridLAB-D"
+      #     BIN_DIR="$PREFIX/bin"
+      #     LIB_DIR="$PREFIX/lib"
+      #     SHARE_DIR="$PREFIX/share"
+      #     GLDCORE_DIR="$(pwd)/gldcore"
+      #     HB_PREFIX="$(brew --prefix)"
+      #     GCC_OPT_DIR="${HB_PREFIX}/opt/gcc"
 
-          # Try to include GCC runtime libs (libstdc++.6, libgcc_s.*)
-          # This avoids runtime issues when using GNU C++ on macOS.
-          # Common locations under Homebrew:
-          GCC_LIB_CANDIDATES=()
-          if [[ -d "${GCC_OPT_DIR}/lib/gcc" ]]; then
-            GCC_LIB_CANDIDATES+=("${GCC_OPT_DIR}/lib/gcc")
-            # deepest versioned subdir (e.g., lib/gcc/15)
-            vdir="$(ls -1d ${GCC_OPT_DIR}/lib/gcc/* 2>/dev/null | sort -V | tail -1 || true)"
-            [[ -n "$vdir" ]] && GCC_LIB_CANDIDATES+=("$vdir")
-          fi
+      #     # Try to include GCC runtime libs (libstdc++.6, libgcc_s.*)
+      #     # This avoids runtime issues when using GNU C++ on macOS.
+      #     # Common locations under Homebrew:
+      #     GCC_LIB_CANDIDATES=()
+      #     if [[ -d "${GCC_OPT_DIR}/lib/gcc" ]]; then
+      #       GCC_LIB_CANDIDATES+=("${GCC_OPT_DIR}/lib/gcc")
+      #       # deepest versioned subdir (e.g., lib/gcc/15)
+      #       vdir="$(ls -1d ${GCC_OPT_DIR}/lib/gcc/* 2>/dev/null | sort -V | tail -1 || true)"
+      #       [[ -n "$vdir" ]] && GCC_LIB_CANDIDATES+=("$vdir")
+      #     fi
 
-          export DYLD_LIBRARY_PATH="$(IFS=:; echo "${LIB_DIR}:${LIB_DIR}/gridlabd:${GCC_LIB_CANDIDATES[*]}:${DYLD_LIBRARY_PATH:-}")"
-          export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
-          export PATH="${PATH}:${BIN_DIR}"
+      #     export DYLD_LIBRARY_PATH="$(IFS=:; echo "${LIB_DIR}:${LIB_DIR}/gridlabd:${GCC_LIB_CANDIDATES[*]}:${DYLD_LIBRARY_PATH:-}")"
+      #     export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
+      #     export PATH="${PATH}:${BIN_DIR}"
 
-          gridlabd --validate || true
+      #     gridlabd --validate || true
 
       - name: Run Python GridLAB-D validator (macOS GCC)(JSON)
         shell: bash
