@@ -211,22 +211,38 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 option(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
 
-##
-## Portable RPATH helper (NON-intrusive for Windows; applied per-target on UNIX)
-## - macOS: @loader_path resolves to the directory of the loading binary or module
-## - Linux: $ORIGIN resolves to the directory of the loading binary or module
-##
+
+# --- CMakeLists.txt patch ---
 function(set_portable_rpath tgt)
+  # Determine the target type: EXECUTABLE, MODULE_LIBRARY, SHARED_LIBRARY, STATIC_LIBRARY, etc.
+  get_target_property(_type ${tgt} TYPE)
+
+  # Always point build-time rpath at the directory holding gldapi (so build tree runs work)
+  set_target_properties(${tgt} PROPERTIES
+    BUILD_RPATH "$<TARGET_FILE_DIR:gldapi>"
+  )
+
   if(APPLE)
-    set_target_properties(${tgt} PROPERTIES
-      BUILD_RPATH "$<TARGET_FILE_DIR:gldapi>"
-      INSTALL_RPATH "@loader_path"
-    )
-  elseif(UNIX)  # excludes Windows
-    set_target_properties(${tgt} PROPERTIES
-      BUILD_RPATH "$<TARGET_FILE_DIR:gldapi>"
-      INSTALL_RPATH "$ORIGIN"
-    )
+    if(_type STREQUAL "EXECUTABLE")
+      # Executable in bin must find libs in ../lib (and ../lib/gridlabd for modules under that subtree)
+      set_target_properties(${tgt} PROPERTIES
+        INSTALL_RPATH "@loader_path/../lib;@loader_path/../lib/gridlabd"
+      )
+    else() # modules/libraries installed into lib
+      set_target_properties(${tgt} PROPERTIES
+        INSTALL_RPATH "@loader_path"
+      )
+    endif()
+  elseif(UNIX) # Linux and other ELF platforms (excluding Windows)
+    if(_type STREQUAL "EXECUTABLE")
+      set_target_properties(${tgt} PROPERTIES
+        INSTALL_RPATH "$ORIGIN/../lib;$ORIGIN/../lib/gridlabd"
+      )
+    else() # modules/libraries in lib
+      set_target_properties(${tgt} PROPERTIES
+        INSTALL_RPATH "$ORIGIN"
+      )
+    endif()
   endif()
 endfunction()
 
