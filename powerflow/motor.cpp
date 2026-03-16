@@ -186,7 +186,7 @@ int motor::create()
 	motor_trip = 0;  // share the variable with TPIM
 	Pbase = -999;
 	n = 1.22;              
-	Rds =0.0365;           
+	Rds = 0.0365;           
 	Rqs = 0.0729;          
 	Rr =-999;
 	Xm=-999;
@@ -194,12 +194,12 @@ int motor::create()
 	Xc1 = -2.779;           
 	Xc2 = -0.7;            
 	Xd_prime = 0.1033;      
-	Xq_prime =0.1489;       
+	Xq_prime = 0.1489;       
 	bsat = 0.7212;  
 	Asat = 5.6;
-	H=-999;
-	Jm=-999;
-	To_prime =0.1212;   
+	H = -999;
+	Jm = -999;
+	To_prime = 0.1212;   
 	trip_time = 10;        
 	reconnect_time = 300;
 	iteration_count = 1000;  // share the variable with TPIM
@@ -1398,7 +1398,7 @@ void motor::SPIMupdateVars() {
 	psi_f_prev = psi_f; 
 	psi_b_prev = psi_b;
 	Iqs_prev = Iqs;
-	Ids_prev =Ids;
+	Ids_prev = Ids;
 	If_prev = If;
 	Ib_prev = Ib;
 	Is_prev = Is;
@@ -1437,7 +1437,7 @@ void motor::SPIMreinitializeVars() {
 	psi_f = psi_f_prev; 
 	psi_b = psi_b_prev;
 	Iqs = Iqs_prev;
-	Ids =Ids_prev;
+	Ids = Ids_prev;
 	If = If_prev;
 	Ib = Ib_prev;
 	Is = Is_prev;

@@ -44,9 +44,9 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			PT_enumeration, "msg_mode", PADDR(msgmode),PT_DESCRIPTION,"messages regarding remote node voltage to come internally from gridlabd or externally through co-simulation. Set to EXTERNAL only if you have co-simulation enabled",
 				PT_KEYWORD, "INTERNAL", (enumeration)msg_INTERNAL,
 				PT_KEYWORD, "EXTERNAL", (enumeration)msg_EXTERNAL,
-			PT_complex, "remote_voltage_A[V]", PADDR(check_voltage[0]),PT_DESCRIPTION,"remote node voltage, Phase A to ground",
-            PT_complex, "remote_voltage_B[V]", PADDR(check_voltage[1]),PT_DESCRIPTION,"remote node voltage, Phase B to ground",
-            PT_complex, "remote_voltage_C[V]", PADDR(check_voltage[2]),PT_DESCRIPTION,"remote node voltage, Phase C to ground",
+			PT_complex, "remote_voltage_A[V]", PADDR(check_voltage[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"remote node voltage, Phase A to ground",
+            PT_complex, "remote_voltage_B[V]", PADDR(check_voltage[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"remote node voltage, Phase B to ground",
+            PT_complex, "remote_voltage_C[V]", PADDR(check_voltage[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"remote node voltage, Phase C to ground",
 			PT_double, "tap_A_change_count",PADDR(tap_A_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase A since beginning of simulation (plus initial value)",
 			PT_double, "tap_B_change_count",PADDR(tap_B_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase B since beginning of simulation (plus initial value)",
 			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
@@ -537,10 +537,13 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 				if (mech_t_next[i] <= curr_time_value) {
 					mech_flag[i] = 1;
 				}
+				else {
+					mech_flag[i] = 0;
+				}
 				if (dwell_t_next[i] <= curr_time_value) {
 					dwell_flag[i] = 1;
 				}
-				else if (dwell_t_next[i] > curr_time_value) {
+				else {
 					dwell_flag[i] = 0;
 				}
 			}
@@ -724,10 +727,13 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 			if (mech_t_next[0] <= curr_time_value) {
 				mech_flag[0] = 1;
 			}
+			else {
+				mech_flag[0] = 0;
+			}
 			if (dwell_t_next[0] <= curr_time_value) {
 				dwell_flag[0] = 1;
 			}
-			else if (dwell_t_next[0] > curr_time_value) {
+			else {
 				dwell_flag[0] = 0;
 			}
 
@@ -1177,10 +1183,13 @@ double regulator::reg_postPost_fxn(double curr_time_value)
 				if (mech_t_next[i] <= curr_time_value) {
 					mech_flag[i] = 1;
 				}
+				else {
+					mech_flag[i] = 0;
+				}
 				if (dwell_t_next[i] <= curr_time_value) {
 					dwell_flag[i] = 1;
 				}
-				else if (dwell_t_next[i] > curr_time_value) {
+				else {
 					dwell_flag[i] = 0;
 				}
 			}
