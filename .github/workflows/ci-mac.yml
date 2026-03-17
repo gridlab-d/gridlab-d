@@ -2,8 +2,6 @@
 name: CI – Linux (ARM64 + x86_64), Windows & macOS with Python validator
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
     inputs:
       config:
@@ -25,7 +23,7 @@ jobs:
       matrix:
         include:
           - name: ubuntu-arm64
-            runs-on: ubuntu-24.04-arm       # Official ARM64 label
+            runs-on: ubuntu-24.04-arm # Official ARM64 label
             triplet: aarch64
           - name: ubuntu-x86_64
             runs-on: ubuntu-latest
@@ -35,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 60
     env:
-      BUILD_TYPE:     ${{ github.event.inputs.config || 'Release' }}
+      BUILD_TYPE: ${{ github.event.inputs.config || 'Release' }}
       INSTALL_PREFIX: ${{ github.workspace }}/.local/GridLAB-D
 
     steps:
@@ -118,7 +116,7 @@ jobs:
           export GLPATH="$(pwd):${INSTALL_PREFIX}:${INSTALL_PREFIX}/bin:${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/share:$(pwd)/gldcore"
           ulimit -c unlimited
           python -u validate_gld.py
-            
+
       - name: Upload validation artefacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -129,8 +127,6 @@ jobs:
             validate_errors.txt
             gridlabd.xml
           if-no-files-found: ignore
-
-      
 
   # ─────────────────────────────────────────────
   # Windows: Visual Studio 2022 + vcpkg + Python validator
@@ -207,7 +203,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       # - name: Run Python GridLAB-D validator (Windows)(glm)
       #   shell: pwsh
@@ -222,7 +218,7 @@ jobs:
       #     $env:PATH   = "$env:PATH;$bin"
       #     $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
 
-      #     gridlabd --validate; if ($LASTEXITCODE -ne 0) { } 
+      #     gridlabd --validate; if ($LASTEXITCODE -ne 0) { }
 
       - name: Run Python GridLAB-D validator (Windows) (JSON)
         shell: pwsh
@@ -239,7 +235,6 @@ jobs:
 
           python -u validate_gld.py
 
-
       - name: Upload validation artefacts (Windows)
         if: always()
         uses: actions/upload-artifact@v4
@@ -255,7 +250,7 @@ jobs:
   # macOS: AppleClang + Homebrew + Python validator
   # ─────────────────────────────────────────────
   macos-build-and-validate:
-    runs-on: macos-latest   # ARM64 macOS runner
+    runs-on: macos-latest # ARM64 macOS runner
     timeout-minutes: 600
 
     steps:
@@ -316,7 +311,7 @@ jobs:
         shell: bash
         env:
           CMAKE_PREFIX_PATH: ${{ env.CMAKE_PREFIX_PATH }}
-          PKG_CONFIG_PATH:   ${{ env.PKG_CONFIG_PATH }}
+          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
         run: |
           set -euxo pipefail
           BUILD_DIR="out/build/ci-macos"
@@ -342,7 +337,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       # - name: Run Python GridLAB-D validator (macOS)(glm)
       #   shell: bash
@@ -375,7 +370,6 @@ jobs:
           export PATH="${PATH}:${BIN_DIR}"
 
           python -u validate_gld.py
-          
 
       - name: Upload validation artefacts (macOS)
         if: always()
@@ -388,11 +382,11 @@ jobs:
             gridlabd.xml
           if-no-files-found: ignore
 
-# ─────────────────────────────────────────────
+  # ─────────────────────────────────────────────
   # macOS (ARM64) with Homebrew GCC + Python validator
   # ─────────────────────────────────────────────
   mac-arm64-gcc:
-    runs-on: macos-latest   # Apple Silicon runner (ARM64)
+    runs-on: macos-latest # Apple Silicon runner (ARM64)
     timeout-minutes: 600
 
     steps:
@@ -481,7 +475,7 @@ jobs:
         shell: bash
         env:
           CMAKE_PREFIX_PATH: ${{ env.CMAKE_PREFIX_PATH }}
-          PKG_CONFIG_PATH:   ${{ env.PKG_CONFIG_PATH }}
+          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
         run: |
           set -euxo pipefail
           BUILD_DIR="out/build/ci-macos-gcc"
@@ -519,7 +513,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       # - name: Run Python GridLAB-D validator (macOS GCC)(glm)
       #   shell: bash
