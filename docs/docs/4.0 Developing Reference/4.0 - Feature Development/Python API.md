@@ -41,7 +41,7 @@ The Python API will be distributed as a PyPI package that users will be able to 
 
 
 
-## Use Cases
+## API Examples
 
 The Python API enables a broad range of applications for GridLAB-D, from simply running a model to integrating GridLAB-D into a larger code base where it serves as a modeling engine alongside a wide range of Python-enabled functionality. The API fundamentally changes GridLAB-D from a command-line simulation tool to a simulation engine that can be used in a much broader range of applications. Below are a few examples of how we envision GridLAB-D being used via this new API and fully expect users to go even further to meet a broad range of power system simulation needs.
 
@@ -52,9 +52,13 @@ The Python API enables a broad range of applications for GridLAB-D, from simply 
 - Messages produced by the GridLAB-D engine that are normally printed on the console are supressed by default and are instead as a list of JSON strings whenever the simulation is stopped via the `get_messages()` method. 
 - **TODO** - Make sure this is correct in the final version: Trying to write an object parameter that is read-only via the API will produce a warning.
 
+### Installation
+
+PyPI, baby: `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ gridlabd==1.0.10`
+
 
 ### Simple Model Run
-As a most minimal use case, the following code is all that is required to perform the equivalent of running a model on the command line
+As a most minimal use case, the following code is all that is required to simply run a GridLAB-D model.
 
 ```python
 import gridlabd
@@ -72,10 +76,32 @@ gld.run()
 gld.exit_gld()
 ```
 
-Though creating a script to just run a single model is likely less common, this code does show the simplest use case. A slightly more complex use case could extend this to run multiple models in parallel by instantiating multiple GridLAB-D engines, loading each with a unique model and running it.
+Though this simple example shows no new additional functionality as compared to 
 
-**TODO** - We need to think about any code examples. I've seen problems on other projects where this kind of documentation gets out of date with the codebase but because it is effectively just text on the page and never has to be run, nobody but the poor user who thinks it should actually work finds out. I'm still going to put this stuff in since its not a big lift but I don't think it should stay. In HELICS, we had a page to document each example we made. The examples were realized as code on disk and thus could be tested and so if we copied any of that code to the documentation page, and if the code failed during testing we knew we only had to update the code snippets on that one page.
+### Running Multiple Models in Parallel
 
+### Controlling Simulation Start and Stop Time
+
+### Controlling Simulation Time
+`step()`, `step_to()`, `set_time_step()`
+
+### Reading Data from the Model
+
+### Writing Data to the Model
+
+### Working with Checkpoints
+
+### Working in Transient Mode
+
+### Example Application 1: GUI for Model Configuration
+
+### Example Application 2: Runtime Monitoring
+
+### Example Application 3: Integration with PyPower
+
+### Example Application 4: Integration with OCHRE
+
+### Example Application 5: Co-Simulation with GLD as a HELICS Federate
 
 ### Simulation Control with Model Reading and Writing
 GridLAB-D, as an existing part of its core functionality, loads properly formatted models from a file into memory as a part of preparing for simulation. The Python API is able to leverage that model parsing and allow access to the model in memory via API calls. This allows users to read and write to the model directly, both before and during the execution of the simulation proper. 
@@ -108,40 +134,8 @@ gld.exit_gld()
 GridLAB-D has many existing data collection capabilities that are often sufficient but if the data collection mechanism or the output data format needs to be customized, the Python API provides mechanisms for doing so. Using the Python APIs to read data out of a model, its possible to write that data to disk in an arbitrary format (_e.g._ parquet, zarr) or write it to a database (_e.g._ SQLite, Postgres). Furthermore, it would not be difficult to make a data monitoring application that runs the GridLAB-D model and pulls out particular parameters and graphs their change in value or simulated time or presents, say, hourly histograms of the indoor air temperature of the house objects. 
 
 
-## Getting Started with the GridLAB-D Python API
-Introduction and examples that show how to use the Python API
-
-### Installation
-
-PyPI, baby: `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ gridlabd==1.0.10`
-
-### Core APIs
-
-**TODO** - I'm not sure if we need this or how it goes with the above section showing actual code. Maybe, for the reasons I stated in the section with code, we don't have code in that section and this section is where we show some of the APIs? Same problem as above, though: we don't want to write literal code here to avoid problems with forgetting about it if the APIs get updated and leaving inaccurate code laying around in the documentation.
-
-That said, somehow we need to introduce new users to the APIs and explain them. Maybe that is part of the examples and we keep this whole page free of code?
-
-#### Time Management
-
-Adjusting model start and stop time
-
-Advancing through simulation time
-
-#### Model Editing
-
-Can only add objects before starting the simulation.
-
-Can always adjust object parameter values. 
-
-Not all parameter values can be adjusted after the simulation starts; some are just used to initialize the simulation.
 
 
-
-## User-Facing Python Class
-
-**TODO** - Add description of class once finalized. I'm holding off on writing a lot on this for now.
-
-**TODO** - Add class and sequence diagram for final Python class.
 
 
 ```mermaid
