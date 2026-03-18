@@ -62,7 +62,15 @@ PUBLISHABLE_TYPES = {
 
 
 def _extract_numeric(value) -> float | None:
-	"""Extract a numeric value from GridLAB-D property strings."""
+	"""Extract the first numeric value from a GridLAB-D property string.
+
+	Args:
+		value: Raw property value from GridLAB-D; may be numeric, a string
+			with units appended, or None.
+
+	Returns:
+		The extracted float, or None if no numeric value could be parsed.
+	"""
 	if isinstance(value, (int, float)):
 		return float(value)
 	if value is None:
@@ -79,15 +87,31 @@ def _extract_numeric(value) -> float | None:
 
 
 def _strip_comments(text: str) -> str:
+	"""Remove C-style block and line comments from source text.
+
+	Args:
+		text: Raw C/C++ source or header text.
+
+	Returns:
+		The input text with all /* ... */ and // ... comments removed.
+	"""
 	text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
 	text = re.sub(r"//.*", "", text)
 	return text
 
 
 def _parse_header_properties(header_path: Path) -> set[str]:
-	"""Parse public member names from a class header.
+	"""Parse public member variable names from a C++ class header file.
 
-	This keeps parsing lightweight and focuses on public declarations.
+	Performs a lightweight scan that tracks public/private/protected access
+	sections and collects non-method member declarations.
+
+	Args:
+		header_path: Absolute path to the .h file to parse.
+
+	Returns:
+		A set of public member variable name strings.  Returns an empty set
+		if the file does not exist.
 	"""
 	if not header_path.exists():
 		return set()
@@ -129,7 +153,21 @@ def _parse_header_properties(header_path: Path) -> set[str]:
 
 
 def _parse_published_properties_and_units(source_path: Path) -> tuple[set[str], dict[str, str]]:
-	"""Parse gl_publish_variable-style property names and units from a .cpp file."""
+	"""Parse property names and units from a GridLAB-D gl_publish_variable block.
+
+	Scans a .cpp file for ``PT_*`` type tokens followed by quoted name strings
+	of the form ``"name[unit]"`` and collects each published property and its
+	optional unit.
+
+	Args:
+		source_path: Absolute path to the .cpp source file to parse.
+
+	Returns:
+		A tuple of ``(props, units)`` where *props* is a set of published
+		property name strings and *units* is a mapping from property name to
+		unit string.  Properties without a unit are omitted from *units*.
+		Both containers are empty if the file does not exist.
+	"""
 	if not source_path.exists():
 		return set(), {}
 
@@ -159,6 +197,18 @@ def _parse_published_properties_and_units(source_path: Path) -> tuple[set[str], 
 
 
 def _find_repo_root(start: Path) -> Path | None:
+	"""Walk up the directory tree to locate the GridLAB-D repository root.
+
+	The root is identified by the simultaneous presence of
+	``residential/house_e.h`` and ``generators/solar.h``.
+
+	Args:
+		start: Directory from which to begin the upward search.
+
+	Returns:
+		The first ancestor directory (inclusive of *start*) that looks like
+		the repo root, or ``None`` if no such directory is found.
+	"""
 	for candidate in [start] + list(start.parents):
 		if (candidate / "residential/house_e.h").exists() and (candidate / "generators/solar.h").exists():
 			return candidate
@@ -179,6 +229,17 @@ class PropertyRuleRow:
 	"""One dynamic row in the property rule list."""
 
 	def __init__(self, parent: tk.Widget, on_remove, metadata_provider):
+		"""Initialize a single property-rule row and attach it to *parent*.
+
+		Args:
+			parent: The Tkinter container widget that will hold this row's frame.
+			on_remove: Callable invoked with this ``PropertyRuleRow`` instance
+				when the Remove button is clicked.
+			metadata_provider: Callable with signature
+				``(mode, class_filter, prop_name)`` that returns either a sorted
+				list of property name strings (``mode="choices"``) or a unit
+				string (``mode="unit"``).
+		"""
 		self.frame = ttk.Frame(parent)
 		self.on_remove = on_remove
 		self.metadata_provider = metadata_provider
@@ -233,12 +294,32 @@ class PropertyRuleRow:
 		self._refresh_property_values()
 
 	def _property_choices(self) -> list[str]:
+		"""Return the sorted list of valid property names for the selected class.
+
+		Returns:
+			A list of property name strings appropriate for the currently
+			selected class filter.
+		"""
 		return self.metadata_provider("choices", self.class_var.get().strip(), "")
 
 	def _property_unit(self, name: str) -> str:
+		"""Return the unit string for a property in the selected class.
+
+		Args:
+			name: Property name to look up.
+
+		Returns:
+			The unit string (e.g. ``"degF"``), or an empty string if the
+			property has no unit or is not found.
+		"""
 		return self.metadata_provider("unit", self.class_var.get().strip(), name)
 
 	def _refresh_property_values(self) -> None:
+		"""Reload the property combobox choices and unit label for the current class.
+
+		Called after the class filter changes to ensure both the dropdown list
+		and the displayed unit reflect the newly selected class.
+		"""
 		choices = self._property_choices()
 		self.property_combo["values"] = choices
 		current = self.property_var.get().strip()
@@ -248,13 +329,33 @@ class PropertyRuleRow:
 			self.unit_var.set(self._property_unit(current) or "-")
 
 	def _on_class_changed(self, _event=None) -> None:
+		"""Handle a class filter combobox selection change.
+
+		Args:
+			_event: Tkinter event object (unused).
+		"""
 		self._refresh_property_values()
 
 	def _on_property_changed(self, _event=None) -> None:
+		"""Handle a property combobox selection change.
+
+		Updates the unit label to match the newly selected property.
+
+		Args:
+			_event: Tkinter event object (unused).
+		"""
 		name = self.property_var.get().strip()
 		self.unit_var.set(self._property_unit(name) or "-")
 
 	def _on_property_typed(self, _event=None) -> None:
+		"""Filter the property dropdown list as the user types.
+
+		Performs a case-insensitive substring match against all valid property
+		names for the current class and updates the combobox values accordingly.
+
+		Args:
+			_event: Tkinter event object (unused).
+		"""
 		typed = self.property_var.get().strip().lower()
 		choices = self._property_choices()
 		if typed:
@@ -265,10 +366,22 @@ class PropertyRuleRow:
 		self.unit_var.set(self._property_unit(self.property_var.get().strip()) or "-")
 
 	def remove(self) -> None:
+		"""Destroy this row's frame and notify the parent to remove it from tracking."""
 		self.frame.destroy()
 		self.on_remove(self)
 
 	def get_rule(self) -> PropertyRule:
+		"""Validate the row's inputs and return a PropertyRule dataclass.
+
+		Returns:
+			A :class:`PropertyRule` populated from the current widget values.
+
+		Raises:
+			ValueError: If the class filter is invalid, the property name is
+				empty, the property is not recognized for the selected class
+				(when a specific class is chosen), min/max are not numeric, or
+				min is greater than max.
+		"""
 		class_filter = self.class_var.get().strip()
 		if class_filter not in CLASS_FILTER_MAP:
 			raise ValueError(f"Invalid class filter '{class_filter}'.")
@@ -306,6 +419,14 @@ class PropertyRuleRow:
 
 class ModelEditGUI:
 	def __init__(self, root: tk.Tk):
+		"""Initialize the GUI and build the application window.
+
+		Loads property metadata from GridLAB-D source files, constructs all
+		UI widgets, and adds a default empty rule row.
+
+		Args:
+			root: The top-level Tkinter window that hosts the GUI.
+		"""
 		self.root = root
 		self.root.title("GridLAB-D Property Group Editor")
 		self.root.geometry("1200x800")
@@ -322,6 +443,20 @@ class ModelEditGUI:
 		self._add_rule_row()
 
 	def _load_property_metadata(self) -> tuple[dict[str, list[str]], dict[str, dict[str, str]]]:
+		"""Parse property names and units from GridLAB-D header and source files.
+
+		Locates the repository root relative to this script, then parses each
+		class's .h and .cpp files to build a combined property list and a
+		units mapping.
+
+		Returns:
+			A tuple of ``(class_properties, class_units)`` where
+			*class_properties* maps each class name to a sorted list of property
+			name strings and *class_units* maps each class name to a dict of
+			``{property_name: unit_string}``.  Both dicts are keyed by
+			``"house"``, ``"solar"``, and ``"inverter"``.  Values are empty if
+			the repository root cannot be found.
+		"""
 		class_properties: dict[str, list[str]] = {"house": [], "solar": [], "inverter": []}
 		class_units: dict[str, dict[str, str]] = {"house": {}, "solar": {}, "inverter": {}}
 
@@ -339,6 +474,24 @@ class ModelEditGUI:
 		return class_properties, class_units
 
 	def _metadata_provider(self, mode: str, class_filter: str, prop_name: str):
+		"""Provide property metadata to rule rows.
+
+		This method is passed as a callable to each :class:`PropertyRuleRow` so
+		they can query available properties and units without a direct reference
+		to the GUI instance.
+
+		Args:
+			mode: ``"choices"`` to retrieve a sorted list of valid property
+				names, or ``"unit"`` to retrieve the unit string for a specific
+				property.
+			class_filter: One of the keys in :data:`CLASS_FILTER_MAP`.
+			prop_name: Property name to look up (only used when ``mode="unit"``).
+
+		Returns:
+			A sorted list of property name strings when ``mode="choices"``, or a
+			unit string (possibly empty) when ``mode="unit"``.  Returns ``[]``
+			or ``""`` for unrecognized inputs.
+		"""
 		if class_filter not in CLASS_FILTER_MAP:
 			return [] if mode == "choices" else ""
 
@@ -364,6 +517,7 @@ class ModelEditGUI:
 		return ""
 
 	def _build_ui(self) -> None:
+		"""Construct and layout all widgets for the main application window."""
 		main = ttk.Frame(self.root, padding=12)
 		main.pack(fill="both", expand=True)
 
@@ -451,15 +605,22 @@ class ModelEditGUI:
 		ttk.Label(bottom, textvariable=self.status_var).pack(side="left", padx=12)
 
 	def _add_rule_row(self) -> None:
+		"""Append a new empty rule row to the property edit rules section."""
 		row = PropertyRuleRow(self.rows_container, self._remove_rule_row, self._metadata_provider)
 		row.frame.pack(fill="x")
 		self.rule_rows.append(row)
 
 	def _remove_rule_row(self, row: PropertyRuleRow) -> None:
+		"""Remove a rule row from the internal tracking list.
+
+		Args:
+			row: The :class:`PropertyRuleRow` to remove.
+		"""
 		if row in self.rule_rows:
 			self.rule_rows.remove(row)
 
 	def _pick_input_file(self) -> None:
+		"""Open a file dialog to select the input GLM and pre-fill the output path."""
 		filename = filedialog.askopenfilename(
 			title="Select GridLAB-D model file",
 			filetypes=[("GridLAB-D Models", "*.glm"), ("All Files", "*.*")],
@@ -471,6 +632,7 @@ class ModelEditGUI:
 				self.output_file_var.set(str(base.with_name(f"{base.stem}_edited{base.suffix}")))
 
 	def _pick_output_file(self) -> None:
+		"""Open a save-as dialog to choose the output file path."""
 		filename = filedialog.asksaveasfilename(
 			title="Save edited GridLAB-D model as",
 			defaultextension=".glm",
@@ -480,10 +642,19 @@ class ModelEditGUI:
 			self.output_file_var.set(filename)
 
 	def _clear_preview_table(self) -> None:
+		"""Remove all rows from the preview Treeview table."""
 		for row_id in self.preview_table.get_children():
 			self.preview_table.delete(row_id)
 
 	def _parse_seed(self) -> int | None:
+		"""Parse and validate the random seed entry.
+
+		Returns:
+			The integer seed value, or ``None`` if the field is blank.
+
+		Raises:
+			ValueError: If the field contains a non-integer value.
+		"""
 		seed_text = self.seed_var.get().strip()
 		if not seed_text:
 			return None
@@ -493,6 +664,17 @@ class ModelEditGUI:
 			raise ValueError("Random seed must be an integer.") from exc
 
 	def _collect_rules(self) -> list[PropertyRule]:
+		"""Collect and validate all non-empty rule rows.
+
+		Skips rows where the property name and both range fields are blank.
+
+		Returns:
+			A list of validated :class:`PropertyRule` objects.
+
+		Raises:
+			ValueError: If no valid rules are present, or if any row's
+				:meth:`PropertyRuleRow.get_rule` raises.
+		"""
 		rules: list[PropertyRule] = []
 		for row in self.rule_rows:
 			if (
@@ -509,9 +691,27 @@ class ModelEditGUI:
 		return rules
 
 	def _get_target_classes(self, class_filter: str) -> list[str]:
+		"""Return the list of GridLAB-D class names for a given filter key.
+
+		Args:
+			class_filter: A key from :data:`CLASS_FILTER_MAP`, e.g. ``"house"``.
+
+		Returns:
+			A list of GridLAB-D internal class name strings to query.
+		"""
 		return CLASS_FILTER_MAP[class_filter]
 
 	def _collect_target_objects(self, sim, class_filter: str) -> list[str]:
+		"""Gather all unique object names matching the class filter from a loaded simulation.
+
+		Args:
+			sim: A loaded ``gridlabd.GridLabD`` simulation instance.
+			class_filter: A key from :data:`CLASS_FILTER_MAP`.
+
+		Returns:
+			A deduplicated list of object name strings matching the given class
+			filter.  Classes that raise during lookup are silently skipped.
+		"""
 		objects: list[str] = []
 		seen: set[str] = set()
 		for cls_name in self._get_target_classes(class_filter):
@@ -526,6 +726,15 @@ class ModelEditGUI:
 		return objects
 
 	def _load_sim(self, input_path: Path):
+		"""Load a GLM file into a new GridLAB-D simulation instance.
+
+		Args:
+			input_path: Absolute path to the .glm file to load.
+
+		Returns:
+			A fully initialised ``gridlabd.GridLabD`` instance ready for
+			property queries and modifications.
+		"""
 		sim = gridlabd.GridLabD()
 		sim.set_working_directory(str(input_path.parent))
 		sim.setup_before_load()
@@ -534,6 +743,16 @@ class ModelEditGUI:
 		return sim
 
 	def _validate_paths(self) -> tuple[Path, Path]:
+		"""Validate that the input and output file paths are usable.
+
+		Returns:
+			A tuple of ``(input_path, output_path)`` as :class:`~pathlib.Path`
+			objects.
+
+		Raises:
+			ValueError: If either path field is empty or if the input file does
+				not exist on disk.
+		"""
 		input_text = self.input_file_var.get().strip()
 		output_text = self.output_file_var.get().strip()
 		if not input_text:
@@ -548,6 +767,13 @@ class ModelEditGUI:
 		return input_path, output_path
 
 	def _preview_rules(self) -> None:
+		"""Load the model and count affected objects per rule for preview.
+
+		Validates paths and rules, loads the simulation, then for each rule
+		counts how many objects in the target class actually expose the
+		requested property.  Results are displayed in the preview table.
+		Errors are shown in a modal dialog.
+		"""
 		sim = None
 		try:
 			input_path, _ = self._validate_paths()
@@ -594,6 +820,14 @@ class ModelEditGUI:
 					pass
 
 	def _export_model(self) -> None:
+		"""Apply all rules to the model and save the edited GLM.
+
+		Loads the simulation, iterates over every rule, draws a uniform random
+		value in [min, max] for each matching object property, updates it via
+		the GridLAB-D API, then calls ``save_checkpoint`` to write the modified
+		model.  Optionally shows distribution histograms.  Errors are shown in
+		a modal dialog.
+		"""
 		sim = None
 		try:
 			input_path, output_path = self._validate_paths()
@@ -680,7 +914,17 @@ class ModelEditGUI:
 					pass
 
 	def _show_histograms(self, plot_data: dict[str, tuple[list[float], list[float]]]) -> None:
-		"""Show one histogram window per selected property when matplotlib is available."""
+		"""Display before/after distribution histograms for edited properties.
+
+		Lazily imports matplotlib at call time so the GUI remains functional
+		even if matplotlib is not installed.  Shows one figure per property key.
+
+		Args:
+			plot_data: Mapping from ``"class_filter:property_name"`` keys to
+				``(original_values, new_values)`` pairs for histogram plotting.
+				Properties with ``show_histogram=False`` are excluded by the
+				caller.
+		"""
 		try:
 			import matplotlib.pyplot as plt
 		except Exception:
@@ -704,6 +948,7 @@ class ModelEditGUI:
 
 
 def main() -> None:
+	"""Launch the GridLAB-D Property Group Editor GUI application."""
 	root = tk.Tk()
 	ModelEditGUI(root)
 	root.mainloop()
