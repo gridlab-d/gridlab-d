@@ -1,6 +1,7 @@
 # 0.0 GridLAB-D
 
 - [x] GLD Association? Is that still a thing? --> it is not, removed from repo.
+- [X] Check links in the publication list, replace with DOIs if possible
 
 # 1.0 Prospective Users
 
@@ -27,7 +28,7 @@
 - [X] **XML** files. Still supported? Keep documentation? 
   - remove ref, "soft keep", switch to JSON as default
 - [ ] Revisit doxygen/built-in documentation within the code itself
-  - [ ]Dev team to build out a few doxygen examples to test campatability and usefulness
+  - [ ] Dev team to build out a few doxygen examples to test campatability and usefulness
 - [X] **MySQL** player and recorder - keep? If so, needs better intro. 
   - move to unimplemented
 - [X] **Aggregate Demand Response Model** - this is a theory page, unclear what part of the GLD code it's actually referring to. Is this implemented? 
@@ -110,7 +111,7 @@
 # 5.0 Integration
 - Deleting for now, preserving intro page:
 
-## Intro to Integration
+#### Intro to Integration
 excerpt: if libgld comes into existence
 
 * Who is an “integrator” and what this guide intends to provide
@@ -183,8 +184,8 @@ Topic | Date | Outstanding Decisions
 Residential Module | Dec 22 | Waterheater needs Multi-Layer model with accurate reflection of its status and stability
 Generators Module | Dec 23 | -  Decide whether to merge inverter and inverter_dyn (invluding VSI, part of SETO project) <br/> - Either energy_storage model gets some tests or it is deprecated <br/> - Single- and three-phase motors shoud be revisited, some "extra features" may not be fully documented. <br/> - Unclear if wind turbine is still experimental
 Powerflow | Feb 2 | Meeting notes circulated, TODOs pending
-Climate | Next Up
-Developing Reference | On Deck
+Climate | Mar 2
+Developing Reference | Mar 2
 
 # Definition Plan
 - Open Index Tracker excel sheet on shareopint --> filter `Page Type` by `Definition`
