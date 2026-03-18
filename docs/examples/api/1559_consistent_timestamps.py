@@ -15,18 +15,25 @@ trevor.hardy@pnnl.gov
 import gridlabd
 from pathlib import Path
 import json
+import os
+from datetime import datetime, timedelta
 
+# Ensure's we're running from the correct directory
+script_path = os.path.abspath(__file__)
+script_dir = os.path.dirname(script_path)
+os.chdir(script_dir)
 
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
 loaded_model = gld.load("houses.glm")
 gld.set_time_step(900)
+starttime = datetime.fromisoformat(gld.get_starttime())
+stoptime = datetime.fromisoformat(gld.get_stoptime())
 gld.step()
-checkpoint_dict = json.loads(gld.get_checkpoint_json())
 status, time = gld.get_time()
-print(f"Start time: {checkpoint_dict['clock']['starttime']}")
-print(f"Stop time: {checkpoint_dict['clock']['starttime']}")
+print(f"Start time: {starttime}")
+print(f"Stop time: {stoptime}")
 print(f"Sim time: {time}")
 print("Above three timestamps should be string formatted as YYYY-MM-DDTHH:mm:ss+/-h:mm")
 gld.stop()

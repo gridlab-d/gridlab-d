@@ -35,10 +35,10 @@ target_time_str = datetime.isoformat(target_time)
 print(f"New target time stepping to:    {target_time_str}")
 gld.step_to(target_time_str)
 status, time = gld.get_time()
+print(f"Post `step_to()` time:          {time}")
 messages = gld.get_messages()
 for message in messages:
     print(message)
-print(f"Post `step_to()` time:          {time}")
 gld.stop()
 gld.exit_gld()
  
