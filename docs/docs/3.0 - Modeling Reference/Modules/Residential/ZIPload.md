@@ -220,6 +220,6 @@ ZIPload is considered a simple, stable model, with many layers of functionality.
   * Powerflow User Guide
   * Residential module
     * house class – Single-family home model.
-    * residential_enduse class – Abstract residential end-use class.
+    * residential_enduse class – Abstract residential end use class.
     * occupantload – Residential occupants (sensible and latent heat).
-    * ZIPload – Generic constant impedance/current/power end-use load.
+    * ZIPload – Generic constant impedance/current/power end use load.

@@ -132,7 +132,7 @@ Option | Description
 Option | Description
 -- | --
 `--dsttest` | Performs a daylight saving time definitions in tzinfo.txt
-`--endusetest` | Performs a test of the end-use pseudo-objects
+`--endusetest` | Performs a test of the end use pseudo-objects
 `--globaldump` | Perform a global dump of the system and immediately exits.
 `--loadshapetest` | Performs a test of the loadshape pseudo-objects
 `--locktest` | Performs memory locking test

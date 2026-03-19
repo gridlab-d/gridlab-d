@@ -39,7 +39,7 @@ When the _enduse_ structure is inherited, it is strongly recommend that it's nam
      load.name = "lights";
     
 
-However, when an object implements multiple end uses, then each one is embedded and the name of the property should be given when the end-use is published, i.e., 
+However, when an object implements multiple end uses, then each one is embedded and the name of the property should be given when the end use is published, i.e., 
     
     
      PT_enduse, "lights", PADDR(end use),
