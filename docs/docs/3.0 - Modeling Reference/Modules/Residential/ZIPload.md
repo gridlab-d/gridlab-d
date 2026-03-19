@@ -8,6 +8,9 @@ Thus far the loads on the systems we’ve been modeling have been fairly abstrac
 
 * For constant power, the power will remain unchanged and the current will increase linearly with the voltage change.
 
+![ZipLoad](../../../../images/ZIPLoads.png)
+### Figure 1. ZIPLoad Model
+
 In parallel with the real power components, ZIP loading can also be applied to the reactive power component; that is, these loads can all be expressed as complex values in GridLAB-D™, as you have seen in previous examples. In a three phase system, the load on each phase can be described independently, giving a total of nine complex load values to fully define a three-phase load.
 
 GridLAB-D™ also has an alternative and perhaps slightly more complex means of representing the same load using the same principles. Rather than specifying the portions of the load directly as three individual complex loads (per phase), a nominal “base” complex load value can be given and are then modified with three power-factor values (constant impedance, current and power power-factors) and an additional three load-fraction values (what portion of the load is constant impedance, current, and power). Mathematically, these two means of defining ZIP loads are identical.

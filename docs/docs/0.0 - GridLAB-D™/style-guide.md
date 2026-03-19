@@ -210,10 +210,17 @@ np.random()
 ### Mermaid Diagram
 
 ```mermaid
-flowchart LR 
- A --- B[fa:fa-spinner B] 
- B --> C[fa:fa-check C] 
- B --> D[fa:fa-ban D]
+graph LR 
+ A --- B
+ B --> C
+ B --> D
+```
+
+```mermaid
+graph LR
+    hello --> world
+    world --> again
+    again --> hello
 ```
 
 ### Equations
@@ -243,7 +250,7 @@ Borrowing heavily from [Microsoft Writing Style Guide](https://learn.microsoft.c
 # Context
 
 Release | Effort | Status | Date
-| - | - | - | - |
+| - | - | - | - 
 Hassayampa | As part of major DER dev project | Complete | 2015
 | | | In Progress | 
 | | | Needs Review | 

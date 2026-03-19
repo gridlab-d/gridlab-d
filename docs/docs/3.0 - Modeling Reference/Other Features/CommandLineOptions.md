@@ -1556,8 +1556,6 @@ To get a list of global variables:
       * dumpfile = "gridlabd.xml"
       * environment = "batch"
       * execdir = "EXE "
-      * event_trace = NONE
-      * event_trace_filter = ""
       * force_compile = 0
       * gdb = 0
       * gdb_window = 0
