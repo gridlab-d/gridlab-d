@@ -2,14 +2,25 @@
 
 """Interactive GridLAB-D simulation monitor GUI demo.
 
-Features:
-- Load a user-selected GLM model file.
-- Configure simulation start time, stop time, and step size.
-- Configure simulation step size in seconds.
-- Add/remove any number of monitored parameters.
-- Add/remove any number of plots and assign parameters to plots.
-- For each plot, render each parameter on its own y-axis.
-- Step the simulation repeatedly and append new values to each parameter trace.
+This script launches a desktop GUI that runs a GridLAB-D model in steps and
+plots selected object properties over time.
+
+Usage:
+		1. Run this script with the GridLAB-D Python environment active.
+		2. Click Browse and select a GLM model file.
+		3. Set start time, stop time, and step size.
+		4. Add one or more plots in the Plots panel.
+		5. Add one or more monitored parameters in Monitored Parameters:
+			 - select an object,
+			 - select or type a property,
+			 - assign it to a plot.
+		6. Click Apply Configuration.
+		7. Use Start, Stop, Step Once, and Restart to control simulation playback.
+
+Notes:
+		- Restart resets simulation time to the configured start time and clears
+			all plotted data.
+		- Each parameter in a plot is drawn on its own y-axis.
 """
 
 from __future__ import annotations
@@ -31,7 +42,17 @@ import gridlabd
 
 
 def _extract_numeric(value: Any) -> float:
-	"""Convert a GridLAB-D value into a numeric value suitable for plotting."""
+	"""Convert a GridLAB-D value into a numeric value for plotting.
+
+	Args:
+		value: Raw value returned from GridLAB-D property APIs.
+
+	Returns:
+		A numeric scalar representation of the input value.
+
+	Raises:
+		RuntimeError: If no numeric component can be extracted.
+	"""
 	if isinstance(value, bool):
 		return 1.0 if value else 0.0
 	if isinstance(value, (int, float)):
@@ -48,12 +69,18 @@ def _extract_numeric(value: Any) -> float:
 
 
 def _parse_iso(value: str) -> datetime:
-	"""Parse GridLAB-D ISO 8601 timestamp and return naive local wall time.
+	"""Parse a GridLAB-D ISO timestamp into a naive local-wall-time datetime.
 
 	GridLAB-D may return offset-aware values (e.g., ``-07:00``). GUI
 	date/time picker inputs are naive datetimes. Normalize parsed values by
 	stripping timezone info while preserving wall-clock fields so comparisons
 	and arithmetic remain consistent.
+
+	Args:
+		value: ISO 8601 timestamp string.
+
+	Returns:
+		A timezone-naive datetime aligned to the timestamp wall-clock value.
 	"""
 	parsed = datetime.fromisoformat(value)
 	if parsed.tzinfo is not None:
@@ -63,7 +90,12 @@ def _parse_iso(value: str) -> datetime:
 
 @dataclass
 class PlotConfig:
-	"""Plot metadata and associated time series storage."""
+	"""Configuration metadata for a plot container.
+
+	Attributes:
+		plot_id: Stable internal plot identifier.
+		title: User-facing plot title.
+	"""
 
 	plot_id: str
 	title: str
@@ -71,7 +103,15 @@ class PlotConfig:
 
 @dataclass
 class SignalConfig:
-	"""Monitored signal metadata and collected values."""
+	"""Configuration and data buffer for one monitored signal.
+
+	Attributes:
+		signal_id: Stable internal signal identifier.
+		object_name: GridLAB-D object name.
+		property_name: GridLAB-D property name.
+		plot_id: Plot identifier this signal is assigned to.
+		values: Collected numeric samples for plotting.
+	"""
 
 	signal_id: str
 	object_name: str
@@ -81,9 +121,16 @@ class SignalConfig:
 
 
 class SignalRow:
-	"""Dynamic UI row representing one monitored signal."""
+	"""Dynamic UI row representing one monitored signal selection."""
 
 	def __init__(self, app: "SimulationMonitorApp", parent: tk.Widget, signal_id: str):
+		"""Initialize a parameter row.
+
+		Args:
+			app: Parent application instance.
+			parent: Tk container that will host this row.
+			signal_id: Unique row identifier.
+		"""
 		self.app = app
 		self.signal_id = signal_id
 		self.frame = ttk.Frame(parent)
@@ -132,19 +179,40 @@ class SignalRow:
 			widget.bind("<Button-1>", self._on_row_clicked, add="+")
 
 	def _on_row_clicked(self, _event=None) -> None:
+		"""Mark this row as selected in the parent UI.
+
+		Args:
+			_event: Tk click event, unused.
+		"""
 		self.app.select_signal_row(self.signal_id)
 
 	def set_selected(self, selected: bool) -> None:
+		"""Update visual selected state for this row.
+
+		Args:
+			selected: True to highlight row; False to clear highlight.
+		"""
 		self.frame.configure(relief="solid" if selected else "flat", borderwidth=1 if selected else 0)
 
 	def remove(self) -> None:
+		"""Remove this row from the UI and app state."""
 		self.frame.destroy()
 		self.app.remove_signal_row(self.signal_id)
 
 	def _on_object_selected(self, _event=None) -> None:
+		"""Refresh property choices after an object selection.
+
+		Args:
+			_event: Tk selection event, unused.
+		"""
 		self.refresh_property_choices()
 
 	def _on_object_typed(self, _event=None) -> None:
+		"""Filter object choices based on user typing.
+
+		Args:
+			_event: Tk key event, unused.
+		"""
 		typed = self.object_var.get().strip().lower()
 		choices = self.app.get_object_names()
 		if typed:
@@ -160,6 +228,11 @@ class SignalRow:
 			self.property_combo["values"] = []
 
 	def _on_property_typed(self, _event=None) -> None:
+		"""Filter property choices based on user typing.
+
+		Args:
+			_event: Tk key event, unused.
+		"""
 		typed = self.property_var.get().strip().lower()
 		choices = self.app.get_object_properties(self.object_var.get().strip())
 		if typed:
@@ -169,6 +242,7 @@ class SignalRow:
 			self.property_combo["values"] = choices
 
 	def refresh_object_choices(self) -> None:
+		"""Refresh available object names from the application cache."""
 		choices = self.app.get_object_names()
 		self.object_combo["values"] = choices
 		current = self.object_var.get().strip()
@@ -177,6 +251,7 @@ class SignalRow:
 		self.refresh_property_choices()
 
 	def refresh_property_choices(self) -> None:
+		"""Refresh available properties for the currently selected object."""
 		obj = self.object_var.get().strip()
 		choices = self.app.get_object_properties(obj)
 		self.property_combo["values"] = choices
@@ -186,6 +261,7 @@ class SignalRow:
 			self.property_var.set(choices[0])
 
 	def refresh_plot_choices(self) -> None:
+		"""Refresh available plot assignments for this row."""
 		plot_labels = self.app.get_plot_labels()
 		self.plot_combo["values"] = plot_labels
 
@@ -196,6 +272,14 @@ class SignalRow:
 			self.plot_var.set(plot_labels[0])
 
 	def to_config(self) -> SignalConfig:
+		"""Validate row fields and build a SignalConfig instance.
+
+		Returns:
+			Validated signal configuration for this row.
+
+		Raises:
+			ValueError: If required fields are missing or invalid.
+		"""
 		object_name = self.object_var.get().strip()
 		property_name = self.property_var.get().strip()
 		plot_label = self.plot_var.get().strip()
@@ -221,9 +305,18 @@ class SignalRow:
 
 
 class SimulationMonitorApp:
-	"""Tkinter app for running GridLAB-D in steps and monitoring properties."""
+	"""Tkinter app for running GridLAB-D in steps and monitoring properties.
+
+	This class owns all GUI widgets, model/session state, simulation control
+	logic, and live plotting behavior.
+	"""
 
 	def __init__(self, root: tk.Tk):
+		"""Initialize application state and construct the GUI.
+
+		Args:
+			root: Tk root window.
+		"""
 		self.root = root
 		self.root.title("GridLAB-D Simulation Monitor")
 		self.root.geometry("1400x980")
@@ -271,6 +364,7 @@ class SimulationMonitorApp:
 		self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
 	def _build_ui(self) -> None:
+		"""Build all top-level UI regions and controls."""
 		main = ttk.Frame(self.root)
 		main.pack(fill=tk.BOTH, expand=True)
 
@@ -363,6 +457,11 @@ class SimulationMonitorApp:
 			pass
 
 	def _build_plots_panel(self, parent: ttk.Frame) -> None:
+		"""Build the plot-management panel.
+
+		Args:
+			parent: Parent container for the panel.
+		"""
 		frame = ttk.LabelFrame(parent, text="Plots")
 		frame.pack(fill=tk.X, padx=4, pady=(0, 8))
 
@@ -375,6 +474,11 @@ class SimulationMonitorApp:
 		ttk.Button(btns, text="Remove Selected Plot", command=self._remove_selected_plot).pack(side=tk.LEFT, padx=3)
 
 	def _build_signals_panel(self, parent: ttk.Frame) -> None:
+		"""Build the monitored-parameters panel.
+
+		Args:
+			parent: Parent container for the panel.
+		"""
 		frame = ttk.LabelFrame(parent, text="Monitored Parameters")
 		frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
 
@@ -408,11 +512,17 @@ class SimulationMonitorApp:
 		scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
 	def _build_chart_panel(self, parent: ttk.Frame) -> None:
+		"""Build the Matplotlib chart panel.
+
+		Args:
+			parent: Parent container for the chart canvas.
+		"""
 		self.figure = Figure(figsize=(9, 4.8), dpi=100)
 		self.canvas = FigureCanvasTkAgg(self.figure, master=parent)
 		self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
 	def _browse_model(self) -> None:
+		"""Open a model-file picker and auto-load the selected GLM."""
 		selected = filedialog.askopenfilename(
 			title="Select GridLAB-D model",
 			filetypes=[("GridLAB-D model", "*.glm"), ("All files", "*.*")],
@@ -422,6 +532,11 @@ class SimulationMonitorApp:
 			self._load_model()
 
 	def _load_model(self) -> None:
+		"""Load the selected model file and refresh object/property metadata.
+
+		Raises:
+			RuntimeError: Wrapped as dialog errors for model load failures.
+		"""
 		path_text = self.model_path_var.get().strip()
 		if not path_text:
 			messagebox.showerror("Missing model", "Please choose a GLM file first.")
@@ -453,6 +568,11 @@ class SimulationMonitorApp:
 			messagebox.showerror("Load failed", f"Failed to load model:\n{exc}")
 
 	def _refresh_model_metadata(self) -> None:
+		"""Refresh object and property lookup caches from GridLAB-D APIs.
+
+		Raises:
+			RuntimeError: If metadata cannot be retrieved or no objects are found.
+		"""
 		if not self.gld:
 			return
 
@@ -490,17 +610,43 @@ class SimulationMonitorApp:
 			raise RuntimeError(f"Failed to query object metadata: {exc}") from exc
 
 	def get_object_names(self) -> list[str]:
+		"""Return available object names for object-combobox controls.
+
+		Returns:
+			Sorted object names discovered from the loaded model.
+		"""
 		return self.object_names
 
 	def get_object_properties(self, object_name: str) -> list[str]:
+		"""Return available property names for a specific object.
+
+		Args:
+			object_name: GridLAB-D object name.
+
+		Returns:
+			Property names for the requested object, or an empty list.
+		"""
 		if not object_name:
 			return []
 		return self.object_properties.get(object_name, [])
 
 	def get_plot_labels(self) -> list[str]:
+		"""Return plot labels for combobox display.
+
+		Returns:
+			Labels in the form "Px: Title".
+		"""
 		return [f"{p.plot_id}: {p.title}" for p in self.plots]
 
 	def plot_id_from_label(self, label: str) -> str | None:
+		"""Resolve internal plot ID from a combobox label.
+
+		Args:
+			label: Display label in the form "Px: Title".
+
+		Returns:
+			Matching plot ID, or None if no match is found.
+		"""
 		for plot in self.plots:
 			full = f"{plot.plot_id}: {plot.title}"
 			if label == full:
@@ -508,6 +654,7 @@ class SimulationMonitorApp:
 		return None
 
 	def _add_plot(self) -> None:
+		"""Create a new plot entry and refresh related UI state."""
 		self.plot_counter += 1
 		plot_id = f"P{self.plot_counter}"
 		title = f"Plot {self.plot_counter}"
@@ -517,6 +664,7 @@ class SimulationMonitorApp:
 		self._redraw()
 
 	def _remove_selected_plot(self) -> None:
+		"""Remove the selected plot and reassign dependent signals."""
 		if len(self.plots) <= 1:
 			messagebox.showwarning("Cannot remove", "At least one plot must remain.")
 			return
@@ -541,15 +689,18 @@ class SimulationMonitorApp:
 		self._redraw()
 
 	def _refresh_plot_listbox(self) -> None:
+		"""Refresh listbox display of plot definitions."""
 		self.plot_listbox.delete(0, tk.END)
 		for plot in self.plots:
 			self.plot_listbox.insert(tk.END, f"{plot.plot_id}: {plot.title}")
 
 	def _refresh_all_plot_choices(self) -> None:
+		"""Refresh plot-combobox choices for all parameter rows."""
 		for row in self.signal_rows.values():
 			row.refresh_plot_choices()
 
 	def _add_signal_row(self) -> None:
+		"""Add one monitored-parameter row to the UI."""
 		self.signal_counter += 1
 		signal_id = f"S{self.signal_counter}"
 		row = SignalRow(self, self.signal_rows_container, signal_id)
@@ -561,6 +712,11 @@ class SimulationMonitorApp:
 		self.select_signal_row(signal_id)
 
 	def select_signal_row(self, signal_id: str) -> None:
+		"""Mark a parameter row as selected.
+
+		Args:
+			signal_id: Row identifier to select.
+		"""
 		if signal_id not in self.signal_rows:
 			return
 		self.selected_signal_id = signal_id
@@ -568,6 +724,7 @@ class SimulationMonitorApp:
 			row.set_selected(sid == signal_id)
 
 	def _remove_selected_signal(self) -> None:
+		"""Remove the selected parameter row or the newest row as fallback."""
 		if not self.signal_rows:
 			messagebox.showinfo("No parameters", "There are no parameters to remove.")
 			return
@@ -580,6 +737,11 @@ class SimulationMonitorApp:
 		self.signal_rows[target_id].remove()
 
 	def remove_signal_row(self, signal_id: str) -> None:
+		"""Remove a parameter row from app state and refresh selection.
+
+		Args:
+			signal_id: Row identifier to remove.
+		"""
 		if signal_id in self.signal_rows:
 			del self.signal_rows[signal_id]
 		if signal_id in self.signal_data:
@@ -592,6 +754,11 @@ class SimulationMonitorApp:
 		self._redraw()
 
 	def apply_configuration(self) -> None:
+		"""Validate all rows and commit the monitoring configuration.
+
+		Raises:
+			ValueError: Surfaced as dialog errors if row configuration is invalid.
+		"""
 		try:
 			new_data: dict[str, SignalConfig] = {}
 			for signal_id, row in self.signal_rows.items():
@@ -607,6 +774,14 @@ class SimulationMonitorApp:
 			messagebox.showerror("Invalid configuration", str(exc))
 
 	def _step_seconds(self) -> int:
+		"""Parse and validate the simulation step size.
+
+		Returns:
+			Step size in seconds.
+
+		Raises:
+			ValueError: If the value is not a positive integer.
+		"""
 		try:
 			value = int(self.step_seconds_var.get().strip())
 			if value <= 0:
@@ -616,6 +791,14 @@ class SimulationMonitorApp:
 			raise ValueError("Step size must be a positive integer number of seconds.") from exc
 
 	def _poll_interval_ms(self) -> int:
+		"""Parse and validate GUI update interval.
+
+		Returns:
+			Polling interval in milliseconds.
+
+		Raises:
+			ValueError: If interval is below minimum or invalid.
+		"""
 		try:
 			value = int(self.poll_interval_ms_var.get().strip())
 			if value < 10:
@@ -625,6 +808,14 @@ class SimulationMonitorApp:
 			raise ValueError("Update interval must be an integer >= 10 ms.") from exc
 
 	def _history_limit(self) -> int:
+		"""Parse and validate time-series buffer length.
+
+		Returns:
+			Maximum stored point count.
+
+		Raises:
+			ValueError: If value is below minimum or invalid.
+		"""
 		try:
 			value = int(self.history_limit_var.get().strip())
 			if value < 10:
@@ -634,6 +825,20 @@ class SimulationMonitorApp:
 			raise ValueError("Max points must be an integer >= 10.") from exc
 
 	def _time_parts(self, hour_var: tk.StringVar, minute_var: tk.StringVar, second_var: tk.StringVar, field_name: str) -> tuple[int, int, int]:
+		"""Parse and validate HH:MM:SS values from Tk variables.
+
+		Args:
+			hour_var: Tk variable containing hour text.
+			minute_var: Tk variable containing minute text.
+			second_var: Tk variable containing second text.
+			field_name: Human-readable field label for errors.
+
+		Returns:
+			Tuple of validated (hour, minute, second).
+
+		Raises:
+			ValueError: If values are non-integer or out of range.
+		"""
 		try:
 			hour = int(hour_var.get().strip())
 			minute = int(minute_var.get().strip())
@@ -651,6 +856,17 @@ class SimulationMonitorApp:
 		return hour, minute, second
 
 	def _get_user_datetime(self, which: str) -> datetime:
+		"""Build a datetime from date-picker and time-entry controls.
+
+		Args:
+			which: Either "start" or "stop".
+
+		Returns:
+			Composed datetime for the requested endpoint.
+
+		Raises:
+			ValueError: If date/time inputs are invalid.
+		"""
 		if which == "start":
 			date_value = self.start_date_picker.get_date()
 			hour, minute, second = self._time_parts(
@@ -681,6 +897,11 @@ class SimulationMonitorApp:
 			raise ValueError(f"Invalid {which} date/time selection.") from exc
 
 	def _apply_time_bounds(self) -> None:
+		"""Apply user-configured start and stop times to GridLAB-D.
+
+		Raises:
+			ValueError: If stop time is not later than start time.
+		"""
 		if not self.gld:
 			return
 
@@ -699,6 +920,7 @@ class SimulationMonitorApp:
 		self.config_stop_time = stop_dt
 
 	def start(self) -> None:
+		"""Start periodic simulation stepping and live plot updates."""
 		if not self.model_loaded or not self.gld:
 			messagebox.showerror("No model", "Load a model before starting the simulation.")
 			return
@@ -721,6 +943,7 @@ class SimulationMonitorApp:
 		self._schedule_next_step()
 
 	def stop(self) -> None:
+		"""Stop periodic simulation stepping."""
 		self.running = False
 		if self.after_id is not None:
 			self.root.after_cancel(self.after_id)
@@ -729,7 +952,7 @@ class SimulationMonitorApp:
 			self.status_var.set("Status: Stopped")
 
 	def _clear_plot_data(self) -> None:
-		"""Clear all collected time-series data from the plots."""
+		"""Clear all collected time-series data and redraw empty plots."""
 		self.time_data.clear()
 		for cfg in self.signal_data.values():
 			cfg.values.clear()
@@ -737,7 +960,7 @@ class SimulationMonitorApp:
 		self._redraw()
 
 	def restart_simulation(self) -> None:
-		"""Reset simulation to configured start time and clear current plot data."""
+		"""Restart simulation from start time and clear existing plotted data."""
 		if not self.model_loaded or not self.gld:
 			messagebox.showerror("No model", "Load a model before restarting the simulation.")
 			return
@@ -767,6 +990,7 @@ class SimulationMonitorApp:
 			messagebox.showerror("Restart failed", str(exc))
 
 	def step_once(self) -> None:
+		"""Execute one simulation step and refresh plots."""
 		if not self.model_loaded or not self.gld:
 			messagebox.showerror("No model", "Load a model before stepping.")
 			return
@@ -780,6 +1004,7 @@ class SimulationMonitorApp:
 			messagebox.showerror("Runtime error", str(exc))
 
 	def _schedule_next_step(self) -> None:
+		"""Run one step cycle and schedule the next cycle."""
 		if not self.running:
 			return
 
@@ -794,6 +1019,11 @@ class SimulationMonitorApp:
 		self.after_id = self.root.after(interval, self._schedule_next_step)
 
 	def _perform_step(self) -> None:
+		"""Advance simulation to the next target time and collect signal values.
+
+		Raises:
+			RuntimeError: If GridLAB-D calls fail or return invalid states.
+		"""
 		if not self.gld:
 			raise RuntimeError("Simulation is not initialized.")
 
@@ -858,6 +1088,7 @@ class SimulationMonitorApp:
 		self._redraw()
 
 	def _redraw(self) -> None:
+		"""Redraw all plot panels from current in-memory data buffers."""
 		self.figure.clear()
 
 		if not self.plots:
@@ -906,6 +1137,7 @@ class SimulationMonitorApp:
 		self.canvas.draw_idle()
 
 	def _shutdown_gld(self) -> None:
+		"""Finalize and release the active GridLAB-D instance if present."""
 		if not self.gld:
 			return
 		try:
@@ -915,12 +1147,14 @@ class SimulationMonitorApp:
 		self.gld = None
 
 	def _on_close(self) -> None:
+		"""Handle GUI window close event with graceful cleanup."""
 		self.stop()
 		self._shutdown_gld()
 		self.root.destroy()
 
 
 def main() -> None:
+	"""Run the simulation monitor GUI application."""
 	root = tk.Tk()
 	app = SimulationMonitorApp(root)
 	app._redraw()
