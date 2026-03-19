@@ -439,7 +439,7 @@ object triplex_meter {
 object inverter {
     name house1_sol_inverter;
     parent house1_solar_meter;
-    generator_status OFFLINE;
+    generator_status ONLINE;
     inverter_efficiency 0.95;
     rated_power 5000;
     inverter_type FOUR_QUADRANT;
@@ -546,7 +546,7 @@ object triplex_meter {
 object inverter {
     name house2_sol_inverter;
     parent house2_solar_meter;
-    generator_status OFFLINE;
+    generator_status ONLINE;
     inverter_efficiency 0.95;
     rated_power 7000;
     inverter_type FOUR_QUADRANT;
@@ -653,7 +653,7 @@ object triplex_meter {
 object inverter {
     name house3_sol_inverter;
     parent house3_solar_meter;
-    generator_status OFFLINE;
+    generator_status ONLINE;
     inverter_efficiency 0.95;
     rated_power 6000;
     inverter_type FOUR_QUADRANT;
@@ -759,7 +759,7 @@ object triplex_meter {
 object inverter {
     name house4_sol_inverter;
     parent house4_solar_meter;
-    generator_status OFFLINE;
+    generator_status ONLINE;
     inverter_efficiency 0.95;
     rated_power 10000;
     inverter_type FOUR_QUADRANT;
@@ -865,7 +865,7 @@ object triplex_meter {
 object inverter {
     name house5_sol_inverter;
     parent house5_solar_meter;
-    generator_status OFFLINE;
+    generator_status ONLINE;
     inverter_efficiency 0.95;
     rated_power 6000;
     inverter_type FOUR_QUADRANT;
@@ -972,7 +972,7 @@ object triplex_meter {
 object inverter {
     name house6_sol_inverter;
     parent house6_solar_meter;
-    generator_status OFFLINE;
+    generator_status ONLINE;
     inverter_efficiency 0.95;
     rated_power 8000;
     inverter_type FOUR_QUADRANT;
@@ -1079,7 +1079,7 @@ object triplex_meter {
 object inverter {
     name house7_sol_inverter;
     parent house7_solar_meter;
-    generator_status OFFLINE;
+    generator_status ONLINE;
     inverter_efficiency 0.95;
     rated_power 6000;
     inverter_type FOUR_QUADRANT;
@@ -1203,7 +1203,7 @@ object triplex_meter {
 object inverter {
     name house8_sol_inverter;
     parent house8_solar_meter;
-    generator_status OFFLINE;
+    generator_status ONLINE;
     inverter_efficiency 0.95;
     rated_power 7500;
     inverter_type FOUR_QUADRANT;
@@ -1328,7 +1328,7 @@ object triplex_meter {
 object inverter {
     name house9_sol_inverter;
     parent house9_solar_meter;
-    generator_status OFFLINE;
+    generator_status ONLINE;
     inverter_efficiency 0.95;
     rated_power 8000;
     inverter_type FOUR_QUADRANT;
