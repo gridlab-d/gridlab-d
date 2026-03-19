@@ -1,0 +1,67 @@
+## Series Compensator
+
+!!! warning
+    This page was automatically generated and requires review.
+
+### Inheritance
+
+| Parent Class |
+| --- |
+| link |
+
+### Series Compensator Parameters
+
+#### Properties
+
+| Property Name | Type | Unit | Input | Updates | Description | Evidence (delete after review) |
+| --- | --- | --- | --- | --- | --- | --- |
+| vset_A | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude reference for phase A</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init; other writes: sercom_postPost_fxn</div> |
+| vset_B | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude reference for phase B</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init; other writes: sercom_postPost_fxn</div> |
+| vset_C | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude reference for phase C</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init; other writes: sercom_postPost_fxn</div> |
+| vset_A_0 | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude set point for phase A, changed by the player</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init</div> |
+| vset_B_0 | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude set point for phase B, changed by the player</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init</div> |
+| vset_C_0 | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude set point for phase C, changed by the player</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init</div> |
+| vset_1 | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude reference for phase 1 of a triplex system</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init; other writes: sercom_postPost_fxn</div> |
+| vset_2 | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude reference for phase 2 of a tryplex system</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init; other writes: sercom_postPost_fxn</div> |
+| vset_1_0 | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude reference for phase 1 of a triplex system</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init</div> |
+| vset_2_0 | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Voltage magnitude reference for phase 2 of a tryplex system</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create, init</div> |
+| frequency_regulation | bool | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">DELTAMODE: Boolean value indicating whether the frequency regulation of the series compensator is enabled or not</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| frequency_open_loop_control | bool | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">DELTAMODE: Boolean value indicating whether the frequency open loop control of the series compensator is enabled or not</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| t_delay | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">the controller will wait for t_delay to take actions</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| t_hold | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Once the controller changes the voltage set point, it will stay there for t_hold time</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| recover_rate | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">The rate that the voltage goes back to nominal, unit: pu/s</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| frequency_low | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">The low frequency that activates the controller</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| frequency_high | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">The high frequency that activates the controller</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| V_error | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Make sure the voltage can go back to nominal</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| voltage_update_tolerance | double | pu | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Largest absolute between vset_X and measured voltage that won&#x27;t force a reiteration</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| turns_ratio_A | double | N/A |  | ✓ | <div style="white-space: normal; overflow-wrap: anywhere;">Debug variable - Turns ratio for phase A series compensator equivalent</div> | <div style="white-space: normal; overflow-wrap: anywhere;">access=PA_HIDDEN; init writes: create; runtime writes: postsync; other writes: sercom_postPost_fxn</div> |
+| turns_ratio_B | double | N/A |  | ✓ | <div style="white-space: normal; overflow-wrap: anywhere;">Debug variable - Turns ratio for phase B series compensator equivalent</div> | <div style="white-space: normal; overflow-wrap: anywhere;">access=PA_HIDDEN; init writes: create; runtime writes: postsync; other writes: sercom_postPost_fxn</div> |
+| turns_ratio_C | double | N/A |  | ✓ | <div style="white-space: normal; overflow-wrap: anywhere;">Debug variable - Turns ratio for phase C series compensator equivalent</div> | <div style="white-space: normal; overflow-wrap: anywhere;">access=PA_HIDDEN; init writes: create; runtime writes: postsync; other writes: sercom_postPost_fxn</div> |
+| turns_ratio_1 | double | N/A |  | ✓ | <div style="white-space: normal; overflow-wrap: anywhere;">Debug variable - Turns ratio for phase 1 (triplex) series compensator equivalent</div> | <div style="white-space: normal; overflow-wrap: anywhere;">access=PA_HIDDEN; init writes: create; runtime writes: postsync; other writes: sercom_postPost_fxn</div> |
+| turns_ratio_2 | double | N/A |  | ✓ | <div style="white-space: normal; overflow-wrap: anywhere;">Debug variable - Turns ratio for phase 2 (triplex) series compensator equivalent</div> | <div style="white-space: normal; overflow-wrap: anywhere;">access=PA_HIDDEN; init writes: create; runtime writes: postsync; other writes: sercom_postPost_fxn</div> |
+| n_max_ext_A | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">maximum Turn ratio for phase A</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| n_max_ext_B | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">maximum Turn ratio for phase B</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| n_max_ext_C | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">maximum Turn ratio for phase C</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| n_min_ext_A | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">minimum Turn ratio for phase A</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| n_min_ext_B | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">minimum Turn ratio for phase B</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| n_min_ext_C | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">minimum Turn ratio for phase C</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| n_max_ext_1 | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">maximum Turn ratio for phase 1 (triplex)</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| n_max_ext_2 | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">maximum Turn ratio for phase 2 (triplex)</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| n_min_ext_1 | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">minimum Turn ratio for phase 1 (triplex)</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| n_min_ext_2 | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">minimum Turn ratio for phase 2 (triplex)</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| kp | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">proportional gain</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| ki | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">integrator gain</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| kpf | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">proportional gain of frequency regulation</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| f_db_max | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">frequency dead band max</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| f_db_min | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">frequency dead band max</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| delta_Vmax | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">upper limit of the frequency regulation output</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| delta_Vmin | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">lower limit of the frequency regulation output</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| delta_V | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">frequency regulation output</div> | <div style="white-space: normal; overflow-wrap: anywhere;">other writes: sercom_postPost_fxn</div> |
+| V_bypass_max_pu | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">the upper limit voltage to bypass compensator</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| V_bypass_min_pu | double | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">the lower limit voltage to bypass compensator</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create</div> |
+| phase_A_state | enumeration | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Defines if phase A is in bypass or not Valid values: NORMAL, BYPASS.</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create; other writes: sercom_postPost_fxn</div> |
+| phase_B_state | enumeration | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Defines if phase B is in bypass or not Valid values: NORMAL, BYPASS.</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create; other writes: sercom_postPost_fxn</div> |
+| phase_C_state | enumeration | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Defines if phase C is in bypass or not Valid values: NORMAL, BYPASS.</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create; other writes: sercom_postPost_fxn</div> |
+| phase_1_state | enumeration | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Defines if phase 1 is in bypass or not Valid values: NORMAL, BYPASS.</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create; other writes: sercom_postPost_fxn</div> |
+| phase_2_state | enumeration | N/A | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Defines if phase 2 is in bypass or not Valid values: NORMAL, BYPASS.</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: create; other writes: sercom_postPost_fxn</div> |
+| series_compensator_resistance | double | Ohm | ✓ |  | <div style="white-space: normal; overflow-wrap: anywhere;">Baseline resistance for the series compensator device - needed for NR</div> | <div style="white-space: normal; overflow-wrap: anywhere;">init writes: init</div> |
