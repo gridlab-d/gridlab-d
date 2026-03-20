@@ -97,7 +97,7 @@ jobs:
           # Add installed GridLAB-D binaries to PATH
           export PATH=$PATH:~/.temp/GridLAB-D/bin
           # Run integration validation from repository root
-          python validate_gld.py -T 0
+          python validate_gld.py -T 1
 
       - name: Upload validation artifacts
         if: always()
