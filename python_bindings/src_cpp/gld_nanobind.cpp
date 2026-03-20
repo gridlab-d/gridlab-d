@@ -15,6 +15,9 @@
 // Forward declaration to avoid pulling in heavy headers
 extern "C" {
 unsigned int object_get_count(void);
+char *global_getvar(const char *name, char *buffer, int size);
+int global_setvar(const char *def, ...);
+int convert_from_timestamp(int64_t ts, char *buffer, int size);
 }
 
 #define NB_STRINGIFY_HELPER(x) #x
@@ -113,7 +116,12 @@ NB_MODULE(gridlabd_core, m) {
           [](GridLabD &self) {
             double simulation_time = 0.0;
             GLDErrorCode code = self.step(simulation_time);
-            return nb::make_tuple(code, simulation_time);
+            char buffer[64];
+            int64_t ts = static_cast<int64_t>(simulation_time);
+            if (convert_from_timestamp(ts, buffer, sizeof(buffer)) > 0) {
+              return nb::make_tuple(code, std::string(buffer));
+            }
+            return nb::make_tuple(code, std::string("INVALID"));
           },
           "Advance the simulation by one time step")
       .def("set_time", &GridLabD::set_time, nb::arg("timestamp"),
@@ -133,7 +141,12 @@ NB_MODULE(gridlabd_core, m) {
           [](GridLabD &self, const std::string &target_time_str) {
             double simulation_time = 0.0;
             GLDErrorCode code = self.step_to(target_time_str, simulation_time);
-            return nb::make_tuple(code, simulation_time);
+            char buffer[64];
+            int64_t ts = static_cast<int64_t>(simulation_time);
+            if (convert_from_timestamp(ts, buffer, sizeof(buffer)) > 0) {
+              return nb::make_tuple(code, std::string(buffer));
+            }
+            return nb::make_tuple(code, std::string("INVALID"));
           },
           nb::arg("target_time_str"),
           "Step the simulation to a specific timestamp (ISO 8601 string)")
@@ -194,6 +207,24 @@ NB_MODULE(gridlabd_core, m) {
           },
           nb::arg("object_name"), nb::arg("property_name"),
           "Get a property value from an object")
+      .def(
+          "get_property_info",
+          [](GridLabD &self, const std::string &object_name,
+             const std::string &property_name) {
+            int prop_type;
+            std::string unit_str;
+            std::string description;
+            GLDErrorCode code = self.get_property_info(
+                object_name, property_name, prop_type, unit_str, description);
+            // Return tuple: (error_code, dict with info)
+            nb::dict info;
+            info["type"] = prop_type;
+            info["unit"] = unit_str;
+            info["description"] = description;
+            return nb::make_tuple(code, info);
+          },
+          nb::arg("object_name"), nb::arg("property_name"),
+          "Get property metadata (type, unit, description)")
       .def("set_property", &GridLabD::set_property, nb::arg("object_name"),
            nb::arg("property_name"), nb::arg("value"),
            "Set a property value on an object")
@@ -210,7 +241,28 @@ NB_MODULE(gridlabd_core, m) {
             return value.dump();
           },
           nb::arg("filepath") = std::string(),
-          "Return checkpoint data as a JSON string");
+          "Return checkpoint data as a JSON string")
+      .def(
+          "get_global",
+          [](GridLabD &self, const std::string &name) {
+            char buffer[1024];
+            char *result = global_getvar(name.c_str(), buffer, sizeof(buffer));
+            if (result == nullptr) {
+              return std::string("");
+            }
+            return std::string(buffer);
+          },
+          nb::arg("name"),
+          "Get a global variable value")
+      .def(
+          "set_global",
+          [](GridLabD &self, const std::string &name, const std::string &value) {
+            std::string def = name + "=" + value;
+            int result = global_setvar(def.c_str());
+            return result;
+          },
+          nb::arg("name"), nb::arg("value"),
+          "Set a global variable value");
 
 #ifdef VERSION_INFO
   m.attr("__version__") = NB_STRINGIFY(VERSION_INFO);
