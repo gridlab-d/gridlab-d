@@ -6997,13 +6997,8 @@ int is_autodef(char *value)
 }
 
 /* started processes */
-#include "threadpool.h"
+//#include "threadpool.h"
 #include <csignal>
-// struct s_threadlist {
-//	pthread_t *data;
-//	struct s_threadlist *next;
-// } *threadlist = nullptr;
-
 #include <iostream>
 #include <vector>
 #include <thread>

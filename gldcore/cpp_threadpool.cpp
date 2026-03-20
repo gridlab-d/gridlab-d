@@ -55,8 +55,7 @@ void cpp_threadpool::sync_wait_on_queue() {
 
     while (!exiting.load()) {
         if (!lock.owns_lock()) lock.lock();
-        sync_condition.wait(lock,
-                            [=] { return !job_queue.empty(); });
+        sync_condition.wait(lock, [this] { return !job_queue.empty(); });
 
         if (job_queue.empty()) {
             continue;
@@ -78,8 +77,7 @@ void cpp_threadpool::wait_on_queue() {
 
     while (!exiting.load() && !(std::this_thread::get_id() == shutdown_id)) {
         if (!lock.owns_lock()) lock.lock();
-        condition.wait(lock,
-                       [=] { return !job_queue.empty(); });
+        condition.wait(lock, [this] { return !job_queue.empty(); });
 
         std::unique_lock<std::mutex> parallel_lock(sync_mode_lock);
         if (job_queue.empty()) {
@@ -116,5 +114,6 @@ bool cpp_threadpool::add_job(std::function<void()> job) {
 
 void cpp_threadpool::await() {
     std::unique_lock<std::mutex> lock(wait_lock);
-    wait_condition.wait_for(lock, std::chrono::milliseconds(50), [=] { return running_threads.load() <= 0; });
+//    wait_condition.wait(lock, [=] { return running_threads.load() <= 0; });
+    wait_condition.wait_for(lock, std::chrono::milliseconds(50), [this] { return running_threads.load() <= 0; });
 }

@@ -54,5 +54,4 @@ public:
 
 };
 
-
 #endif //_CPP_THREADPOOL_H

@@ -1,95 +1,85 @@
 /** $Id: exec.c 4738 2014-07-03 00:55:39Z dchassin $
-        Copyright (C) 2008 Battelle Memorial Institute
-        @file exec.c
-        @addtogroup exec Main execution loop
-        @ingroup core
+	Copyright (C) 2008 Battelle Memorial Institute
+	@file exec.c
+	@addtogroup exec Main execution loop
+	@ingroup core
+	
+	The main execution loop sets up the main simulation, initializes the
+	objects, and runs the simulation until it either settles to equilibrium
+	or runs into a problem.  It also takes care multicore/multiprocessor
+	parallelism when possible.  Objects of the same rank will be synchronized
+	simultaneously, resources permitting.
 
-        The main execution loop sets up the main simulation, initializes the
-        objects, and runs the simulation until it either settles to equilibrium
-        or runs into a problem.  It also takes care multicore/multiprocessor
-        parallelism when possible.  Objects of the same rank will be
-synchronized simultaneously, resources permitting.
+	The main processing loop calls each object passing to it a TIMESTAMP
+	indicating the desired synchronization time.  The sync() call attempts to
+	advance the object's internal clock to the time indicated, and if successful it
+	returns the time of the next expected change in the object's state.  An
+	object state change is one which requires the equilibrium equations of
+	the object to be updated.  When an object's state changes, all the other
+	objects in the simulator are given an opportunity to consider the change
+	and possibly alter the time of their next state change.  The core
+	continues calling objects, advancing the global clock when
+	necessary, and continuing in this way until all objects indicate that
+	no further state changes are expected.  This is the equilibrium condition
+	and the simulation consequently ends.
 
-        The main processing loop calls each object passing to it a TIMESTAMP
-        indicating the desired synchronization time.  The sync() call attempts
-to advance the object's internal clock to the time indicated, and if successful
-it returns the time of the next expected change in the object's state.  An
-        object state change is one which requires the equilibrium equations of
-        the object to be updated.  When an object's state changes, all the other
-        objects in the simulator are given an opportunity to consider the change
-        and possibly alter the time of their next state change.  The core
-        continues calling objects, advancing the global clock when
-        necessary, and continuing in this way until all objects indicate that
-        no further state changes are expected.  This is the equilibrium
-condition and the simulation consequently ends.
+	\section exec_sync Sync Event API
 
-        \section exec_sync Sync Event API
+	 Sync handling is done using an API implemented in #core_exec
+	 There are several types of sync events that are handled.
+	 - Hard sync is a sync time that should always be considered
+	 - Soft sync is a sync time should only be considered when
+	   the hard sync is not TS_NEVER
+	 - Status is SUCCESS if the sync time is valid
 
-         Sync handling is done using an API implemented in #core_exec
-         There are several types of sync events that are handled.
-         - Hard sync is a sync time that should always be considered
-         - Soft sync is a sync time should only be considered when
-           the hard sync is not TS_NEVER
-         - Status is SUCCESS if the sync time is valid
-
-         Sync logic table:
+	 Sync logic table:
 @verbatim
  hard t
-
-  sync_to    | t==INVALID  | t<sync_to   | t==sync_to  | sync_to<t<NEVER |
-t==NEVER
-  ---------- | ----------- | ----------- | ----------- | --------------- |
----------- INVALID    | INVALID     | INVALID     | INVALID     | INVALID |
-INVALID soft       | INVALID     | t           | t           | sync_to         |
-sync_to hard       | INVALID     | t           | sync_to     | sync_to         |
-sync_to NEVER      | INVALID     | t           | sync_to     | sync_to         |
-NEVER
+ 
+  sync_to    | t==INVALID  | t<sync_to   | t==sync_to  | sync_to<t<NEVER | t==NEVER
+  ---------- | ----------- | ----------- | ----------- | --------------- | ----------
+  INVALID    | INVALID     | INVALID     | INVALID     | INVALID         | INVALID
+  soft       | INVALID     | t           | t           | sync_to         | sync_to
+  hard       | INVALID     | t           | sync_to     | sync_to         | sync_to
+  NEVER      | INVALID     | t           | sync_to     | sync_to         | NEVER
 @endverbatim
 
 @verbatim
  soft t
-
-  sync_to    | t==INVALID  | t<sync_to   | t==sync_to  | sync_to<t<NEVER |
-t==NEVER
-  ---------- | ----------- | ----------- | ----------- | --------------- |
----------- INVALID    | INVALID     | INVALID     | INVALID     | INVALID |
-INVALID soft       | INVALID     | t           | t           | sync_to         |
-sync_to hard       | INVALID     | t*          | t*          | sync_to         |
-sync_to NEVER      | INVALID     | t           | sync_to     | sync_to         |
-NEVER
-
+ 
+  sync_to    | t==INVALID  | t<sync_to   | t==sync_to  | sync_to<t<NEVER | t==NEVER
+  ---------- | ----------- | ----------- | ----------- | --------------- | ----------
+  INVALID    | INVALID     | INVALID     | INVALID     | INVALID         | INVALID
+  soft       | INVALID     | t           | t           | sync_to         | sync_to
+  hard       | INVALID     | t*          | t*          | sync_to         | sync_to
+  NEVER      | INVALID     | t           | sync_to     | sync_to         | NEVER
+ 
  * indicates soft event is made hard
 @endverbatim
 
-        The Sync Event API functions are as follows:
-        - #exec_sync_reset is used to reset a sync event to initial steady state
-sync (NEVER)
-        - #exec_sync_merge is used to update an existing sync event with a new
-sync event
-        - #exec_sync_set is used to set a sync event
-        - #exec_sync_get is used to get a sync event
-        - #exec_sync_getevents is used to get the number of hard events in a
-sync event
-        - #exec_sync_getstatus is used to get the status of a sync event
-        - #exec_sync_ishard is used to determine whether a sync event is a hard
-event
-        - #exec_sync_isinvalid is used to determine whether a sync event is
-valid
-        - #exec_sync_isnever is used to determine whether a sync event is
-pending
+    The Sync Event API functions are as follows:
+	- #exec_sync_reset is used to reset a sync event to initial steady state sync (NEVER)
+	- #exec_sync_merge is used to update an existing sync event with a new sync event
+	- #exec_sync_set is used to set a sync event
+	- #exec_sync_get is used to get a sync event
+	- #exec_sync_getevents is used to get the number of hard events in a sync event
+	- #exec_sync_getstatus is used to get the status of a sync event
+	- #exec_sync_ishard is used to determine whether a sync event is a hard event
+	- #exec_sync_isinvalid is used to determine whether a sync event is valid
+	- #exec_sync_isnever is used to determine whether a sync event is pending
 
-        @future [Chassin Oct'07]
+	@future [Chassin Oct'07]
 
-        There is some value in exploring whether it is necessary to update all
-        objects when a particular objects implements a state change.  The idea
-is based on the fact that updates propagate through the model based on known
-        relations, such at the parent-child relation or the link-node relation.
-        Consequently, it should obvious that unless a value in a related object
-        has changed, there can be no significant change to an object that hasn't
-reached it's declared update time.  Thus only the object that "won" the next
-update time and those that are immediately related to it need be updated.  This
-        change could result in a very significant improvement in performance,
-        particularly in models with many lightly coupled objects.
+	There is some value in exploring whether it is necessary to update all
+	objects when a particular objects implements a state change.  The idea is
+	based on the fact that updates propagate through the model based on known
+	relations, such at the parent-child relation or the link-node relation.
+	Consequently, it should obvious that unless a value in a related object
+	has changed, there can be no significant change to an object that hasn't reached
+	it's declared update time.  Thus only the object that "won" the next update
+	time and those that are immediately related to it need be updated.  This 
+	change could result in a very significant improvement in performance,
+	particularly in models with many lightly coupled objects. 
 
  @{
  **/
@@ -313,13 +303,10 @@ int64 rlock_count = 0, rlock_spin = 0;
 int64 wlock_count = 0, wlock_spin = 0;
 #endif
 
-// extern pthread_mutex_t mls_inst_lock;
-// extern pthread_cond_t mls_inst_signal;
-
 extern unsigned int mls_inst_lock;
 extern std::condition_variable_any mls_inst_signal;
 
-// sjin: struct for pthread_create arguments
+// struct for thread_create arguments
 struct arg_data
 {
     int thread;
@@ -726,8 +713,7 @@ nlohmann::json do_checkpoint(const char *output_directory)
 }
 /***********************************************************************/
 
-threadpool_thread_data::threadpool_thread_data(int size,
-                                               cpp_threadpool *threadpool)
+threadpool_thread_data::threadpool_thread_data(int size, cpp_threadpool *threadpool)
 {
     //	data = std::vector<struct sync_data>(size);
     data = new struct sync_data[size];
@@ -737,11 +723,13 @@ threadpool_thread_data::threadpool_thread_data(int size,
         data[index].status = SUCCESS;
 }
 
+clock_t objs_synctime = 0;
 struct sync_data *
 threadpool_thread_data::get_thread_data(std::thread::id thread_id)
 {
     return &data[thread_map.at(thread_id)];
 }
+
 struct sync_data *threadpool_thread_data::get_data(int index)
 {
     return &data[index];
@@ -985,29 +973,6 @@ static void ss_do_object_sync(int thread, void *item)
     }
 }
 
-// sjin: implement new ss_do_object_sync_list for pthreads
-static void *ss_do_object_sync_list(void *threadarg)
-{
-    LISTITEM *ptr;
-    int iPtr;
-
-    struct arg_data *mydata = (struct arg_data *)threadarg;
-    int thread = mydata->thread;
-    void *item = mydata->item;
-    int incr = mydata->incr;
-
-    iPtr = 0;
-    for (ptr = static_cast<LISTITEM *>(item); ptr != nullptr; ptr = ptr->next)
-    {
-        if (iPtr < incr)
-        {
-            ss_do_object_sync(thread, ptr->data);
-            iPtr++;
-        }
-    }
-    return nullptr;
-}
-
 static STATUS init_by_creation()
 {
     OBJECT *obj;
@@ -1059,8 +1024,7 @@ static STATUS init_by_creation()
     return rv;
 }
 
-static int init_by_deferral_retry(std::vector<OBJECT *> &def_array,
-                                  int def_ct)
+static int init_by_deferral_retry(std::vector<OBJECT *> &def_array, int def_ct)
 {
     OBJECT *obj;
     int ct = 0, i = 0, obj_rv = 0;
@@ -1376,24 +1340,13 @@ static STATUS init_all()
     return static_cast<STATUS>(link_initall());
 }
 
-/*
- *	STATUS precommit(t0)
- *		This callback function allows an object to perform actions at
- *the beginning of a timestep, before the sync process.  This callback is only
- *triggered once per timestep, and will not fire between iterations.
- */
-// typedef struct s_simplelinklist {
-//	void *data;
-//	struct s_simplelinklist *next;
-// } SIMPLELINKLIST;
-
 // Define the linked list node structure
 struct s_simplelinklist
 {
-    void *data; // Use std::shared_ptr<void> for data to improve safety compared
-                // to raw void*.
-    std::unique_ptr<s_simplelinklist>
-        next; // Use std::unique_ptr for managing ownership of the next node.
+    // Use std::shared_ptr<void> for data to improve safety compared to raw void*.
+    void *data;
+    // Use std::unique_ptr for managing ownership of the next node.
+    std::unique_ptr<s_simplelinklist> next;
 };
 
 // Alias type for convenience
@@ -1401,6 +1354,9 @@ using SIMPLELINKLIST = s_simplelinklist;
 
 /**************************************************************************
  ** PRECOMMIT ITERATOR
+ *		This callback function allows an object to perform actions at
+ *  the beginning of a timestep, before the sync process.  This callback is only
+ *  triggered once per timestep, and will not fire between iterations.
  **************************************************************************/
 static STATUS precommit_all(TIMESTAMP t0)
 {
@@ -1480,6 +1436,7 @@ static STATUS precommit_all(TIMESTAMP t0)
  ** COMMIT ITERATOR
  **************************************************************************/
 static std::unique_ptr<SIMPLELINKLIST> commit_list[2] = {nullptr, nullptr};
+
 /* initialize commit_list - must be called only once */
 static int commit_init()
 {
@@ -1783,76 +1740,6 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
     return result;
 }
 
-/* single threaded version of commit_all */
-// static TIMESTAMP tp_commit_all(TIMESTAMP t0, TIMESTAMP t2, cpp_threadpool
-// *threadpool) {
-////    TIMESTAMP result = TS_NEVER;
-//	std::atomic_long result{static_cast<long>(TS_NEVER)};
-//	SIMPLELINKLIST *item;
-//	unsigned int pc;
-//	static int n_commits = -1;
-//	TRY	{
-//				/* build commit list */
-//				if (n_commits == -1) n_commits = commit_init();
-//
-//				/* if no commits found, stop here */
-//				if (n_commits == 0) {
-//					result = TS_NEVER;
-//				}
-//
-//				for (pc = 0; pc < 2; pc++) {
-//					for (item = commit_list[pc].get(); item
-//!= nullptr; item = item->next.get()) {
-//! OBJECT *obj = (OBJECT *) item->data;
-//						threadpool->add_job([=,
-//&result]() { 							auto
-// inner_result = result.load();
-//
-//							if (t0 < obj->in_svc) {
-//								if (obj->in_svc
-//< inner_result) result = obj->in_svc;
-//} else if ((t0 == obj->in_svc) && (obj->in_svc_micro != 0)) {
-// if (obj->in_svc == inner_result)
-// result.store(obj->in_svc
-//+ 1); 							} else if
-//(obj->out_svc >= t0) {
-// TIMESTAMP next = object_commit(obj, t0, t2);
-// if (next == TS_INVALID) {
-// char name[64];
-// throw_exception("object %s commit failed",
-// object_name(obj, name, sizeof(name) - 1));
-//									/*
-// TROUBLESHOOT
-//                                        The commit function of the named
-//                                        object has failed.  Make sure that the
-//                                        object's requirements for committing
-//                                        are satisfied and try again.  (likely
-//                                        internal state aberrations)
-//                                     */
-//								}
-//								if (next <
-// result.load()) result.store(next);
-//							}
-//						});
-//					}
-//					threadpool->await();
-//				}
-//			}
-//		CATCH(const char *msg)
-//			{
-//				output_error("tp_commit_all() failure: %s",
-// msg);
-//				/* TROUBLESHOOT
-//                    The commit'ing procedure failed.  This is usually preceded
-//                    by a more detailed message that explains why it failed.
-//                    Follow the guidance for that message and try again.
-//                 */
-//				result = TS_INVALID;
-//			}
-//	ENDCATCH;
-//    return result.load();
-//}
-
 /**************************************************************************
  ** FINALIZE ITERATOR
  **************************************************************************/
@@ -1929,52 +1816,6 @@ static STATUS finalize_all()
 STATUS exec_test(struct sync_data *data, int pass, OBJECT *obj);
 
 STATUS t_setup_ranks() { return setup_ranks(); }
-STATUS t_sync_all(PASSCONFIG pass)
-{
-    struct sync_data sync = {TS_NEVER, 0, SUCCESS};
-    int pass_index = ((int)(pass / 2)); /* 1->0, 2->1, 4->2; NB: if a fourth pass
-                                           is added this won't work right */
-
-    /* scan the ranks of objects */
-    if (ranks[pass_index] != nullptr)
-    {
-        int i;
-
-        /* process object in order of rank using index */
-        for (i = PASSINIT(pass_index); PASSCMP(i, pass_index);
-             i += PASSINC(pass_index))
-        {
-            LISTITEM *item;
-            /* skip empty lists */
-            if (ranks[pass_index]->ordinal[i] == nullptr)
-                continue;
-
-            for (item = ranks[pass_index]->ordinal[i]->first; item != nullptr;
-                 item = item->next)
-            {
-                OBJECT *obj = static_cast<OBJECT *>(item->data);
-                if (exec_test(&sync, pass, obj) == FAILED)
-                    return FAILED;
-            }
-        }
-    }
-
-    /* run all non-schedule transforms */
-    {
-        TIMESTAMP st = transform_syncall(
-            global_clock,
-            static_cast<TRANSFORMSOURCE>(XS_DOUBLE | XS_COMPLEX | XS_ENDUSE),
-            nullptr); // if (abs(t) < t2) t2 = t;
-
-        if (st == TS_INVALID)
-            return FAILED;
-
-        if (st < sync.step_to)
-            sync.step_to = st;
-    }
-
-    return SUCCESS;
-}
 
 TIMESTAMP sync_heartbeats()
 {
@@ -2043,28 +1884,22 @@ void exec_sleep(unsigned int usec)
 typedef struct s_objsyncdata
 {
     unsigned int n; // thread id 0~n_threads for this object rank list
-    // pthread_t pt;
     bool ok;
-    // void *item;
     LISTITEM *ls;
     unsigned int nObj; // number of obj in this object rank list
     unsigned int t0;
     int i; // index of mutex or cond this object rank list uses
 } OBJSYNCDATA;
 
-// static pthread_mutex_t *startlock;
-// static pthread_mutex_t *donelock;
-// static pthread_cond_t *start;
-// static pthread_cond_t *done;
+// After the first iteration, setTP = false;
+bool setTP = true;
+static std::vector<int> n_idx = {0};
+static std::vector<std::unique_ptr<OBJSYNCDATA>> thread;
+static std::vector<std::unique_ptr<unsigned int>> n_threads;
 
-static std::vector<std::unique_ptr<std::mutex>> startlock, donelock;
-static std::vector<std::unique_ptr<std::condition_variable>> start, done;
-
-static std::vector<std::unique_ptr<unsigned int>> next_t1;
-static std::vector<std::unique_ptr<unsigned int>> donecount;
-
-/** MAIN LOOP CONTROL
- * ******************************************************************/
+/**************************************************************************
+ * MAIN LOOP CONTROL
+ **************************************************************************/
 
 unsigned int mls_svr_lock;
 std::condition_variable_any mls_svr_signal;
@@ -2074,20 +1909,9 @@ int mls_created = 0;
 void exec_mls_create()
 {
     int rv = 0;
-
     mls_created = 1;
 
     output_debug("exec_mls_create()");
-    // rv = pthread_mutex_init(&mls_svr_lock,nullptr);
-    // if (rv != 0)
-    //{
-    //	output_error("error with pthread_mutex_init() in exec_mls_init()");
-    // }
-    // rv = pthread_cond_init(&mls_svr_signal,nullptr);
-    // if (rv != 0)
-    //{
-    //	output_error("error with pthread_cond_init() in exec_mls_init()");
-    // }
 }
 
 void exec_mls_init()
@@ -2112,11 +1936,6 @@ void exec_mls_suspend()
         output_warning("suspending simulation with no server/multirun active to "
                        "control mainloop state");
     output_debug("lock_ (%x->%x)", &mls_svr_lock, mls_svr_lock);
-    /*rv = pthread_mutex_lock(&mls_svr_lock);
-    if (0 != rv)
-    {
-            output_error("error with pthread_mutex_lock() in exec_mls_suspend()");
-    }*/
 
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&mls_svr_lock));
@@ -2131,70 +1950,35 @@ void exec_mls_suspend()
         {
             output_debug(" * tick (%i)", --loopctr);
         }
-        // rv = pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
-        // if (rv != 0)
-        //{
-        //	output_error("error with pthread_cond_wait() in exec_mls_suspend()");
-        // }
         mls_svr_signal.wait(lock);
     }
     output_debug("sched update_");
     sched_update(global_clock, global_mainloopstate = MLS_RUNNING);
     output_debug("unlock_");
-    /*rv = pthread_mutex_unlock(&mls_svr_lock);
-    if (rv != 0)
-    {
-            output_error("error with pthread_mutex_unlock() in
-    exec_mls_suspend()");
-    }*/
 }
 
 void exec_mls_resume(TIMESTAMP ts)
 {
     int rv = 0;
-    // rv = pthread_mutex_lock(&mls_svr_lock);
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&mls_svr_lock));
-    /*if (rv != 0)
-    {
-            output_error("error in pthread_mutex_lock() in exec_mls_resume()
-    (error %i)", rv);
-    }*/
     global_mainlooppauseat = ts;
-    /*rv = pthread_mutex_unlock(&mls_svr_lock);
-    if (rv != 0)
-    {
-            output_error("error in pthread_mutex_unlock() in exec_mls_resume()");
-    }*/
 
     lock.unlock();
-
-    /*rv = pthread_cond_broadcast(&mls_svr_signal);
-    if (rv != 0)
-    {
-            output_error("error in pthread_cond_broadcast() in
-    exec_mls_resume()");
-    }*/
-
     mls_svr_signal.notify_all();
 }
 
 void exec_mls_statewait(unsigned states)
 {
-    // pthread_mutex_lock(&mls_svr_lock);
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&mls_svr_lock));
     while (((global_mainloopstate & states) | states) == 0)
-        // pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
         mls_svr_signal.wait(lock);
-    // pthread_mutex_unlock(&mls_svr_lock);
 }
 
 void exec_mls_done()
 {
     sched_update(global_clock, global_mainloopstate = MLS_DONE);
-    // pthread_mutex_destroy(&mls_svr_lock);
-    // pthread_cond_destroy(&mls_svr_signal);
 }
 
 /******************************************************************
@@ -2443,10 +2227,6 @@ STATUS multi_thread_init()
 {
     // Only setup threadpool for each object rank list at the first iteration;
     cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
-    // int n_threads; //number of thread used in the threadpool of an object rank
-    // list
-    OBJSYNCDATA *thread = nullptr;
-    // struct arg_data *arg_data_array;
     std::vector<std::shared_ptr<struct arg_data>> arg_data_array = {};
     int j;
     /* set thread count equal to processor count if not passed on command-line */
@@ -2456,15 +2236,7 @@ STATUS multi_thread_init()
         output_verbose("using %d helper thread(s)", global_threadcount);
     }
 
-    // sjin: allocate arg_data_array to store pthreads creation argument
-    // arg_data_array = (struct arg_data *)malloc(sizeof(struct arg_data) *
-    // global_threadcount);
-
     /* allocate thread synchronization data */
-    // thread_data = (struct thread_data *)malloc(sizeof(struct thread_data) +
-    //    sizeof(struct sync_data) * global_threadcount);
-    // threadpool_data = new threadpool_thread_data(global_threadcount,
-    // threadpool);
     thread_data = std::make_shared<struct thread_data>();
     if (!thread_data)
     {
@@ -2477,9 +2249,6 @@ STATUS multi_thread_init()
     }
     thread_data->data.resize(global_threadcount);
     thread_data->count = global_threadcount;
-    // thread_data->data = (struct sync_data *)(thread_data + 1);
-    // for (j = 0; j < thread_data->count; j++)
-    // thread_data->data[j].status = SUCCESS;
 
     for (j = 0; j < thread_data->count; j++)
     {
@@ -2490,106 +2259,106 @@ STATUS multi_thread_init()
     return SUCCESS;
 }
 
-// void multithread_stuff(int iObjRankList, cpp_threadpool *threadpool, int i)
-// {
-// 	unsigned int n_items, objn = 0, n;
-// 	unsigned int n_obj = ranks[pass]->ordinal[i]->size;
-// 	LISTITEM *ptr;
-// 	int incr;
-// 	int j = 0;
-// 	OBJSYNCDATA *thread = nullptr;
+static void *obj_syncproc(void *ptr)
+{
+	OBJSYNCDATA *data = (OBJSYNCDATA*)ptr;
+	LISTITEM *s;
+	unsigned int n;
+	int i = data->i;
 
-// 	// Only create threadpool for each object rank list at the first
-// iteration.
-// 	// Reuse the threadppol of each object rank list at all other
-// iterations.
-// 	//  if (setTP) {
-// 	incr = (int)ceil((float)n_obj / global_threadcount);
-// 	// if the number of objects is less than or equal to the number of
-// threads, each thread process one object 	if (incr <= 1)
-// 	{
-// 		n_threads[iObjRankList] = n_obj;
-// 		n_items = 1;
-// 		// if the number of objects is greater than the number of
-// threads, each thread process the same number of
-// 		// objects (incr), except that the last thread may process less
-// objects
-// 	}
-// 	else
-// 	{
-// 		n_threads[iObjRankList] = (int)ceil((float)n_obj / incr);
-// 		n_items = incr;
-// 	}
-// 	if ((int)n_threads[iObjRankList] > global_threadcount)
-// 	{
-// 		output_error("Running threads > global_threadcount");
-// 		exit(0);
-// 	}
+	// begin processing loop
+	while (data->ok)
+	{
+		for (s=data->ls, n=0; s!=nullptr, n<data->nObj; s=s->next,n++) {
+			OBJECT *obj = static_cast<OBJECT *>(s->data);
+            clock_t ts = (clock_t)exec_clock();
+            ss_do_object_sync(data->n, s->data);
+        	objs_synctime += (clock_t)exec_clock() - ts;
+            if (obj->valid_to == TS_INVALID)
+            {
+                // Get us out of the loop so others don't exec on bad status
+                break;
+            }
+		}
+        return nullptr;
+	}
+   return nullptr;
+}
 
-// 	// allocate thread list
-// 	thread = (OBJSYNCDATA *)malloc(sizeof(OBJSYNCDATA) *
-// n_threads[iObjRankList]); 	memset(thread, 0, sizeof(OBJSYNCDATA) *
-// n_threads[iObjRankList]);
-// 	// assign starting obj for each thread
-// 	for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr =
-// ptr->next)
-// 	{
-// 		if (thread[objn].nObj == n_items)
-// 			objn++;
-// 		if (thread[objn].nObj == 0)
-// 		{
-// 			thread[objn].ls = ptr;
-// 		}
-// 		thread[objn].nObj++;
-// 	}
+void multithread_stuff(int iObjRankList, cpp_threadpool *threadpool, int i, int k)
+{
+	unsigned int n_items, objn = 0, n;
+	unsigned int n_obj = ranks[pass]->ordinal[i]->size;
+	LISTITEM *ptr;
+	int incr;
+	int j = 0;
+	OBJSYNCDATA *objsyncdata = nullptr;
 
-// 	// lock access to done count
-// 	std::unique_lock<std::mutex> lock_done(*donelock[iObjRankList]);
-// 	//
-// pthread_mutex_lock(&donelock[iObjRankList]);
+	// Only create threadpool for each object rank list at the first iteration.
+	// Reuse the threadppol of each object rank list at all other iterations.
+	if (setTP) {
+        incr = (int)ceil((float)n_obj / global_threadcount);
+        // if the number of objects is less than or equal to the number of threads, each thread process one object 	
+        if (incr <= 1)
+        {
+            n_threads[iObjRankList] = std::make_unique<unsigned int>(n_obj);
+            n_items = 1;
+            // if the number of objects is greater than the number of threads, each thread process the same number of
+            // objects (incr), except that the last thread may process less objects
+        }
+        else
+        {
+            n_threads[iObjRankList] = std::make_unique<unsigned int>((int)ceil((float)n_obj / incr));
+            n_items = incr;
+        }
+        if (*n_threads[iObjRankList] > global_threadcount)
+        {
+            output_error("Running threads > global_threadcount");
+            exit(0);
+        }
 
-// 	// initialize wait count
-// 	donecount[iObjRankList] = n_threads[iObjRankList];
+        // allocate thread list
+        objsyncdata = new OBJSYNCDATA();
+        for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
+        {
+            if (objsyncdata->nObj == n_items) {
+                objn++;
+                thread.push_back(std::unique_ptr<OBJSYNCDATA>(objsyncdata));
+                objsyncdata = new OBJSYNCDATA();
+            }
+            if (objsyncdata->nObj == 0)
+                objsyncdata->ls = ptr;
+            objsyncdata->nObj++;
+        }
+        if (objn < *n_threads[iObjRankList]) 
+            thread.push_back(std::unique_ptr<OBJSYNCDATA>(objsyncdata));
+        n_idx.push_back(k + *n_threads[iObjRankList]);
+    }
 
-// 	// lock access to start condition
-// 	std::unique_lock<std::mutex> lock_start(*startlock[iObjRankList]);
-// 	//
-// pthread_mutex_lock(&startlock[iObjRankList]);
+    for (n = 0; n < *n_threads[iObjRankList]; n++) {
+        thread[n+k]->ok = true;
+        thread[n+k]->t0 = 0;
+        thread[n+k]->i = iObjRankList;
+        if (!threadpool->add_job([=] { obj_syncproc(&*thread[n+k]); })) {
+            output_fatal("obj_sync thread creation failed");
+            thread[n+k]->ok = false;
+        } 
+        else {
+            thread[n+k]->n = n;
+        }
+    }
 
-// 	// update start condition
-// 	next_t1[iObjRankList]++;
+    threadpool->await();
 
-// 	// signal all the threads
-// 	start[iObjRankList]->notify_all();
-
-// 	// pthread_cond_broadcast(&start[iObjRankList]);
-// 	// unlock access to start count
-// 	//
-// pthread_mutex_unlock(&startlock[iObjRankList]);
-// 	startlock[iObjRankList]->unlock();
-
-// 	// begin wait
-// 	while (donecount[iObjRankList] > 0)
-// 		done[iObjRankList]->wait_for(lock_done,
-// std::chrono::milliseconds(100));
-// 	//
-// pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
-
-// 	// unlock done count
-// 	//
-// pthread_mutex_unlock(&donelock[iObjRankList]);
-// 	donelock[iObjRankList]->unlock();
-// 	threadpool->await();
-
-// 	for (j = 0; j < thread_data->count; j++)
-// 	{
-// 		if (thread_data->data[j].status == FAILED)
-// 		{
-// 			exec_sync_set(sync_data_nullptr, TS_INVALID, false);
-// 			THROW("synchronization failed");
-// 		}
-// 	}
-// }
+	for (j = 0; j < thread_data->count; j++)
+	{
+		if (thread_data->data[j]->status == FAILED)
+		{
+			exec_sync_set(thread_data->data[j], TS_INVALID, false);
+			THROW("synchronization failed");
+		}
+	}
+}
 
 /******************************************************************
  *  MAIN EXEC LOOP
@@ -2599,17 +2368,11 @@ STATUS run_preparation()
 {
     // Only setup threadpool for each object rank list at the first iteration;
     cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
-    // After the first iteration, setTP = false;
-    bool setTP = true;
-    // int n_threads; //number of thread used in the threadpool of an object rank
-    // list
-    OBJSYNCDATA *thread = nullptr;
     struct arg_data *arg_data_array;
     int nObjRankList, iObjRankList;
     int j, k;
 
-    // Ensure deterministic behavior by setting a fixed random seed if not already
-    // set
+    // Ensure deterministic behavior by setting a fixed random seed if not already set
     if (global_randomseed == 0)
     {
         global_randomseed = 42; // Default seed for reproducibility
@@ -2739,41 +2502,7 @@ STATUS run_preparation()
     /* allocate and initialize thread data */
     output_debug("nObjRankList=%d ", nObjRankList);
 
-    // next_t1 = static_cast<unsigned int *>(malloc(sizeof(next_t1[0]) *
-    // nObjRankList)); memset(next_t1,0,sizeof(next_t1[0])*nObjRankList);
-
-    //	next_t1 = new unsigned int[nObjRankList]{0};
-
-    // donecount = static_cast<unsigned int *>(malloc(sizeof(donecount[0]) *
-    // nObjRankList)); memset(donecount, 0, sizeof(donecount[0]) * nObjRankList);
-
-    //	donecount = new unsigned int[nObjRankList]{0};
-
-    // n_threads = static_cast<unsigned int *>(malloc(sizeof(n_threads[0]) *
-    // nObjRankList)); memset(n_threads, 0, sizeof(n_threads[0]) * nObjRankList);
-
-    //	n_threads = new unsigned int[nObjRankList]{0};
-
-    next_t1.resize(nObjRankList);
-    for (iObjRankList = 0; iObjRankList < nObjRankList; iObjRankList++)
-    {
-        next_t1[iObjRankList] = std::make_unique<unsigned int>(0);
-    }
-
-    donecount.resize(nObjRankList);
-    for (iObjRankList = 0; iObjRankList < nObjRankList; iObjRankList++)
-    {
-        donecount[iObjRankList] = std::make_unique<unsigned int>(0);
-    }
-
-    // allocation and nitialize mutex and cond for object rank lists
-    for (k = 0; k < nObjRankList; k++)
-    {
-        startlock.push_back(std::make_unique<std::mutex>());
-        donelock.push_back(std::make_unique<std::mutex>());
-        start.push_back(std::make_unique<std::condition_variable>());
-        done.push_back(std::make_unique<std::condition_variable>());
-    }
+    n_threads.resize(nObjRankList);
 
     // global test mode
     if (global_test_mode == true)
@@ -2781,7 +2510,6 @@ STATUS run_preparation()
 
     /* check for a model */
     if (object_get_count() == 0)
-
         /* no object -> nothing to do */
         return SUCCESS;
 
@@ -2841,6 +2569,7 @@ void report_performance_after_run(time_t start_time, int64 passes,
         extern clock_t loadshape_synctime;
         extern clock_t enduse_synctime;
         extern clock_t transform_synctime;
+        extern clock_t objs_synctime;
 
         CLASS *cl;
         DELTAPROFILE *dp = delta_getprofile();
@@ -2894,6 +2623,10 @@ void report_performance_after_run(time_t start_time, int64 passes,
         output_profile("    Transforms          %8.1f seconds (%.1f%%)",
                        (double)transform_synctime / global_ms_per_second,
                        ((double)transform_synctime / global_ms_per_second) /
+                           elapsed_wall * 100);
+        output_profile("    Objects             %8.1f seconds (%.1f%%)",
+                       (double)objs_synctime / global_ms_per_second,
+                       ((double)objs_synctime / global_ms_per_second) /
                            elapsed_wall * 100);
         output_profile("  Model time            %8.1f seconds/thread (%.1f%%)",
                        sync_time, sync_time / elapsed_wall * 100);
@@ -2981,6 +2714,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
                                                 int &j, LISTITEM *&ptr,
                                                 int &pc_rv, int &iObjRankList)
 {
+    int n_cnt = 0;
     std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
     TIMESTAMP internal_synctime;
     output_debug("*** main loop event at %lli; stoptime=%lli, n_events=%i, "
@@ -3205,14 +2939,15 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
             }
             else
             {
-                // sjin: if global_threadcount == 1, no pthread multhreading
+                // global_threadcount == 1, no multithreading
                 if (global_threadcount == 1)
                 {
-                    for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr;
-                         ptr = ptr->next)
+                    for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
                     {
                         OBJECT *obj = static_cast<OBJECT *>(ptr->data);
+                        clock_t ts = (clock_t)exec_clock();
                         ss_do_object_sync(0, ptr->data);
+                    	objs_synctime += (clock_t)exec_clock() - ts;
 
                         if (obj->valid_to == TS_INVALID)
                         {
@@ -3224,9 +2959,10 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
                     // printf("\n");
                 }
                 else
-                { // sjin: implement pthreads
-                  //  multithread_stuff(i, threadpool, iObjRankList); // Function
-                  //  is disabled
+                { // implement multithreading
+//                    printf("****PASS: %d, RANK: %d, iObjRankList: %d\n", pass, i, iObjRankList);
+                    multithread_stuff(iObjRankList, threadpool, i, n_idx.at(n_cnt)); // Function
+                    n_cnt++;
                 }
             }
         }
@@ -3240,7 +2976,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
             exec_sync_set(sync_data_nullptr, st, false);
         }
     }
-    //	setTP = false;
+    setTP = false;
 
     if (!global_debug_mode)
     {
@@ -3261,13 +2997,6 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
     {
         output_debug("step_to = %lli", exec_sync_get(sync_data_nullptr));
         output_debug("exec_start(), slave waiting for looped time signal");
-
-        // pthread_cond_broadcast(&mls_inst_signal);
-
-        // pthread_mutex_lock(&mls_inst_lock);
-        // pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-        // pthread_mutex_unlock(&mls_inst_lock);
-
         output_debug("exec_start(), slave received looped time signal (%lli)",
                      exec_sync_get(sync_data_nullptr));
     }
@@ -3292,10 +3021,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
         if (exec_sync_get(sync_data_nullptr) > global_clock)
         {
             global_federation_reiteration = false;
-            TIMESTAMP commit_time = TS_NEVER;
-            commit_time = commit_all(global_clock, exec_sync_get(sync_data_nullptr));
-            //		commit_time = tp_commit_all(global_clock,
-            // exec_sync_get(sync_data_nullptr), threadpool);
+            TIMESTAMP commit_time = commit_all(global_clock, exec_sync_get(sync_data_nullptr));
             if (absolute_timestamp(commit_time) <= global_clock)
             {
                 // commit cannot force reiterations, and any event where the time is
@@ -3395,6 +3121,8 @@ static void run_main_simulation_loop(cpp_threadpool *threadpool, int64 &passes,
     {
         continue;
     }
+    /* deallocate threadpool */
+    delete threadpool;
 }
 
 /** Single step simulation function
@@ -4032,522 +3760,3 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
     return data->status;
 }
 
-// void *slave_node_proc(void *args)
-//{
-//	SOCKET **args_in = (SOCKET **)args;
-//	SOCKET *sockfd_ptr = (SOCKET *)args_in[1];
-//	SOCKET masterfd = *args_in[2];
-//	bool *done_ptr = (bool *)(args_in[0]);
-//	struct sockaddr_in *addrin = (struct sockaddr_in *)(args_in[3]);
-//
-//	char buffer[1024], response[1024], addrstr[17], *paddrstr, *token_to,
-//*params; 	char cmd[1024], dirname[256], filename[256], filepath[256],
-// ippath[256]; 	unsigned int64 mtr_port, id;
-////	char *tok_to;
-//	const char *token[5]={
-//		HS_CMD,
-//		"dir=\"", // CMD absorbs dir's leading whitespace
-//		" file=\"",
-//		" port=",
-//		" id="
-//	};
-//	size_t token_len[] = {
-//		strlen(token[0]),
-//		strlen(token[1]),
-//		strlen(token[2]),
-//		strlen(token[3]),
-//		strlen(token[4])
-//	};
-//	int /* rsp_port = global_server_portnum,*/ rv = 0;
-//	size_t offset = 0, tok_len = 0;
-//	SOCKET sockfd = *sockfd_ptr;
-//
-//	// input checks
-//	if(0 == sockfd_ptr)
-//	{
-//		output_error("slave_node_proc(): no pointer to listener
-// socket"); 		return 0;
-//	}
-//	if(0 == done_ptr)
-//	{
-//		output_error("slave_node_proc(): no pointer to stop condition");
-//		return 0;
-//	}
-//	if(0 > masterfd)
-//	{
-//		output_error("slave_node_proc(): no accepted socket");
-//		return 0;
-//	}
-//	if(0 == addrin)
-//	{
-//		output_error("slave_node_proc(): no address struct");
-//		return 0;
-//	}
-//	// sanity checks
-//	if(0 != *done_ptr)
-//	{
-//		// something else errored while the thread was starting
-//		output_error("slave_node_proc(): slavenode finished while thread
-// started"); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//	// socket has been accept()ed
-//
-//	// read handshake
-//	rv = recv(masterfd, buffer, 1023, 0);
-//	if (rv < 0)
-//	{
-//		output_error("slave_node_proc(): error receiving handshake");
-//		closesocket(masterfd);
-//		free(addrin);
-//		return 0;
-//	} else if (rv == 0)
-//	{
-//		output_error("slave_node_proc(): socket closed before receiving
-// handshake"); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//	if (0 != strcmp(buffer, HS_SYN))
-//	{
-//		output_error("slave_node_proc(): received handshake mismatch
-//(\"%s\")", buffer); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//
-//	sprintf(response, HS_ACK);
-//	// send response
-//	//	* see above
-//	rv = send(masterfd, response, (int)strlen(response), 0);
-//	if (rv < 0)
-//	{
-//		output_error("slave_node_proc(): error sending handshake
-// response"); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//	else if (rv == 0)
-//	{
-//		output_error("slave_node_proc(): socket closed before sending
-// handshake response"); 		closesocket(masterfd);
-// free(addrin); 		return 0;
-//	}
-//
-//	// receive command
-//	rv = recv(masterfd, buffer, 1023, 0);
-//	if (0 > rv)
-//	{
-//		output_error("slave_node_proc(): error receiving command
-// instruction"); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//	else if(0 == rv)
-//	{
-//		output_error("slave_node_proc(): socket closed before receiving
-// command instruction"); 		closesocket(masterfd);
-// free(addrin); 		return 0;
-//	}
-//
-//	// process command (what kinds do we expect?)
-//	// HS_CMD dir file r_port cacheid profile relax debug verbose warn quiet
-// avlbalance
-//	//	the first four tokens are dir="%s" file="%s" port=%d id=%I64
-//	//	subsequent toekns are as legitimate GLD cmdargs
-//	//	ex: [HS_CMD]dir="C:\mytemp\mls\slave\" file="model.glm"
-// port="6762" id="1234567890" --profile --relax --quiet
-// output_debug("cmd:
-//\'%s\'", buffer);
-//	// HS_CMD
-//	if ( memcmp(token[0],buffer,token_len[0])!=0 )
-//	{
-//		output_error("slave_node_proc(): bad command instruction
-// token"); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//	offset += token_len[0];
-//	// dir="%s"
-//	if ( memcmp(token[1], buffer+offset, token_len[1])!=0 )
-//	{
-//		output_error("slave_node_proc(): error in command instruction
-// dir token"); 		output_debug("t=\"%5s\" vs c=\"%5s\"", token[1],
-// buffer+offset); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//	offset += token_len[1];
-//	//tok_len = strcspn(buffer+offset, "\"\n\r\t\0"); // whitespace in path
-// allowable
-//	//tok_to = strchr(buffer+offset+1, '"');
-//	//tok_len = tok_to - (buffer+offset+1) - 1; // -1 to fudge the last "
-//	// strchr doesn't like when you start with a ", it seems
-//	tok_len = 0;
-//	while ( buffer[offset+tok_len]!='"' && buffer[offset+tok_len]!=0 )
-//	{
-//		++tok_len;
-//	}
-//	output_debug("tok_len = %d", tok_len);
-//	if (tok_len > 0)
-//	{
-//		char temp[256];
-//		sprintf(temp, "%%ld offset and %%ld len for \'%%%lds\'",
-// tok_len); 		output_debug(temp, offset, tok_len, buffer+offset);
-// memcpy(dirname, buffer+offset, (tok_len > sizeof(dirname) ? sizeof(dirname) :
-// tok_len)); 	} else { 		dirname[0] = 0;
-//	}
-//	offset += 1 + tok_len; // one for "
-//	// zero-len dir is allowable
-//	// file=""
-//	if ( memcmp(token[2],buffer+offset,token_len[2])!=0 )
-//	{
-//		output_error("slave_node_proc(): error in command instruction
-// file token"); 		output_debug("(%d)t=\"%7s\" vs c=\"%7s\"",
-// offset, token[2], buffer+offset); 		closesocket(masterfd);
-// free(addrin); 		return 0;
-//	}
-//	offset += token_len[2];
-//	tok_len = strcspn(buffer+offset, "\"\n\r\t\0"); // whitespace in
-// filename allowable 	if (tok_len > 0)
-//	{
-//		char temp[256];
-//		memcpy(filename, buffer+offset, (tok_len > sizeof(filename) ?
-// sizeof(filename) : tok_len)); 		filename[tok_len]=0;
-// sprintf(temp, "%%ld offset and %%ld len for \'%%%lds\'", tok_len);
-// output_debug(temp, offset, tok_len, buffer+offset);
-//	}
-//	else
-//	{
-//		filename[0] = 0;
-//	}
-//	offset += 1 + tok_len;
-//	// port=
-//	if (0 != memcmp(token[3], buffer+offset, token_len[3]))
-//	{
-//		output_error("slave_node_proc(): error in command instruction
-// port token"); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//	offset += token_len[3];
-//	mtr_port = strtol(buffer+offset, &token_to, 10);
-//	if (mtr_port < 0)
-//	{
-//		output_error("slave_node_proc(): bad return port specified in
-// command instruction"); 		closesocket(masterfd);
-// free(addrin); 		return 0;
-//	}
-//	else if (mtr_port < 1024)
-//	{
-//		output_warning("slave_node_proc(): return port %d specified, may
-// cause system conflicts", mtr_port);
-//	}
-//
-//	// id=
-//	if (0 != memcmp(token_to, token[4], token_len[4]))
-//	{
-//		output_error("slave_node_proc(): error in command instruction id
-// token"); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//	offset = token_len[4]; // not += since we updated our zero point
-//	output_debug("%12s -> ???", token_to);
-//	id = strtoll(token_to+offset, &token_to, 10);
-//	if (id < 0)
-//	{
-//		output_error("slave_node_proc(): id %" FMT_INT64 " specified,
-// may cause system conflicts", id); 		closesocket(masterfd);
-// free(addrin); 		return 0;
-//	}
-//	else
-//	{
-//		output_debug("id = %llu", id);
-//	}
-//	// then zero or more CL args
-//	params = 1 + token_to;
-//
-//	// if unable to locate model file,
-//	//	* request model
-//	//	* receive model file (raw or packaged)
-//	// else
-//	//	* receipt model file found
-//
-//	// run command
-////	rsp_port = ntohs(addrin->sin_port);
-//	paddrstr = inet_ntoa(addrin->sin_addr);
-//	if (0 == paddrstr)
-//	{
-//		output_error("slave_node_proc(): unable to write address to a
-// string"); 		closesocket(masterfd); 		free(addrin);
-// return 0;
-//	}
-//	else
-//	{
-//		memcpy(addrstr, paddrstr, sizeof(addrstr));
-//		output_debug("snp(): connect to %s:%d", addrstr, mtr_port);
-//	}
-//
-// #ifdef _WIN32
-//	// write, system() --slave command
-//	sprintf(filepath, "%s%s%s", dirname, (dirname[0] ? "\\" : ""),
-// filename); 	output_debug("filepath = %s", filepath); 	sprintf(ippath,
-// "--slave %s:%d", addrstr, mtr_port); 	output_debug("ippath = %s",
-// ippath); 	sprintf(cmd,
-//"\"%s%sgridlabd.exe\" %s --id %" FMT_INT64 "d %s %s",
-//(global_execdir[0] ? global_execdir : ""), (global_execdir[0] ? "\\" : ""),
-// params, id, ippath, filepath);//addrstr, mtr_port, filepath);//,
-// output_debug("system(\"%s\")", cmd);
-//
-//	rv = system(cmd);
-// #endif
-//
-//	// cleanup
-//	closesocket(masterfd);
-//	free(addrin);
-//
-//	return nullptr;
-//}
-
-/**	exec_slave_node
-        Variant startup mode for GridLAB-D that causes the system to run a
- simple server that will spawn new instances of GridLAB-D as requested to run as
-        remote slave nodes (see cmdarg.c:slave() )
- **/
-// void exec_slave_node()
-//{
-//	static bool node_done = false;
-//	static SOCKET sockfd = -1;
-//	SOCKET *args[4];
-//	struct sockaddr_in server_addr;
-//	std::shared_ptr< struct sockaddr_in> inaddr = nullptr;
-//	fd_set reader_fdset, master_fdset;
-//	struct timeval timer;
-//	pthread_t slave_thread;
-//	int rct;
-// #ifdef _WIN32
-//	static WSADATA wsaData;
-//		int inaddrsz;
-// #else
-//	unsigned int inaddrsz;
-// #endif
-//
-//	inaddrsz = sizeof(struct sockaddr_in);
-// #ifdef _WIN32
-//	// if we're on windows, we're using WinSock2, so we need WSAStartup.
-//	output_debug("starting WS2");
-//	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
-//	{
-//		output_error("exec_slave_node(): socket library initialization
-// failed: %s",strerror(GetLastError())); 		return;
-//	}
-// #endif
-//
-//	// init listener socket
-//	sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-//	if (INVALID_SOCKET == sockfd)
-//	{
-//		output_fatal("exec_slave_node(): unable to open IPv4 TCP
-// socket"); 		return;
-//	}
-//
-//	// bind to global_slave_port
-//	//  * this port shall not be located on Tatooine.
-//	memset(&server_addr, 0, inaddrsz);
-//	server_addr.sin_family = AF_INET;
-//	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-//	server_addr.sin_port = htons(global_slave_port);
-//	if (0 != bind(sockfd, (struct sockaddr *)&server_addr, inaddrsz))
-//	{
-//		output_fatal("exec_slave_node(): unable to bind socket to port
-//%d", global_slave_port); 		perror("bind()");
-// closesocket(sockfd); 		return;
-//	}
-//
-//	// listen
-//	if ( 0 != listen(sockfd, 5))
-//	{
-//		output_fatal("exec_slave_node(): unable to listen to socket");
-//		closesocket(sockfd);
-//		return;
-//	}
-//	output_debug("exec_slave_node(): listening on port %d",
-// global_slave_port);
-//
-//	// set up fd_set
-//	FD_ZERO(&master_fdset);
-//	FD_SET(sockfd, &master_fdset);
-//
-//	args[0] = (SOCKET *)&node_done;
-//	args[1] = (SOCKET *)&sockfd;
-//
-//	output_debug("esn(): starting loop");
-//	while (!node_done)
-//	{
-//		reader_fdset = master_fdset;
-//		timer.tv_sec = 3; // check for kaputness every three (not five)
-// seconds 		timer.tv_usec = 0;
-//		// wait for connection
-//		rct = select(1 + (int)sockfd, &reader_fdset, 0, 0, &timer);
-//		if (rct < 0)
-//		{
-//			output_error("slavenode select() error");
-//			return;
-//		}
-//		else if (rct == 0)
-//		{
-//			// Waited three seconds without any input.  Play it
-// again, Sam.
-//			//output_debug("esn(): select ");
-//		}
-//		else if (rct > 0)
-//		{
-//			//inaddr = static_cast<sockaddr_in *>(malloc(inaddrsz));
-//			inaddr = std::make_shared<struct sockaddr_in>();
-//
-//			args[3] = (SOCKET *)inaddr;
-//			//output_debug("esn(): got client");
-//			memset(inaddr, 0, inaddrsz);
-//			args[2] = (SOCKET
-//*)reinterpret_cast<int*>(accept(sockfd, (struct sockaddr *)inaddr,
-//&inaddrsz)); 			output_debug("esn(): accepted client");
-// if (-1 == (int64)(args[2]))
-//			{
-//				output_error("unable to accept connection");
-//				perror("accept()");
-//				node_done = true;
-//				closesocket(sockfd);
-//				return;
-//			}
-//
-//			// thread off connection
-//			//	* include &node_done to handle 'stop' messages
-//			//	* include &sock to unblock thread on stop
-// condition
-//			//	* detatch, since we don't care about it after we
-// start it
-//			//	! I have no idea if the reuse of slave_thread
-// will fly. Change
-//			//	!  this if strange things start to happen.
-//			if ( pthread_create(&slave_thread, nullptr,
-// slave_node_proc, (void *)args) )
-//			{
-//				output_error("slavenode unable to thread off
-// connection"); 				node_done = true;
-// closesocket(sockfd); 				closesocket(*args[2]);
-//				return;
-//			}
-//			//output_debug("esn(): thread created");
-//			if ( pthread_detach(slave_thread) )
-//			{
-//				output_error("slavenode unable to detach
-// connection thread"); 				node_done = true;
-// closesocket(sockfd); 				closesocket(*args[2]);
-// return;
-//			}
-//			//output_debug("esn(): thread detached");
-//		} // end if rct
-//	} // end while
-// }
-
-/*************************************
- * Script support
- *************************************/
-
-// typedef struct s_simplelist {
-//	char *data;
-//	struct s_simplelist *next;
-// } SIMPLELIST;
-//
-// SIMPLELIST *script_exports = nullptr;
-// int exec_add_scriptexport(const char *name)
-//{
-//	SIMPLELIST *item = (SIMPLELIST*)malloc(sizeof(SIMPLELIST));
-//	if ( !item ) return 0;
-//	item->data = static_cast<char *>(malloc(strlen(name) + 1));
-//	strcpy(item->data,name);
-//	item->next = script_exports;
-//	script_exports = item;
-//	return 1;
-// }
-// static int update_exports()
-//{
-//	SIMPLELIST *item;
-//	for ( item=script_exports ; item!=nullptr ; item=item->next )
-//	{
-//		char *name = item->data;
-//		char value[1024];
-//		if ( global_getvar(name,value,sizeof(value)) )
-//		{
-//             char env[2048];
-//             sprintf(env,"%s=%s",name,value);
-//             if ( putenv(env)!=0 )
-//                 output_warning("unable to update script export '%s' with
-//                 value '%s'", name, value);
-//		}
-//	}
-//	return 1;
-// }
-
-// SIMPLELIST *create_scripts = nullptr;
-// SIMPLELIST *init_scripts = nullptr;
-// SIMPLELIST *sync_scripts = nullptr;
-// SIMPLELIST *term_scripts = nullptr;
-//
-// static int add_script(SIMPLELIST **list, const char *file)
-//{
-//	SIMPLELIST *item = (SIMPLELIST*)malloc(sizeof(SIMPLELIST));
-//	if ( !item ) return 0;
-//	item->data = static_cast<char *>(malloc(strlen(file) + 1));
-//	strcpy(item->data,file);
-//	item->next = *list;
-//	*list = item;
-//	return 1;
-// }
-// static EXITCODE run_scripts(SIMPLELIST *list)
-//{
-//	SIMPLELIST *item;
-//	update_exports();
-//	for ( item=list ; item!=nullptr ; item=item->next )
-//	{
-//		EXITCODE rc = system(item->data);
-//         if (rc == -1 || WEXITSTATUS(rc) != XC_SUCCESS)
-//		{
-//			output_error("script '%s' return with exit code %d",
-// item->data,WEXITSTATUS(rc)); 			return WEXITSTATUS(rc);
-//		}
-//		else
-//			output_verbose("script '%s'' returned ok", item->data);
-//	}
-//	return XC_SUCCESS;
-// }
-// int exec_add_createscript(const char *file)
-//{
-//	output_debug("adding create script '%s'", file);
-//	return add_script(&create_scripts,file);
-// }
-// int exec_add_initscript(const char *file)
-//{
-//	output_debug("adding init script '%s'", file);
-//	return add_script(&init_scripts,file);
-// }
-// int exec_add_syncscript(const char *file)
-//{
-//	output_debug("adding sync script '%s'", file);
-//	return add_script(&sync_scripts,file);
-// }
-// int exec_add_termscript(const char *file)
-//{
-//	output_debug("adding term script '%s'", file);
-//	return add_script(&term_scripts,file);
-// }
-// int exec_run_createscripts()
-//{
-//	return run_scripts(create_scripts);
-// }
-// int exec_run_initscripts()
-//{
-//	return run_scripts(init_scripts);
-// }
-// int exec_run_syncscripts()
-//{
-//	return run_scripts(sync_scripts);
-// }
-// int exec_run_termscripts()
-//{
-//	return run_scripts(term_scripts);
-// }
-/**@}*/

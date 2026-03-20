@@ -2071,33 +2071,22 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 typedef struct s_schedulesyncdata
 {
 	unsigned int n;
-	// pthread_t pt;
-	std::thread thread;
+	std::thread worker;
 	bool ok;
 	SCHEDULE *sch;
 	unsigned int nsch;
 	TIMESTAMP t0;
 } SCHEDULESYNCDATA;
 
-// static pthread_cond_t start_sch = PTHREAD_COND_INITIALIZER;
-// static pthread_mutex_t startlock_sch = PTHREAD_MUTEX_INITIALIZER;
-// static pthread_cond_t done_sch = PTHREAD_COND_INITIALIZER;
-// static pthread_mutex_t donelock_sch = PTHREAD_MUTEX_INITIALIZER;
-// static TIMESTAMP next_t1_sch;
-// static TIMESTAMP next_t2_sch = TS_ZERO;
-// static unsigned int donecount_sch;
-// clock_t schedule_synctime = 0;
 
-// Replace pthread synchronization primitives with C++17 equivalents
-static std::condition_variable_any start_sch;
+// thread constructs with C++17 
+static bool setSCH = true;
 static std::mutex start_sch_mutex; // Use a standard mutex
-static std::condition_variable_any done_sch;
-static std::mutex done_sch_mutex; // Use a standard mutex
-
+static std::condition_variable_any start_sch;
 static TIMESTAMP next_t1_sch;
 static TIMESTAMP next_t2_sch = TS_ZERO;
-static unsigned int donecount_sch;
 clock_t schedule_synctime = 0; // Retained as requested
+static bool schedule_ready = false;
 
 // Modernized thread function
 void schedule_syncproc(SCHEDULESYNCDATA *data)
@@ -2107,18 +2096,13 @@ void schedule_syncproc(SCHEDULESYNCDATA *data)
 	TIMESTAMP t2;
 
 	// Processing loop
-	while (data->ok)
-	{
+	while (data->ok) {
 		// Lock access to start condition using RAII
-		{
-			std::unique_lock<std::mutex> start_lock(start_sch_mutex);
+		std::unique_lock<std::mutex> start_lock(start_sch_mutex);
 
-			// Wait for thread start condition with predicate
-			start_sch.wait(start_lock, [data]()
-						   { return data->t0 != next_t1_sch; });
-
-			// Lock automatically released at the end of the scope
-		}
+		// Wait for thread start condition
+		while (!schedule_ready) 
+			start_sch.wait(start_sch_mutex);
 
 		// Process the list for this thread
 		t2 = TS_NEVER;
@@ -2126,244 +2110,18 @@ void schedule_syncproc(SCHEDULESYNCDATA *data)
 		// Fixed the loop condition: replaced comma with logical AND
 		for (sch = data->sch, n = 0; sch != nullptr && n < data->nsch; sch = sch->next, n++)
 		{
-			TIMESTAMP t = schedule_sync(sch, next_t1_sch);
-			if (t < t2)
-				t2 = t;
+			TIMESTAMP t3 = schedule_sync(sch, next_t1_sch);
+			if (t3 < t2)
+				t2 = t3;
 		}
 
 		// Signal completed condition
 		data->t0 = next_t1_sch;
 
-		// Lock access to done condition using RAII
-		{
-			std::unique_lock<std::mutex> done_lock(done_sch_mutex);
-
-			// Signal thread is done for now
-			donecount_sch--;
-			if (t2 < next_t2_sch)
-				next_t2_sch = t2;
-
-			// Signal change in done condition
-			done_sch.notify_all(); // Equivalent to pthread_cond_broadcast
-
-			// Lock automatically released at the end of the scope
-		}
+		if (t2 < next_t2_sch) next_t2_sch = t2;
 	}
-
-	// No need for pthread_exit - function return handles cleanup
 }
 
-// void* schedule_syncproc(void* ptr)
-//{
-//	SCHEDULESYNCDATA* data = (SCHEDULESYNCDATA*)ptr;
-//	SCHEDULE* sch;
-//	unsigned int n;
-//	TIMESTAMP t2;
-//
-//	// begin processing loop
-//	while (data->ok)
-//	{
-//		// lock access to start condition
-//		pthread_mutex_lock(&startlock_sch);
-//
-//		// wait for thread start condition
-//		while (data->t0 == next_t1_sch)
-//			pthread_cond_wait(&start_sch, &startlock_sch);
-//
-//		// unlock access to start count
-//		pthread_mutex_unlock(&startlock_sch);
-//
-//		// process the list for this thread
-//		t2 = TS_NEVER;
-//		for (sch = data->sch, n = 0; sch != nullptr, n < data->nsch; sch = sch->next, n++)
-//		{
-//			TIMESTAMP t = schedule_sync(sch, next_t1_sch);
-//			if (t < t2) t2 = t;
-//		}
-//
-//		// signal completed condition
-//		data->t0 = next_t1_sch;
-//
-//		// lock access to done condition
-//		pthread_mutex_lock(&donelock_sch);
-//
-//		// signal thread is done for now
-//		donecount_sch--;
-//		if (t2 < next_t2_sch) next_t2_sch = t2;
-//
-//		// signal change in done condition
-//		pthread_cond_broadcast(&done_sch);
-//
-//		// unlock access to done count
-//		pthread_mutex_unlock(&donelock_sch);
-//	}
-//	pthread_exit((void*)0);
-//	return (void*)0;
-// }
-
-/** synchronized all the schedules to the time given
-	@return the time of the next schedule change
- **/
-// TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is synchronized */
-// {
-// 	static unsigned int n_threads_sch = 0;
-// 	static SCHEDULESYNCDATA *thread_sch = nullptr;
-// 	TIMESTAMP t2 = TS_NEVER;
-// 	clock_t ts = (clock_t)exec_clock();
-
-// 	// skip schedule_syncall if there's no schedule in the glm
-// 	if (n_schedules == 0)
-// 		return TS_NEVER;
-
-// 	// number of threads desired
-// 	if (n_threads_sch == 0)
-// 	{
-// 		SCHEDULE *sch;
-// 		int n_items, schn = 0;
-
-// 		output_debug("loadshape_syncall setting up for %d shapes", n_schedules);
-
-// 		// determine needed threads
-// 		n_threads_sch = global_threadcount;
-// 		if (n_threads_sch > 1)
-// 		{
-// 			unsigned int n;
-// 			if (n_schedules < n_threads_sch * 4)
-// 				n_threads_sch = n_schedules / 4;
-
-// 			// only need 1 thread if n_schedules is less than 4
-// 			if (n_threads_sch == 0)
-// 				n_threads_sch = 1;
-
-// 			// determine shapes per thread
-// 			n_items = n_schedules / n_threads_sch;
-// 			n_threads_sch = n_schedules / n_items;
-// 			if (n_threads_sch * n_items < n_schedules) // not enough slots yet
-// 				n_threads_sch++;					   // add one underused threads
-
-// 			output_debug("schedule_syncall is using %d of %d available threads", n_threads_sch, global_threadcount);
-// 			output_debug("schedule_syncall is assigning %d shapes per thread", n_items);
-
-// 			// allocate thread list
-// 			thread_sch = (SCHEDULESYNCDATA *)malloc(sizeof(SCHEDULESYNCDATA) * n_threads_sch);
-// 			memset(thread_sch, 0, sizeof(SCHEDULESYNCDATA) * n_threads_sch);
-
-// 			// assign starting shape for each thread
-// 			for (sch = schedule_list; sch != nullptr; sch = sch->next)
-// 			{
-// 				if (thread_sch[schn].nsch == n_items)
-// 					schn++;
-// 				if (thread_sch[schn].nsch == 0)
-// 					thread_sch[schn].sch = sch;
-// 				thread_sch[schn].nsch++;
-// 			}
-
-// 			// create threads
-// 			for (n = 0; n < n_threads_sch; n++)
-// 			{
-// 				thread_sch[n].ok = true;
-// 				/*if (pthread_create(&(thread_sch[n].pt), nullptr, schedule_syncproc, &(thread_sch[n])) != 0)
-// 				{
-// 					output_fatal("loadshape_sync thread creation failed");
-// 					thread_sch[n].ok = false;
-// 				}
-// 				else*/
-// 				thread_sch[n].thread = std::thread(schedule_syncproc, &(thread_sch[n]));
-// 				thread_sch[n].n = n;
-// 			}
-// 		}
-// 	}
-
-// 	// don't update if no schedules ever expect to change again
-// 	if (next_t2_sch == TS_NEVER)
-// 		return TS_NEVER;
-
-// 	// don't update if next_t2 < next_t1, but override this if there are interpolated schedules
-// 	if (next_t2_sch > t1 && !interpolated_schedules)
-// 		return next_t2_sch;
-
-// 	// no threading required
-// 	if (n_threads_sch < 2)
-// 	{
-// 		// process list directly
-// 		std::lock_guard<std::mutex> lock(g_schedule_list_mutex);
-// 		SCHEDULE *sch;
-// 		for (sch = schedule_list; sch != nullptr; sch = sch->next)
-// 		{
-// 			TIMESTAMP t3 = schedule_sync(sch, t1);
-// 			if (t3 < t2)
-// 				t2 = t3;
-// 		}
-// 		next_t2_sch = t2;
-// 	}
-// 	else
-// 	{
-// 		//// lock access to done count
-// 		// pthread_mutex_lock(&donelock_sch);
-
-// 		//// initialize wait count
-// 		// donecount_sch = n_threads_sch;
-
-// 		//// lock access to start condition
-// 		// pthread_mutex_lock(&startlock_sch);
-
-// 		//// update start condition
-// 		// next_t1_sch = t1;
-// 		// next_t2_sch = TS_NEVER;
-
-// 		//// signal all the threads
-// 		// pthread_cond_broadcast(&start_sch);
-
-// 		//// unlock access to start count
-// 		// pthread_mutex_unlock(&startlock_sch);
-
-// 		//// begin wait
-// 		// while (donecount_sch > 0)
-// 		//	pthread_cond_wait(&done_sch, &donelock_sch);
-// 		// output_debug("passed donecount==0 condition");
-
-// 		//// unlock done count
-// 		// pthread_mutex_unlock(&donelock_sch);
-
-// 		//// process results from all threads
-// 		// if (next_t2_sch < t2) t2 = next_t2_sch;
-
-// 		// Lock access to done count using std::mutex
-// 		// std::unique_lock<std::shared_mutex> doneLock(SharedMutexManager::get_mutex(&donelock_sch));
-
-// 		// Initialize wait count
-// 		donecount_sch = n_threads_sch;
-
-// 		// Lock access to start condition using another std::mutex
-// 		{
-// 			// std::unique_lock<std::shared_mutex> startLock(SharedMutexManager::get_mutex(&startlock_sch));
-
-// 			// Update start condition
-// 			next_t1_sch = t1;
-// 			next_t2_sch = TS_NEVER;
-
-// 			// Signal all threads - unlock after notifying to ensure all threads receive notification
-// 			start_sch.notify_all();
-// 		} // startLock is automatically released here
-
-// 		// Begin wait with the condition variable
-// 		// This waits until donecount_sch reaches 0
-// 		done_sch.wait(doneLock, [&]()
-// 					  { return donecount_sch <= 0; });
-
-// 		output_debug("passed donecount==0 condition");
-
-// 		// doneLock is automatically released when it goes out of scope
-// 		// No explicit unlock needed with std::unique_lock
-
-// 		// Process results from all threads
-// 		if (next_t2_sch < t2)
-// 			t2 = next_t2_sch;
-// 	}
-
-// 	schedule_synctime += (clock_t)exec_clock() - ts;
-// 	return t2;
-// }
 
 /** synchronized all the schedules to the time given
 	@return the time of the next schedule change
@@ -2371,7 +2129,8 @@ void schedule_syncproc(SCHEDULESYNCDATA *data)
 TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is synchronized */
 {
 	static unsigned int n_threads_sch = 0;
-	static SCHEDULESYNCDATA *thread_sch = nullptr;
+	static std::vector<SCHEDULESYNCDATA> thread_sch;
+
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = (clock_t)exec_clock();
 
@@ -2380,17 +2139,17 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		return TS_NEVER;
 
 	// This block runs only once to set up the threading model
-	if (n_threads_sch == 0)
-	{
-		SCHEDULE *sch;
+	if (n_threads_sch == 0) {
 		int n_items, schn = 0;
+
 		output_debug("schedule_syncall setting up for %d schedules", n_schedules);
 
 		// determine needed threads based on global count and number of schedules
 		n_threads_sch = global_threadcount;
+
 		// This runtime threading pool uses global static variables that get polluted
 		// by other test processes running in parallel. We must disable it for validation.
-		if (false && n_threads_sch > 1)
+		if (n_threads_sch > 1)
 		{
 			unsigned int n;
 			if (n_schedules < n_threads_sch * 4)
@@ -2408,15 +2167,14 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 			output_debug("schedule_syncall is using %d of %d available threads", n_threads_sch, global_threadcount);
 			output_debug("schedule_syncall is assigning %d schedules per thread", n_items);
 
-			// allocate thread data list
-			thread_sch = (SCHEDULESYNCDATA *)malloc(sizeof(SCHEDULESYNCDATA) * n_threads_sch);
-			memset(thread_sch, 0, sizeof(SCHEDULESYNCDATA) * n_threads_sch);
+			// Initialize thread data
+			thread_sch.resize(n_threads_sch);
 
 			// Lock the global list while partitioning it among threads to prevent race conditions
 			{
 				std::lock_guard<std::recursive_mutex> lock(g_schedule_list_mutex);
 				// assign starting schedule for each thread's partition
-				for (sch = schedule_list; sch != nullptr; sch = sch->next)
+				for (SCHEDULE *sch = schedule_list; sch != nullptr; sch = sch->next)
 				{
 					if (thread_sch[schn].nsch == n_items)
 						schn++;
@@ -2430,8 +2188,8 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 			for (n = 0; n < n_threads_sch; n++)
 			{
 				thread_sch[n].ok = true;
-				thread_sch[n].thread = std::thread(schedule_syncproc, &(thread_sch[n]));
 				thread_sch[n].n = n;
+				thread_sch[n].worker = std::thread(schedule_syncproc, &(thread_sch[n]));
 			}
 		}
 	}
@@ -2448,11 +2206,10 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	if (n_threads_sch < 2)
 	{
 		// process list directly on the main thread
-		SCHEDULE *sch;
 		// Lock the global list while iterating to ensure thread safety
 		{
 			std::lock_guard<std::recursive_mutex> lock(g_schedule_list_mutex);
-			for (sch = schedule_list; sch != nullptr; sch = sch->next)
+			for (SCHEDULE *sch = schedule_list; sch != nullptr; sch = sch->next)
 			{
 				TIMESTAMP t3 = schedule_sync(sch, t1);
 				if (t3 < t2)
@@ -2463,33 +2220,27 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 	}
 	else // Use the multi-threaded synchronization logic
 	{
-		// Lock the 'done' condition for the duration of the wait
-		std::unique_lock<std::mutex> doneLock(done_sch_mutex);
-
-		// initialize wait count for this sync cycle
-		donecount_sch = n_threads_sch;
-
 		// Use a separate, scoped lock to update and signal the start condition
-		{
-			std::unique_lock<std::mutex> startLock(start_sch_mutex);
-			// update start condition
-			next_t1_sch = t1;
-			next_t2_sch = TS_NEVER;
+		std::unique_lock<std::mutex> startLock(start_sch_mutex);
 
-			// signal all the worker threads to start
-			start_sch.notify_all();
-		} // startLock is automatically released here
+		// Update start condition
+		schedule_ready = true;
+		next_t1_sch = t1;
+		next_t2_sch = TS_NEVER;
 
-		// begin wait with a predicate to safely handle spurious wakeups
-		done_sch.wait(doneLock, []()
-					  { return donecount_sch <= 0; });
-		output_debug("passed donecount==0 condition");
-
-		// doneLock is automatically released here
+		// signal all the worker threads to start
+		start_sch.notify_all();
 
 		// process results from all threads
 		if (next_t2_sch < t2)
 			t2 = next_t2_sch;
+
+		if (setSCH) {
+			for (unsigned int n = 0; n < n_threads_sch; n++) {
+				thread_sch[n].worker.detach();  // Let thread run independently
+			}
+			setSCH = false;
+		}
 	}
 
 	schedule_synctime += (clock_t)exec_clock() - ts;
