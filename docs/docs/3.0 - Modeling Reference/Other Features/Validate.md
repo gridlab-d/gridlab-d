@@ -203,7 +203,7 @@ The following tests are current performed on the GridLAB-D.
 
 * **test_latlon** - Verify all the allowed formats of latitude and longitude.
 
-* **test_loadshape_exercise_2_3_3** - Verify end-use loadshapes.
+* **test_loadshape_exercise_2_3_3** - Verify end use loadshapes.
 
 * **test_locale** - Verify the use of locale names instead of timezone specifications ( TODO: : only checks syntax, does not check proper functionality).
 

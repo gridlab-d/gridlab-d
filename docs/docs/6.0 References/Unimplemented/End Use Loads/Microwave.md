@@ -48,9 +48,9 @@
     * User's Guide
     * Appliances
     * house class – Single-family home model.
-    * residential_enduse class – Abstract residential end-use class.
+    * residential_enduse class – Abstract residential end use class.
     * occupantload – Residential occupants (sensible and latent heat).
-    * ZIPload – Generic constant impedance/current/power end-use load.
+    * ZIPload – Generic constant impedance/current/power end use load.
   * Technical Documents 
     * Requirements
     * Specifications

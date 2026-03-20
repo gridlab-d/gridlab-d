@@ -183,9 +183,9 @@ queue(k+1) &= queue(k) - \displaystyle{}\delta\end{align}$. This is calculated i
 # References
 
   * 1\. Source: IEEE power & energy magazine; May/June 2010.
-  * 2\. K. P. Schneider and J. C. Fuller, “Detailed end-use models for distribution system analysis,” in Proc. 2010 IEEE PES General Meeting, pp. 1-7.
+  * 2\. K. P. Schneider and J. C. Fuller, “Detailed end use models for distribution system analysis,” in Proc. 2010 IEEE PES General Meeting, pp. 1-7.
   * 3\. J. C. Fuller, B. Vyakaranam, N. Prakash Kumar, S.M. Leistritz, and GB Parker, “Modeling of GE Appliances in GridLAB-D: Peak Demand Reduction,” PNNL-XXXXX, Pacific Northwest National Laboratory, Richland, WA, 2012.
-  * 4\. Pratt, R.G., et al., 1989. “Description of Electric Energy Use in Single-Family Residences in the Pacific Northwest," End-Use Load and Consumer Assessment Program (ELCAP),” Pacific Northwest Laboratory, DOE/BP-13795-21, Richland, WA, April 1989
+  * 4\. Pratt, R.G., et al., 1989. “Description of Electric Energy Use in Single-Family Residences in the Pacific Northwest," end use Load and Consumer Assessment Program (ELCAP),” Pacific Northwest Laboratory, DOE/BP-13795-21, Richland, WA, April 1989
 
 ## Related Concepts:
 

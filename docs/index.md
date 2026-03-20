@@ -1,7 +1,7 @@
 <img   src=./images/Gdlogo.jpg width="750">
 
 # GridLAB-D: A Unique Tool to Design the Smart Grid
-GridLAB-D™ is an open-source project for developing a next-generation power system simulation technology. GridLAB-D™ is an electric power distribution system simulation and analysis tool that provides valuable information to users who design and operate distribution systems, and to utilities that wish to take advantage of the latest energy technologies such as distributed energy resources (DERs), power flow, load, and energy market modeling, among others. GridLAB-D™ incorporates advanced load modeling techniques, with high-performance solution algorithms to deliver end-use load modeling, coupled with power system models, market models, distribution automation models, and software integration tools for users of many power system analysis tools. 
+GridLAB-D™ is an open-source project for developing a next-generation power system simulation technology. GridLAB-D™ is an electric power distribution system simulation and analysis tool that provides valuable information to users who design and operate distribution systems, and to utilities that wish to take advantage of the latest energy technologies such as distributed energy resources (DERs), power flow, load, and energy market modeling, among others. GridLAB-D™ incorporates advanced load modeling techniques, with high-performance solution algorithms to deliver end use load modeling, coupled with power system models, market models, distribution automation models, and software integration tools for users of many power system analysis tools. 
 
 GridLAB-D™ was developed by the U.S. Department of Energy (DOE) at Pacific Northwest National Laboratory (PNNL) with funding from the Office of Electricity and continues to be developed in collaboration with industry and academia. 
 
@@ -17,7 +17,7 @@ In simplest terms, GridLAB-D™ examines in detail the interplay of all parts of
 ## Who should use GridLAB-D™?
 GridLAB-D™ incorporates an extensive suite of tools to build and manage studies and analyze results, including:
 
-1. Agent-based and information-based modeling tools that allow users to create detailed models of how new end-use technologies such as DERs, distribution automation, and retail markets interact and evolve over time.
+1. Agent-based and information-based modeling tools that allow users to create detailed models of how new end use technologies such as DERs, distribution automation, and retail markets interact and evolve over time.
 2. Tools to create and validate rate structures, examine consumer reaction, and verify the interaction and dependence of programs with other technologies and wholesale markets.
 3. Interfaces to industry-standard power systems tools and analysis systems.
 4. Extensive data collection tools to permit a wide variety of analyses.

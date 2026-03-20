@@ -47,7 +47,7 @@ Commercial and residential buildings are implemented using the Equivalent Therma
   * Internal gains
   * House loads (including air conditioning, heat pumps, and solar loads)
 
-**TODO - Relevance - Are we still developing more detailed end-use behavior as we march forward in time?** Commercial loads are simulated using an aggregate multi-zone Energy Technology Perspectives (ETP) model that will be enhanced with more detailed end-use behavior in coming versions. 
+**TODO - Relevance - Are we still developing more detailed end use behavior as we march forward in time?** Commercial loads are simulated using an aggregate multi-zone Energy Technology Perspectives (ETP) model that will be enhanced with more detailed end use behavior in coming versions. 
 
 
 # Economic Behaviors

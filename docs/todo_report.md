@@ -24,7 +24,7 @@ This report contains all TODO items found in Markdown files.
 
 
 ## Consistency
-- `2.0 - New Users\Tutorial\2.2.1 - Overview.md` - l.3 - ...grid technologies or technology? In the next sentance, "load modeling technology" seems odd. Can we say, "load modeling software or programs?" Technology seems like an odd word here *[jk 12/1 I almost feel like "capabilities" is the more apropriate word here. Trevor?]*** It incorporates advanced modeling techniques with high-performance algorithms to deliver the latest in end-use load modeling technology integrated with three-phase unbalanced power flow and retail market systems. Historically, the inability to effectively model and evaluate smart grid technologies has been a barrier to adoption; GridLAB-D™ is designed to address this problem.
+- `2.0 - New Users\Tutorial\2.2.1 - Overview.md` - l.3 - ...grid technologies or technology? In the next sentance, "load modeling technology" seems odd. Can we say, "load modeling software or programs?" Technology seems like an odd word here *[jk 12/1 I almost feel like "capabilities" is the more apropriate word here. Trevor?]*** It incorporates advanced modeling techniques with high-performance algorithms to deliver the latest in end use load modeling technology integrated with three-phase unbalanced power flow and retail market systems. Historically, the inability to effectively model and evaluate smart grid technologies has been a barrier to adoption; GridLAB-D™ is designed to address this problem.
 
 
 ## Context
@@ -83,7 +83,7 @@ This report contains all TODO items found in Markdown files.
 
 
 ## Relevance
-- `1.0 - Prospective Users\Technical_Overview.md` - l.50 - Are we still developing more detailed end-use behavior as we march forward in time?** Commercial loads are simulated using an aggregate multi-zone Energy Technology Perspectives (ETP) model that will be enhanced with more detailed end-use behavior in coming versions.
+- `1.0 - Prospective Users\Technical_Overview.md` - l.50 - Are we still developing more detailed end use behavior as we march forward in time?** Commercial loads are simulated using an aggregate multi-zone Energy Technology Perspectives (ETP) model that will be enhanced with more detailed end use behavior in coming versions.
 - `1.0 - Prospective Users\Technical_Overview.md` - l.63 - Do we provide the following functionality?** GridLAB-D™ will provide the ability to model consumer choice behavior in response to multiple rate offerings (including fixed rates, demand rates, time-of-day rates, and real-time rates) to determine whether a suite of rate offerings is likely to succeed.
 - `3.0 - Modeling Reference\Modules\Powerflow\Switch_object.md` - l.52 - Review whether this level of detail of model implementation is necessary
 

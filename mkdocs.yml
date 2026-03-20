@@ -100,8 +100,66 @@ nav:
         - Solar Panel: docs/3.0 - Modeling Reference/Modules/Generators/Solar.md
         - Wind Turbine: docs/3.0 - Modeling Reference/Modules/Generators/Windturb_dg.md
       - Powerflow:
-        - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/1.0 - Power_Flow_User_Guide.md
-        - Powerflow Tehnical Reference: docs/3.0 - Modeling Reference/Modules/Powerflow/3.0 - Power_Flow_Reference.md
+        # - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/1.0 - Power_Flow_User_Guide.md
+        # - Powerflow Tehnical Reference: docs/3.0 - Modeling Reference/Modules/Powerflow/3.0 - Power_Flow_Reference.md
+        - Theory:
+          - Algorithm Selection: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/01 - Algorithm_Selection.md
+          - Node, Load, and Meter Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/02 - Node_Load_Meter_Theory.md
+          - Lines and Transformers Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/03 - Lines_and_Transformers_Theory.md
+          - Controls and Devices Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/04 - Controls_and_Devices_Theory.md
+          - References: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/99 - References.md
+        - Introduction: docs/3.0 - Modeling Reference/Modules/Powerflow/Introduction/00 - Powerflow_Introduction.md
+        - Classes:
+          - Overview: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/00 - index.md
+          - Inherited Classes: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/01 - inherited_classes.md
+          - Powerflow Objects: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/02 - powerflow_objects.md
+          - Node: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/03 - node.md
+          - Link: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/04 - link.md
+          - Line: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/05 - line.md
+          - Line Configuration: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/06 - line_configuration.md
+          - Line Spacing: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/07 - line_spacing.md
+          - Overhead Line: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/08 - overhead_line.md
+          - Overhead Line Conductor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/09 - overhead_line_conductor.md
+          - Underground Line: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/10 - underground_line.md
+          - Underground Line Conductor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/11 - underground_line_conductor.md
+          - Triplex Line: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/12 - triplex_line.md
+          - Triplex Line Configuration: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/13 - triplex_line_configuration.md
+          - Triplex Conductor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/14 - triplex_conductor.md
+          - Transformer: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/15 - transformer.md
+          - Transformer Configuration: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/16 - transformer_configuration.md
+          - Load: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/17 - load.md
+          - Meter: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/18 - meter.md
+          - Triplex Node: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/19 - triplex_node.md
+          - Triplex Meter: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/20 - triplex_meter.md
+          - Triplex Load: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/21 - triplex_load.md
+          - Regulator: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/22 - regulator.md
+          - Regulator Configuration: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/23 - regulator_configuration.md
+          - Capacitor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/24 - capacitor.md
+          - Fuse: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/25 - fuse.md
+          - Switch: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/26 - switch.md
+          - Recloser: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/27 - recloser.md
+          - Relay: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/28 - relay.md
+          - Substation: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/29 - substation.md
+          - Parametric Load: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/30 - parametric_load.md
+          - Volt Var Control: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/31 - volt_var_control.md
+          - Volt Dump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/32 - volt_dump.md
+          - Current Dump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/33 - current_dump.md
+          - Impedance Dump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/34 - impedance_dump.md
+          - Bill Dump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/35 - bill_dump.md
+          - Fault Check: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/36 - fault_check.md
+          - Motor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/37 - motor.md
+          - Restoration: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/38 - restoration.md
+          - Series Reactor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/39 - series_reactor.md
+          - Sectionalizer: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/40 - sectionalizer.md
+          - Power Metrics: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/41 - power_metrics.md
+          - Emissions: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/42 - emissions.md
+          - Visualization Tools: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/43 - visualization_tools.md
+          - JSON Dump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/44 - jsondump.md
+          - Load Tracker: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/45 - load_tracker.md
+          - Performance Motor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/46 - performance_motor.md
+          - Series Compensator: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/47 - series_compensator.md
+          - Sync Check: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/48 - sync_check.md
+          - VFD: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/49 - vfd.md
         - Reliability User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/4.0 - Reliability_User_Guide.md
         - Newton-Raphson Distribution Powerflow Solver: docs/3.0 - Modeling Reference/Modules/Powerflow/5.0 - Newton-Raphson_Distribution_Powerflow_Solver.md
         - Motor:
