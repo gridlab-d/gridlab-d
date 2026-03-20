@@ -237,6 +237,33 @@ def handle_set_time_step(message: Message) -> Response:
         return Response(success=False, error=str(e))
 
 
+def handle_maintain_transient(message: Message) -> Response:
+    """Toggle persistent transient (deltamode) behavior."""
+    try:
+        code = _gld_instance.maintain_transient(message.args["enable"])
+        return Response(success=True, result=int(code) if isinstance(code, int) else int(code.value))
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
+def handle_trigger_transient(message: Message) -> Response:
+    """Trigger one-shot transient (deltamode) behavior."""
+    try:
+        code = _gld_instance.trigger_transient()
+        return Response(success=True, result=int(code) if isinstance(code, int) else int(code.value))
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
+def handle_exit_transient(message: Message) -> Response:
+    """Force exit from transient (deltamode) behavior."""
+    try:
+        code = _gld_instance.exit_transient()
+        return Response(success=True, result=int(code) if isinstance(code, int) else int(code.value))
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
 def handle_save_checkpoint(message: Message) -> Response:
     """Save a checkpoint."""
     try:
@@ -704,6 +731,9 @@ COMMAND_HANDLERS = {
     Command.SET_TIME: handle_set_time,
     Command.GET_TIME: handle_get_time,
     Command.SET_TIME_STEP: handle_set_time_step,
+    Command.MAINTAIN_TRANSIENT: handle_maintain_transient,
+    Command.TRIGGER_TRANSIENT: handle_trigger_transient,
+    Command.EXIT_TRANSIENT: handle_exit_transient,
     Command.SAVE_CHECKPOINT: handle_save_checkpoint,
     Command.LOAD_CHECKPOINT: handle_load_checkpoint,
     Command.GET_CHECKPOINT_JSON: handle_get_checkpoint_json,

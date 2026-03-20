@@ -84,8 +84,8 @@ nanobind_add_module(
 
 # Add include directories
 target_include_directories(gridlabd_core PRIVATE 
-    ${GRIDLABD_BUILD_INCLUDE_DIR}
     ${GRIDLABD_INCLUDE_DIR}
+    ${GRIDLABD_BUILD_INCLUDE_DIR}
     ${GRIDLABD_ROOT}/third_party
 )
 

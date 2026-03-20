@@ -139,6 +139,15 @@ public:
   // Set the time step for the simulation
   GLDErrorCode set_time_step(double time_step);
 
+  // Maintain transient (deltamode) operation by toggling global force flag
+  GLDErrorCode maintain_transient(bool enable);
+
+  // Trigger transient (deltamode) operation on the next step opportunity
+  GLDErrorCode trigger_transient();
+
+  // Force exit transient mode back to QSTS (not recommended)
+  GLDErrorCode exit_transient();
+
   // Step the simulation to a specific timestamp
   // Step the simulation to a specific timestamp
   GLDErrorCode step_to(const std::string &target_time_str,
@@ -275,6 +284,7 @@ private:
   std::string glm_file_path; // Path to the GLM file
   int selected_timestep; // User-selected timestep in seconds (0 = use default
                          // event-driven behavior)
+  double selected_timestep_delta; // User-selected fractional timestep in seconds
 };
 
 #endif // gldapi.hpp

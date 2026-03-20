@@ -38,6 +38,9 @@ class Command(Enum):
     SET_TIME = "set_time"
     GET_TIME = "get_time"
     SET_TIME_STEP = "set_time_step"
+    MAINTAIN_TRANSIENT = "maintain_transient"
+    TRIGGER_TRANSIENT = "trigger_transient"
+    EXIT_TRANSIENT = "exit_transient"
     
     # Checkpoints
     SAVE_CHECKPOINT = "save_checkpoint"

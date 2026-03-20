@@ -1,7 +1,5 @@
 """Integration tests for the copied deltamode model in tests/models."""
 
-from __future__ import annotations
-
 from pathlib import Path
 import re
 

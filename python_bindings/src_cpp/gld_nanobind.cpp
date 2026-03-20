@@ -157,6 +157,13 @@ NB_MODULE(gridlabd_core, m) {
           "Get the current simulation time")
       .def("set_time_step", &GridLabD::set_time_step, nb::arg("time_step"),
            "Set the simulation time step")
+      .def("maintain_transient", &GridLabD::maintain_transient,
+           nb::arg("enable"),
+           "Toggle global transient persistence via deltamode_forced_always")
+      .def("trigger_transient", &GridLabD::trigger_transient,
+           "Request one-shot transient entry on the next step opportunity")
+      .def("exit_transient", &GridLabD::exit_transient,
+           "Force exit transient mode back to QSTS (not recommended)")
       .def(
           "step_to",
           [](GridLabD &self, const std::string &target_time_str) {

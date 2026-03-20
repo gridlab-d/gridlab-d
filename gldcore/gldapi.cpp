@@ -95,6 +95,47 @@ void sync_api_fractional_clock(unsigned int nanoseconds) {
       (double)global_clock +
       (double)global_api_clock_nanoseconds / kNanosecondsPerSecond;
 }
+
+DT resolve_effective_api_deltamode_timestep() {
+  DT effective_timestep = global_deltamode_timestep;
+  const std::string suffix = "::deltamode_timestep";
+
+  for (GLOBALVAR *var = global_getnext(nullptr); var != nullptr;
+       var = global_getnext(var)) {
+    if (var->prop == nullptr || var->prop->name == nullptr) {
+      continue;
+    }
+
+    const std::string name(var->prop->name);
+    if (name.size() <= suffix.size() ||
+        name.compare(name.size() - suffix.size(), suffix.size(), suffix) != 0) {
+      continue;
+    }
+
+    char value_buffer[128] = {0};
+    if (global_getvar(var->prop->name, value_buffer, sizeof(value_buffer)) ==
+        nullptr) {
+      continue;
+    }
+
+    char *parse_end = nullptr;
+    const double parsed_value = std::strtod(value_buffer, &parse_end);
+    if (!std::isfinite(parsed_value) || parsed_value <= 0.0) {
+      continue;
+    }
+
+    const DT candidate_timestep = static_cast<DT>(parsed_value + 0.5);
+    if (candidate_timestep <= 0) {
+      continue;
+    }
+
+    if (effective_timestep <= 0 || candidate_timestep < effective_timestep) {
+      effective_timestep = candidate_timestep;
+    }
+  }
+
+  return effective_timestep;
+}
 } // namespace
 namespace {
 
@@ -281,7 +322,7 @@ std::string GridLabD::get_executable_path() {
 }
 
 // constructor
-GridLabD::GridLabD() : selected_timestep(0) {
+GridLabD::GridLabD() : selected_timestep(0), selected_timestep_delta(0.0) {
   strcpy(global_environment, "batch");
   char *browser = getenv("GLBROWSER");
 
@@ -812,6 +853,151 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
   if (selected_timestep == 0) {
     output_verbose(
         "Using default event-driven stepping (selected_timestep = 0)");
+
+    if (selected_timestep_delta > 0.0 && global_run_realtime == 0) {
+      const double start_time = current_api_time_in_seconds();
+      const double target_time = start_time + selected_timestep_delta;
+
+      TIMESTAMP target_clock = TS_NEVER;
+      unsigned int target_nanoseconds =
+          fractional_nanoseconds(target_time, target_clock);
+
+      output_verbose(
+          "Using requested fractional API timestep %.9f seconds: %.9f -> %.9f",
+          selected_timestep_delta, start_time, target_time);
+
+      global_api_force_deltamode_once = true;
+      global_step_time = target_clock;
+
+      while (current_api_time_in_seconds() + kTimeEpsilon < target_time) {
+        STATUS result = exec_step();
+
+        if (result == FAILED) {
+          output_error("Error occurred during simulation step");
+          simulation_time = current_api_time_in_seconds();
+          global_step_time = TS_NEVER;
+          global_api_force_deltamode_once = false;
+          return GLD_OPERATION_FAILED;
+        }
+      }
+
+      simulation_time = current_api_time_in_seconds();
+
+      if (global_clock > target_clock) {
+        if (exec_force_sync_to_time(target_clock) == FAILED) {
+          output_error("Failed to force sync to target time");
+          global_step_time = TS_NEVER;
+          global_api_force_deltamode_once = false;
+          return GLD_OPERATION_FAILED;
+        }
+        sync_api_fractional_clock(target_nanoseconds);
+        simulation_time = current_api_time_in_seconds();
+      } else if (global_clock == target_clock) {
+        sync_api_fractional_clock(target_nanoseconds);
+        simulation_time = current_api_time_in_seconds();
+      }
+
+      global_step_time = TS_NEVER;
+      global_api_force_deltamode_once = false;
+
+      output_verbose(
+          "Stepped with requested fractional API timestep: %.9f -> %.9f",
+          start_time, simulation_time);
+      return GLD_SUCCESS;
+    }
+
+    const DT effective_deltamode_timestep =
+      resolve_effective_api_deltamode_timestep();
+
+    bool should_take_fractional_delta_step =
+        (global_api_clock_nanoseconds != 0 && global_run_realtime == 0 &&
+         effective_deltamode_timestep > 0);
+
+    if (should_take_fractional_delta_step &&
+        !global_deltamode_forced_always && !global_api_force_deltamode_once) {
+      TIMESTAMP sync_target = global_clock + 1;
+      if (global_stoptime != TS_NEVER && sync_target > global_stoptime) {
+        sync_target = global_stoptime;
+      }
+
+      if (exec_force_sync_to_time(sync_target) == FAILED) {
+        output_error("Failed to synchronize fractional API time to next whole second");
+        simulation_time = current_api_time_in_seconds();
+        return GLD_OPERATION_FAILED;
+      }
+
+      sync_api_fractional_clock(0);
+      simulation_time = current_api_time_in_seconds();
+      output_verbose(
+          "Fractional API step synchronized to next whole second (%.9f) "
+          "because transient persistence was not requested",
+          simulation_time);
+      return GLD_SUCCESS;
+    }
+
+    if (should_take_fractional_delta_step) {
+      const double start_time = current_api_time_in_seconds();
+      const double delta_step_seconds =
+        (double)effective_deltamode_timestep / kNanosecondsPerSecond;
+      const double target_time = start_time + delta_step_seconds;
+
+      TIMESTAMP target_clock = TS_NEVER;
+      unsigned int target_nanoseconds =
+          fractional_nanoseconds(target_time, target_clock);
+
+      output_verbose(
+          "Fractional API time context detected (ns=%u), advancing by one "
+          "deltamode timestep: %.9f -> %.9f",
+          global_api_clock_nanoseconds, start_time, target_time);
+
+      // Request one deltamode entry and cap event stepping at the floor-second
+      // boundary while we advance to the exact sub-second target.
+      global_api_force_deltamode_once = true;
+      global_step_time = target_clock;
+
+      while (current_api_time_in_seconds() + kTimeEpsilon < target_time) {
+        STATUS result = exec_step();
+
+        if (result == FAILED) {
+          output_error("Error occurred during simulation step");
+          simulation_time = current_api_time_in_seconds();
+          global_step_time = TS_NEVER;
+          global_api_force_deltamode_once = false;
+          return GLD_OPERATION_FAILED;
+        }
+      }
+
+      simulation_time = current_api_time_in_seconds();
+
+      if (global_clock > target_clock) {
+        if (exec_force_sync_to_time(target_clock) == FAILED) {
+          output_error("Failed to force sync to target time");
+          global_step_time = TS_NEVER;
+          global_api_force_deltamode_once = false;
+          return GLD_OPERATION_FAILED;
+        }
+        sync_api_fractional_clock(target_nanoseconds);
+        simulation_time = current_api_time_in_seconds();
+      } else if (global_clock == target_clock && target_nanoseconds != 0) {
+        sync_api_fractional_clock(target_nanoseconds);
+        simulation_time = current_api_time_in_seconds();
+      }
+
+      global_step_time = TS_NEVER;
+      global_api_force_deltamode_once = false;
+
+      output_verbose("Stepped in fractional deltamode context: %.9f -> %.9f",
+                     start_time, simulation_time);
+      return GLD_SUCCESS;
+    } else if (global_api_clock_nanoseconds != 0) {
+      output_warning(
+          "fractional step() branch skipped: api_ns=%u, realtime=%d, "
+          "deltamode_timestep=%lld, effective_deltamode_timestep=%lld",
+          global_api_clock_nanoseconds, global_run_realtime,
+          (long long)global_deltamode_timestep,
+          (long long)effective_deltamode_timestep);
+    }
+
     TIMESTAMP prev_clock = global_clock;
 
     STATUS result = exec_step();
@@ -950,14 +1136,80 @@ GLDErrorCode GridLabD::set_time_step(double time_step) {
     return GLD_OPERATION_FAILED;
   }
 
-  // Store the user-selected timestep
-  // This is separate from global_minimum_timestep to avoid interfering with
-  // GridLAB-D's core behavior
-  selected_timestep = static_cast<int>(time_step);
+  const double rounded_seconds = std::round(time_step);
+  const bool is_integer_seconds =
+      std::fabs(time_step - rounded_seconds) <= kTimeEpsilon;
 
-  output_verbose("Setting API timestep to: %d seconds (global_minimum_timestep "
-                 "unchanged at %d)",
-                 selected_timestep, global_minimum_timestep);
+  double requested_fractional_step = is_integer_seconds ? 0.0 : time_step;
+  if (requested_fractional_step > 0.0) {
+    const DT effective_deltamode_timestep =
+        resolve_effective_api_deltamode_timestep();
+    const double effective_delta_seconds =
+        (effective_deltamode_timestep > 0)
+            ? (double)effective_deltamode_timestep / kNanosecondsPerSecond
+            : 0.0;
+
+    if (effective_delta_seconds > 0.0 &&
+        requested_fractional_step + kTimeEpsilon < effective_delta_seconds) {
+      output_warning(
+          "set_time_step(%.9f) is too small for effective deltamode timestep "
+          "%.9f; using %.9f instead",
+          requested_fractional_step, effective_delta_seconds,
+          effective_delta_seconds);
+      requested_fractional_step = effective_delta_seconds;
+    }
+  }
+
+  // Preserve user intent: integer requests keep legacy second-resolution path,
+  // fractional requests use selected_timestep_delta in step().
+  selected_timestep = is_integer_seconds ? static_cast<int>(rounded_seconds) : 0;
+  selected_timestep_delta = requested_fractional_step;
+
+  output_verbose(
+      "Setting API timestep request to %.9f seconds (selected_timestep=%d, "
+      "selected_timestep_delta=%.9f, global_minimum_timestep unchanged at %d)",
+      time_step, selected_timestep, selected_timestep_delta,
+      global_minimum_timestep);
+  return GLD_SUCCESS;
+}
+
+GLDErrorCode GridLabD::maintain_transient(bool enable) {
+  global_deltamode_forced_always = enable;
+
+  output_warning(
+      "maintain_transient(%s) set deltamode_forced_always=%s (global behavior)",
+      enable ? "True" : "False", enable ? "TRUE" : "FALSE");
+
+  return GLD_SUCCESS;
+}
+
+GLDErrorCode GridLabD::trigger_transient() {
+  global_api_force_deltamode_once = true;
+
+  output_warning(
+      "trigger_transient() requested one-shot transient entry on the next "
+      "step opportunity; persistence is not guaranteed unless maintained");
+
+  return GLD_SUCCESS;
+}
+
+GLDErrorCode GridLabD::exit_transient() {
+  output_warning(
+      "exit_transient() forces exit from transient mode without steady-state "
+      "reconvergence and is NOT RECOMMENDED; model outputs may be invalid");
+
+  global_deltamode_forced_always = false;
+  global_deltamode_forced_extra_timesteps = 0;
+  global_api_force_deltamode_once = false;
+
+  if (global_simulation_mode == SM_DELTA ||
+      global_simulation_mode == SM_DELTA_ITER) {
+    global_simulation_mode = SM_EVENT;
+  }
+
+  global_api_clock_nanoseconds = 0;
+  global_delta_curr_clock = (double)global_clock;
+
   return GLD_SUCCESS;
 }
 
@@ -984,6 +1236,11 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
     // Request one deltamode entry at the floor-second boundary while stepping
     // to a sub-second target.
     global_api_force_deltamode_once = true;
+    output_warning(
+        "step_to('%s') uses fractional seconds; GridLAB-D forces a one-shot "
+        "deltamode entry while reaching this target, but does not guarantee "
+        "that simulation mode will remain DELTA after step_to returns",
+        target_time_str.c_str());
   } else {
     global_api_force_deltamode_once = false;
   }
@@ -1066,6 +1323,14 @@ GLDErrorCode GridLabD::step_to(const std::string &target_time_str,
 
   global_step_time = TS_NEVER;
   global_api_force_deltamode_once = false;
+
+  if (target_nanoseconds != 0 && global_simulation_mode == SM_EVENT) {
+    output_warning(
+        "step_to('%s') reached a fractional target while simulation mode is "
+        "EVENT; a subsequent step() will follow normal event scheduling unless "
+        "the model itself keeps deltamode active",
+        target_time_str.c_str());
+  }
 
   return GLD_SUCCESS;
 }

@@ -2808,7 +2808,8 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
 
   /* Update the "double-precision" clock (usually for deltamode) for consistency
    */
-  global_delta_curr_clock = (double)global_clock;
+  global_delta_curr_clock =
+      (double)global_clock + ((double)global_api_clock_nanoseconds / 1e9);
 
   /* determine whether any modules seek delta mode */
   DELTAMODEFLAGS flags = DMF_NONE;

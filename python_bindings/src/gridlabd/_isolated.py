@@ -468,6 +468,30 @@ class IsolatedGridLabD:
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
+
+    def maintain_transient(self, enable: bool) -> int:
+        """Toggle persistent transient behavior (global deltamode_forced_always)."""
+        response = self._send_command(
+            Command.MAINTAIN_TRANSIENT,
+            {"enable": bool(enable)},
+        )
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result
+
+    def trigger_transient(self) -> int:
+        """Trigger one-shot transient behavior for the next step opportunity."""
+        response = self._send_command(Command.TRIGGER_TRANSIENT, {})
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result
+
+    def exit_transient(self) -> int:
+        """Force exit transient mode back to QSTS (not recommended)."""
+        response = self._send_command(Command.EXIT_TRANSIENT, {})
+        if not response.success:
+            raise RuntimeError(response.error)
+        return response.result
     
     # Checkpoint methods
     def save_checkpoint(self, save_path: str, mode: Optional[int] = None) -> int:
