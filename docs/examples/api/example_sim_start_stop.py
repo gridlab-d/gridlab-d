@@ -18,18 +18,20 @@ import os
 from pprint import pprint
 from datetime import datetime, timedelta
 
+step_size = 900
+
 # Ensure's we're running from the correct directory
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
-
-step_size = 900
 
 # Initilize GridLAB-D and load the model
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
 load_code = gld.load("houses.glm")
+if load_code != 0:
+    raise RuntimeError(f"Failed to load model with error code {load_code}.")
 
 # Read in current start and stop time
 starttime = datetime.fromisoformat(gld.get_starttime())
