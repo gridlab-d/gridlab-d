@@ -53,11 +53,13 @@ gld.set_stoptime(calc_stop_time)
 # Confirm changes to start and stop times
 new_starttime = datetime.fromisoformat(gld.get_starttime())
 new_stoptime = datetime.fromisoformat(gld.get_stoptime())
-print(f"New start time: {new_starttime} (should be one hour less than original)")
-print(f"New stop time: {new_stoptime} (should be one hour less than original)")
+print(f"New start time: {new_starttime}")
+print(f"New stop time: {new_stoptime}")
 
-# Set time step and run the model
-gld.set_time_step(step_size)
+
 gld.run()
+# Can also call `run()` with start and stop time defined
+# gld.run(start_time=calc_start_time, stop_time=calc_stop_time)
+# Above fails, Github issue #1725
 gld.stop()
 gld.exit_gld()
