@@ -145,7 +145,6 @@
 #include "schedule.h"
 #include "stream.h"
 #include "test.h"
-#include "threadpool.h"
 #include "transform.h"
 #include <fstream>
 #include <map>
@@ -161,6 +160,10 @@ using namespace std::literals;
 #ifdef _WIN32
 #define WEXITSTATUS(X) (X & 127)
 #endif
+
+
+// Only setup threadpool for each object rank list at the first iteration;
+cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
 
 /** Set/get exit code **/
 int exec_setexitcode(int xc)
@@ -713,7 +716,7 @@ nlohmann::json do_checkpoint(const char *output_directory)
 }
 /***********************************************************************/
 
-threadpool_thread_data::threadpool_thread_data(int size, cpp_threadpool *threadpool)
+threadpool_thread_data::threadpool_thread_data(int size)
 {
     //	data = std::vector<struct sync_data>(size);
     data = new struct sync_data[size];
@@ -1464,265 +1467,93 @@ static int commit_init()
     }
     return n_commits;
 }
-/* commit_list iterator */
-static MTIITEM commit_get0(MTIITEM item)
-{
-    if (item == nullptr)
-        return (MTIITEM)commit_list[0].get();
-    else
-    {
-        // return (MTIITEM)(((SIMPLELINKLIST*)item)->next);
-        SIMPLELINKLIST *node = static_cast<SIMPLELINKLIST *>(item);
-        return static_cast<void *>(node->next.get());
-    }
-}
-static MTIITEM commit_get1(MTIITEM item)
-{
-    if (item == nullptr)
-        return (MTIITEM)commit_list[1].get();
-    else
-    {
-        // return (MTIITEM)(((SIMPLELINKLIST*)item)->next);
-        SIMPLELINKLIST *node = static_cast<SIMPLELINKLIST *>(item);
-        return static_cast<void *>(node->next.get());
-    }
-}
-/* commit function call */
-static void commit_call(MTIDATA output, MTIITEM item, MTIDATA input)
-{
-    // OBJECT *obj = (OBJECT*)(((SIMPLELINKLIST*)item)->data);
-    // TIMESTAMP *t2 = (TIMESTAMP*)output;
-    // TIMESTAMP *t0 = (TIMESTAMP*)input;
 
-    //
-
-    // if ( *t0<obj->in_svc )
-    //	*t2 = obj->in_svc;
-    // else if ((*t0 == obj->in_svc) && (obj->in_svc_micro != 0))
-    //	*t2 = obj->in_svc + 1;
-    // else if ( obj->out_svc>=*t0 )
-    //	*t2 = obj->oclass->commit(obj,*t0);
-    // else
-    //	*t2 = TS_NEVER;
-
-    // Validate input pointers
-    if (!item || input == nullptr || output == nullptr)
-        return;
-
-    // Safely extract object from link
-    SIMPLELINKLIST *link = static_cast<SIMPLELINKLIST *>(item);
-    OBJECT *obj = static_cast<OBJECT *>(link->data);
-
-    // Safely extract TIMESTAMP pointers
-    TIMESTAMP *t0 = static_cast<TIMESTAMP *>(input.get());
-    TIMESTAMP *t2 = static_cast<TIMESTAMP *>(output.get());
-
-    // Ensure timestamps point to valid memory
-    if (t0 && t2)
-    {
-        if (*t0 < obj->in_svc)
-        {
-            *t2 = obj->in_svc;
-        }
-        else if ((*t0 == obj->in_svc) && (obj->in_svc_micro != 0))
-        {
-            *t2 = obj->in_svc + 1;
-        }
-        else if (obj->out_svc >= *t0)
-        {
-            *t2 = obj->oclass->commit(obj, *t0);
-        }
-        else
-        {
-            *t2 = TS_NEVER;
-        }
-    }
-}
-/* commit data set accessor */
-static MTIDATA commit_set(MTIDATA to, MTIDATA from)
-{
-    /* allocation request */
-    if (to == nullptr)
-        // to = (MTIDATA)malloc(sizeof(TIMESTAMP));
-        to = std::make_shared<MTIDATA>();
-
-    /* clear request (may follow allocation request) */
-    if (from == nullptr)
-    {
-        //*(TIMESTAMP*)to = TS_NEVER;
-        auto to_timestamp = static_cast<TIMESTAMP *>(to.get());
-        *to_timestamp = TS_NEVER;
-    }
-
-    /* copy request */
-    else
-    {
-        // memcpy(to,from,sizeof(TIMESTAMP));
-        auto from_timestamp = static_cast<TIMESTAMP *>(from.get());
-        auto to_timestamp = static_cast<TIMESTAMP *>(to.get());
-        *to_timestamp = *from_timestamp; //
-    }
-
-    return to;
-}
-/* commit data compare accessor */
-static int commit_compare(MTIDATA a, MTIDATA b)
-{
-    /*TIMESTAMP t0 = (a?*(TIMESTAMP*)a:TS_NEVER);
-    TIMESTAMP t1 = (b?*(TIMESTAMP*)b:TS_NEVER);
-    */
-    TIMESTAMP t0 = (a ? *(static_cast<TIMESTAMP *>(a.get())) : TS_NEVER);
-    TIMESTAMP t1 = (b ? *(static_cast<TIMESTAMP *>(b.get())) : TS_NEVER);
-    if (t0 > t1)
-        return 1;
-    if (t0 < t1)
-        return -1;
-    return 0;
-}
-/* commit data gather accessor */
-static void commit_gather(MTIDATA a, MTIDATA b)
-{
-    // TIMESTAMP *t0 = (TIMESTAMP*)a;
-    // TIMESTAMP *t1 = (TIMESTAMP*)b;
-    // if ( a==nullptr || b==nullptr ) return;
-    // if ( *t1<*t0 ) *t0 = *t1;
-
-    // Null check for input pointers
-    if (a == nullptr || b == nullptr)
-        return;
-
-    // Extract values safely
-    TIMESTAMP t0 = *(static_cast<TIMESTAMP *>(a.get()));
-    TIMESTAMP t1 = *(static_cast<TIMESTAMP *>(b.get()));
-
-    // Perform comparison and assignment
-    if (t1 < t0)
-        t0 = t1;
-}
-/* commit iterator reject test */
-static int commit_reject(MTI *mti, MTIDATA value)
-{
-    // TIMESTAMP *t1 = (TIMESTAMP*)value;
-    // TIMESTAMP *t2 = (TIMESTAMP*)mti->output;
-    // if ( value==nullptr ) return 0;
-    // return ( *t2>*t1 && *t2<TS_NEVER ) ? 1 : 0;
-
-    std::shared_ptr<TIMESTAMP> mti_output =
-        std::static_pointer_cast<TIMESTAMP>(mti->output);
-
-    // Check if the smart pointer is null before operating on it
-    if (value == nullptr)
-        return 0;
-
-    // Dereference directly (no casting needed)
-    TIMESTAMP t1 = *(static_cast<TIMESTAMP *>(value.get()));
-    TIMESTAMP t2 = *mti_output;
-
-    // Perform the comparison safely
-    return (t2 > t1 && t2 < TS_NEVER) ? 1 : 0;
-}
-/* single threaded version of commit_all */
-static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2)
-{
-    TIMESTAMP result = TS_NEVER;
-    SIMPLELINKLIST *item;
-    unsigned int pc;
-    for (pc = 0; pc < 2; pc++)
-    {
-        for (item = commit_list[pc].get(); item != nullptr;
-             item = item->next.get())
-        {
-            OBJECT *obj = (OBJECT *)item->data;
-            if (t0 < obj->in_svc)
-            {
-                if (obj->in_svc < result)
-                    result = obj->in_svc;
-            }
-            else if ((t0 == obj->in_svc) && (obj->in_svc_micro != 0))
-            {
-                if (obj->in_svc == result)
-                    result = obj->in_svc + 1;
-            }
-            else if (obj->out_svc >= t0)
-            {
-                TIMESTAMP next = object_commit(obj, t0, t2);
-                if (next == TS_INVALID)
-                {
-                    char name[64];
-                    throw_exception("object %s commit failed",
-                                    object_name(obj, name, sizeof(name) - 1));
-                    /* TROUBLESHOOT
-                            The commit function of the named object has failed.  Make sure
-                       that the object's requirements for committing are satisfied and try
-                       again.  (likely internal state aberrations)
-                     */
-                }
-                if (next < result)
-                    result = next;
-            }
-        }
-    }
-    return result;
-}
-/* multi-threaded version of commit_all */
-static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
-{
-    static int n_commits = -1;
-    static MTI *mti[] = {nullptr, nullptr};
-    static int init_tried = false;
-    // MTIDATA input = (MTIDATA)&t0;
-    // MTIDATA output = (MTIDATA)&t2;
-
-    std::shared_ptr<TIMESTAMP> input = std::make_shared<TIMESTAMP>(t0);
-    std::shared_ptr<TIMESTAMP> output = std::make_shared<TIMESTAMP>(t2);
-
-    TIMESTAMP result = TS_NEVER;
-
-    TRY
-    {
-        unsigned int pc;
-
+/* single / multiple threaded version of commit_all */
+static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
+	std::atomic_long result{static_cast<long>(TS_NEVER)};
+	SIMPLELINKLIST *item;
+	unsigned int pc;
+	static int n_commits = -1;
+	TRY	{
         /* build commit list */
-        if (n_commits == -1)
+        if (n_commits == -1) 
             n_commits = commit_init();
 
         /* if no commits found, stop here */
-        if (n_commits == 0)
-        {
+        if (n_commits == 0) {
             result = TS_NEVER;
-        }
-        else
-        {
-            /* initialize MTI */
-            for (pc = 0; pc < 2; pc++)
-            {
-                if (mti[pc] == nullptr && global_threadcount != 1 && !init_tried)
+        } 
+        else {
+            for (pc = 0; pc < 2; pc++) {
+                if (commit_list[pc].get() == nullptr) 
                 {
-                    /* build mti */
-                    static MTIFUNCTIONS fns[] = {
-                        {commit_get0, commit_call, commit_set, commit_compare,
-                         commit_gather, commit_reject},
-                        {commit_get1, commit_call, commit_set, commit_compare,
-                         commit_gather, commit_reject},
-                    };
-                    mti[pc] = mti_init("commit", &fns[pc], 8);
-                    if (mti[pc] == nullptr)
-                    {
-                        output_warning(
-                            "commit_all multi-threaded iterator initialization failed - "
-                            "using single-threaded iterator as fallback");
-                        init_tried = true;
-                    }
+                    result = TS_NEVER;
+                    continue; // No commits, skip waiting
                 }
-
-                /* attempt to run multithreaded iterator */
-                if (mti[pc] != nullptr && mti_run(output, mti[pc], input))
-                    // result = *(TIMESTAMP*)output;
-                    result = *(TIMESTAMP *)output.get();
-
-                /* resort to single threaded iterator (which handles both passes) */
-                else if (pc == 0)
-                    result = commit_all_st(t0, t2);
+                if (global_threadcount == 1) {
+                    // Single-threaded fallback
+                    for (item = commit_list[pc].get(); item != nullptr; item = item->next.get()) {
+                        OBJECT *obj = (OBJECT *)item->data;
+                        if (t0 < obj->in_svc)
+                        {
+                            if (obj->in_svc < result)
+                                result = obj->in_svc;
+                        }
+                        else if ((t0 == obj->in_svc) && (obj->in_svc_micro != 0))
+                        {
+                            if (obj->in_svc == result)
+                                result = obj->in_svc + 1;
+                        }
+                        else if (obj->out_svc >= t0)
+                        {
+                            TIMESTAMP next = object_commit(obj, t0, t2);
+                            if (next == TS_INVALID) {
+                                char name[64];
+                                throw_exception("object %s commit failed",
+                                    object_name(obj, name, sizeof(name) - 1));
+                                /* TROUBLESHOOT
+                                    The commit function of the named object has failed.  
+                                    Make sure that the object's requirements for committing are 
+                                    satisfied and try again. (likely internal state aberrations)
+                                */
+                            }
+                            if (next < result)
+                                result = next;
+                        }
+                    }
+                } 
+                else {
+                    for (item = commit_list[pc].get(); item != nullptr; item = item->next.get()) {
+                        OBJECT *obj = (OBJECT *) item->data;
+                        threadpool->add_job([=, &obj, &result]() {
+                            auto inner_result = result.load();
+                            if (t0 < obj->in_svc) {
+                                if (obj->in_svc < inner_result) 
+                                    result.store(obj->in_svc);
+                            } 
+                            else if ((t0 == obj->in_svc) && (obj->in_svc_micro != 0)) {
+                                if (obj->in_svc == inner_result)
+                                    result.store(obj->in_svc + 1);
+                            } 
+                            else if (obj->out_svc >= t0) {
+                                TIMESTAMP next = object_commit(obj, t0, t2);
+                                if (next == TS_INVALID) {
+                                    char name[64];
+                                    throw_exception("object %s commit failed",
+                                        object_name(obj, name, sizeof(name) - 1));
+                                    /* TROUBLESHOOT
+                                        The commit function of the named object has failed.  
+                                        Make sure that the object's requirements for committing are 
+                                        satisfied and try again. (likely internal state aberrations)
+                                    */
+                                }
+                                if (next < result.load()) 
+                                    result.store(next);
+                            }
+                        });
+                    }
+                    threadpool->await();
+                }
             }
         }
     }
@@ -1730,14 +1561,14 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
     {
         output_error("commit_all() failure: %s", msg);
         /* TROUBLESHOOT
-                The commit'ing procedure failed.  This is usually preceded
-                by a more detailed message that explains why it failed.  Follow
-                the guidance for that message and try again.
-         */
+            The commit'ing procedure failed.  This is usually preceded
+            by a more detailed message that explains why it failed.
+            Follow the guidance for that message and try again.
+        */
         result = TS_INVALID;
     }
     ENDCATCH;
-    return result;
+    return result.load();
 }
 
 /**************************************************************************
@@ -2225,8 +2056,6 @@ void exec_clock_update_modules()
 
 STATUS multi_thread_init()
 {
-    // Only setup threadpool for each object rank list at the first iteration;
-    cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
     std::vector<std::shared_ptr<struct arg_data>> arg_data_array = {};
     int j;
     /* set thread count equal to processor count if not passed on command-line */
@@ -2285,7 +2114,7 @@ static void *obj_syncproc(void *ptr)
    return nullptr;
 }
 
-void multithread_stuff(int iObjRankList, cpp_threadpool *threadpool, int i, int k)
+void multithread_stuff(int iObjRankList, int i, int k)
 {
 	unsigned int n_items, objn = 0, n;
 	unsigned int n_obj = ranks[pass]->ordinal[i]->size;
@@ -2366,8 +2195,6 @@ void multithread_stuff(int iObjRankList, cpp_threadpool *threadpool, int i, int 
 // Commenting everything related to multithreading
 STATUS run_preparation()
 {
-    // Only setup threadpool for each object rank list at the first iteration;
-    cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
     struct arg_data *arg_data_array;
     int nObjRankList, iObjRankList;
     int j, k;
@@ -2700,7 +2527,6 @@ void report_performance_after_run(time_t start_time, int64 passes,
         This function executes one iteration of the simulation loop, handling
         realtime control, delta mode, object synchronization, and event
  processing.
-        @param threadpool pointer to the thread pool for multithreading
         @param passes reference to pass counter
         @param tsteps reference to timestep counter
         @param j reference to loop variable used for thread data
@@ -2709,8 +2535,7 @@ void report_performance_after_run(time_t start_time, int64 passes,
         @param iObjRankList reference to object rank list index
         @return true if simulation should continue, false if it should stop
  **/
-static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
-                                                int64 &passes, int64 &tsteps,
+static bool execute_single_simulation_iteration(int64 &passes, int64 &tsteps,
                                                 int &j, LISTITEM *&ptr,
                                                 int &pc_rv, int &iObjRankList)
 {
@@ -2961,7 +2786,7 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
                 else
                 { // implement multithreading
 //                    printf("****PASS: %d, RANK: %d, iObjRankList: %d\n", pass, i, iObjRankList);
-                    multithread_stuff(iObjRankList, threadpool, i, n_idx.at(n_cnt)); // Function
+                    multithread_stuff(iObjRankList, i, n_idx.at(n_cnt)); // Function
                     n_cnt++;
                 }
             }
@@ -3109,14 +2934,14 @@ static bool execute_single_simulation_iteration(cpp_threadpool *threadpool,
         @param pc_rv reference to precommit return value
         @param iObjRankList reference to object rank list index
  **/
-static void run_main_simulation_loop(cpp_threadpool *threadpool, int64 &passes,
+static void run_main_simulation_loop(int64 &passes,
                                      int64 &tsteps, int &j, LISTITEM *&ptr,
                                      int &pc_rv, int &iObjRankList)
 {
     int i = 0;
     /* main loop runs for iteration limit, or when nothing futher occurs (ignoring
      * soft events) */
-    while (execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr,
+    while (execute_single_simulation_iteration(passes, tsteps, j, ptr,
                                                pc_rv, iObjRankList))
     {
         continue;
@@ -3137,14 +2962,12 @@ static void run_main_simulation_loop(cpp_threadpool *threadpool, int64 &passes,
         @param pc_rv reference to precommit return value
         @param iObjRankList reference to object rank list index
  **/
-static void run_single_simulation_step(cpp_threadpool *threadpool,
-                                       int64 &passes, int64 &tsteps, int &j,
+static void run_single_simulation_step(int64 &passes, int64 &tsteps, int &j,
                                        LISTITEM *&ptr, int &pc_rv,
                                        int &iObjRankList)
 {
     /* Execute one iteration using the shared iteration function */
-    execute_single_simulation_iteration(threadpool, passes, tsteps, j, ptr, pc_rv,
-                                        iObjRankList);
+    execute_single_simulation_iteration(passes, tsteps, j, ptr, pc_rv, iObjRankList);
 }
 
 /** Check if the simulation has been properly initialized
@@ -3172,7 +2995,6 @@ STATUS exec_finalize_all(void) { return finalize_all(); }
 STATUS exec_step(void)
 {
     // Setup variables needed for the step (similar to exec_start)
-    cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
     std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
     int64 passes = 0, tsteps = 0;
     int j = 0, pc_rv = 0, iObjRankList = 0;
@@ -3219,7 +3041,7 @@ STATUS exec_step(void)
 
         /* Keep running iterations until the clock advances or simulation should
          * stop */
-        while (execute_single_simulation_iteration(threadpool, passes, tsteps, j,
+        while (execute_single_simulation_iteration(passes, tsteps, j,
                                                    ptr, pc_rv, iObjRankList))
         {
             /* Check if the clock has advanced - if so, we've completed one step */
@@ -3349,7 +3171,6 @@ STATUS exec_force_sync_to_time(TIMESTAMP target_time)
 STATUS exec_start()
 {
     std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
-    cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
     int64 passes = 0, tsteps = 0;
     int ptc_rv = 0;                         // unused
     int ptj_rv = 0;                         // unused
@@ -3369,7 +3190,7 @@ STATUS exec_start()
     TRY
     {
         /* Run the main simulation loop */
-        run_main_simulation_loop(threadpool, passes, tsteps, j, ptr, pc_rv,
+        run_main_simulation_loop(passes, tsteps, j, ptr, pc_rv,
                                  iObjRankList);
 
         /* disable signal handler */
@@ -3491,7 +3312,6 @@ STATUS exec_start()
 STATUS exec_step(int64 *passes, int64 *tsteps)
 {
     std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
-    cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
     int j = 0, pc_rv = 0, iObjRankList = 0;
     LISTITEM *ptr = nullptr;
 
@@ -3529,8 +3349,7 @@ STATUS exec_step(int64 *passes, int64 *tsteps)
 
         /* Keep running iterations until the clock advances or simulation should
          * stop */
-        while (execute_single_simulation_iteration(
-            threadpool, local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList))
+        while (execute_single_simulation_iteration(local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList))
         {
             /* Check if the clock has advanced - if so, we've completed one step */
             if (global_clock > start_clock)
@@ -3565,7 +3384,6 @@ STATUS exec_step(int64 *passes, int64 *tsteps)
 STATUS exec_start(int64 *passes, int64 *tsteps)
 {
     std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
-    cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
     int ptc_rv = 0;                         // unused
     int ptj_rv = 0;                         // unused
     int pc_rv = 0;                          // precommit return value
@@ -3596,8 +3414,7 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
     {
 
         /* Run the main simulation loop */
-        run_main_simulation_loop(threadpool, local_passes, local_tsteps, j, ptr,
-                                 pc_rv, iObjRankList);
+        run_main_simulation_loop(local_passes, local_tsteps, j, ptr, pc_rv, iObjRankList);
 
         /* disable signal handler */
         signal(SIGINT, nullptr);

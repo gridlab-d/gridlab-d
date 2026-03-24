@@ -24,7 +24,7 @@ extern size_t output_get_message_capture_limit();
 #include "load.h"
 #include "object.h"
 #include "save.h"
-#include "threadpool.h"
+#include "cpp_threadpool.h"
 #include <array>
 #include <cstdlib>
 #include <cstring>

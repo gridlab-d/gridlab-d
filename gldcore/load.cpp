@@ -6997,7 +6997,6 @@ int is_autodef(char *value)
 }
 
 /* started processes */
-//#include "threadpool.h"
 #include <csignal>
 #include <iostream>
 #include <vector>
@@ -7108,57 +7107,7 @@ public:
 void kill_processes(void)
 {
 	threadlist.kill_all();
-
-	/*while ( threadlist!=nullptr )
-	{
-		void *ptr;
-		struct s_threadlist *next = threadlist->next;
-		int sig = SIGTERM;
-		int rc = pthread_kill(*(threadlist->data),sig);
-		switch ( rc ) {
-		case 0:
-			output_debug("killing thread %p", threadlist->data);
-			break;
-		case ESRCH:
-			output_error("unable to kill thread %p (no such thread)", threadlist->data);
-			break;
-		case EINVAL:
-			output_error("unable to kill thread %p (signal %d invalid/ignored)", threadlist->data, sig);
-			break;
-		default:
-			output_error("unable to kill thread %p (unknown return code %d)", threadlist->data, rc);
-			break;
-		}
-		free(threadlist->data);
-		threadlist=next;
-	}*/
 }
-
-/** @return -1 on failure, thread_id on success **/
-// void* start_process(const char *cmd)
-//{
-//	static bool first = true;
-//	pthread_t *pThreadInfo = (pthread_t*)malloc(sizeof(pthread_t));
-//	struct s_threadlist *thread = (struct s_threadlist*)malloc(sizeof(struct s_threadlist));
-//     char *args = static_cast<char *>(malloc(strlen(cmd) + 1));
-//	strcpy(args,cmd);
-//	if ( thread==nullptr || pThreadInfo==nullptr || pthread_create(pThreadInfo,nullptr,(void*(*)(void*))system,args)!=0 )
-//	{
-//		output_error_raw("%s(%d): unable to create thread to start '%s'", filename, linenum, cmd);
-//		return nullptr;
-//	}
-//	else
-//		output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
-//	thread->data = pThreadInfo;
-//	thread->next = threadlist;
-//	threadlist = thread;
-//	if ( first )
-//	{
-//		atexit(kill_processes);
-//		first = false;
-//	}
-//	return threadlist;
-// }
 
 void *start_process(const char *cmd)
 {

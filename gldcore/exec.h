@@ -43,7 +43,7 @@ class threadpool_thread_data {
 
 public:
   inline int get_count() { return count; }
-  threadpool_thread_data(int size, cpp_threadpool *threadpool);
+  threadpool_thread_data(int size);
   struct sync_data *get_thread_data(std::thread::id thread_id);
   struct sync_data *get_data(int index);
 };
