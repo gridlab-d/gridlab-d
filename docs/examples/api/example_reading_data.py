@@ -2,17 +2,16 @@
 Created on 03/24/2026
 
 This example shows how to read data out of GridLAB-D while the simulation is
-running and writing this to an HDF5 and CSV file on disk. The data of 
-interest is the indoor air temperature for each house.
+running and writing this to an HDF5 file on disk. The data of interest is the
+indoor air temperature for each house.
 
 To demonstrate the ability to record data in a more nuanced way, the example 
 starts out stepping through time with a 60 second step size, recording data 
 at every time step. If the HVAC systems for all houses reach a point where 
 they are off for more than 30 minutes, the step size changes to 300 seconds
 (five minutes). If any of the HVAC systems turn back on, the step size changes
-back to 60 seconds.
-
-For this analysis to work effectively, the simulation is run for two days.
+back to 60 seconds.To effectively demonstrate this variable step size, the 
+analysis is run for two days.
 
 @author: Trevor Hardy
 trevor.hardy@pnnl.gov
@@ -26,8 +25,42 @@ from datetime import datetime, timedelta, timezone
 import h5py
 import numpy as np
 import re
+import matplotlib.pyplot as plt
 
 step_size = 60
+
+def plot_air_temperature(hdf5_filename="output_data.h5"):
+    """
+    Read air temperature data from HDF5 file and plot it.
+    
+    Args:
+        hdf5_filename (str): Path to the HDF5 file containing temperature data
+    """
+    try:
+        with h5py.File(hdf5_filename, "r") as hdf5_file:
+            if "air_temperature" not in hdf5_file:
+                print(f"No air_temperature group found in {hdf5_filename}")
+                return
+            
+            air_temp_group = hdf5_file["air_temperature"]
+            plt.figure(figsize=(12, 6))
+            
+            for house_name in air_temp_group.keys():
+                temps = air_temp_group[house_name][:]
+                plt.plot(temps, label=house_name, alpha=0.7)
+            
+            plt.xlabel("Time Step")
+            plt.ylabel("Air Temperature (°F)")
+            plt.title("House Air Temperature Over Time")
+            plt.legend(loc="best")
+            plt.grid(True, alpha=0.3)
+            plt.tight_layout()
+            plt.show()
+    except FileNotFoundError:
+        print(f"HDF5 file '{hdf5_filename}' not found.")
+    except Exception as e:
+        print(f"Error plotting air temperature data: {e}")
+
 
 def parse_temperature_data(air_dict):
     """
@@ -209,18 +242,9 @@ stop_time_str = datetime.isoformat(stop_time_obj)
 gld.set_stoptime(stop_time_str)
 new_stoptime = datetime.fromisoformat(gld.get_stoptime())
 
-# Build list of house object names
-# May not be needed with get_properties_by_class()
-# house_names = []
-# house_objs = gld.get_objects_by_class("house")
-# for house in house_objs:
-#     house_names.append(house["name"])
 
 # Getting list of house names
 house_dict = gld.get_properties_by_class(class_name="house", property_name="name")
-# Waiting on resolution of Github #1723 and #1724
-
-
 
 # Open HDF5 and CSV files for writing
 hdf5_file = h5py.File("output_data.h5", "w")
@@ -233,9 +257,12 @@ small_step_count = 0
 status, sim_time = gld.get_time()
 sim_time_obj = datetime.fromisoformat(sim_time)
 while sim_time_obj < stop_time_obj:
+    # Set step size and advance one step
     gld.set_time_step(step_size)
     error_code, sim_time = gld.step()
     sim_time_obj = datetime.fromisoformat(sim_time)
+
+    # Collect data for all houses at current time step
     air_dict = gld.get_properties_by_class("house", "air_temperature") 
     hvac_off_dict = gld.get_properties_by_class("house", "hvac_last_off") 
     hvac_load_dict = gld.get_properties_by_class("house", "hvac_load")
@@ -245,7 +272,7 @@ while sim_time_obj < stop_time_obj:
     hvac_load_dict = parse_hvac_load_data(hvac_load_dict)
     hvac_off_dict = parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_obj)
     hvac_off_elapsed_dict = check_hvac_off_elapsed(hvac_off_dict, sim_time_obj, threshold_seconds=300)
-    
+
     # Adjust step size based on HVAC off elapsed times
     if all(hvac_off_elapsed_dict.values()):
         step_size = 300
@@ -253,20 +280,25 @@ while sim_time_obj < stop_time_obj:
     else:
         step_size = 60
         small_step_count += 1
-    # print(f"{sim_time}: next step size is {step_size}")
     
     # Write air temperature and HVAC last off time to HDF5 and CSV files
+    # Initialize HDF5 datasets on first iteration
+    if 'air_temperature' not in hdf5_file:
+        air_temp_group = hdf5_file.create_group("air_temperature")
+        for house in air_dict.keys():
+            air_temp_group.create_dataset(house, data=[air_dict[house]], maxshape=(None,), dtype='f')
+    else:
+        # Append data to existing datasets
+        air_temp_group = hdf5_file["air_temperature"]
+        for house in air_dict.keys():
+            air_temp_group[house].resize(air_temp_group[house].shape[0] + 1)
+            air_temp_group[house][-1] = air_dict[house]
 
-    # Check if all HVAC systems are off for more than 30 minutes and adjust step size accordingly
-    # hvac_status = gld.get_hvac_status()  # Hypothetical function to get HVAC status
-    # if all(status == 'off' for status in hvac_status):
-    #     time_off = gld.get_time_off()  # Hypothetical function to get time since HVAC turned off
-    #     if time_off > timedelta(minutes=30):
-    #         step_size = 900  # Change to 15 minutes
-    # else:
-    #     step_size = 60  # Change back to 60 seconds
     dummy = 0
 print(f"big_step_count: {big_step_count}")
 print(f"small_step_count: {small_step_count}")
 gld.stop()
 gld.exit_gld()
+
+# Plot the air temperature data from the HDF5 file
+plot_air_temperature("output_data.h5")
