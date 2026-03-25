@@ -304,17 +304,13 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1) {
 					thread_ed[en].ne++;
 			}
 
-			// Start worker threads
+			// Create and start worker threads
 			for (unsigned int n = 0; n < n_threads_ed; n++) {
 				thread_ed[n].ok = true;
 				thread_ed[n].n = n;
 				thread_ed[n].worker = std::thread(enduse_syncproc, &thread_ed[n]);
 			}
 		}
-	}
-	// Don't update if next_t2 < next_t1
- 	if (next_t2_ed > t1 && next_t2_ed < TS_NEVER) {
-		return next_t2_ed;
 	}
 
 	// Single-threaded processing

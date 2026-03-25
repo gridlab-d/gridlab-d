@@ -1485,11 +1485,6 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
         } 
         else {
             for (pc = 0; pc < 2; pc++) {
-                if (commit_list[pc].get() == nullptr) 
-                {
-                    result = TS_NEVER;
-                    continue; // No commits, skip waiting
-                }
                 if (global_threadcount == 1) {
                     // Single-threaded fallback
                     for (item = commit_list[pc].get(); item != nullptr; item = item->next.get()) {

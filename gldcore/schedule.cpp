@@ -2194,15 +2194,11 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		}
 	}
 
-	// don't update if no schedules ever expect to change again
-	if (next_t2_sch == TS_NEVER)
-		return TS_NEVER;
-
 	// don't update if next_t2 < next_t1, but override this if there are interpolated schedules
 	if (next_t2_sch > t1 && !interpolated_schedules)
 		return next_t2_sch;
 
-	// no threading required, or only one thread available
+	// Single-threaded processing
 	if (n_threads_sch < 2)
 	{
 		// process list directly on the main thread
@@ -2218,9 +2214,11 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		}
 		next_t2_sch = t2;
 	}
-	else // Use the multi-threaded synchronization logic
+	// Multi-threaded processing
+	else
 	{
-		// Use a separate, scoped lock to update and signal the start condition
+		// Use threads for processing
+		// Lock the start condition mutex
 		std::unique_lock<std::mutex> startLock(start_sch_mutex);
 
 		// Update start condition
@@ -2228,10 +2226,10 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 		next_t1_sch = t1;
 		next_t2_sch = TS_NEVER;
 
-		// signal all the worker threads to start
+		// Signal all threads to start processing
 		start_sch.notify_all();
 
-		// process results from all threads
+		// Process results
 		if (next_t2_sch < t2)
 			t2 = next_t2_sch;
 
@@ -2242,7 +2240,7 @@ TIMESTAMP schedule_syncall(TIMESTAMP t1) /**< the time to which the schedule is 
 			setSCH = false;
 		}
 	}
-
+	// Update processing time measurement
 	schedule_synctime += (clock_t)exec_clock() - ts;
 	return t2;
 }

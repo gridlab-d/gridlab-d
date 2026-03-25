@@ -983,12 +983,8 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1) {
 			}
 		}
 	}
-	// Don't update if next_t2 < next_t1
- 	if (next_t2_ls > t1 && next_t2_ls < TS_NEVER) {
-		return next_t2_ls;
-	}
 
-	// No threading required
+	// Single-threaded processing
 	if (n_threads_ls < 2) {
 		// Process list directly
 		for (loadshape* s = loadshape_list; s != nullptr; s = s->next) {
@@ -998,6 +994,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1) {
 		}
 		next_t2_ls = t2;
 	}
+	// Multi-threaded processing
 	else {
 		// Use threads for processing
 		// Lock the start condition mutex
