@@ -24,7 +24,6 @@ gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
 load_code = gld.load("houses.glm")
-load_code = gld.load("houses.glm")
 if load_code != 0:
     raise RuntimeError(f"Failed to load model with error code {load_code}.")
 
