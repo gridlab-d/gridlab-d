@@ -309,6 +309,7 @@ cooling_setpoint_dict = gld.get_properties_by_class("house", "cooling_setpoint")
 original_cooling_setpoint_dict = parse_cooling_setpoint_data(cooling_setpoint_dict)
 
 while sim_time_obj < stop_time_obj:
+    print(f"Current simulation time: {sim_time_obj}")
     error_code, sim_time = gld.step()
     if error_code != 0:
         raise RuntimeError(f"Simulation step failed at {sim_time} with error code {error_code}.")
