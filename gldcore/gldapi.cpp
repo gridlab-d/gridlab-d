@@ -497,7 +497,7 @@ GLDErrorCode GridLabD::exit_gld(const std::string &filepath) {
 #endif
 #endif
 
-  report_performance_after_run(started_at, passes, tsteps);
+  // report_performance_after_run(started_at, passes, tsteps);
 
   /* compute elapsed runtime */
   output_verbose("elapsed runtime %d seconds", realtime_runtime());
@@ -507,31 +507,11 @@ GLDErrorCode GridLabD::exit_gld(const std::string &filepath) {
 }
 
 // Retrieve GLM data based on a query, optionally save to filepath
-nlohmann::ordered_json GridLabD::get_checkpoint_json(const std::string& filepath) {
+nlohmann::ordered_json GridLabD::get_checkpoint_json(const std::string& filename) {
     nlohmann::ordered_json checkpoint;
     
-    if (filepath.empty()) {
-        // If no filepath provided, just return the JSON without saving
-        checkpoint = do_checkpoint(nullptr);
-    }
-    else
-    {
-        // Extract directory from filepath for do_checkpoint
-        size_t last_slash = filepath.find_last_of("/\\");
-        std::string directory;
-
-        if (last_slash != std::string::npos)
-        {
-            directory = filepath.substr(0, last_slash);
-        }
-        else
-        {
-            directory = "."; // Current directory if no path separators found
-        }
-
-        // Get checkpoint JSON with directory specified
-        checkpoint = do_checkpoint(directory.c_str());
-    }
+    // If no filepath provided
+    checkpoint = do_checkpoint(filename.c_str()); // Use provided directory or default if empty
 
     // Set the internal gld_model representation to be equal to checkpoint
     gld_model = nlohmann::ordered_json(checkpoint);

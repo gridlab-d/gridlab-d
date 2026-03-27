@@ -61,7 +61,7 @@ public:
   static std::string get_install_root();
 
     // Get the GLM data based on a query, optionally save to filepath
-    nlohmann::ordered_json get_checkpoint_json(const std::string& filepath = "");
+    nlohmann::ordered_json get_checkpoint_json(const std::string& filename = "");
 
   // Set the global environment (internal use - for subprocess initialization)
   void set_environment(const std::string &env);

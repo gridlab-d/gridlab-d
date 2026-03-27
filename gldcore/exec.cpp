@@ -409,482 +409,408 @@ static bool directory_exists(const char *path)
     return (info.st_mode & S_IFDIR) != 0; // Check if it's a directory
 }
 
-// Do Checkpoint
-/**
- * Creates a JSON checkpoint of the current simulation state.
- * 
- * @param output_directory Directory path for writing checkpoint files. 
- *                        If nullptr or empty, generates JSON in-memory without writing files.
- * @return nlohmann::ordered_json containing the checkpoint data
- */
-nlohmann::ordered_json do_checkpoint(const char *output_directory)
+nlohmann::ordered_json do_checkpoint(const char *output_filename)
 {
     /* last checkpoint value */
     static TIMESTAMP last_checkpoint = 0;
     TIMESTAMP now = 0;
+
     /* check point type selection */
     switch (global_checkpoint_type)
     {
-    /* wallclock checkpoint interval */
     case CPT_WALL:
-        /* checkpoint based on wall time */
         now = time(nullptr);
-        /* default checkpoint for WALL */
         if (global_checkpoint_interval == 0)
             global_checkpoint_interval = 3600;
         break;
-
-    /* simulation checkpoint interval */
     case CPT_SIM:
-        /* checkpoint based on sim time */
         now = global_clock;
-        /* default checkpoint for SIM */
         if (global_checkpoint_interval == 0)
             global_checkpoint_interval = 86400;
         break;
-
-    /* no checkpoints used */
     case CPT_NONE:
         now = 0;
         break;
     }
 
-	nlohmann::ordered_json checkpoint;
-	/* checkpoint may be needed */
-	if (now > 0)
-	{
+    nlohmann::ordered_json checkpoint;
 
-		// TODO: Take a look at global_checkpoint_interval and if we want to keep it
-		/* checkpoint time lapsed */
-		// if ( last_checkpoint + global_checkpoint_interval <= now )
-		if (last_checkpoint <= now)
-		{
-			static char json_fn[1024] = "";
+    if (now > 0)
+    {
+        if (last_checkpoint <= now)
+        {
+            static char json_fn[1024] = "";
 
-			// Strip extension from global_modelname if present
-			char modelname_noext[1024];
-			strncpy(modelname_noext, global_modelname, sizeof(modelname_noext));
-			modelname_noext[sizeof(modelname_noext)-1] = '\0';
-			char *last_dot = strrchr(modelname_noext, '.');
-			if (last_dot) {
-				*last_dot = '\0';
-			}
+            // ── Use output_filename if provided, otherwise derive from model name ──
+            if (output_filename != nullptr && strlen(output_filename) > 0)
+            {
+                strncpy(json_fn, output_filename, sizeof(json_fn));
+                json_fn[sizeof(json_fn) - 1] = '\0';
+            }
+            else
+            {
+                // Strip extension from global_modelname if present
+                char modelname_noext[1024];
+                strncpy(modelname_noext, global_modelname, sizeof(modelname_noext));
+                modelname_noext[sizeof(modelname_noext) - 1] = '\0';
+                char *last_dot = strrchr(modelname_noext, '.');
+                if (last_dot)
+                {
+                    *last_dot = '\0';
+                }
+                sprintf(json_fn, "%s_%s", modelname_noext, "checkpoint.json");
+            }
 
-			/* create current checkpoint save filename */
-			sprintf(json_fn, "%s_%s", modelname_noext, "checkpoint.json");
+            // ── Resolve output directory (only when filename was auto-generated) ──
+            char full_path[2048] = "";
+            if (output_filename != nullptr && strlen(output_filename) > 0)
+            {
+                // Caller provided a full/relative path — use it directly
+                strncpy(full_path, json_fn, sizeof(full_path));
+                full_path[sizeof(full_path) - 1] = '\0';
+            }
+            else
+            {
+                const char *json_dir = (global_workdir[0] != '\0')
+                                        ? global_workdir
+                                        : ".";
+                if (!directory_exists(json_dir))
+                {
+                    output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
+                    return nlohmann::ordered_json();
+                }
+                snprintf(full_path, sizeof(full_path), "%s/%s", json_dir, json_fn);
+            }
 
-			const char *json_dir = (output_directory && strlen(output_directory) > 0) ? output_directory : ".";
-			/* check if output directory exists */
-			if (!directory_exists(json_dir))
-			{
-				output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
-				return nlohmann::ordered_json(); // Return empty JSON value on error
-			}
+            if (last_checkpoint == 0)
+                last_checkpoint = now;
 
-			/* initial value of last checkpoint */
-			if (last_checkpoint == 0)
-				last_checkpoint = now;
-			/* Write JSON data using JsonCpp */
-			// Create JSON structure using nlohmann::json
-			// Add preamble (ensure comments is an array)
-			if (!checkpoint.contains("__preamble"))
-				checkpoint["__preamble"] = nlohmann::ordered_json::object();
-			if (!checkpoint["__preamble"].contains("comments") || !checkpoint["__preamble"]["comments"].is_array())
-				checkpoint["__preamble"]["comments"] = nlohmann::ordered_json::array();
-			checkpoint["__preamble"]["comments"].push_back("// GridLAB-D checkpoint data export");
-			{
-				std::time_t sys_now = std::time(nullptr);
-				struct tm *tm_local = std::localtime(&sys_now);
-				char sys_time_buf[64] = "";
-				std::strftime(sys_time_buf, sizeof(sys_time_buf), "%Y-%m-%d %H:%M:%S %Z", tm_local);
-				std::string timestamp_comment = std::string("// Generated at: ") + sys_time_buf;
-				checkpoint["__preamble"]["comments"].push_back(timestamp_comment);
-			}
+            // ── Build checkpoint JSON (preamble) ──
+            if (!checkpoint.contains("__preamble"))
+                checkpoint["__preamble"] = nlohmann::ordered_json::object();
+            if (!checkpoint["__preamble"].contains("comments") || !checkpoint["__preamble"]["comments"].is_array())
+                checkpoint["__preamble"]["comments"] = nlohmann::ordered_json::array();
+            checkpoint["__preamble"]["comments"].push_back("// GridLAB-D checkpoint data export");
+            {
+                std::time_t sys_now = std::time(nullptr);
+                struct tm *tm_local = std::localtime(&sys_now);
+                char sys_time_buf[64] = "";
+                std::strftime(sys_time_buf, sizeof(sys_time_buf), "%Y-%m-%d %H:%M:%S %Z", tm_local);
+                std::string timestamp_comment = std::string("// Generated at: ") + sys_time_buf;
+                checkpoint["__preamble"]["comments"].push_back(timestamp_comment);
+            }
 
-			// Add clock info (format timestamps as strings with timezone)
-			char ts_buffer[64];
-			std::string tz = timestamp_current_timezone();
-			size_t first_digit = tz.find_first_of("0123456789");
-			if (first_digit != std::string::npos && (first_digit == 0 || (tz[first_digit - 1] != '+' && tz[first_digit - 1] != '-')))
-			{
-				tz.insert(first_digit, "+");
-			}
-			
-			convert_from_timestamp(global_clock, ts_buffer, sizeof(ts_buffer));
-			checkpoint["clock"]["timestamp"] = "'" + std::string(ts_buffer) + "'";
-			
-			convert_from_timestamp(global_stoptime, ts_buffer, sizeof(ts_buffer));
-			checkpoint["clock"]["stoptime"] = "'" + std::string(ts_buffer) + "'";
-			
-			convert_from_timestamp(global_starttime, ts_buffer, sizeof(ts_buffer));
-			checkpoint["clock"]["starttime"] = "'" + std::string(ts_buffer) + "'";
-			
-			checkpoint["clock"]["timezone"] = tz;
-			checkpoint["_checkpoint"] = true;
+            // ── Clock info ──
+            char ts_buffer[64];
+            std::string tz = timestamp_current_timezone();
+            size_t first_digit = tz.find_first_of("0123456789");
+            if (first_digit != std::string::npos &&
+                (first_digit == 0 || (tz[first_digit - 1] != '+' && tz[first_digit - 1] != '-')))
+            {
+                tz.insert(first_digit, "+");
+            }
 
-			// First, collect objects by class name
-			std::map<std::string, std::vector<OBJECT *>> objects_by_class;
-			std::set<OBJECT *> processed_objects; // Track processed objects to prevent duplicates
+            convert_from_timestamp(global_clock, ts_buffer, sizeof(ts_buffer));
+            checkpoint["clock"]["timestamp"] = "'" + std::string(ts_buffer) + "'";
 
-			// Helper function to parse property value string into JSON based on type
-			auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str) -> nlohmann::json {
-				switch (ptype)
-				{
-				case PT_double:
-				{
-					double val = strtod(value_str, nullptr);
-					return val;
-				}
-				case PT_int32:
-				{
-					int32 val = (int32)strtol(value_str, nullptr, 10);
-					return val;
-				}
-				case PT_int64:
-				{
-					int64 val = strtoll(value_str, nullptr, 10);
-					return static_cast<int64_t>(val);
-				}
-				case PT_bool:
-				{
-					bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
-					return val;
-				}
-				case PT_timestamp:
-				{
-					TIMESTAMP val = strtoll(value_str, nullptr, 10);
-					return static_cast<int64_t>(val);
-				}
-				case PT_char8:
-				case PT_char32:
-				case PT_char256:
-				case PT_char1024:
-				case PT_complex:
-					return std::string(value_str);
-				default:
-					// For all other types, store as string
-					return std::string(value_str);
-				}
-			};				
+            convert_from_timestamp(global_stoptime, ts_buffer, sizeof(ts_buffer));
+            checkpoint["clock"]["stoptime"] = "'" + std::string(ts_buffer) + "'";
 
-			/* Traverse all objects to group by class */
-			for (int pass = 0; ranks[pass] != nullptr; pass++)
-			{
-				for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
-				{
-					if (ranks[pass]->ordinal[i] == nullptr)
-						continue;
+            convert_from_timestamp(global_starttime, ts_buffer, sizeof(ts_buffer));
+            checkpoint["clock"]["starttime"] = "'" + std::string(ts_buffer) + "'";
 
-					for (LISTITEM *ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
-					{
-						OBJECT *obj = static_cast<OBJECT *>(ptr->data);
+            checkpoint["clock"]["timezone"] = tz;
+            checkpoint["_checkpoint"] = true;
 
-						// Skip if we've already processed this object
-						if (processed_objects.find(obj) != processed_objects.end())
-							continue;
+            // ── Collect objects by class ──
+            std::map<std::string, std::vector<OBJECT *>> objects_by_class;
+            std::set<OBJECT *> processed_objects;
 
-						std::string class_name = obj->oclass->name;
-						objects_by_class[class_name].push_back(obj);
-						processed_objects.insert(obj); // Mark as processed
-					}
-				}
-			}
+            auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str) -> nlohmann::json {
+                switch (ptype)
+                {
+                case PT_double:
+                {
+                    double val = strtod(value_str, nullptr);
+                    return val;
+                }
+                case PT_int32:
+                {
+                    int32 val = (int32)strtol(value_str, nullptr, 10);
+                    return val;
+                }
+                case PT_int64:
+                {
+                    int64 val = strtoll(value_str, nullptr, 10);
+                    return static_cast<int64_t>(val);
+                }
+                case PT_bool:
+                {
+                    bool val = (strcmp(value_str, "TRUE") == 0 || strcmp(value_str, "1") == 0);
+                    return val;
+                }
+                case PT_timestamp:
+                {
+                    TIMESTAMP val = strtoll(value_str, nullptr, 10);
+                    return static_cast<int64_t>(val);
+                }
+                case PT_char8:
+                case PT_char32:
+                case PT_char256:
+                case PT_char1024:
+                case PT_complex:
+                    return std::string(value_str);
+                default:
+                    return std::string(value_str);
+                }
+            };
 
-			// Build objects section grouped by class
-			int classnameCounter = 0;
-			for (auto &class_pair : objects_by_class)
-			{
-				nlohmann::json instances = nlohmann::json::array();
+            for (int pass = 0; ranks[pass] != nullptr; pass++)
+            {
+                for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
+                {
+                    if (ranks[pass]->ordinal[i] == nullptr)
+                        continue;
+                    for (LISTITEM *ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
+                    {
+                        OBJECT *obj = static_cast<OBJECT *>(ptr->data);
+                        if (processed_objects.find(obj) != processed_objects.end())
+                            continue;
+                        std::string class_name = obj->oclass->name;
+                        objects_by_class[class_name].push_back(obj);
+                        processed_objects.insert(obj);
+                    }
+                }
+            }
 
-				for (OBJECT *obj : class_pair.second)
-				{
-					nlohmann::json instance = nlohmann::json::object();
+            // ── Build objects section ──
+            int classnameCounter = 0;
+            for (auto &class_pair : objects_by_class)
+            {
+                nlohmann::json instances = nlohmann::json::array();
+                for (OBJECT *obj : class_pair.second)
+                {
+                    nlohmann::json instance = nlohmann::json::object();
+                    if (obj->name && strlen(obj->name) > 0)
+                        instance["name"] = obj->name;
+                    else
+                    {
+                        instance["object_declaration"] = std::string(obj->oclass->name) + ":" + std::to_string(static_cast<int>(obj->id));
+                        classnameCounter++;
+                    }
+                    if (obj->parent && obj->parent != nullptr)
+                    {
+                        if (obj->parent->name && strlen(obj->parent->name) > 0)
+                            instance["parent"] = obj->parent->name;
+                        else
+                            instance["parent"] = std::string(obj->parent->oclass->name) + ":" + std::to_string(static_cast<int>(obj->parent->id));
+                    }
+                    if (obj->groupid[0] != '\0')
+                        instance["groupid"] = std::string(obj->groupid);
+                    if (obj->rank != 0)
+                        instance["rank"] = static_cast<int>(obj->rank);
+                    if (obj->schedule_skew != 0)
+                        instance["schedule_skew"] = static_cast<int64_t>(obj->schedule_skew);
+                    if (!std::isnan(obj->latitude) && obj->latitude != 0.0)
+                        instance["latitude"] = obj->latitude;
+                    if (!std::isnan(obj->longitude) && obj->longitude != 0.0)
+                        instance["longitude"] = obj->longitude;
+                    if (obj->in_svc != 0 && obj->in_svc != TS_NEVER)
+                    {
+                        char svc_buf[64] = "";
+                        convert_from_timestamp(obj->in_svc, svc_buf, sizeof(svc_buf));
+                        instance["in_svc"] = std::string(svc_buf);
+                    }
+                    if (obj->out_svc != 0 && obj->out_svc != TS_NEVER)
+                    {
+                        char svc_buf[64] = "";
+                        convert_from_timestamp(obj->out_svc, svc_buf, sizeof(svc_buf));
+                        instance["out_svc"] = std::string(svc_buf);
+                    }
+                    if (!std::isnan(obj->in_svc_double) && obj->in_svc_double != 0.0 && obj->in_svc_double != TS_NEVER_DBL)
+                        instance["in_svc_double"] = obj->in_svc_double;
+                    if (!std::isnan(obj->out_svc_double) && obj->out_svc_double != 0.0 && obj->out_svc_double != TS_NEVER_DBL)
+                        instance["out_svc_double"] = obj->out_svc_double;
+                    if (obj->rng_state != 0)
+                        instance["rng_state"] = static_cast<uint32_t>(obj->rng_state);
+                    if (obj->heartbeat != 0 && obj->heartbeat != TS_NEVER)
+                        instance["heartbeat"] = static_cast<int64_t>(obj->heartbeat);
+                    if (obj->flags & OF_DELTAMODE)
+                        instance["flags"] = static_cast<uint32_t>(obj->flags);
 
-					// Add object name if it exists
-					if (obj->name && strlen(obj->name) > 0)
-						instance["name"] = obj->name;
-					else
-					{
-						instance["object_declaration"] = std::string(obj->oclass->name) + ":" + std::to_string(static_cast<int>(obj->id));
-						classnameCounter++;
-					}
+                    std::set<std::string> processed_properties;
+                    CLASS *current_class = obj->oclass;
+                    while (current_class != nullptr)
+                    {
+                        PROPERTY *pmap = current_class->pmap;
+                        for (; pmap != nullptr; pmap = pmap->next)
+                        {
+                            if (strcmp(pmap->name, "name") == 0)
+                                continue;
+                            std::string prop_name(pmap->name);
+                            if (processed_properties.find(prop_name) != processed_properties.end())
+                                continue;
+                            processed_properties.insert(prop_name);
 
-					// Add reference to parent object
-					if (obj->parent && obj->parent != nullptr){
-						if(obj->parent->name && strlen(obj->parent->name) > 0){
-							instance["parent"] = obj->parent->name;
-						}
-						else {
-							instance["parent"] = std::string(obj->parent->oclass->name) + ":" + std::to_string(static_cast<int>(obj->parent->id));
-						}
-					}
+                            switch (pmap->ptype)
+                            {
+                            case PT_double:
+                            {
+                                double *dptr = object_get_double_quick(obj, pmap);
+                                if (dptr != nullptr)
+                                {
+                                    double val = *dptr;
+                                    if (!std::isnan(val) && std::fpclassify(val) != FP_SUBNORMAL)
+                                        instance[pmap->name] = val;
+                                }
+                                break;
+                            }
+                            case PT_int32:
+                            {
+                                int32 *iptr = object_get_int32(obj, pmap);
+                                if (iptr != nullptr)
+                                    instance[pmap->name] = *iptr;
+                                break;
+                            }
+                            case PT_int64:
+                            {
+                                int64 *iptr = object_get_int64(obj, pmap);
+                                if (iptr != nullptr)
+                                    instance[pmap->name] = static_cast<int64_t>(*iptr);
+                                break;
+                            }
+                            case PT_bool:
+                            {
+                                bool *bptr = object_get_bool(obj, pmap);
+                                if (bptr != nullptr)
+                                    instance[pmap->name] = *bptr;
+                                break;
+                            }
+                            case PT_timestamp:
+                            {
+                                int64 *tptr = object_get_int64(obj, pmap);
+                                if (tptr != nullptr)
+                                    instance[pmap->name] = static_cast<int64_t>(*tptr);
+                                break;
+                            }
+                            default:
+                            {
+                                char value_str[1024] = "";
+                                if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0
+                                    && strlen(value_str) > 0
+                                    && strcmp(value_str, "null") != 0 && strcmp(value_str, "NULL") != 0
+                                    && strcmp(value_str, "\"\"") != 0 && strcmp(value_str, "''") != 0
+                                    && strcmp(value_str, "NAN") != 0 && strcmp(value_str, "nan") != 0)
+                                {
+                                    instance[pmap->name] = std::string(value_str);
+                                }
+                                break;
+                            }
+                            }
+                        }
+                        current_class = current_class->parent;
+                    }
+                    instances.push_back(instance);
+                }
+                checkpoint["objects"][class_pair.first]["instances"] = instances;
+            }
 
-					// Write s_object_list (built-in) properties if not null/empty/default
+            // ── Modules and globals ──
+            nlohmann::ordered_json modules = nlohmann::ordered_json::object();
+            std::map<std::string, MODULE *> module_map;
 
-					// groupid
-					if (obj->groupid[0] != '\0')
-						instance["groupid"] = std::string(obj->groupid);
+            for (MODULE *mod = module_get_first(); mod != nullptr; mod = mod->next)
+            {
+                nlohmann::ordered_json module = nlohmann::ordered_json::object();
+                if (mod->globals != nullptr)
+                {
+                    char value_buffer[1024];
+                    for (PROPERTY *prop = mod->globals; prop != nullptr; prop = prop->next)
+                    {
+                        if (module_getvar(mod, prop->name, value_buffer, sizeof(value_buffer)) != nullptr)
+                        {
+                            if (value_buffer == nullptr || strlen(value_buffer) == 0 ||
+                                strcmp(value_buffer, "null") == 0 || strcmp(value_buffer, "NULL") == 0 ||
+                                strcmp(value_buffer, "\"\"") == 0 || strcmp(value_buffer, "''") == 0 ||
+                                strcmp(value_buffer, "NAN") == 0 || strcmp(value_buffer, "nan") == 0)
+                                continue;
+                            module[prop->name] = parse_property_value(prop->ptype, value_buffer);
+                        }
+                    }
+                }
+                modules[mod->name] = module;
+                module_map[mod->name] = mod;
+            }
 
-					// rank
-					if (obj->rank != 0)
-						instance["rank"] = static_cast<int>(obj->rank);
+            nlohmann::ordered_json globals = nlohmann::ordered_json::object();
+            GLOBALVAR *global = nullptr;
+            char buffer[1024];
+            while ((global = global_getnext(global)) != nullptr)
+            {
+                if (global_getvar(global->prop->name, buffer, sizeof(buffer)))
+                {
+                    std::string global_name(global->prop->name);
+                    size_t separator_pos = global_name.find("::");
+                    if (separator_pos != std::string::npos)
+                    {
+                        std::string module_name = global_name.substr(0, separator_pos);
+                        std::string var_name = global_name.substr(separator_pos + 2);
+                        if (module_map.find(module_name) != module_map.end())
+                        {
+                            if (buffer != nullptr && strlen(buffer) > 0 &&
+                                strcmp(buffer, "null") != 0 && strcmp(buffer, "NULL") != 0 &&
+                                strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
+                                strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
+                            {
+                                modules[module_name][var_name] = parse_property_value(global->prop->ptype, buffer);
+                            }
+                        }
+                        else
+                        {
+                            output_warning("Global variable '%s' references module '%s' which is not loaded",
+                                           global_name.c_str(), module_name.c_str());
+                            if (buffer != nullptr && strlen(buffer) > 0 &&
+                                strcmp(buffer, "null") != 0 && strcmp(buffer, "NULL") != 0 &&
+                                strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
+                                strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
+                            {
+                                globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (buffer != nullptr && strlen(buffer) > 0 &&
+                            strcmp(buffer, "null") != 0 && strcmp(buffer, "NULL") != 0 &&
+                            strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
+                            strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
+                        {
+                            globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+                        }
+                    }
+                }
+            }
+            checkpoint["globals"] = globals;
+            checkpoint["modules"] = modules;
 
-					// schedule_skew
-					if (obj->schedule_skew != 0)
-						instance["schedule_skew"] = static_cast<int64_t>(obj->schedule_skew);
-
-					// latitude / longitude
-					if (!std::isnan(obj->latitude) && obj->latitude != 0.0)
-						instance["latitude"] = obj->latitude;
-					if (!std::isnan(obj->longitude) && obj->longitude != 0.0)
-						instance["longitude"] = obj->longitude;
-
-					// in_svc / out_svc (as formatted timestamp strings, skip TS_NEVER/0)
-					if (obj->in_svc != 0 && obj->in_svc != TS_NEVER)
-					{
-						char svc_buf[64] = "";
-						convert_from_timestamp(obj->in_svc, svc_buf, sizeof(svc_buf));
-						instance["in_svc"] = std::string(svc_buf);
-					}
-					if (obj->out_svc != 0 && obj->out_svc != TS_NEVER)
-					{
-						char svc_buf[64] = "";
-						convert_from_timestamp(obj->out_svc, svc_buf, sizeof(svc_buf));
-						instance["out_svc"] = std::string(svc_buf);
-					}
-
-					// in_svc_double / out_svc_double
-					if (!std::isnan(obj->in_svc_double) && obj->in_svc_double != 0.0 && obj->in_svc_double != TS_NEVER_DBL)
-						instance["in_svc_double"] = obj->in_svc_double;
-					if (!std::isnan(obj->out_svc_double) && obj->out_svc_double != 0.0 && obj->out_svc_double != TS_NEVER_DBL)
-						instance["out_svc_double"] = obj->out_svc_double;
-
-					// rng_state
-					if (obj->rng_state != 0)
-						instance["rng_state"] = static_cast<uint32_t>(obj->rng_state);
-
-					// heartbeat
-					if (obj->heartbeat != 0 && obj->heartbeat != TS_NEVER)
-						instance["heartbeat"] = static_cast<int64_t>(obj->heartbeat);
-
-					// flags — only write if deltamode flag is set
-					if (obj->flags & OF_DELTAMODE)
-						instance["flags"] = static_cast<uint32_t>(obj->flags);
-
-					// Add all properties from this object's class and all parent classes
-					std::set<std::string> processed_properties; // Track processed properties to avoid duplicates
-
-					// Traverse the entire class hierarchy (class and all parents)
-					CLASS *current_class = obj->oclass;
-					while (current_class != nullptr)
-					{
-						PROPERTY *pmap = current_class->pmap;
-						for (; pmap != nullptr; pmap = pmap->next)
-						{
-							// Skip if this is the name property and we already added it
-							if (strcmp(pmap->name, "name") == 0)
-								continue;
-
-							// Skip if we've already processed this property (from a derived class)
-							std::string prop_name(pmap->name);
-							if (processed_properties.find(prop_name) != processed_properties.end())
-								continue;
-
-							// Mark this property as processed
-							processed_properties.insert(prop_name);
-
-							/* Get property value based on type */
-							switch (pmap->ptype)
-							{
-							case PT_double:
-							{
-								double *dptr = object_get_double_quick(obj, pmap);
-								if (dptr != nullptr)
-								{
-									double val = *dptr;
-									// Skip NaN and subnormal values - subnormals (< DBL_MIN)
-									// are almost always uninitialized memory, not valid data.
-									if (!std::isnan(val) && std::fpclassify(val) != FP_SUBNORMAL)
-										instance[pmap->name] = val;
-								}
-								break;
-							}
-							case PT_int32:
-							{
-								int32 *iptr = object_get_int32(obj, pmap);
-								if (iptr != nullptr)
-									instance[pmap->name] = *iptr;
-								break;
-							}
-							case PT_int64:
-							{
-								int64 *iptr = object_get_int64(obj, pmap);
-								if (iptr != nullptr)
-									instance[pmap->name] = static_cast<int64_t>(*iptr);
-								break;
-							}
-							case PT_bool:
-							{
-								bool *bptr = object_get_bool(obj, pmap);
-								if (bptr != nullptr)
-									instance[pmap->name] = *bptr;
-								break;
-							}
-							case PT_timestamp:
-							{
-								int64 *tptr = object_get_int64(obj, pmap);
-								if (tptr != nullptr)
-									instance[pmap->name] = static_cast<int64_t>(*tptr);
-								break;
-							}
-							default:
-							{
-								// For string and all other types, use object_get_value_by_name
-								char value_str[1024] = "";
-								if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0
-								    && strlen(value_str) > 0
-								    && strcmp(value_str, "null") != 0 && strcmp(value_str, "NULL") != 0
-								    && strcmp(value_str, "\"\"") != 0 && strcmp(value_str, "''") != 0
-								    && strcmp(value_str, "NAN") != 0 && strcmp(value_str, "nan") != 0)
-								{
-									instance[pmap->name] = std::string(value_str);
-								}
-								break;
-							}
-							}
-							// Skip properties that couldn't be retrieved - don't add null values
-						}
-
-						// Move to parent class
-						current_class = current_class->parent;
-					}
-
-					instances.push_back(instance);
-				}
-
-				checkpoint["objects"][class_pair.first]["instances"] = instances;
-			}
-
-			// Get modules data
-			nlohmann::ordered_json modules = nlohmann::ordered_json::object();
-			std::map<std::string, MODULE *> module_map;
-			
-			for (MODULE *mod = module_get_first(); mod != nullptr; mod = mod->next)
-			{
-				nlohmann::ordered_json module = nlohmann::ordered_json::object();
-				
-			// Iterate through module's own property list
-			if (mod->globals != nullptr)
-			{
-				char value_buffer[1024];
-				for (PROPERTY *prop = mod->globals; prop != nullptr; prop = prop->next)
-				{
-					// Get the value using module_getvar
-					if (module_getvar(mod, prop->name, value_buffer, sizeof(value_buffer)) != nullptr)
-					{
-						// Skip if value is empty, null, or invalid
-						if (value_buffer == nullptr || strlen(value_buffer) == 0 ||
-						    strcmp(value_buffer, "null") == 0 || strcmp(value_buffer, "NULL") == 0 ||
-						    strcmp(value_buffer, "\"\"") == 0 || strcmp(value_buffer, "''") == 0 ||
-						    strcmp(value_buffer, "NAN") == 0 || strcmp(value_buffer, "nan") == 0)
-						{
-							continue;
-						}
-						// Parse the value based on property type
-						module[prop->name] = parse_property_value(prop->ptype, value_buffer);
-					}
-				}
-			}					modules[mod->name] = module;
-				module_map[mod->name] = mod;
-			}
-
-			// Get globals data and assign to modules
-			nlohmann::ordered_json globals = nlohmann::ordered_json::object();
-			GLOBALVAR *global = nullptr;
-			char buffer[1024];
-			
-			// Iterate through all global variables
-			while ((global = global_getnext(global)) != nullptr)
-			{
-				// Get the global variable value
-				if (global_getvar(global->prop->name, buffer, sizeof(buffer)))
-				{
-					std::string global_name(global->prop->name);
-					
-					// Check if this global belongs to a module (contains "::")
-					size_t separator_pos = global_name.find("::");
-					if (separator_pos != std::string::npos)
-					{
-						// Extract module name and variable name
-						std::string module_name = global_name.substr(0, separator_pos);
-						std::string var_name = global_name.substr(separator_pos + 2);
-						
-						// Check if the module exists
-						if (module_map.find(module_name) != module_map.end())
-						{
-							// Skip if value is empty, null, or invalid
-							if (buffer != nullptr && strlen(buffer) > 0 &&
-							    strcmp(buffer, "null") != 0 && strcmp(buffer, "NULL") != 0 &&
-							    strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
-							    strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
-							{
-								// Assign global to the module with proper type parsing
-								modules[module_name][var_name] = parse_property_value(global->prop->ptype, buffer);
-							}
-						}
-						else
-						{
-							// Module not found, issue a warning
-							output_warning("Global variable '%s' references module '%s' which is not loaded", 
-								global_name.c_str(), module_name.c_str());
-							// Still add to core globals as fallback if value is valid
-							if (buffer != nullptr && strlen(buffer) > 0 &&
-							    strcmp(buffer, "null") != 0 && strcmp(buffer, "NULL") != 0 &&
-							    strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
-							    strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
-							{
-								globals[global_name] = parse_property_value(global->prop->ptype, buffer);
-							}
-						}
-					}
-					else
-					{
-						// Core global variable (no module prefix)
-						if (buffer != nullptr && strlen(buffer) > 0 &&
-						    strcmp(buffer, "null") != 0 && strcmp(buffer, "NULL") != 0 &&
-						    strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
-						    strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
-						{
-							globals[global_name] = parse_property_value(global->prop->ptype, buffer);
-						}
-					}
-				}
-			}
-			// Assign globals and modules to checkpoint
-			checkpoint["globals"] = globals;
-			checkpoint["modules"] = modules;	
-
-			// Write JSON to file with pretty formatting
-			std::ofstream json_file(json_fn);
-			if (json_file.is_open())
-			{
-				// pretty print with 2-space indentation
-				std::string out = checkpoint.dump(2);
-				json_file << out;
-				json_file.close();
-				output_verbose("JSON checkpoint written to '%s'", json_fn);
-			}
-			else
-			{
-				output_error("unable to open JSON checkpoint file '%s' for writing", json_fn);
-			}
-
-			return checkpoint;	
-		}
-	}
-	return checkpoint;
+            // ── Write JSON to file using resolved path ──
+            std::ofstream json_file(full_path);
+            if (json_file.is_open())
+            {
+                std::string out = checkpoint.dump(2);
+                json_file << out;
+                json_file.close();
+                output_verbose("JSON checkpoint written to '%s'", full_path);
+            }
+            else
+            {
+                output_error("unable to open JSON checkpoint file '%s' for writing", full_path);
+            }
+            return checkpoint;
+        }
+    }
+    return checkpoint;
 }
-/***********************************************************************/
 
 threadpool_thread_data::threadpool_thread_data(int size,
                                                cpp_threadpool *threadpool)

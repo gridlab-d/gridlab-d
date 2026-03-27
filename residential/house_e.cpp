@@ -1390,7 +1390,9 @@ int house_e::checkpoint_init(OBJECT *parent)
 			load.config = EUC_IS220;
 		}
 		pHVAC_EnduseLoad = attach(object_header(this), hvac_breaker_rating, true, &load);
-	}	
+	}
+
+	init_climate();
 		
 	return SUCCESS;
 }
