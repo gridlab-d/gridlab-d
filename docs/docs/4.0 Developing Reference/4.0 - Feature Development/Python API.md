@@ -86,7 +86,7 @@ TODO - Add best practices when using the API and link to sections that demonstra
  - Use datetime objects to track simulation time (makes any time math easier)
  - Make checkpoints at judicious times (especially when using `house` objects that take a few days to initialize)
  - Double-check simulation start and stop times 
- - 
+ - Check return codes on API calls to make sure they succeeded
 
 ### Running Multiple Models in Parallel
 Waiting on resolution of [Github issue 1720](https://github.com/gridlab-d/gridlab-d/issues/1720).
@@ -98,6 +98,7 @@ Covered in "example_sim_start_stop.py".
 Covered in "example_sim_stepping.py".
 
 ### Monitoring Console Messages
+Covered in "example_get_messages.py"
 
 ### Reading Data from the Model
 Covered in "example_reading_data.py".
