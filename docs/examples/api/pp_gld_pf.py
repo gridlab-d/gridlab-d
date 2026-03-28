@@ -21,27 +21,27 @@ import math
 import matplotlib.pyplot as plt
 
 
-def plot_coupled_signals(time_seconds, voltage_magnitude, load_magnitude):
+def plot_coupled_signals(sim_time_points, voltage_magnitude, load_magnitude):
     """Plot coupled T&D values with dual y-axes over simulated time."""
     fig, ax_voltage = plt.subplots(figsize=(11, 5))
     ax_load = ax_voltage.twinx()
 
     ax_voltage.plot(
-        time_seconds,
+        sim_time_points,
         voltage_magnitude,
         color="tab:blue",
         linewidth=2,
         label="|Pandapower Voltage Applied to GridLAB-D|",
     )
     ax_load.plot(
-        time_seconds,
+        sim_time_points,
         load_magnitude,
         color="tab:red",
         linewidth=2,
         label="|GridLAB-D Load Applied to Pandapower|",
     )
 
-    ax_voltage.set_xlabel("Simulated Time (s)")
+    ax_voltage.set_xlabel("Simulated Time")
     ax_voltage.set_ylabel("Voltage Magnitude (V)", color="tab:blue")
     ax_load.set_ylabel("Load Magnitude (MVA)", color="tab:red")
     ax_voltage.tick_params(axis="y", labelcolor="tab:blue")
@@ -69,7 +69,7 @@ step_size = 300
 # appreciably change.
 starttime = datetime(2026, 7, 1, 0, 0, 0)
 stoptime = datetime(2026, 7, 2, 0, 0, 0)
-pp_coupling_index = 42
+pp_bus_coupling_index = 40
 voltage_scaling_factor = 1.0
 load_scaling_factor = 1.0
 
@@ -89,15 +89,31 @@ gld.set_stoptime(stoptime.isoformat())
 gld.set_time_step(step_size)
 
 # Setting up pandapower
-pp_net1 = pn.case118()
+net118 = pn.case118()
+coupling_load_rows = net118.load.index[net118.load["bus"] == pp_bus_coupling_index]
+if coupling_load_rows.empty:
+    raise ValueError(f"No pandapower load rows found at bus index {pp_bus_coupling_index}")
+coupling_load_row = coupling_load_rows[0]
 
 # Setting up integrated T&D powerflow
 sim_duration = stoptime - starttime
 num_steps = int(sim_duration.total_seconds() / step_size)
 
 # Calculating scaling factor after running each tool for one step
-pp.run.runpp(pp_net1)
+pp.run.runpp(net118)
 gld.step()
+
+# Checking to see if a generator is at the bus we're attaching the
+# GridLAB-D load to. 
+gen_at_bus = net118.gen[net118.gen.bus == pp_bus_coupling_index]
+if gen_at_bus.empty:
+    print(f"No pandapower generator found at bus index "
+            f"{pp_bus_coupling_index}.")
+
+pv_buses = net118.gen.bus.unique()
+print(f"PV buses: {pv_buses}")
+slack_buses = net118.ext_grid.bus.unique()
+print(f"Slack buses: {slack_buses}")
 
 # Voltage from pandapower will be applied to GridLAB-D, thus the scaling 
 # factor is calculated as the ratio of GridLAB-D voltage to pandapower 
@@ -105,27 +121,27 @@ gld.step()
 gld_voltage_str = gld.get_object_property_value(
         "network_node", "positive_sequence_voltage")
 gld_voltage = complex(gld_voltage_str.replace("i", "j"))
-pp_voltage = pp_net1.bus.at[pp_coupling_index, "vn_kv"] * 1000 * math.sqrt(3)
+pp_voltage = net118.bus.at[pp_bus_coupling_index, "vn_kv"] * 1000 * math.sqrt(3)
 voltage_scaling_factor = abs(gld_voltage) / abs(pp_voltage)
 
 # Load from GridLAB-D will be applied to pandapower, thus the scaling 
-# factor is calculated
+# factor is calculated as the ratio of pandapower load to GridLAB-D load
 gld_load = gld.get_object_property_value(
         "network_node", "distribution_load")
-pp_load = complex(pp_net1.load.at[pp_coupling_index, "p_mw"],
-     pp_net1.load.at[pp_coupling_index, "q_mvar"]) / 1000000
+pp_load = complex(net118.load.at[coupling_load_row, "p_mw"],
+    net118.load.at[coupling_load_row, "q_mvar"]) / 1000000
 load_scaling_factor = abs(pp_load) / abs(gld_load)
 
 # Store magnitudes for post-simulation visualization.
-time_points_s = []
+sim_time_points = []
 applied_voltage_magnitude = []
 applied_load_magnitude = []
 
 for step in range(num_steps - 1):
     status, sim_time = gld.get_time()
     sim_time_obj = datetime.fromisoformat(sim_time)
-    pp.run.runpp(pp_net1, calculate_voltage_angles=True)
-    pp_voltage = pp_net1.bus.at[pp_coupling_index, "vn_kv"] * 1000 * math.sqrt(3)
+    pp.run.runpp(net118, calculate_voltage_angles=True)
+    pp_voltage = net118.bus.at[pp_bus_coupling_index, "vn_kv"] * 1000 * math.sqrt(3)
     gld_substation_voltage = float(abs(pp_voltage * voltage_scaling_factor))
     gld.set_property(
         "network_node", "positive_sequence_voltage", gld_substation_voltage)
@@ -133,17 +149,14 @@ for step in range(num_steps - 1):
     complex_load = gld.get_object_property_value(
         "network_node", "distribution_load")
     t_load = complex_load * 1000000 * load_scaling_factor
-    pp_net1.load.at[pp_coupling_index, "p_mw"] = t_load.real
-    pp_net1.load.at[pp_coupling_index, "q_mvar"] = t_load.imag
-    pp.run.runpp(pp_net1, calculate_voltage_angles=True)
-    p_mw = pp_net1.res_bus.p_mw.at[pp_coupling_index]
-    q_mvar = pp_net1.res_bus.q_mvar.at[pp_coupling_index]
+    net118.load.at[coupling_load_row, "p_mw"] = t_load.real
+    net118.load.at[coupling_load_row, "q_mvar"] = t_load.imag
 
-    time_points_s.append((step + 1) * step_size)
+    sim_time_points.append(sim_time_obj)
     applied_voltage_magnitude.append(abs(gld_substation_voltage))
     applied_load_magnitude.append(abs(t_load))
 
 gld.stop()
 gld.exit_gld()
 
-plot_coupled_signals(time_points_s, applied_voltage_magnitude, applied_load_magnitude)
+plot_coupled_signals(sim_time_points, applied_voltage_magnitude, applied_load_magnitude)
