@@ -69,7 +69,7 @@ step_size = 300
 # appreciably change.
 starttime = datetime(2026, 7, 1, 0, 0, 0)
 stoptime = datetime(2026, 7, 2, 0, 0, 0)
-pp_coupling_index = 41
+pp_coupling_index = 42
 voltage_scaling_factor = 1.0
 load_scaling_factor = 1.0
 
@@ -77,7 +77,7 @@ load_scaling_factor = 1.0
 
 # Setting up GridLAB-D
 gld = gridlabd.GridLabD()
-model_path = os.path.join(os.path.dirname(script_dir), "house_with_solar")
+model_path = Path("house_with_solar")
 response_working = gld.set_working_directory(str(model_path))
 if response_working != 0:
     raise RuntimeError(f"Failed to change working directory to {model_path} with response code: {response_working}")
@@ -122,7 +122,9 @@ applied_voltage_magnitude = []
 applied_load_magnitude = []
 
 for step in range(num_steps - 1):
-    pp.run.runpp(pp_net1)
+    status, sim_time = gld.get_time()
+    sim_time_obj = datetime.fromisoformat(sim_time)
+    pp.run.runpp(pp_net1, calculate_voltage_angles=True)
     pp_voltage = pp_net1.bus.at[pp_coupling_index, "vn_kv"] * 1000 * math.sqrt(3)
     gld_substation_voltage = float(abs(pp_voltage * voltage_scaling_factor))
     gld.set_property(
@@ -130,9 +132,12 @@ for step in range(num_steps - 1):
     gld.step()
     complex_load = gld.get_object_property_value(
         "network_node", "distribution_load")
-    t_load = complex_load * load_scaling_factor
+    t_load = complex_load * 1000000 * load_scaling_factor
     pp_net1.load.at[pp_coupling_index, "p_mw"] = t_load.real
     pp_net1.load.at[pp_coupling_index, "q_mvar"] = t_load.imag
+    pp.run.runpp(pp_net1, calculate_voltage_angles=True)
+    p_mw = pp_net1.res_bus.p_mw.at[pp_coupling_index]
+    q_mvar = pp_net1.res_bus.q_mvar.at[pp_coupling_index]
 
     time_points_s.append((step + 1) * step_size)
     applied_voltage_magnitude.append(abs(gld_substation_voltage))
