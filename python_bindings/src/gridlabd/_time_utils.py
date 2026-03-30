@@ -11,8 +11,39 @@ from typing import Optional
 # Sentinel values returned by GridLAB-D's convert_from_timestamp()
 _SENTINELS = frozenset({"INIT", "NEVER", "INVALID", ""})
 
+_TZ_OFFSETS = {
+    "PST": "-08:00",
+    "PDT": "-07:00",
+    "MST": "-07:00",
+    "MDT": "-06:00",
+    "CST": "-06:00",
+    "CDT": "-05:00",
+    "EST": "-05:00",
+    "EDT": "-04:00",
+}
 
-def gld_to_iso(time_str: str) -> Optional[str]:
+
+def _tz_to_offset(value: str) -> Optional[str]:
+    """Convert timezone labels/specs into an ISO 8601 offset when possible."""
+    tz = value.strip()
+    if not tz:
+        return None
+
+    if tz in _TZ_OFFSETS:
+        return _TZ_OFFSETS[tz]
+
+    if re.match(r"^[+-]\d{2}:\d{2}$", tz):
+        return tz
+
+    # Handle POSIX-style timezone specs like PST+8PDT by using the standard-zone token.
+    m = re.match(r"^([A-Z]{3,4})[+-]\d{1,2}(?:[A-Z]{3,4})?$", tz)
+    if m:
+        return _TZ_OFFSETS.get(m.group(1))
+
+    return None
+
+
+def gld_to_iso(time_str: str, timezone_hint: Optional[str] = None) -> Optional[str]:
     """Convert a GridLAB-D time string to ISO 8601 format, preserving timezone info.
 
     Args:
@@ -20,6 +51,8 @@ def gld_to_iso(time_str: str) -> Optional[str]:
             - "2024-01-01 00:00:00 EST+5EDT" (GLD timezone name)
             - "2024-01-01T00:00:00-08:00" (already ISO with offset)
             - "2024-01-01 00:00:00" (no timezone)
+        timezone_hint: Optional timezone spec (for example "PST+8PDT")
+            used when time_str has no explicit timezone.
 
     Returns:
         ISO 8601 string with timezone preserved when present, or None for
@@ -28,36 +61,22 @@ def gld_to_iso(time_str: str) -> Optional[str]:
     if time_str in _SENTINELS:
         return None
 
-    # Already in ISO 8601 format with timezone offset (e.g., "2024-01-01T00:00:00-08:00")
-    if re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$', time_str):
-        return time_str
+    value = time_str.strip()
 
-    # Check if it has a GLD timezone suffix (alphabetic characters like "EST", "PST+8PDT")
-    # vs an ISO timezone offset (like "-08:00", "+05:30")
-    parts = time_str.rsplit(" ", 1)
-    if len(parts) == 2:
-        potential_tz = parts[1]
-        # If it's an alphabetic timezone name (EST, PST+8PDT), strip it
-        # Keep ISO timezone offsets like -08:00
-        if any(c.isalpha() for c in potential_tz):
-            time_str = parts[0]
-        # If it's an ISO offset like "-08:00", we'll preserve it
+    # Already in ISO 8601 format with optional timezone offset.
+    if re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:[+-]\d{2}:\d{2})?$", value):
+        return value
 
-    # Replace the space between date and time with 'T' for ISO 8601
-    # "2024-01-01 00:00:00" -> "2024-01-01T00:00:00"
-    # "2024-01-01 00:00:00 -08:00" -> "2024-01-01T00:00:00-08:00"
-    if " " in time_str:
-        # Split on first space only to preserve timezone offset
-        parts = time_str.split(" ", 1)
-        if len(parts) == 2:
-            date_part = parts[0]
-            # Check if there's a timezone offset in the time part
-            time_and_tz = parts[1]
-            if " " in time_and_tz:
-                # "00:00:00 -08:00" -> "00:00:00-08:00"
-                time_part, tz_offset = time_and_tz.split(" ", 1)
-                return f"{date_part}T{time_part}{tz_offset}"
-            else:
-                return f"{date_part}T{time_and_tz}"
+    match = re.match(
+        r"^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})(?:\s+([^\s]+))?$",
+        value,
+    )
+    if match:
+        date_part, time_part, tz_part = match.groups()
+        iso = f"{date_part}T{time_part}"
+        offset = _tz_to_offset(tz_part) if tz_part else _tz_to_offset(timezone_hint or "")
+        if offset:
+            return f"{iso}{offset}"
+        return iso
 
-    return time_str
+    return value

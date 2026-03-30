@@ -878,7 +878,7 @@ class IsolatedGridLabD:
             ISO 8601 string in the simulation's local timezone, or None
             if the clock has not been initialized.
         """
-        return gld_to_iso(self.global_getvar("clock"))
+        return gld_to_iso(self.global_getvar("clock"), timezone_hint=self.get_timezone())
 
     def get_starttime(self) -> Optional[str]:
         """Get the simulation start time.
@@ -887,7 +887,7 @@ class IsolatedGridLabD:
             ISO 8601 string in the simulation's local timezone, or None
             if start time is not set.
         """
-        return gld_to_iso(self.global_getvar("starttime"))
+        return gld_to_iso(self.global_getvar("starttime"), timezone_hint=self.get_timezone())
 
     def get_stoptime(self) -> Optional[str]:
         """Get the simulation stop time.
@@ -896,7 +896,7 @@ class IsolatedGridLabD:
             ISO 8601 string in the simulation's local timezone, or None
             if stop time is NEVER (unbounded simulation).
         """
-        return gld_to_iso(self.global_getvar("stoptime"))
+        return gld_to_iso(self.global_getvar("stoptime"), timezone_hint=self.get_timezone())
     
     def set_starttime(self, value: str) -> int:
         """Set the simulation start time.
