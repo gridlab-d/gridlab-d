@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 
 import pytest
+import gridlabd
 
 
 def test_step_respects_fixed_timestep(gld_instance, test_models_dir):
@@ -90,6 +91,24 @@ def test_get_time_returns_iso8601(gld_instance, test_models_dir):
     # Expect ISO 8601 like 2020-01-01T00:00:00 or with timezone offset
     iso_pattern = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})?$"
     assert re.match(iso_pattern, time_str), f"Non-ISO timestamp: {time_str}"
+
+
+def test_step_past_stoptime_returns_error_and_warns(gld_instance, test_models_dir, capsys):
+    """Stepping at stoptime should return TIME_STEP_ERROR and print a warning."""
+    model_path = test_models_dir / "minimal.glm"
+    assert gld_instance.load(str(model_path)) == 0
+
+    assert gld_instance.set_time_step(4000) == 0
+
+    status1, stop_time = gld_instance.step()
+    assert status1 >= 0
+
+    status2, time2 = gld_instance.step()
+    assert status2 == int(gridlabd.GLDErrorCode.TIME_STEP_ERROR.value)
+    assert time2 == stop_time
+
+    captured = capsys.readouterr()
+    assert "blocked at stoptime" in captured.err.lower()
 
 
 def test_step_to_subseconds_triggers_delta_branch(gld_instance, test_models_dir):
