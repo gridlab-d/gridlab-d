@@ -651,7 +651,6 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             if (processed_properties.find(prop_name) != processed_properties.end())
                                 continue;
                             processed_properties.insert(prop_name);
-
                             switch (pmap->ptype)
                             {
                             case PT_double:
@@ -793,6 +792,41 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             checkpoint["globals"] = globals;
             checkpoint["modules"] = modules;
 
+
+            // ── Schedules ──
+            nlohmann::ordered_json schedules = nlohmann::ordered_json::object();
+            SCHEDULE *schedule = nullptr;
+            while ((schedule = schedule_getnext(schedule)) != nullptr)
+            {
+                if(!schedule->raw.empty())
+                {
+                    // Count on this to be valid JSON — if it is, we'll parse and include it as structured data; if not, we'll just skip it
+                    bool parsed_as_json = false;
+                    try {
+                        nlohmann::ordered_json parsed = nlohmann::ordered_json::parse(schedule->raw);
+                        if (parsed.is_array()) {
+                            if (!schedules.contains(schedule->name)) {
+                                schedules[schedule->name] = nlohmann::ordered_json::array();
+                            }
+                            for (const auto& elem : parsed) {
+                                schedules[schedule->name].push_back(elem);
+                            }
+                            parsed_as_json = true;
+                        } else if (parsed.is_object()) {
+                            if (!schedules.contains(schedule->name)) {
+                                schedules[schedule->name] = nlohmann::ordered_json::array();
+                            }
+                            schedules[schedule->name].push_back(parsed);
+                            parsed_as_json = true;
+                        }
+                    } catch (...) {
+                        // Not valid JSON
+                        throw std::runtime_error("Schedule raw data is not valid JSON");
+                    }
+                }
+            }
+            checkpoint["schedules"] = schedules;
+            
             // ── Write JSON to file using resolved path ──
             std::ofstream json_file(full_path);
             if (json_file.is_open())
