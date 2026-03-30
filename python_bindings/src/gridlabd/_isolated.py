@@ -457,7 +457,24 @@ class IsolatedGridLabD:
         _, before_step_time = self.get_time()
         stop_time = self.get_stoptime()
 
-        response = self._send_command(Command.STEP, {})
+        try:
+            response = self._send_command(Command.STEP, {})
+        except RuntimeError as exc:
+            text = str(exc)
+            if "processing STEP" in text and "Worker process" in text:
+                # If GridLAB-D terminates the worker during stepping, surface this as
+                # a step-level error so callers can handle it in loop control logic.
+                print(
+                    "GridLAB-D error: worker exited during step(); "
+                    "returning TIME_STEP_ERROR and preserving last known time. "
+                    f"Details: {text}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                from .gridlabd_core import GLDErrorCode
+
+                return int(GLDErrorCode.TIME_STEP_ERROR.value), before_step_time
+            raise
         if not response.success:
             raise RuntimeError(response.error)
 

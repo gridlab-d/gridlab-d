@@ -11,6 +11,7 @@ Tests:
 from datetime import datetime
 
 import pytest
+import gridlabd
 
 
 def test_run_minimal_model(minimal_model):
@@ -98,3 +99,20 @@ def test_step_respects_fixed_timestep(gld_instance, test_models_dir):
     dt1 = datetime.fromisoformat(time1)
     dt2 = datetime.fromisoformat(time2)
     assert (dt2 - dt1).total_seconds() == pytest.approx(900.0, abs=1e-6)
+
+
+def test_step_returns_error_when_worker_exits_during_step(gld_instance, monkeypatch):
+    """If worker exits during STEP, step() should return TIME_STEP_ERROR, not raise."""
+
+    def _fake_send_command(command, args):
+        raise RuntimeError("Worker process exited unexpectedly with code 255 while processing STEP")
+
+    monkeypatch.setattr(gld_instance, "get_object_count", lambda: 1)
+    monkeypatch.setattr(gld_instance, "get_time", lambda: (0, "2023-07-01T07:03:26-07:00"))
+    monkeypatch.setattr(gld_instance, "get_stoptime", lambda: None)
+    monkeypatch.setattr(gld_instance, "_send_command", _fake_send_command)
+
+    code, sim_time = gld_instance.step()
+
+    assert code == int(gridlabd.GLDErrorCode.TIME_STEP_ERROR.value)
+    assert sim_time == "2023-07-01T07:03:26-07:00"
