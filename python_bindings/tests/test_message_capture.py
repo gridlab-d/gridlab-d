@@ -2,6 +2,7 @@
 from pathlib import Path
 import subprocess
 import sys
+from datetime import datetime
 import pytest
 import gridlabd
 
@@ -117,7 +118,7 @@ def test_message_limit_enforcement():
 
 
 def test_message_timestamps():
-    """Test that messages have timestamps"""
+    """Test that message timestamps are ISO 8601 for non-sentinel values."""
     gld = gridlabd.GridLabD()
     gld.clear_messages()
     
@@ -131,10 +132,18 @@ def test_message_timestamps():
     if len(messages) == 0:
         pytest.skip("No messages captured - likely due to global state from previous tests")
     
+    sentinel_values = {"INIT", "NEVER", "INVALID", ""}
+
     for msg in messages:
-        assert msg["timestamp"] != "", f"Message should have timestamp: {msg}"
-        assert "INIT" in msg["timestamp"] or "20" in msg["timestamp"], \
-            f"Unexpected timestamp format: {msg['timestamp']}"
+        timestamp = msg.get("timestamp", "")
+        assert timestamp != "", f"Message should have timestamp: {msg}"
+        if timestamp in sentinel_values:
+            continue
+        assert "T" in timestamp, f"Timestamp should be ISO 8601: {timestamp}"
+        try:
+            datetime.fromisoformat(timestamp)
+        except ValueError as exc:
+            raise AssertionError(f"Timestamp should be parseable ISO 8601: {timestamp}") from exc
 
 
 def test_verbose_default_suppresses_console_output():

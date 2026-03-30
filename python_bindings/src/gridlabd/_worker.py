@@ -671,6 +671,12 @@ def handle_get_messages(message: Message) -> Response:
     """Get all captured warning/error/debug messages."""
     try:
         result = _gld_instance.get_messages()
+        if isinstance(result, list):
+            for entry in result:
+                if isinstance(entry, dict):
+                    timestamp = entry.get("timestamp")
+                    if isinstance(timestamp, str) and timestamp.strip():
+                        entry["timestamp"] = _to_iso8601(timestamp)
         return Response(success=True, result=result)
     except Exception as e:
         return Response(success=False, error=str(e))
