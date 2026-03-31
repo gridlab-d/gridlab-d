@@ -205,21 +205,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      # - name: Run Python GridLAB-D validator (Windows)(glm)
-      #   shell: pwsh
-      #   run: |
-      #     $prefix = "$env:USERPROFILE\.temp\GridLAB-D"
-      #     $bin    = Join-Path $prefix "bin"
-      #     $lib    = Join-Path $prefix "lib"
-      #     $share  = Join-Path $prefix "share"
-      #     $gldcore= Join-Path $pwd "gldcore"
-
-      #     # Ensure the validator sees GLD binaries and modules
-      #     $env:PATH   = "$env:PATH;$bin"
-      #     $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
-
-      #     gridlabd --validate; if ($LASTEXITCODE -ne 0) { }
-
+     
       - name: Run Python GridLAB-D validator (Windows) (JSON)
         shell: pwsh
         run: |
