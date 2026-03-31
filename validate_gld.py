@@ -84,27 +84,70 @@ def runAutotest(args: tuple[Path, str]) -> tuple[int, Path]:
 
     # Compose command: run from parent directory, write outputs into work_dir
     command = [binFile, autotestFile.name]
+    (work_dir / "gridlabd.start").write_text(f"RUN {autotestFile.name} via {binFile}\n"
 
-    # Capture raw bytes to avoid UnicodeDecodeError
-    result = subprocess.run(
-        command,
-        cwd=work_dir,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=False,  # <-- CRITICAL: captures bytes, no decoding
-    )
+                                             
+    env = dict(os.environ)
+    per_test_timeout_s = int(env.get("GLD_TEST_TIMEOUT", os.environ.get("GLD_TIMEOUT", "600")))
+
+
+    # # Capture raw bytes to avoid UnicodeDecodeError
+    # result = subprocess.run(
+    #     command,
+    #     cwd=work_dir,
+    #     stdout=subprocess.PIPE,
+    #     stderr=subprocess.PIPE,
+    #     text=False,  # <-- CRITICAL: captures bytes, no decoding
+    # )
+
+    print(f"[run] {autotestFile}", flush=True)
+    try:
+            result = subprocess.run(
+                command,
+                cwd=work_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=False,  # capture bytes
+                env=env,
+                timeout=per_test_timeout_s,
+            )
+    except subprocess.TimeoutExpired as e:
+            # Persist a clear timeout marker
+            (work_dir / "gridlabd.out").write_text("")
+            (work_dir / "gridlabd.err").write_text(f"TIMEOUT after {per_test_timeout_s}s\n{e}")
+            return (1, work_dir / autotestFile.name)
+
 
     # Persist outputs (parity with validate.cpp)
     (work_dir / "gridlabd.out").write_bytes(result.stdout)
     (work_dir / "gridlabd.err").write_bytes(result.stderr)
 
-    # Classification logic (same as your harness)
+    # # Classification logic (same as your harness)
+    # rv = 0
+    # if result.returncode != 0 and "_err" not in autotestFile.stem:
+    #     rv = 1
+    # elif result.returncode == 0 and "_err" in autotestFile.stem:
+    #     rv = 2
+    # return (rv, work_dir / autotestFile.name)
+
+
+    
     rv = 0
-    if result.returncode != 0 and "_err" not in autotestFile.stem:
+    # Signal termination: negative return code on POSIX
+    if result.returncode < 0:
+        rv = 1
+        # Append a signal note
+        try:
+            existing = (work_dir / "gridlabd.err").read_text()
+        except Exception:
+            existing = ""
+        (work_dir / "gridlabd.err").write_text(existing + f"\nPROCESS TERMINATED BY SIGNAL {abs(result.returncode)}")
+    elif result.returncode != 0 and "_err" not in autotestFile.stem:
         rv = 1
     elif result.returncode == 0 and "_err" in autotestFile.stem:
         rv = 2
     return (rv, work_dir / autotestFile.name)
+
 
 def getGLDVersionInfo() -> str:
     """
@@ -268,5 +311,18 @@ if __name__ == "__main__":
         default=1,
         help="Number of threads to use when running tests in parallel. Default is 1.",
     )
+    
+    parser.add_argument(
+        "-t",
+        "--timeout",
+        type=int,
+        default=600,
+        help="Per-test timeout in seconds (default: 600).",
+    )
+
     args = parser.parse_args()
+    # main(args.module, args.run_optional_tests, args.threads)
+
+    os.environ["GLD_TEST_TIMEOUT"] = str(args.timeout)
     main(args.module, args.run_optional_tests, args.threads)
+
