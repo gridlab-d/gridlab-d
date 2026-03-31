@@ -361,6 +361,7 @@ jobs:
           export DYLD_LIBRARY_PATH="${LIB_DIR}:${LIB_DIR}/gridlabd:${DYLD_LIBRARY_PATH:-}"
           export GLPATH="$(pwd):${PREFIX}:${BIN_DIR}:${LIB_DIR}:${SHARE_DIR}:${GLDCORE_DIR}"
           export PATH="${PATH}:${BIN_DIR}"
+          export DYLD_LIBRARY_PATH="${PREFIX}/lib:${PREFIX}/lib/gridlabd:/opt/homebrew/lib:${DYLD_LIBRARY_PATH:-}"
 
           python -u validate_gld.py
 
