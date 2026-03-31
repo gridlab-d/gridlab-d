@@ -31,12 +31,12 @@ public:
 	gld::complex constant_impedance[3];	// impedance load
 
 	double base_power[3];
-	double power_pf[3];
-	double current_pf[3];
 	double impedance_pf[3];
-	double power_fraction[3];
+	double current_pf[3];
+	double power_pf[3];
 	double impedance_fraction[3];
 	double current_fraction[3];
+	double power_fraction[3];
 
 	enum {LC_UNKNOWN=0, LC_RESIDENTIAL, LC_COMMERCIAL, LC_INDUSTRIAL, LC_AGRICULTURAL};
 	enumeration load_class;
