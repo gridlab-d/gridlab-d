@@ -643,12 +643,16 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result
 
-    def get_objects_by_class(self, class_name: str) -> list[str]:
-        """Get all object names of a specific class."""
+    def get_object_names_by_class(self, class_name: str) -> list[str]:
+        """Get all object names/IDs of a specific class."""
         response = self._send_command(Command.GET_OBJECTS_BY_CLASS, {"class_name": class_name})
         if not response.success:
             raise RuntimeError(response.error)
         return response.result
+
+    def get_objects_by_class(self, class_name: str) -> list[str]:
+        """Compatibility alias for get_object_names_by_class()."""
+        return self.get_object_names_by_class(class_name)
     
     def get_object_properties(self, object_name: str, typed: bool = True) -> dict[str, Any]:
         """Get all properties of an object as a dictionary.

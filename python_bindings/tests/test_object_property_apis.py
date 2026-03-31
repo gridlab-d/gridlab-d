@@ -91,6 +91,12 @@ class TestSingleObjectAllProperties:
 
 class TestAllObjectsNames:
     """Test get_objects_by_class() - just names/IDs."""
+
+    def test_get_object_names_by_class_matches_alias(self, gld_with_model):
+        """New API name should match legacy alias behavior."""
+        names_new = gld_with_model.get_object_names_by_class("house")
+        names_old = gld_with_model.get_objects_by_class("house")
+        assert names_new == names_old
     
     def test_get_objects_by_class(self, gld_with_model):
         """Get list of object names for a class."""
