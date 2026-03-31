@@ -58,6 +58,7 @@ public:
     STATUS loadSchedules();
     STATUS loadDirectives();
     STATUS loadIncludes();
+    STATUS loadGlobals();
     STATUS loadall_json_roll(char *file_name);
 };
 

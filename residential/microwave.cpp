@@ -38,7 +38,7 @@ microwave::microwave(MODULE *module) : residential_enduse(module)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
-			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power),PT_DESCRIPTION,"rated microwave power level",
+			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power),PT_DESCRIPTION,"rated microwave power level",			
 			PT_double,"standby_power[kW]",PADDR(standby_power),PT_DESCRIPTION,"standby microwave power draw (unshaped only)",
 			PT_double,"circuit_split",PADDR(circuit_split),
 			PT_enumeration,"state",PADDR(state),PT_DESCRIPTION,"on/off state of the microwave",
@@ -48,6 +48,7 @@ microwave::microwave(MODULE *module) : residential_enduse(module)
 			PT_double,"cycle_length[s]",PADDR(cycle_time),PT_DESCRIPTION,"length of the combined on/off cycle between uses",
 			PT_double,"runtime[s]",PADDR(runtime),PT_DESCRIPTION,"",
 			PT_double,"state_time[s]",PADDR(state_time),PT_DESCRIPTION,"",
+			PT_double,"prev_demand",PADDR(prev_demand), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for previous demand",
 			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -103,15 +104,39 @@ void microwave::init_noshape(){
 	}
 }
 
-int microwave::init(OBJECT *parent)
+int microwave::shared_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
 			char objname[256];
 			gl_verbose("microwave::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	cycle_start = 0;
+	cycle_on = 0;
+	cycle_off = 0;
+	return 1;
+}
+
+int microwave::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	return residential_enduse::checkpoint_init(parent);
+}
+
+int microwave::init(OBJECT *parent)
+{
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
@@ -351,6 +376,12 @@ EXPORT int isa_microwave(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
+}
+
+EXPORT int checkpoint_init_microwave(OBJECT *obj)
+{
+	microwave *my = object_data<microwave>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_microwave(OBJECT *obj, TIMESTAMP t0)

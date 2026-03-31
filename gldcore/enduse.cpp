@@ -768,9 +768,9 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 			e->power_fraction = atof(value);
 		else if (strcmp(param,"power_factor")==0)
 			e->power_factor = atof(value);
-		else if ( strcmp(param,"power.r")==0 )
+		else if ( strcmp(param,"power.r")==0 || strcmp(param,"power.Re()")==0 )
 			e->power.Re() = atof(value);
-		else if ( strcmp(param,"power.i")==0 )
+		else if ( strcmp(param,"power.i")==0 || strcmp(param,"power.Im()")==0 )
 			e->power.Im() = atof(value);
 		else if (strcmp(param,"loadshape")==0)
 		{

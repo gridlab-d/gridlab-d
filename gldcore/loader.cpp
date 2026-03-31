@@ -1,4 +1,5 @@
 #include "loader.h"
+#include <unordered_set>
 
 void loader::clearQuotesFromStr(string &str)
 {
@@ -397,22 +398,6 @@ STATUS loader::loadClock()
             return FAILED;
         }
     }
-    if (j_obj.contains("timestamp"))
-    {
-        string ts = j_obj["timestamp"].get<string>();
-        clearQuotesFromStr(ts);
-        TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
-        if (tsval == TS_INVALID)
-        {
-            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
-                             "provided: %s.", this->filename.string().c_str(), ts.c_str());
-            return FAILED;
-        }
-        else
-        {
-            global_starttime = tsval;
-        }
-    }
     if (j_obj.contains("starttime"))
     {
         string ts = j_obj["starttime"].get<string>();
@@ -429,6 +414,22 @@ STATUS loader::loadClock()
             global_starttime = tsval;
         }
     }
+    if (j_obj.contains("timestamp"))
+    {
+        string ts = j_obj["timestamp"].get<string>();
+        clearQuotesFromStr(ts);
+        TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
+        if (tsval == TS_INVALID)
+        {
+            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
+                             "provided: %s.", this->filename.string().c_str(), ts.c_str());
+            return FAILED;
+        }
+        else
+        {
+            global_starttime = tsval;
+        }
+    }    
     if (j_obj.contains("stoptime"))
     {
         string ts = j_obj["stoptime"].get<string>();
@@ -772,6 +773,21 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
         this->currentObject = obj;
         this->currentModule = obj->oclass->module;
         this->parse.current_object = obj;
+        
+        // Protect against empty property values to prevent segfaults in parsing functions
+        if (propValue.empty())
+        {
+            if (prop == nullptr)
+            {
+                output_error_raw("loader::objectProperties() parsing file, %s: property %s is not defined in class "
+                                 "%s and has empty value", this->filename.string().c_str(), propName.c_str(), 
+                                 oClass->name);
+                return FAILED;
+            }
+            // Empty value for valid property - just skip parsing
+            return SUCCESS;
+        }
+        
         if (prop != nullptr && prop->ptype == PT_complex && this->parse.complex_unit(propValue, &cval, &unit) > 0)
         {
 			if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0
@@ -963,6 +979,18 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 {
                     obj->out_svc = convert_to_timestamp_delta(propValue.c_str(), &obj->out_svc_micro,
                                                               &obj->out_svc_double);
+                }
+                else if (propName.compare("in_svc_double") == 0)
+                {
+                    obj->in_svc_double = stod(propValue);
+                }
+                else if (propName.compare("out_svc_double") == 0)
+                {
+                    obj->out_svc_double = stod(propValue);
+                }
+                else if (propName.compare("rng_state") == 0)
+                {
+                    obj->rng_state = static_cast<unsigned int>(stoul(propValue));
                 }
                 else if (propName.compare("name") == 0)
                 {
@@ -1191,6 +1219,46 @@ STATUS loader::loadSchedules()
     return rv;
 }
 
+STATUS loader::loadGlobals()
+{
+    if (!this->jsn.contains("globals") || !this->jsn["globals"].is_object())
+    {
+        return SUCCESS; // no globals section — nothing to do
+    }
+
+    // Read-only or runtime-set globals that must not be overridden on reload
+    static const std::unordered_set<std::string> skip_globals = {
+        "version", "version.major", "version.minor", "version.patch",
+        "version.build", "version.branch",
+        "platform", "exename", "execdir",
+        "checkpoint_loaded",
+    };
+
+    STATUS result = SUCCESS;
+    std::string propValue;
+    for (auto& [name, value] : this->jsn["globals"].items())
+    {
+        if (skip_globals.count(name))
+        {
+            continue;
+        }
+        if (convert(value, propValue) == FAILED)
+        {
+            output_warning("loader::loadGlobals() parsing file, %s: unable to convert value for global '%s', skipping",
+                           this->filename.string().c_str(), name.c_str());
+            continue;
+        }
+        STATUS rv = global_setvar(name.c_str(), propValue.data());
+        if (rv == FAILED)
+        {
+            output_warning("loader::loadGlobals() parsing file, %s: could not set global '%s', skipping",
+                           this->filename.string().c_str(), name.c_str());
+            // Non-fatal — continue with remaining globals
+        }
+    }
+    return result;
+}
+
 STATUS loader::loadJsonFile(filesystem::path filename)
 {
     if (this->open_file(filename))
@@ -1205,11 +1273,21 @@ STATUS loader::loadJsonFile(filesystem::path filename)
             output_error("loader::loadJsonFile() parsing file, %s: file is empty!", filename.string().c_str());
             return FAILED;
         }
+        // Check if this is a checkpoint file
+        if (this->jsn.contains("_checkpoint") && this->jsn["_checkpoint"].is_boolean() && this->jsn["_checkpoint"].get<bool>() == true)
+        {
+            global_checkpoint_loaded = 1;
+            output_verbose("loader::loadJsonFile(): checkpoint file detected");
+        }
         if (this->loadDirectives() == FAILED)
         {
             return FAILED;
         }
         if (this->loadModules() == FAILED)
+        {
+            return FAILED;
+        }
+        if (global_checkpoint_loaded && this->loadGlobals() == FAILED)
         {
             return FAILED;
         }

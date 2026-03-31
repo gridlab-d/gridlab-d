@@ -76,7 +76,6 @@ public:
 	bool Heateddry_option_check;
 
 
-	double zero_power;
 	double motor_power;					///< installed dishwasher motor power [W] (default = random uniform between 150-350 W)
 	double coil_power[4];					///< installed heating coil power [W] (default = random uniform between 3500-5000 W, 0 for gas)
 	double controls_power;
@@ -122,13 +121,8 @@ public:
 	double total_power;					///< instaneous power draw of the unit
 	double motor_on_off;				///< boolean logic to track the state of dishwasher
 	double motor_coil_on_off;
-	double both_coils_on_off;
 	/*double response_criticalmode;
 	double response_highmode;*/
-
-	TIMESTAMP time_state;				///< time in current state
-
-	TIMESTAMP return_time;
 
 public:
 	static CLASS *oclass, *pclass;
@@ -138,6 +132,8 @@ public:
 	~dishwasher();
 	int create();
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP last_t;
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

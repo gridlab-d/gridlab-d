@@ -123,6 +123,16 @@ range::range(MODULE *module) : residential_enduse(module){
 			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the actual load based on current voltage stored for use in controllers",
 			PT_complex,"actual_power[kVA]",PADDR(range_actual_power), PT_DESCRIPTION, "the actual power based on the current voltage across the coils",
 			PT_double,"is_range_on",PADDR(is_range_on),PT_DESCRIPTION, "simple logic output to determine state of range (1-on, 0-off)",
+			PT_double,"time_to_transition",PADDR(time_to_transition), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for time to transition",
+			PT_double,"cycle_duration_cooktop",PADDR(cycle_duration_cooktop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle duration cooktop",
+			PT_double,"cycle_time_cooktop",PADDR(cycle_time_cooktop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle time cooktop",
+			PT_double,"state_time",PADDR(state_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for state time",
+			PT_double,"Tlower",PADDR(Tlower), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tlower",
+			PT_double,"Tlower_old",PADDR(Tlower_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tlower_old",
+			PT_double,"Tupper",PADDR(Tupper), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tupper",
+			PT_double,"Tupper_old",PADDR(Tupper_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tupper_old",
+			PT_double,"Tw_old",PADDR(Tw_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tw_old",
+			PT_double,"oven_demand_old",PADDR(oven_demand_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for oven_demand_old",
 			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -221,26 +231,23 @@ int range::create()
 
 }
 
-/** Initialize oven model properties - randomized defaults for all published variables
+/** Shared initialization for both normal init and checkpoint restore
  **/
-int range::init(OBJECT *parent)
+int range::shared_init(OBJECT *parent)
 {
-	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
-	
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
 			char objname[256];
 			gl_verbose("range::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = object_header(this);
-	hdr->flags |= OF_SKIPSAFE;
-
 	static double sTair = 74;
 	static double sTout = 68;
-	if (heat_fraction==0) heat_fraction = 0.2;
 
+	// Initialize pointers to parent properties
 	if(parent){
 		pTair = gl_get_double_by_name(parent, "air_temperature");
 		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
@@ -254,6 +261,32 @@ int range::init(OBJECT *parent)
 		pTout = &sTout;
 		gl_warning("range parent lacks \'outside_temperature\' property, using default");
 	}
+	return 1;
+}
+
+/** Called when restoring from checkpoint to reinitialize non-published variables
+ **/
+int range::checkpoint_init(OBJECT *parent)
+{
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	return residential_enduse::checkpoint_init(parent);
+}
+
+/** Initialize oven model properties - randomized defaults for all published variables
+ **/
+int range::init(OBJECT *parent)
+{
+	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
+	
+	OBJECT *hdr = object_header(this);
+	hdr->flags |= OF_SKIPSAFE;
+
+	if (heat_fraction==0) heat_fraction = 0.2;
+
+	// Initialize pointers and other non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	/* sanity checks */
 	/* initialize oven volume */
@@ -305,9 +338,6 @@ int range::init(OBJECT *parent)
 	}
 	current_model = NONE;
 	load_state = STABLE;
-
-	// initial demand
-	Tset_curtail	= oven_setpoint - thermostat_deadband/2 - 10;  // Allow T to drop only 10 degrees below lower cut-in T...
 
 	// Setup derived characteristics...
 	area 		= (pi * pow(oven_diameter,2))/4;
@@ -1267,6 +1297,10 @@ EXPORT int isa_range(OBJECT *obj, char *classname)
 	}
 }
 
+EXPORT int checkpoint_init_range(OBJECT *obj)
+{
+	return object_data<range>(obj)->checkpoint_init(obj->parent);
+}
 
 EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
