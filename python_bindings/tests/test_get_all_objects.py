@@ -49,9 +49,9 @@ def test_get_all_objects_has_properties(gld_with_model):
         # Should have at least some properties
         assert len(property_keys) > 0, "Object should have properties beyond metadata"
         
-        # All values should be strings
+        # Property values should be scalar Python types in typed mode
         for key in property_keys:
-            assert isinstance(first_obj[key], str), f"Property {key} should be a string"
+            assert not isinstance(first_obj[key], (dict, list)), f"Property {key} should be scalar"
 
 def test_get_all_objects_nonexistent_class(gld_with_model):
     """Test that requesting a non-existent class returns an empty list."""

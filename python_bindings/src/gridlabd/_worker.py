@@ -359,7 +359,10 @@ def handle_get_objects_by_class(message: Message) -> Response:
 def handle_get_object_properties(message: Message) -> Response:
     """Get all properties of an object."""
     try:
-        result = _gld_instance.get_object_properties(message.args["object_name"])
+        object_name = message.args["object_name"]
+        result = _gld_instance.get_object_properties(object_name)
+        if bool(message.args.get("typed", False)) and isinstance(result, dict):
+            result = _convert_typed_property_map(object_name, result)
         return Response(success=True, result=result)
     except Exception as e:
         return Response(success=False, error=str(e))
@@ -369,6 +372,18 @@ def handle_get_all_objects(message: Message) -> Response:
     """Get all objects (and their properties) of a specific class."""
     try:
         result = _gld_instance.get_all_objects(message.args["class_name"])
+        if bool(message.args.get("typed", False)) and isinstance(result, list):
+            typed_objects = []
+            for obj_props in result:
+                if not isinstance(obj_props, dict):
+                    typed_objects.append(obj_props)
+                    continue
+                obj_name = obj_props.get("__name__") or obj_props.get("__id__")
+                if isinstance(obj_name, str) and obj_name:
+                    typed_objects.append(_convert_typed_property_map(obj_name, obj_props))
+                else:
+                    typed_objects.append(obj_props)
+            result = typed_objects
         return Response(success=True, result=result)
     except Exception as e:
         return Response(success=False, error=str(e))
@@ -378,6 +393,24 @@ def handle_get_model(message: Message) -> Response:
     """Get the entire model with all objects and properties organized by class."""
     try:
         result = _gld_instance.get_model()
+        if bool(message.args.get("typed", False)) and isinstance(result, dict):
+            typed_model = {}
+            for class_name, objects in result.items():
+                if not isinstance(objects, list):
+                    typed_model[class_name] = objects
+                    continue
+                typed_objects = []
+                for obj_props in objects:
+                    if not isinstance(obj_props, dict):
+                        typed_objects.append(obj_props)
+                        continue
+                    obj_name = obj_props.get("__name__") or obj_props.get("__id__")
+                    if isinstance(obj_name, str) and obj_name:
+                        typed_objects.append(_convert_typed_property_map(obj_name, obj_props))
+                    else:
+                        typed_objects.append(obj_props)
+                typed_model[class_name] = typed_objects
+            result = typed_model
         return Response(success=True, result=result)
     except Exception as e:
         return Response(success=False, error=str(e))
@@ -386,11 +419,17 @@ def handle_get_model(message: Message) -> Response:
 def handle_get_property(message: Message) -> Response:
     """Get a property value."""
     try:
+        object_name = message.args["object_name"]
+        property_name = message.args["property_name"]
         code, value = _gld_instance.get_property(
-            message.args["object_name"],
-            message.args["property_name"]
+            object_name,
+            property_name
         )
-        return Response(success=True, result={"code": int(code) if isinstance(code, int) else int(code.value), "value": value})
+        code_int = int(code) if isinstance(code, int) else int(code.value)
+        if bool(message.args.get("typed", False)) and code_int == 0:
+            prop_type, unit = _get_prop_type_unit(object_name, property_name)
+            value = _convert_value(value, prop_type, unit)
+        return Response(success=True, result={"code": code_int, "value": value})
     except Exception as e:
         return Response(success=False, error=str(e))
 
@@ -440,6 +479,7 @@ _STR_TYPES   = {_PT_CHAR8, _PT_CHAR32, _PT_CHAR256, _PT_CHAR1024,
                 _PT_OBJECT, _PT_DELEGATED, _PT_ENUMERATION, _PT_SET}
 
 _PA_W = 0x02  # write access bit (from property.h)
+_META_KEYS = {"__class__", "__id__", "__name__"}
 
 _TYPE_NAMES = {
     _PT_VOID: "void",
@@ -517,6 +557,34 @@ def _convert_value(raw_value: str, prop_type: int, unit: str):
     except (ValueError, TypeError):
         # Fall back to the raw (unit-stripped) string
         return s
+
+
+def _get_prop_type_unit(obj_name: str, prop_name: str) -> tuple[int, str]:
+    """Get the property type/unit metadata for one object property."""
+    if not hasattr(_gld_instance, 'get_property_info'):
+        return _PT_VOID, ""
+
+    try:
+        code_info, info = _gld_instance.get_property_info(obj_name, prop_name)
+        info_int = int(code_info) if isinstance(code_info, int) else int(code_info.value)
+        if info_int == 0:
+            return info.get("type", _PT_VOID), info.get("unit", "")
+    except Exception:
+        pass
+
+    return _PT_VOID, ""
+
+
+def _convert_typed_property_map(obj_name: str, props: dict[str, str]) -> dict[str, Any]:
+    """Convert property map values to native Python types without units."""
+    result = {}
+    for prop_name, raw_value in props.items():
+        if prop_name in _META_KEYS:
+            result[prop_name] = raw_value
+            continue
+        prop_type, unit = _get_prop_type_unit(obj_name, prop_name)
+        result[prop_name] = _convert_value(raw_value, prop_type, unit)
+    return result
 
 
 def handle_get_object_property_value(message: Message) -> Response:
@@ -628,6 +696,13 @@ def handle_get_properties_by_class(message: Message) -> Response:
             message.args["class_name"],
             message.args["property_name"]
         )
+        if bool(message.args.get("typed", False)) and isinstance(result, dict):
+            property_name = message.args["property_name"]
+            typed_result = {}
+            for obj_name, raw_value in result.items():
+                prop_type, unit = _get_prop_type_unit(obj_name, property_name)
+                typed_result[obj_name] = _convert_value(raw_value, prop_type, unit)
+            result = typed_result
         return Response(success=True, result=result)
     except Exception as e:
         return Response(success=False, error=str(e))

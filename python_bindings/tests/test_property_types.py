@@ -78,7 +78,7 @@ class TestSetPropertyWithNativeTypes:
         assert code == 0, f"Failed to set property with string: code={code}"
         
         # Verify
-        code, value = gld_with_house.get_property(house_name, "floor_area")
+        code, value = gld_with_house.get_property(house_name, "floor_area", typed=False)
         assert code == 0
         print(f"Set floor_area to '2500 sf', got back: {value}")
     
@@ -92,7 +92,7 @@ class TestSetPropertyWithNativeTypes:
         assert code == 0, f"Failed to set property with int: code={code}"
         
         # Verify
-        code, value = gld_with_house.get_property(house_name, "floor_area")
+        code, value = gld_with_house.get_property(house_name, "floor_area", typed=False)
         assert code == 0
         print(f"Set floor_area to int 3000, got back: {value}")
         assert "3000" in value
@@ -107,7 +107,7 @@ class TestSetPropertyWithNativeTypes:
         assert code == 0, f"Failed to set property with float: code={code}"
         
         # Verify
-        code, value = gld_with_house.get_property(house_name, "floor_area")
+        code, value = gld_with_house.get_property(house_name, "floor_area", typed=False)
         assert code == 0
         print(f"Set floor_area to float 2750.5, got back: {value}")
         assert "2750" in value
@@ -179,7 +179,7 @@ class TestPropertyTypeWorkflow:
             assert code == 0
         
         # 3. Verify the change
-        code, value = gld_with_house.get_property(house_name, "floor_area")
+        code, value = gld_with_house.get_property(house_name, "floor_area", typed=False)
         assert code == 0
         print(f"Final value: {value}")
 

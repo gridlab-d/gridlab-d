@@ -93,7 +93,7 @@ class TestGetObjectPropertyValue:
         house = houses[0]
 
         # Get raw string
-        code, raw = gld_with_house.get_property(house, "floor_area")
+        code, raw = gld_with_house.get_property(house, "floor_area", typed=False)
         assert code == 0
 
         # Get typed value

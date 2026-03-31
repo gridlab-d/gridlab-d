@@ -650,36 +650,72 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result
     
-    def get_object_properties(self, object_name: str) -> dict[str, str]:
-        """Get all properties of an object as a dictionary."""
-        response = self._send_command(Command.GET_OBJECT_PROPERTIES, {"object_name": object_name})
+    def get_object_properties(self, object_name: str, typed: bool = True) -> dict[str, Any]:
+        """Get all properties of an object as a dictionary.
+
+        Args:
+            object_name: Name or ID of the object.
+            typed: When True, return native Python values with units stripped.
+        """
+        response = self._send_command(
+            Command.GET_OBJECT_PROPERTIES,
+            {"object_name": object_name, "typed": bool(typed)},
+        )
         if not response.success:
             raise RuntimeError(response.error)
+        if typed:
+            return self._reconstruct_complex_deep(response.result)
         return response.result
     
-    def get_all_objects(self, class_name: str) -> list[dict[str, str]]:
-        """Get all objects (and their properties) of a specific class."""
-        response = self._send_command(Command.GET_ALL_OBJECTS, {"class_name": class_name})
+    def get_all_objects(self, class_name: str, typed: bool = True) -> list[dict[str, Any]]:
+        """Get all objects (and their properties) of a specific class.
+
+        Args:
+            class_name: Name of the class.
+            typed: When True, return native Python values with units stripped.
+        """
+        response = self._send_command(
+            Command.GET_ALL_OBJECTS,
+            {"class_name": class_name, "typed": bool(typed)},
+        )
         if not response.success:
             raise RuntimeError(response.error)
+        if typed:
+            return self._reconstruct_complex_deep(response.result)
         return response.result
     
-    def get_model(self) -> dict[str, list[dict[str, str]]]:
-        """Get the entire model with all objects and properties organized by class."""
-        response = self._send_command(Command.GET_MODEL, {})
+    def get_model(self, typed: bool = True) -> dict[str, list[dict[str, Any]]]:
+        """Get the entire model with all objects and properties organized by class.
+
+        Args:
+            typed: When True, return native Python values with units stripped.
+        """
+        response = self._send_command(Command.GET_MODEL, {"typed": bool(typed)})
         if not response.success:
             raise RuntimeError(response.error)
+        if typed:
+            return self._reconstruct_complex_deep(response.result)
         return response.result
     
-    def get_property(self, object_name: str, property_name: str) -> tuple[int, str]:
-        """Get a property value from an object."""
+    def get_property(self, object_name: str, property_name: str, typed: bool = True) -> tuple[int, Any]:
+        """Get a property value from an object.
+
+        Args:
+            object_name: Name or ID of the object.
+            property_name: Name of the property.
+            typed: When True, return native Python value with units stripped.
+        """
         response = self._send_command(Command.GET_PROPERTY, {
             "object_name": object_name,
-            "property_name": property_name
+            "property_name": property_name,
+            "typed": bool(typed),
         })
         if not response.success:
             raise RuntimeError(response.error)
-        return response.result["code"], response.result["value"]
+        value = response.result["value"]
+        if typed:
+            value = self._reconstruct_complex_deep(value)
+        return response.result["code"], value
     
     def get_property_info(self, object_name: str, property_name: str) -> tuple[int, dict]:
         """Get property metadata (type, unit, description, access).
@@ -708,6 +744,16 @@ class IsolatedGridLabD:
         """Reconstruct a complex number from its JSON-safe dict representation."""
         if isinstance(value, dict) and value.get("__complex__"):
             return complex(value["real"], value["imag"])
+        return value
+
+    @classmethod
+    def _reconstruct_complex_deep(cls, value):
+        """Reconstruct complex markers recursively in lists and dictionaries."""
+        value = cls._reconstruct_complex(value)
+        if isinstance(value, list):
+            return [cls._reconstruct_complex_deep(v) for v in value]
+        if isinstance(value, dict):
+            return {k: cls._reconstruct_complex_deep(v) for k, v in value.items()}
         return value
 
     def get_object_property_value(self, object_name: str, property_name: str):
@@ -834,14 +880,23 @@ class IsolatedGridLabD:
             raise RuntimeError(response.error)
         return response.result
     
-    def get_properties_by_class(self, class_name: str, property_name: str) -> dict[str, str]:
-        """Get property values from all objects of a class."""
+    def get_properties_by_class(self, class_name: str, property_name: str, typed: bool = True) -> dict[str, Any]:
+        """Get property values from all objects of a class.
+
+        Args:
+            class_name: Name of the class.
+            property_name: Name of the property.
+            typed: When True, return native Python values with units stripped.
+        """
         response = self._send_command(Command.GET_PROPERTIES_BY_CLASS, {
             "class_name": class_name,
-            "property_name": property_name
+            "property_name": property_name,
+            "typed": bool(typed),
         })
         if not response.success:
             raise RuntimeError(response.error)
+        if typed:
+            return self._reconstruct_complex_deep(response.result)
         return response.result
     
     def set_property_by_class(self, class_name: str, property_name: str, value: str) -> int:
