@@ -3,11 +3,18 @@ name: CI – Linux (ARM64 + x86_64), Windows & macOS with Python validator
 
 on:
   workflow_dispatch:
+
     inputs:
       config:
         description: "CMake build type"
         required: false
         default: "Release"
+
+
+  push:
+    branches:
+      - "**"
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
