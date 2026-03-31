@@ -9,7 +9,7 @@ on:
 
 
 permissions:
-  contents: write  # Needed when creating a release and uploading assets
+  contents: write  # when creating a release and uploading assets
 
 
 env:
