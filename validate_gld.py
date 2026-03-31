@@ -84,7 +84,7 @@ def runAutotest(args: tuple[Path, str]) -> tuple[int, Path]:
 
     # Compose command: run from parent directory, write outputs into work_dir
     command = [binFile, autotestFile.name]
-    (work_dir / "gridlabd.start").write_text(f"RUN {autotestFile.name} via {binFile}\n"
+    (work_dir / "gridlabd.start").write_text(f"RUN {autotestFile.name} via {binFile}\n")
 
                                              
     env = dict(os.environ)
