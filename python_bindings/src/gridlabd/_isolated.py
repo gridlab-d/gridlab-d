@@ -425,7 +425,17 @@ class IsolatedGridLabD:
     
     # Execution methods
     def run(self, start_time: Optional[float] = None, stop_time: Optional[float] = None) -> int:
-        """Run the simulation optionally bounding time interval."""
+        """Run the simulation, optionally bounding the timestamp interval.
+
+        Args:
+            start_time: Optional numeric GridLAB-D timestamp bound.
+            stop_time: Optional numeric GridLAB-D timestamp bound.
+
+        Note:
+            This method follows the underlying C++ API and expects numeric
+            timestamp values for bounds. In contrast, step/get_time/step_to
+            expose ISO 8601 time strings at the Python wrapper layer.
+        """
         if self.get_object_count() == 0:
             raise RuntimeError("Cannot run simulation: no objects loaded in model")
         response = self._send_command(Command.RUN, {
