@@ -73,11 +73,16 @@ int residential_enduse::create(bool connect_shape)
 
 /** Shared initialization for both normal init and checkpoint restore
  **/
-void residential_enduse::shared_init(void)
+int residential_enduse::shared_init(OBJECT *parent)
 {
-	OBJECT *parent = object_header(this)->parent;
 	gld_object *pParent = object_data<gld_object>(parent);
-	
+	if ( pParent!=nullptr && pParent->is_valid() )
+	{
+		if ((pParent->get_flags() & OF_INIT) != OF_INIT)
+		{
+			return 2;
+		}
+	}
 	// Attach to parent's circuit (reinitialize pCircuit pointer)
 	if ( pParent!=nullptr && pParent->is_valid() )
 	{
@@ -87,6 +92,7 @@ void residential_enduse::shared_init(void)
 		else
 			gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse function so voltage response cannot be modeled", get_name(), get_oclass()->get_name(), get_id(), pParent->get_name(), pParent->get_oclass()->get_name(), pParent->get_id());
 	}
+	return 1;
 }
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
@@ -94,35 +100,17 @@ void residential_enduse::shared_init(void)
 int residential_enduse::checkpoint_init(OBJECT *parent)
 {
 	set_flags(get_flags()|OF_SKIPSAFE);
-	gld_object *pParent = object_data<gld_object>(parent);
-	//	pull parent attach_enduse and attach the enduseload
-	if ( pParent!=nullptr && pParent->is_valid() )
-	{
-        if ((pParent->get_flags() & OF_INIT) != OF_INIT)
-        {
-            return 2;
-        }
-	}
-		
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return SUCCESS;
 }
 
 int residential_enduse::init(OBJECT *parent)
 {
 	set_flags(get_flags()|OF_SKIPSAFE);
-	gld_object *pParent = object_data<gld_object>(parent);
-	//	pull parent attach_enduse and attach the enduseload
-	if ( pParent!=nullptr && pParent->is_valid() )
-	{
-        if ((pParent->get_flags() & OF_INIT) != OF_INIT)
-        {
-            return 2;
-        }
-	}
-	
 	// Initialize pCircuit pointer and other non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	if (load.shape!=nullptr) {
 		if (load.shape->schedule==nullptr)

@@ -201,8 +201,17 @@ int evcharger_det::create()
 	return create_res;
 }
 
-void evcharger_det::shared_init(void)
+int evcharger_det::shared_init(OBJECT *parent)
 {
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("evcharger_det::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	// These variables need initialized every time regardless of checkpoint load
 	// Non-published variables (not loaded from checkpoint) must be initialized here
 	deltamode_inclusive = false;		//By default, no deltamode participation
@@ -223,35 +232,23 @@ void evcharger_det::shared_init(void)
 	
 	//Populate the "max current" value, based on published values
 	max_overload_charge_current = max_overload_currentPU * CarInformation.MaxChargeRate / expected_voltage_base / 1000.0;
+	return 1;
 }
 
 int evcharger_det::checkpoint_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("evcharger_det::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-
 	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return residential_enduse::checkpoint_init(parent);
 }
 
 int evcharger_det::init(OBJECT *parent)
 {
 	// Initialize non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("evcharger_det::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
 	OBJECT *hdr = object_header(this);
 	int init_res;
 	int comma_count, curr_idx, curr_comma_count;

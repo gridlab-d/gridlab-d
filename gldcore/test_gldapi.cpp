@@ -46,9 +46,9 @@ int main(int argc, char* argv[]) {
     if(restore_mode) {
         fileName = get_base_filename(fileName) + "_checkpoint.json";
     }
-    std::vector<const char*> args = {"notneeded", fileName.c_str(), "--verbose"};
+    std::vector<const char*> args = {fileName.c_str(), "--verbose"};
     int test_argc = static_cast<int>(args.size());
-    char* test_argv[] = { const_cast<char*>(args[0]), const_cast<char*>(args[1]), const_cast<char*>(args[2])};
+    char* test_argv[] = { nullptr, const_cast<char*>(args[0]), const_cast<char*>(args[1])};
     try{
         gld.load_glm(test_argc, test_argv);
     } catch (const std::exception& e) {

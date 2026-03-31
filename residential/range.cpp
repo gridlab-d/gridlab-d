@@ -233,9 +233,17 @@ int range::create()
 
 /** Shared initialization for both normal init and checkpoint restore
  **/
-void range::shared_init(void)
+int range::shared_init(OBJECT *parent)
 {
-	OBJECT *parent = object_header(this)->parent;
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("range::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	static double sTair = 74;
 	static double sTout = 68;
 
@@ -253,21 +261,15 @@ void range::shared_init(void)
 		pTout = &sTout;
 		gl_warning("range parent lacks \'outside_temperature\' property, using default");
 	}
+	return 1;
 }
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
  **/
 int range::checkpoint_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("range::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return residential_enduse::checkpoint_init(parent);
 }
 
@@ -277,21 +279,14 @@ int range::init(OBJECT *parent)
 {
 	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
 	
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("range::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	if (heat_fraction==0) heat_fraction = 0.2;
 
 	// Initialize pointers and other non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	/* sanity checks */
 	/* initialize oven volume */

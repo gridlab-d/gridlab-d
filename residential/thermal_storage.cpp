@@ -143,9 +143,17 @@ int thermal_storage::create(void)
 
 /** Shared initialization for both normal init and checkpoint restore
  **/
-void thermal_storage::shared_init(void)
+int thermal_storage::shared_init(OBJECT *parent)
 {
-	OBJECT *parent = object_header(this)->parent;
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("thermal_storage::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	OBJECT *hdr = object_header(this);
 	gld_property *design_cooling_capacity_prop;
 	double design_cooling_capacity;
@@ -255,41 +263,28 @@ void thermal_storage::shared_init(void)
 		//Assigned to the published property
 		discharge_time_ptr = &discharge_time;
 	}
+	return 1;
 }
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
  **/
 int thermal_storage::checkpoint_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("thermal_storage::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return residential_enduse::checkpoint_init(parent);
 }
 
 int thermal_storage::init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("thermal_storage::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 	gld_property *design_cooling_capacity_prop;
 	double design_cooling_capacity;
 
 	// Initialize pointers and other non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	//Check the cooling capacity (design_cooling_capacity already pulled in shared_init)
 	design_cooling_capacity_prop = new gld_property(parent,"design_cooling_capacity");

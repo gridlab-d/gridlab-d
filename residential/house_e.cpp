@@ -1341,33 +1341,42 @@ void house_e::set_window_Rvalue(){
 	}
 }
 
-void house_e::shared_init(OBJECT *parent)
+int house_e::shared_init(OBJECT *parent)
 {
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("house::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	// These variables need intialized every time regardless of checkpoint load
 	// Non-published variables (not loaded from checkpoint) must be initialized here
 	heat_start = false;
 	air_density = 0.0735;		// density of air [lb/cf]
 	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
+	return 1;
 }
 
 int house_e::checkpoint_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("house::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}	
 	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	shared_init(parent);
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
+	// Set simulation beginning time
+	simulation_beginning_time = gl_globalclock;
+	simulation_beginning_time_dbl = (double)simulation_beginning_time;
 
 	// Re-initialize pMeterStatus if parent is available
 	if (parent != nullptr && pMeterStatus == nullptr) {
-		if (pMeterStatus) delete pMeterStatus;
 		pMeterStatus = new gld_property(parent, "service_status");
 	}
+
+	// Attach implicit enduses to the panel (built in create(), must be attached here as in init())
+	attach_implicit_enduses();
 
 	// Re-initialize pHVAC_EnduseLoad
 	if(pHVAC_EnduseLoad == nullptr){
@@ -1379,8 +1388,8 @@ int house_e::checkpoint_init(OBJECT *parent)
 		else{
 			load.breaker_amps = hvac_breaker_rating;
 			load.config = EUC_IS220;
-			pHVAC_EnduseLoad = attach(object_header(this), hvac_breaker_rating, true, &load);
 		}
+		pHVAC_EnduseLoad = attach(object_header(this), hvac_breaker_rating, true, &load);
 	}	
 		
 	return SUCCESS;
@@ -1398,16 +1407,10 @@ int house_e::init(OBJECT *parent)
 	unsigned int test_rlock = 0;
 	bool temp_bool_val;
 
-	// Initialize non-published variables
-	shared_init(parent);
+	// Initialize non-published variables (also performs parent deferment check)
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("house::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 

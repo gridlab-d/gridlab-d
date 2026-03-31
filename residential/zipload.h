@@ -55,7 +55,7 @@ public:
 
 private:
 	int first_pass;
-	void shared_init(void);
+	int shared_init(OBJECT *parent);
 
 public:
 	static CLASS *oclass, *pclass;

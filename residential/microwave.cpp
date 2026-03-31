@@ -104,41 +104,39 @@ void microwave::init_noshape(){
 	}
 }
 
-void microwave::shared_init(void)
+int microwave::shared_init(OBJECT *parent)
 {
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("microwave::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
 	// These variables need initialized every time regardless of checkpoint load
 	// Non-published variables (not loaded from checkpoint) must be initialized here
 	cycle_start = 0;
 	cycle_on = 0;
 	cycle_off = 0;
+	return 1;
 }
 
 int microwave::checkpoint_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("microwave::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}	
 	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	return residential_enduse::checkpoint_init(parent);
 }
 
 int microwave::init(OBJECT *parent)
 {
 	// Initialize non-published variables
-	shared_init();
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("microwave::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
