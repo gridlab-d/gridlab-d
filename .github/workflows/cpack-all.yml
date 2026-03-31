@@ -1,6 +1,7 @@
 name: GridLAB-D Build
 
 on:
+  workflow_dispatch:    # allows "Run workflow" button in GitHub UI
   push:
     branches:
       - "release/*"
