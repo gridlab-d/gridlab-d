@@ -7,6 +7,11 @@ on:
     tags:
       - "v*"
 
+
+permissions:
+  contents: write  # Needed when creating a release and uploading assets
+
+
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
@@ -58,7 +63,7 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/helics-build/build 
+          cmake -B "${{github.workspace}}/helics-build/build" \
           -G Ninja \
           -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON
@@ -156,17 +161,14 @@ jobs:
         working-directory: ${{github.workspace}}/cmake-build
         run: cpack CPackConfig.cmake
 
-      - name: Package
-        working-directory: ${{github.workspace}}/cmake-build
-        run: cpack CPackConfig.cmake
-
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v7
         with:
           name: Windows Package
           path: |
-            ${{github.workspace}}/gridlab-build/cmake-build/packages
-            !${{github.workspace}}/gridlab-build/cmake-build/packages/_CPack_Packages
+            ${{github.workspace}}/cmake-build/packages
+            !${{github.workspace}}/cmake-build/packages/_CPack_Packages
+
 
   macos-build-and-validate:
     runs-on: macos-latest # ARM64 macOS runner
@@ -230,7 +232,7 @@ jobs:
             -DCMAKE_BUILD_TYPE="Release" \
             -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
             -DCMAKE_MACOSX_RPATH=ON \
-            -DCMAKE_INSTALL_RPATH="$HOME/.temp/GridLAB-D/lib;$HOME/.temp/GridLAB-D/lib/gridlabd"
+            -DCMAKE_INSTALL_RPATH="~/.temp/GridLAB-D/lib;~/.temp/GridLAB-D/lib/gridlabd"
 
       - name: Build (Release)
         shell: bash
@@ -238,7 +240,7 @@ jobs:
 
       - name: Install (Release)
         shell: bash
-        run: cmake --install ${{github.workspace}}/cmake-build --prefix "$HOME/.temp/GridLAB-D" --verbose
+        run: cmake --install ${{github.workspace}}/cmake-build --prefix "~/.temp/GridLAB-D" --verbose
 
       - name: Package
         working-directory: ${{github.workspace}}/cmake-build
@@ -247,7 +249,7 @@ jobs:
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: Mac ${{matrix.arch}} Package
+          name: Mac Package
           path: |
             ${{github.workspace}}/cmake-build/packages
             !${{github.workspace}}/cmake-build/packages/_CPack_Packages
@@ -348,8 +350,8 @@ jobs:
           PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
         run: |
           set -euxo pipefail
-          BUILD_DIR="${{github.workspace}}/cmake-build"
-          PREFIX_DIR="$HOME/.temp/GridLAB-D"
+          BUILD_DIR="${GITHUB_WORKSPACE}/cmake-build"
+          PREFIX_DIR="~/.temp/GridLAB-D"
 
           if [[ "${{ steps.gcc.outputs.major }}" != "default" ]]; then
             export CC="gcc-${{ steps.gcc.outputs.major }}"
@@ -377,7 +379,7 @@ jobs:
 
       - name: Install (Release)
         shell: bash
-        run: cmake --install ${{github.workspace}}/cmake-build --prefix "$HOME/.temp/GridLAB-D" --verbose
+        run: cmake --install ${{github.workspace}}/cmake-build --prefix "~/.temp/GridLAB-D" --verbose
 
       - name: Package
         working-directory: ${{github.workspace}}/build-${{matrix.arch}}
