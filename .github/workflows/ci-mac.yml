@@ -250,7 +250,7 @@ jobs:
   # macOS: AppleClang + Homebrew + Python validator
   # ─────────────────────────────────────────────
   macos-build-and-validate:
-    runs-on: macos-latest # ARM64 macOS runner
+    runs-on: macos-26 # ARM64 macOS runner
     timeout-minutes: 600
 
     steps:
