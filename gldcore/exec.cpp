@@ -161,9 +161,9 @@ using namespace std::literals;
 #define WEXITSTATUS(X) (X & 127)
 #endif
 
-
 // Only setup threadpool for each object rank list at the first iteration;
-cpp_threadpool *threadpool = new cpp_threadpool(global_threadcount);
+cpp_threadpool *threadpool;
+
 
 /** Set/get exit code **/
 int exec_setexitcode(int xc)
@@ -3387,6 +3387,9 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
     int j, k;
     LISTITEM *ptr;
     int incr, iObjRankList;
+    // Only setup threadpool for each object rank list at the first iteration;
+    threadpool = new cpp_threadpool(global_threadcount);
+
 
     // Create local variables for internal use (use provided values or defaults)
     int64 local_passes = (passes != nullptr) ? *passes : 0;
