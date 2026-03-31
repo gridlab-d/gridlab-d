@@ -61,6 +61,9 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 			PT_double, "phase_A_secondary_flux_value[Wb]", PADDR(flux_vals_inst[3]), PT_DESCRIPTION, "instantaneous magnetic flux in phase A on the secondary side of the transformer during saturation calculations",
 			PT_double, "phase_B_secondary_flux_value[Wb]", PADDR(flux_vals_inst[4]), PT_DESCRIPTION, "instantaneous magnetic flux in phase B on the secondary side of the transformer during saturation calculations",
 			PT_double, "phase_C_secondary_flux_value[Wb]", PADDR(flux_vals_inst[5]), PT_DESCRIPTION, "instantaneous magnetic flux in phase C on the secondary side of the transformer during saturation calculations",
+			PT_timestamp, "time_before", PADDR(time_before), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Previous timestamp used in aging calculations",
+			PT_timestamp, "return_at", PADDR(return_at), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Timestamp to return to after aging calculations",
+			PT_double, "last_temp", PADDR(last_temp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Last temperature recorded during aging calculations",
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			if (gl_publish_function(oclass,"power_calculation",(FUNCTIONADDR)power_calculation)==nullptr)
@@ -1783,25 +1786,12 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 		//See if we're in "init mode" or some form of "skip"
 		if (deltaIsat == nullptr)	//Init mode
 		{
-			//Allocate the storage matrix - 12 always (just zero others)
-			saturation_calculated_vals = (gld::complex *)gl_malloc(12*sizeof(gld::complex));
-
-			//Make sure it worked
-			if (saturation_calculated_vals == nullptr)
-			{
-				GL_THROW("Transformer:%d %s failed to allocate memory for inrush saturation tracking",obj->id,obj->name ? obj->name : "Unnamed");
-				/*  TROUBLESHOOT
-				While attempting to allocate the tracking and calculation matrices for the inrush
-				saturation terms, an error was encountered.  Please try again.  If the error persists,
-				please submit your code and a bug report via the ticketing website.
-				*/
-			}
-
-			//Initialize it, for giggles
+			//Initialize the storage array and enable it
 			for (index_loop=0; index_loop<12; index_loop++)
 			{
 				saturation_calculated_vals[index_loop] = gld::complex(0.0,0.0);
 			}
+			saturation_calculated_vals_enabled = true;
 
 			//Check the winding type
 			//1 = primary, 2 = secondary, 3 = both
