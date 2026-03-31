@@ -564,23 +564,15 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     return std::string(value_str);
                 }
             };
-
-            for (int pass = 0; ranks[pass] != nullptr; pass++)
+            OBJECT * iterator_object = object_get_first();
+            while(iterator_object != nullptr)
             {
-                for (int i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))
-                {
-                    if (ranks[pass]->ordinal[i] == nullptr)
-                        continue;
-                    for (LISTITEM *ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
-                    {
-                        OBJECT *obj = static_cast<OBJECT *>(ptr->data);
-                        if (processed_objects.find(obj) != processed_objects.end())
-                            continue;
-                        std::string class_name = obj->oclass->name;
-                        objects_by_class[class_name].push_back(obj);
-                        processed_objects.insert(obj);
-                    }
-                }
+                if (processed_objects.find(iterator_object) != processed_objects.end())
+                    continue;
+                std::string class_name = iterator_object->oclass->name;
+                objects_by_class[class_name].push_back(iterator_object);
+                processed_objects.insert(iterator_object);
+                iterator_object = object_get_next(iterator_object);
             }
 
             // ── Build objects section ──

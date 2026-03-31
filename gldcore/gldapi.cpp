@@ -688,6 +688,13 @@ GLDErrorCode GridLabD::run(std::optional<double> start_time,
 
 // Perform a single time step
 GLDErrorCode GridLabD::step(double &simulation_time) {
+  if(global_clock >= global_stoptime || global_clock == TS_NEVER) {
+    output_verbose("Simulation has already reached or exceeded stoptime (%.2f >= %.2f), no stepping performed",
+                   (double)global_clock, (double)global_stoptime);
+    simulation_time = (double)global_clock;
+    return GLD_SUCCESS;
+  }
+
   output_verbose("Stepping simulation forward");
 
   // Ensure simulation is initialized

@@ -1375,6 +1375,35 @@ int house_e::checkpoint_init(OBJECT *parent)
 		pMeterStatus = new gld_property(parent, "service_status");
 	}
 
+	bool is_triplex_parent = parent != nullptr &&
+		(gl_object_isa(parent, "triplex_meter", "powerflow") ||
+		gl_object_isa(parent, "triplex_node", "powerflow") ||
+		gl_object_isa(parent, "triplex_load", "powerflow"));
+
+	if (is_triplex_parent) {
+		if (pCircuit_V[0] == nullptr) {
+			pCircuit_V[0] = map_complex_value(parent, "voltage_12");
+			pCircuit_V[1] = map_complex_value(parent, "voltage_1N");
+			pCircuit_V[2] = map_complex_value(parent, "voltage_2N");
+		}
+		if (pLine_I[0] == nullptr) {
+			pLine_I[0] = map_complex_value(parent, "residential_nominal_current_1");
+			pLine_I[1] = map_complex_value(parent, "residential_nominal_current_2");
+			pLine_I[2] = map_complex_value(parent, "residential_nominal_current_12");
+		}
+		if (pShunt[0] == nullptr) {
+			pShunt[0] = map_complex_value(parent, "shunt_1");
+			pShunt[1] = map_complex_value(parent, "shunt_2");
+			pShunt[2] = map_complex_value(parent, "shunt_12");
+		}
+		if (pPower[0] == nullptr) {
+			pPower[0] = map_complex_value(parent, "power_1");
+			pPower[1] = map_complex_value(parent, "power_2");
+			pPower[2] = map_complex_value(parent, "power_12");
+		}
+	}
+
+
 	// Attach implicit enduses to the panel (built in create(), must be attached here as in init())
 	attach_implicit_enduses();
 
