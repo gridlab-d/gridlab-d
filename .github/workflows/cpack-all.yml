@@ -9,7 +9,7 @@ on:
 
 
 permissions:
-  contents: write  # when creating a release and uploading assets
+  contents: write
 
 
 env:
