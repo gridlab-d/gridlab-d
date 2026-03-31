@@ -32,7 +32,7 @@ def test_time_api_signatures_use_iso_strings():
 
 
 def test_run_signature_remains_numeric_bounds():
-    """run() should remain numeric-bound to match core C++ API."""
+    """run() should accept float or ISO string bounds at wrapper layer."""
     sig = inspect.signature(gridlabd.GridLabD.run)
-    assert sig.parameters["start_time"].annotation == Optional[float]
-    assert sig.parameters["stop_time"].annotation == Optional[float]
+    assert sig.parameters["start_time"].annotation == Optional[float | str]
+    assert sig.parameters["stop_time"].annotation == Optional[float | str]

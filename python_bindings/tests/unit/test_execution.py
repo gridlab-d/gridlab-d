@@ -8,7 +8,7 @@ Tests:
 - Execution without loading model
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 import gridlabd
@@ -81,6 +81,25 @@ def test_run_returns_status_code(minimal_model):
     result = minimal_model.run()
     assert isinstance(result, int)
     assert result == 0  # Success
+
+
+def test_run_accepts_iso8601_bounds(gld_instance, test_models_dir):
+    """run() should accept ISO 8601 strings for start_time/stop_time bounds."""
+    model_path = test_models_dir / "minimal.glm"
+    assert gld_instance.load(str(model_path)) == 0
+
+    status0, start_iso = gld_instance.get_time()
+    assert status0 >= 0
+
+    start_dt = datetime.fromisoformat(start_iso)
+    stop_dt = start_dt + timedelta(hours=1)
+
+    result = gld_instance.run(start_time=start_dt.isoformat(), stop_time=stop_dt.isoformat())
+    assert result == 0
+
+    status1, final_iso = gld_instance.get_time()
+    assert status1 >= 0
+    assert datetime.fromisoformat(final_iso) == stop_dt
 
 
 def test_step_respects_fixed_timestep(gld_instance, test_models_dir):

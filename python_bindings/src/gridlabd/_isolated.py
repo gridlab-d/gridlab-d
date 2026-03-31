@@ -97,6 +97,54 @@ def _parse_iso_datetime(value: Optional[str]) -> Optional[datetime]:
     return dt
 
 
+def _parse_iso_datetime_with_tz(value: Optional[str]) -> Optional[datetime]:
+    """Parse an ISO 8601 datetime string and preserve timezone when present."""
+    if not value or not isinstance(value, str):
+        return None
+
+    text = value.strip()
+    if not text:
+        return None
+
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+
+    try:
+        return datetime.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def _coerce_run_bound_to_timestamp(
+    value: Optional[float | str],
+    reference_tz,
+) -> Optional[float]:
+    """Convert run() bound inputs (float or ISO string) to numeric timestamps."""
+    if value is None:
+        return None
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+
+        dt = _parse_iso_datetime_with_tz(text)
+        if dt is None:
+            raise ValueError(f"Invalid ISO 8601 time value for run bound: {value!r}")
+
+        if dt.tzinfo is None and reference_tz is not None:
+            dt = dt.replace(tzinfo=reference_tz)
+
+        return float(dt.timestamp())
+
+    raise TypeError(
+        f"run bounds must be float, str, or None; got {type(value).__name__}"
+    )
+
+
 def _is_stoptime_blocked_step(
     before_step_time: Optional[str],
     after_step_time: Optional[str],
@@ -424,23 +472,38 @@ class IsolatedGridLabD:
         return response.result
     
     # Execution methods
-    def run(self, start_time: Optional[float] = None, stop_time: Optional[float] = None) -> int:
+    def run(
+        self,
+        start_time: Optional[float | str] = None,
+        stop_time: Optional[float | str] = None,
+    ) -> int:
         """Run the simulation, optionally bounding the timestamp interval.
 
         Args:
-            start_time: Optional numeric GridLAB-D timestamp bound.
-            stop_time: Optional numeric GridLAB-D timestamp bound.
+            start_time: Optional bound as either numeric GridLAB-D timestamp
+                or ISO 8601 string.
+            stop_time: Optional bound as either numeric GridLAB-D timestamp
+                or ISO 8601 string.
 
         Note:
-            This method follows the underlying C++ API and expects numeric
-            timestamp values for bounds. In contrast, step/get_time/step_to
-            expose ISO 8601 time strings at the Python wrapper layer.
+            The underlying C++ run API accepts numeric timestamps. String
+            inputs are converted to timestamps in the wrapper before dispatch.
         """
         if self.get_object_count() == 0:
             raise RuntimeError("Cannot run simulation: no objects loaded in model")
+
+        reference_tz = None
+        if isinstance(start_time, str) or isinstance(stop_time, str):
+            _, current_time = self.get_time()
+            current_dt = _parse_iso_datetime_with_tz(current_time)
+            reference_tz = current_dt.tzinfo if current_dt is not None else None
+
+        start_ts = _coerce_run_bound_to_timestamp(start_time, reference_tz)
+        stop_ts = _coerce_run_bound_to_timestamp(stop_time, reference_tz)
+
         response = self._send_command(Command.RUN, {
-            "start_time": start_time,
-            "stop_time": stop_time
+            "start_time": start_ts,
+            "stop_time": stop_ts,
         })
         if not response.success:
             raise RuntimeError(response.error)
