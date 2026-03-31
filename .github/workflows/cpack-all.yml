@@ -348,7 +348,7 @@ jobs:
           PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
         run: |
           set -euxo pipefail
-          BUILD_DIR="${{workspace}}/cmake-build"
+          BUILD_DIR="${{github.workspace}}/cmake-build"
           PREFIX_DIR="$HOME/.temp/GridLAB-D"
 
           if [[ "${{ steps.gcc.outputs.major }}" != "default" ]]; then
