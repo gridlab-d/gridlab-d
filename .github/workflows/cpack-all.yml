@@ -4,6 +4,7 @@ on:
   workflow_dispatch:    # allows "Run workflow" button in GitHub UI
   push:
     branches:
+      - "1478-cpp23"
       - "release/*"
     tags:
       - "v*"
@@ -99,7 +100,10 @@ jobs:
             ${{github.workspace}}/build/packages
             !${{github.workspace}}/build/packages/_CPack_Packages
 
-  win-build:
+  # ─────────────────────────────────────────────
+  # Windows: Visual Studio 2022 + vcpkg + Python validator
+  # ─────────────────────────────────────────────
+  win-build-and-validate:
     runs-on: windows-latest
     timeout-minutes: 60
 
@@ -125,7 +129,7 @@ jobs:
       - name: Clean install prefix (Windows)
         shell: pwsh
         run: |
-          $installRoot = "${{github.workspace}}/install"
+          $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
           if (Test-Path $installRoot) {
             Write-Host "Removing previous install at $installRoot..."
             Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
@@ -138,41 +142,41 @@ jobs:
           --log-level=VERBOSE
           --log-context
           --debug-output
-          -B ${{github.workspace}}/cmake-build
+          -B out/build/ci-windows
           -G "Visual Studio 17 2022"
           -A x64
           -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
           -DVCPKG_TARGET_TRIPLET=x64-windows
           "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          "-DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install"
+          "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
           -DGLD_CI_BUILD=ON
 
       - name: Build GridLAB-D (Release)
         shell: pwsh
-        run: cmake --build ${{github.workspace}}/cmake-build --config Release -t ALL_BUILD
+        run: cmake --build out/build/ci-windows --config Release -t ALL_BUILD
         env:
           CFLAGS: "/W0"
           CXXFLAGS: "/W0"
 
-      - name: Install GridLAB-D (Release)
-        shell: pwsh
-        run: cmake --install ${{github.workspace}}/cmake-build --config Release --verbose
-
       - name: Package
-        working-directory: ${{github.workspace}}/cmake-build
+        working-directory: ${{github.workspace}}/out/build/ci-windows
         run: cpack CPackConfig.cmake
 
-      - name: Upload a Build Artifact
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
         with:
           name: Windows Package
           path: |
-            ${{github.workspace}}/cmake-build/packages
-            !${{github.workspace}}/cmake-build/packages/_CPack_Packages
+            ${{github.workspace}}/out/build/ci-windows/packages
+            !${{github.workspace}}/out/build/ci-windows/packages/_CPack_Packages
 
 
+
+  # ─────────────────────────────────────────────
+  # macOS: AppleClang + Homebrew + Python validator
+  # ─────────────────────────────────────────────
   macos-build-and-validate:
-    runs-on: macos-latest # ARM64 macOS runner
+    runs-on: macos-26 # ARM64 macOS runner
     timeout-minutes: 600
 
     steps:
@@ -183,7 +187,7 @@ jobs:
           fetch-depth: 0
 
       - name: Cache Homebrew (optional)
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: |
             ~/Library/Caches/Homebrew
@@ -217,6 +221,18 @@ jobs:
           echo "CMAKE_PREFIX_PATH=${HOMEBREW_PREFIX}" >> "$GITHUB_ENV"
           echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"   >> "$GITHUB_ENV"
 
+      - name: Print toolchain info
+        run: |
+          sw_vers
+          clang --version
+          cmake --version
+          ninja --version
+          brew list --versions cmake ninja pkg-config eigen
+
+      - name: Clean build
+        run: |
+          rm -rf build/ out/ CMakeCache.txt CMakeFiles 2>/dev/null || true
+
       - name: Configure CMake (AppleClang + Ninja)
         shell: bash
         env:
@@ -224,7 +240,7 @@ jobs:
           PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
         run: |
           set -euxo pipefail
-          BUILD_DIR="${{github.workspace}}/cmake-build"
+          BUILD_DIR="out/build/ci-macos"
 
           cmake -S . -B "$BUILD_DIR" \
             -G Ninja \
@@ -233,187 +249,20 @@ jobs:
             -DCMAKE_BUILD_TYPE="Release" \
             -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
             -DCMAKE_MACOSX_RPATH=ON \
-            -DCMAKE_INSTALL_RPATH="~/.temp/GridLAB-D/lib;~/.temp/GridLAB-D/lib/gridlabd"
+            -DCMAKE_INSTALL_RPATH="$HOME/.temp/GridLAB-D/lib;$HOME/.temp/GridLAB-D/lib/gridlabd"
 
       - name: Build (Release)
         shell: bash
-        run: cmake --build ${{github.workspace}}/cmake-build
-
-      - name: Install (Release)
-        shell: bash
-        run: cmake --install ${{github.workspace}}/cmake-build --prefix "~/.temp/GridLAB-D" --verbose
+        run: cmake --build out/build/ci-macos -- -v
 
       - name: Package
-        working-directory: ${{github.workspace}}/cmake-build
+        working-directory: ${{github.workspace}}/out/build/ci-macos
         run: cpack CPackConfig.cmake
 
-      - name: Upload a Build Artifact
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
         with:
           name: Mac Package
           path: |
-            ${{github.workspace}}/cmake-build/packages
-            !${{github.workspace}}/cmake-build/packages/_CPack_Packages
-
-  # ─────────────────────────────────────────────
-  # macOS (ARM64) with Homebrew GCC + Python validator
-  # ─────────────────────────────────────────────
-  mac-arm64-gcc:
-    runs-on: macos-latest # Apple Silicon runner (ARM64)
-    timeout-minutes: 600
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: Cache Homebrew (optional)
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/Library/Caches/Homebrew
-            /Library/Caches/Homebrew
-          key: brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ci/Brewfile') }}
-          restore-keys: |
-            brew-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Install build tools via Homebrew (incl. GCC)
-        shell: bash
-        run: |
-          set -euxo pipefail
-          brew update
-
-          if [[ -f ci/Brewfile ]]; then
-            # Ensure Brewfile contains: gcc, cmake, ninja, pkg-config, eigen
-            grep -q '^brew "gcc"$' ci/Brewfile || echo 'brew "gcc"' >> ci/Brewfile
-            grep -q '^brew "cmake"$' ci/Brewfile || echo 'brew "cmake"' >> ci/Brewfile
-            grep -q '^brew "ninja"$' ci/Brewfile || echo 'brew "ninja"' >> ci/Brewfile
-            grep -q '^brew "pkg-config"$' ci/Brewfile || echo 'brew "pkg-config"' >> ci/Brewfile
-            grep -q '^brew "eigen"$' ci/Brewfile || echo 'brew "eigen"' >> ci/Brewfile
-            brew bundle --file=ci/Brewfile
-          else
-            brew install gcc cmake ninja pkg-config eigen
-          fi
-
-          HOMEBREW_PREFIX="$(brew --prefix)"
-          echo "HOMEBREW_PREFIX=${HOMEBREW_PREFIX}"
-
-          # Help CMake find Homebrew-installed packages
-          export PKG_CONFIG_PATH="${HOMEBREW_PREFIX}/lib/pkgconfig:${HOMEBREW_PREFIX}/share/pkgconfig:${PKG_CONFIG_PATH:-}"
-          echo "CMAKE_PREFIX_PATH=${HOMEBREW_PREFIX}" >> "$GITHUB_ENV"
-          echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"   >> "$GITHUB_ENV"
-
-      - name: Detect GCC toolchain (major version)
-        id: gcc
-        shell: bash
-        run: |
-          set -euxo pipefail
-          # Try common Homebrew gcc suffixes from newest to older
-          for v in 15 14 13 12 11; do
-            if command -v "gcc-${v}" >/dev/null 2>&1 && command -v "g++-${v}" >/dev/null 2>&1; then
-              echo "found gcc-${v}"
-              echo "major=${v}" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-          done
-          echo "No suffixed gcc found; falling back to default gcc/g++"
-          echo "major=default" >> "$GITHUB_OUTPUT"
-
-      - name: Print toolchain info
-        shell: bash
-        run: |
-          set -euxo pipefail
-          sw_vers
-          clang --version || true
-          cmake --version
-          ninja --version
-          brew list --versions gcc cmake ninja pkg-config eigen
-          if [[ "${{ steps.gcc.outputs.major }}" != "default" ]]; then
-            "gcc-${{ steps.gcc.outputs.major }}" --version | head -1
-            "g++-${{ steps.gcc.outputs.major }}" --version | head -1
-          else
-            gcc --version | head -1
-            g++ --version | head -1
-          fi
-
-      - name: Clean build
-        shell: bash
-        run: |
-          set -euxo pipefail
-          rm -rf build/ out/ CMakeCache.txt CMakeFiles 2>/dev/null || true
-
-      - name: Configure CMake (GNU GCC + Ninja)
-        shell: bash
-        env:
-          CMAKE_PREFIX_PATH: ${{ env.CMAKE_PREFIX_PATH }}
-          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
-        run: |
-          set -euxo pipefail
-          BUILD_DIR="${GITHUB_WORKSPACE}/cmake-build"
-          PREFIX_DIR="~/.temp/GridLAB-D"
-
-          if [[ "${{ steps.gcc.outputs.major }}" != "default" ]]; then
-            export CC="gcc-${{ steps.gcc.outputs.major }}"
-            export CXX="g++-${{ steps.gcc.outputs.major }}"
-          else
-            export CC="gcc"
-            export CXX="g++"
-          fi
-
-          cmake -S . -B "$BUILD_DIR" \
-            -G Ninja \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
-            -DCMAKE_BUILD_TYPE="Release" \
-            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
-            -DCMAKE_MACOSX_RPATH=ON \
-            -DCMAKE_INSTALL_RPATH="$PREFIX_DIR/lib;$PREFIX_DIR/lib/gridlabd" \
-            -DCMAKE_C_COMPILER="${CC}" \
-            -DCMAKE_CXX_COMPILER="${CXX}" \
-            -DGLD_CI_BUILD=ON
-
-      - name: Build (Release)
-        shell: bash
-        run: cmake --build ${{github.workspace}}/cmake-build -- -v
-
-      - name: Install (Release)
-        shell: bash
-        run: cmake --install ${{github.workspace}}/cmake-build --prefix "~/.temp/GridLAB-D" --verbose
-
-      - name: Package
-        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
-        run: cpack CPackConfig.cmake
-
-      - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: Mac ${{matrix.arch}} Package
-          path: |
-            ${{github.workspace}}/cmake-build/packages
-            ${{github.workspace}}/cmake-build/packages/_CPack_Packages
-
-  create-release:
-    if: github.ref_type == 'tag'
-    runs-on: ubuntu-latest
-    needs: [linux-build, win-build,  macos-build-and-validate]
-    steps:
-      - name: Install Dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y jq
-
-      - uses: actions/checkout@v6
-
-      - uses: actions/download-artifact@v8
-        with:
-          path: ${{github.workspace}}/artifacts
-
-      - name: "Create Release and Upload Assets"
-        run: bash ../.github/scripts/upload_release_assets.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GLD_GITHUB_URL: ${{github.api_url}}/repos/${{ github.repository }}
-          GLD_TAG: ${{ github.ref_name }}
-        working-directory: ${{github.workspace}}/artifacts
+            ${{github.workspace}}/out/build/ci-macos/packages
+            !${{github.workspace}}/out/build/ci-macos/packages/_CPack_Packages
