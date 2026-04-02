@@ -43,6 +43,8 @@ The Python API will be distributed as a PyPI package that users will be able to 
 
 ## API Examples
 
+TODO - Update all examples with appropriate `.get_messages()` to make sure nothing bad is happening.
+
 The Python API enables a broad range of applications for GridLAB-D, from simply running a model to integrating GridLAB-D into a larger code base where it serves as a modeling engine alongside a wide range of Python-enabled functionality. The API fundamentally changes GridLAB-D from a command-line simulation tool to a simulation engine that can be used in a much broader range of applications. Below are a few examples of how we envision GridLAB-D being used via this new API and fully expect users to go even further to meet a broad range of power system simulation needs.
 
 ### General API Notes
@@ -78,26 +80,45 @@ gld.exit_gld()
 
 Though this simple example shows no new additional functionality as compared to 
 
+### API Best Practices
+TODO - Add best practices when using the API and link to sections that demonstrate each of them.
+ - Check GridLAB-D messages programmatically with `.get_messages()`
+ - Use datetime objects to track simulation time (makes any time math easier)
+ - Make checkpoints at judicious times (especially when using `house` objects that take a few days to initialize)
+ - Double-check simulation start and stop times 
+ - Check return codes on API calls to make sure they succeeded
+
 ### Running Multiple Models in Parallel
+Waiting on resolution of [Github issue 1720](https://github.com/gridlab-d/gridlab-d/issues/1720).
 
 ### Controlling Simulation Start and Stop Time
+Covered in "example_sim_start_stop.py".
 
 ### Controlling Simulation Time
-`step()`, `step_to()`, `set_time_step()`
+Covered in "example_sim_stepping.py".
+
+### Monitoring Console Messages
+Covered in "example_get_messages.py"
 
 ### Reading Data from the Model
+Covered in "example_reading_data.py".
 
 ### Writing Data to the Model
+Covered in "example_read_write_data.py".
 
 ### Working with Checkpoints
+Waiting on checkpoint feature to be complete.
 
 ### Working in Transient Mode
+Waiting on transient mode feature to be complete.
 
 ### Example Application 1: GUI for Model Configuration
 
 ### Example Application 2: Runtime Monitoring
+Covered in "sim_monitor_gui_demo.py"
 
-### Example Application 3: Integration with PyPower
+### Example Application 3: Integration with pandapower
+Covered in "pp_gld_pf.py"
 
 ### Example Application 4: Integration with OCHRE
 
