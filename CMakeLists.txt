@@ -687,4 +687,10 @@ install(TARGETS
         COMPONENT Development
 )
 
+# Ninja doesn't generate a 'preinstall' target that CPack expects.
+# Create an empty one so CPack's internal build step succeeds.
+if(CMAKE_GENERATOR MATCHES "Ninja")
+    add_custom_target(preinstall)
+endif()
+
 include(cmake/CPackConfig.cmake)
