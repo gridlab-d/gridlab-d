@@ -659,7 +659,7 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/headers/
         COMPONENT Runtime
 		OPTIONAL
         FILES_MATCHING PATTERN "*.h"
-        OPTIONAL)
+        )
 install(FILES ${GLD_SHARE}
         ${FILE_PERMISSIONS}
         DESTINATION share
