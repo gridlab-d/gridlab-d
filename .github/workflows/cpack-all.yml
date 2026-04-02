@@ -137,23 +137,7 @@ jobs:
         env:
           VCPKG_INSTALL_OPTIONS: "--debug"
 
-      - name: Dump vcpkg failure logs
-        if: failure()
-        shell: pwsh
-        run: |
-          Write-Host "=== vcpkg manifest ==="
-          Get-Content vcpkg.json -ErrorAction SilentlyContinue
-          Write-Host ""
-          Write-Host "=== vcpkg install logs ==="
-          $vcpkgRoot = "$env:VCPKG_ROOT"
-          if (!$vcpkgRoot) { $vcpkgRoot = "$env:VCPKG_INSTALLATION_ROOT" }
-          Get-ChildItem -Path "$vcpkgRoot/buildtrees" -Filter "*.log" -Recurse -ErrorAction SilentlyContinue |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -First 10 |
-            ForEach-Object {
-              Write-Host "--- $($_.FullName) ---"
-              Get-Content $_.FullName -Tail 50
-            }
+   
 
       - name: Clean install prefix (Windows)
         shell: pwsh
@@ -188,39 +172,20 @@ jobs:
           CXXFLAGS: "/W0"
 
       - name: Package
-        working-directory: ${{github.workspace}}/out/build/ci-windows
-        run: cpack CPackConfig.cmake
-
-     
-      - name: Dump CPack logs on failure
-        if: failure()
         shell: pwsh
-        working-directory: ${{ format('{0}/out/build/ci-windows', github.workspace) }}
+        working-directory: ${{github.workspace}}/out/build/ci-windows
         run: |
-          Write-Host "=== CPack Logs ==="
-          Get-ChildItem -Path packages/_CPack_Packages -Filter *.log -Recurse -ErrorAction SilentlyContinue |
-            ForEach-Object {
-              Write-Host "--- $($_.FullName) ---"
-              Get-Content $_.FullName
-            }
-          Write-Host "=== MSBuild preinstall check ==="
-          if (Test-Path build.ninja) {
-            ninja -t targets rule phony 2>$null | Select-String -Pattern "preinstall" 
-          } else {
-            Write-Host "Not a Ninja build (Visual Studio generator) - no ninja targets to check"
-            # List available MSBuild targets instead
-            cmake --build . --target help 2>$null || Write-Host "Could not list targets"
-          }
-
+          $staging = "${{ runner.temp }}/gridlabd-install"
+          if (Test-Path $staging) { Remove-Item -Recurse -Force $staging }
+          cmake --install . --config Release --prefix $staging
+          New-Item -ItemType Directory -Force -Path packages | Out-Null
+          Compress-Archive -Path "$staging/*" -DestinationPath packages/gridlabd-windows-x64.zip
+      
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
         with:
           name: Windows Package
-          path: |
-            ${{github.workspace}}/out/build/ci-windows/packages
-            !${{github.workspace}}/out/build/ci-windows/packages/_CPack_Packages
-
-
+          path: ${{github.workspace}}/out/build/ci-windows/packages/gridlabd-windows-x64.zip
 
   # ─────────────────────────────────────────────
   # macOS: AppleClang + Homebrew + Python validator
