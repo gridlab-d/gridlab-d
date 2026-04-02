@@ -11,9 +11,9 @@ on:
         default: "Release"
 
 
-  push:
-    branches:
-      - "**"
+  #push:
+  #  branches:
+  #    - "**"
 
 
 concurrency:
