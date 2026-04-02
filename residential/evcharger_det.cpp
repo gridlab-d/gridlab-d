@@ -61,6 +61,9 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 			PT_double,"mileage_efficiency[mile/kWh]",PADDR(CarInformation.mileage_efficiency), PT_DESCRIPTION, "Efficiency of drive train in mile/kWh",
 			PT_double,"maximum_charge_rate[W]",PADDR(CarInformation.MaxChargeRate), PT_DESCRIPTION, "Maximum output rate of charger in kW",
 			PT_double,"charging_efficiency[unit]",PADDR(CarInformation.ChargeEfficiency), PT_DESCRIPTION, "Efficiency of charger (ratio) when charging",
+			PT_double,"duration_work_to_home[s]",PADDR(CarInformation.WorkHomeDuration), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for duration of commute from work to home",
+			PT_double,"duration_home_to_work[s]",PADDR(CarInformation.HomeWorkDuration), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for duration of commute from home to work",
+			PT_double, "next_state_change", PADDR(CarInformation.next_state_change), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for timestamp of next vehicle state transition",
 
 			PT_double,"maximum_overload_current[unit]",PADDR(max_overload_currentPU), PT_DESCRIPTION, "Maximum overload current, in per-unit",
 
@@ -104,6 +107,11 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 			PT_bool, "J2894_voltage_low_state_1", PADDR(J2894_voltage_low_state[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 low-voltage state (index 1)",
 			PT_double, "J2894_off_accumulator", PADDR(J2894_off_accumulator), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 off accumulator",
 			PT_bool, "J2894_is_ramp_constrained", PADDR(J2894_is_ramp_constrained), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 ramp constrained flag",
+			PT_double, "J2894_voltage_high_accumulator_0", PADDR(J2894_voltage_high_accumulators[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 high-voltage accumulator (index 0)",
+			PT_double, "J2894_voltage_high_accumulator_1", PADDR(J2894_voltage_high_accumulators[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 high-voltage accumulator (index 1)",
+			PT_double, "J2894_voltage_low_accumulator_0", PADDR(J2894_voltage_low_accumulators[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 low-voltage accumulator (index 0)",
+			PT_double, "J2894_voltage_low_accumulator_1", PADDR(J2894_voltage_low_accumulators[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 low-voltage accumulator (index 1)",
+			PT_bool, "deltamode_inclusive", PADDR(deltamode_inclusive), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for deltamode participation flag",
 		nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -212,14 +220,6 @@ int evcharger_det::shared_init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	// These variables need initialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	deltamode_inclusive = false;		//By default, no deltamode participation
-	
-	//Zero the accumulators - just because
-	J2894_voltage_high_accumulators[0] = J2894_voltage_high_accumulators[1] = 0.0;
-	J2894_voltage_low_accumulators[0] = J2894_voltage_low_accumulators[1] = 0.0;
-	
 	// Recalculate derived values that depend on published variables
 	if (load.config == EUC_IS220)
 	{
