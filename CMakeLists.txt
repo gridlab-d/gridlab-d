@@ -633,6 +633,9 @@ set(FILE_PERMISSIONS PERMISSIONS
         GROUP_EXECUTE GROUP_READ
         WORLD_EXECUTE WORLD_READ
 )
+
+include(GNUInstallDirs) 
+
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
         #${FILE_PERMISSIONS}
@@ -653,7 +656,7 @@ endif ()
 #        COMPONENT Runtime
 #)
 
-include(GNUInstallDirs) 
+
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/headers/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         COMPONENT Runtime
