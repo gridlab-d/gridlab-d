@@ -117,7 +117,7 @@ jobs:
   # ─────────────────────────────────────────────
   # Windows: Visual Studio 2022 + vcpkg + Python validator
   # ─────────────────────────────────────────────
-  win-build-and-validate:
+  win-build:
     runs-on: windows-latest
     timeout-minutes: 60
 
@@ -139,6 +139,26 @@ jobs:
             .*/CMakeOutput\.log$
             .*/CMakeError\.log$
             .*/vcpkg/buildtrees/.+\.log$
+        env:
+          VCPKG_INSTALL_OPTIONS: "--debug"
+
+      - name: Dump vcpkg failure logs
+        if: failure()
+        shell: pwsh
+        run: |
+          Write-Host "=== vcpkg manifest ==="
+          Get-Content vcpkg.json -ErrorAction SilentlyContinue
+          Write-Host ""
+          Write-Host "=== vcpkg install logs ==="
+          $vcpkgRoot = "$env:VCPKG_ROOT"
+          if (!$vcpkgRoot) { $vcpkgRoot = "$env:VCPKG_INSTALLATION_ROOT" }
+          Get-ChildItem -Path "$vcpkgRoot/buildtrees" -Filter "*.log" -Recurse -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 10 |
+            ForEach-Object {
+              Write-Host "--- $($_.FullName) ---"
+              Get-Content $_.FullName -Tail 50
+            }
 
       - name: Clean install prefix (Windows)
         shell: pwsh
@@ -210,7 +230,7 @@ jobs:
   # ─────────────────────────────────────────────
   # macOS: AppleClang + Homebrew + Python validator
   # ─────────────────────────────────────────────
-  macos-build-and-validate:
+  macos-build:
     runs-on: macos-26 # ARM64 macOS runner
     timeout-minutes: 600
 
@@ -285,7 +305,11 @@ jobs:
             -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
             -DCMAKE_MACOSX_RPATH=ON \
             -DCMAKE_INSTALL_RPATH="$HOME/.temp/GridLAB-D/lib;$HOME/.temp/GridLAB-D/lib/gridlabd"
-    
+
+      - name: Build
+        working-directory: out/build/ci-macos
+        run: cmake --build . --config Release
+        
       - name: Install
         working-directory: out/build/ci-macos
         run: cmake --install . --config Release --prefix ${{ runner.temp }}/staging
