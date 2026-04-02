@@ -87,10 +87,14 @@ jobs:
           -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
 
+      - name: Install
+        working-directory: ${{github.workspace}}/build
+        run: cmake --install . --config Release --prefix ${{ runner.temp }}/staging
+
       - name: Package
         working-directory: ${{github.workspace}}/build
-        run: cpack CPackConfig.cmake
-
+        run: cpack --config CPackConfig.cmake
+        
       - name: Dump CPack logs on failure
         if: failure()
         working-directory: ${{ format('{0}/build', github.workspace) }}
@@ -281,23 +285,15 @@ jobs:
             -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
             -DCMAKE_MACOSX_RPATH=ON \
             -DCMAKE_INSTALL_RPATH="$HOME/.temp/GridLAB-D/lib;$HOME/.temp/GridLAB-D/lib/gridlabd"
-
-      #- name: Build (Release)
-      #  shell: bash
-      #  run: cmake --build out/build/ci-macos -- -v
-
-      #- name: Package
-      #  working-directory: ${{github.workspace}}/out/build/ci-macos
-      #  run: cpack CPackConfig.cmake
-
-      - name: Build
-        working-directory: ${{ format('{0}/out/build/ci-macos', github.workspace) }}
-        run: cmake --build . --config Release
-      
+    
+      - name: Install
+        working-directory: out/build/ci-macos
+        run: cmake --install . --config Release --prefix ${{ runner.temp }}/staging
+    
       - name: Package
-        working-directory: ${{ format('{0}/out/build/ci-macos', github.workspace) }}
-        run: cpack --config CPackConfig.cmake  
-
+        working-directory: out/build/ci-macos
+        run: cpack --config CPackConfig.cmake
+      
       - name: Dump CPack logs on failure
         if: failure()
         working-directory: ${{ format('{0}/out/build/ci-macos', github.workspace) }}
