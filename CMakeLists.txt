@@ -635,8 +635,8 @@ set(FILE_PERMISSIONS PERMISSIONS
 )
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
-        ${FILE_PERMISSIONS}
-        DESTINATION bin
+        #${FILE_PERMISSIONS}
+        DESTINATION ${CMAKE_INSTALL_BINDIR} #bin
         COMPONENT Runtime
 )
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
@@ -647,11 +647,16 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
             COMPONENT Runtime
     )
 endif ()
-install(FILES ${HEADER_FILE_NAMES}
-        ${FILE_PERMISSIONS}
-        DESTINATION include
+#install(FILES ${HEADER_FILE_NAMES}
+#        ${FILE_PERMISSIONS}
+#        DESTINATION include
+#        COMPONENT Runtime
+#)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/headers/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         COMPONENT Runtime
-)
+        FILES_MATCHING PATTERN "*.h"
+        OPTIONAL)
 install(FILES ${GLD_SHARE}
         ${FILE_PERMISSIONS}
         DESTINATION share
