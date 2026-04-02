@@ -91,21 +91,16 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: cmake --install . --config Release --prefix ${{ runner.temp }}/staging
 
+
       - name: Package
         working-directory: ${{github.workspace}}/build
-        run: cpack --config CPackConfig.cmake
-        
-      - name: Dump CPack logs on failure
-        if: failure()
-        working-directory: ${{ format('{0}/build', github.workspace) }}
         run: |
-          echo "=== PreinstallOutput.log ==="
-          find packages/_CPack_Packages -name '*.log' \
-            -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || true
-          echo "=== Ninja targets check ==="
-          ninja -t targets rule phony 2>/dev/null | grep -i preinstall || echo "No preinstall target found"
+          STAGING="${{ runner.temp }}/gridlabd-install"
+          rm -rf "$STAGING"
+          cmake --install . --prefix "$STAGING"
+          mkdir -p packages
+          tar czf packages/gridlabd-linux-x86_64.tar.gz -C "$STAGING" .
           
-
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
         with:
@@ -316,17 +311,12 @@ jobs:
     
       - name: Package
         working-directory: out/build/ci-macos
-        run: cpack --config CPackConfig.cmake
-      
-      - name: Dump CPack logs on failure
-        if: failure()
-        working-directory: ${{ format('{0}/out/build/ci-macos', github.workspace) }}
         run: |
-          echo "=== PreinstallOutput.log ==="
-          find packages/_CPack_Packages -name '*.log' \
-            -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || true
-          echo "=== Ninja targets check ==="
-          ninja -t targets rule phony 2>/dev/null | grep -i preinstall || echo "No preinstall target found"
+          STAGING="${{ runner.temp }}/gridlabd-install"
+          rm -rf "$STAGING"
+          cmake --install . --prefix "$STAGING"
+          mkdir -p packages
+          tar czf packages/gridlabd-macos-arm64.tar.gz -C "$STAGING" .
           
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
