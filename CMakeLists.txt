@@ -652,9 +652,12 @@ endif ()
 #        DESTINATION include
 #        COMPONENT Runtime
 #)
+
+include(GNUInstallDirs) 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/headers/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         COMPONENT Runtime
+		OPTIONAL
         FILES_MATCHING PATTERN "*.h"
         OPTIONAL)
 install(FILES ${GLD_SHARE}
