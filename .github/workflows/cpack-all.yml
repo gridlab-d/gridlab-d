@@ -250,13 +250,21 @@ jobs:
             -DCMAKE_MACOSX_RPATH=ON \
             -DCMAKE_INSTALL_RPATH="$HOME/.temp/GridLAB-D/lib;$HOME/.temp/GridLAB-D/lib/gridlabd"
 
-      - name: Build (Release)
-        shell: bash
-        run: cmake --build out/build/ci-macos -- -v
+      #- name: Build (Release)
+      #  shell: bash
+      #  run: cmake --build out/build/ci-macos -- -v
 
+      #- name: Package
+      #  working-directory: ${{github.workspace}}/out/build/ci-macos
+      #  run: cpack CPackConfig.cmake
+
+      - name: Build
+        working-directory: ${{ format('{0}/out/build/ci-macos', github.workspace) }}
+        run: cmake --build . --config Release
+      
       - name: Package
-        working-directory: ${{github.workspace}}/out/build/ci-macos
-        run: cpack CPackConfig.cmake
+        working-directory: ${{ format('{0}/out/build/ci-macos', github.workspace) }}
+        run: cpack --config CPackConfig.cmake  
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
