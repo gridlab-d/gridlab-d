@@ -91,6 +91,17 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: cpack CPackConfig.cmake
 
+      - name: Dump CPack logs on failure
+        if: failure()
+        working-directory: ${{ format('{0}/build', github.workspace) }}
+        run: |
+          echo "=== PreinstallOutput.log ==="
+          find packages/_CPack_Packages -name '*.log' \
+            -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || true
+          echo "=== Ninja targets check ==="
+          ninja -t targets rule phony 2>/dev/null | grep -i preinstall || echo "No preinstall target found"
+          
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
         with:
@@ -160,6 +171,27 @@ jobs:
       - name: Package
         working-directory: ${{github.workspace}}/out/build/ci-windows
         run: cpack CPackConfig.cmake
+
+     
+      - name: Dump CPack logs on failure
+        if: failure()
+        shell: pwsh
+        working-directory: ${{ format('{0}/out/build/ci-windows', github.workspace) }}
+        run: |
+          Write-Host "=== CPack Logs ==="
+          Get-ChildItem -Path packages/_CPack_Packages -Filter *.log -Recurse -ErrorAction SilentlyContinue |
+            ForEach-Object {
+              Write-Host "--- $($_.FullName) ---"
+              Get-Content $_.FullName
+            }
+          Write-Host "=== MSBuild preinstall check ==="
+          if (Test-Path build.ninja) {
+            ninja -t targets rule phony 2>$null | Select-String -Pattern "preinstall" 
+          } else {
+            Write-Host "Not a Ninja build (Visual Studio generator) - no ninja targets to check"
+            # List available MSBuild targets instead
+            cmake --build . --target help 2>$null || Write-Host "Could not list targets"
+          }
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
@@ -266,6 +298,16 @@ jobs:
         working-directory: ${{ format('{0}/out/build/ci-macos', github.workspace) }}
         run: cpack --config CPackConfig.cmake  
 
+      - name: Dump CPack logs on failure
+        if: failure()
+        working-directory: ${{ format('{0}/out/build/ci-macos', github.workspace) }}
+        run: |
+          echo "=== PreinstallOutput.log ==="
+          find packages/_CPack_Packages -name '*.log' \
+            -exec echo "--- {} ---" \; -exec cat {} \; 2>/dev/null || true
+          echo "=== Ninja targets check ==="
+          ninja -t targets rule phony 2>/dev/null | grep -i preinstall || echo "No preinstall target found"
+          
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
         with:
