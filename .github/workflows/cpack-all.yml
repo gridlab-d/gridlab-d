@@ -4,10 +4,9 @@ on:
   workflow_dispatch:    # allows "Run workflow" button in GitHub UI
   push:
     branches:
-      - "**"
-      #- "release/*"
-    #tags:
-    #  - "v*"
+      - "release/*"
+    tags:
+      - "v*"
 
 permissions:
   contents: write
