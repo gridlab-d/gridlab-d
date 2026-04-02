@@ -1,0 +1,15 @@
+/* Force table text to wrap instead of scroll */
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+    white-space: normal !important;
+    /* word-break: break-word;   /* break long tokens/URLs */
+    width: auto;                /* allow columns to size based on content */
+    min-width: 60px;          /* prevent columns from collapsing too narrow */
+    overflow-wrap: break-word;
+    vertical-align: top;
+    padding: 8px 12px;
+}
+
+.wy-table-responsive {
+    overflow-x: visible;   /* disable horizontal scroll on the wrapper */
+}
