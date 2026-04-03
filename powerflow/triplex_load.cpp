@@ -102,6 +102,15 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 			PT_double, "power_fraction_1[pu]",PADDR(power_fraction[0]),PT_DESCRIPTION,"this is the constant power fraction of base power on phase 1",
 			PT_double, "power_fraction_2[pu]",PADDR(power_fraction[1]),PT_DESCRIPTION,"this is the constant power fraction of base power on phase 2",
 			PT_double, "power_fraction_12[pu]",PADDR(power_fraction[2]),PT_DESCRIPTION,"this is the constant power fraction of base power on phase 12",
+			PT_complex, "prev_load_values_shunt_1", PADDR(prev_load_values[0][0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION, "CHECKPOINT VAR: Tracking variable for accumulators - shunt phase 1",
+			PT_complex, "prev_load_values_shunt_2", PADDR(prev_load_values[0][1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION, "CHECKPOINT VAR: Tracking variable for accumulators - shunt phase 2",
+			PT_complex, "prev_load_values_shunt_12", PADDR(prev_load_values[0][2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION, "CHECKPOINT VAR: Tracking variable for accumulators - shunt phase 12",
+			PT_complex, "prev_load_values_current_1", PADDR(prev_load_values[1][0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION, "CHECKPOINT VAR: Tracking variable for accumulators - current phase 1",
+			PT_complex, "prev_load_values_current_2", PADDR(prev_load_values[1][1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION, "CHECKPOINT VAR: Tracking variable for accumulators - current phase 2",
+			PT_complex, "prev_load_values_current_12", PADDR(prev_load_values[1][2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION, "CHECKPOINT VAR: Tracking variable for accumulators - current phase 12",
+			PT_complex, "prev_load_values_power_1", PADDR(prev_load_values[2][0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION, "CHECKPOINT VAR: Tracking variable for accumulators - power phase 1",
+			PT_complex, "prev_load_values_power_2", PADDR(prev_load_values[2][1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION, "CHECKPOINT VAR: Tracking variable for accumulators - power phase 2",
+			PT_complex, "prev_load_values_power_12", PADDR(prev_load_values[2][2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION, "CHECKPOINT VAR: Tracking variable for accumulators - power phase 12",
 
          	nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
