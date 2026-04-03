@@ -115,7 +115,7 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double temp_voltage_magnitude;
 	double val = 0.0;
 
-	if (pCircuit!=nullptr)
+	if (pCircuit!=nullptr && pCircuit->pV!=nullptr)
 	{
 		//Get the current voltage
 		temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
@@ -125,7 +125,7 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	t2 = residential_enduse::sync(t0,t1);
 
-	if (pCircuit->status==BRK_CLOSED) 
+	if (pCircuit!=nullptr && pCircuit->status==BRK_CLOSED) 
 	{
 		if (shape.type == MT_UNKNOWN)
 		{
