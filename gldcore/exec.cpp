@@ -682,6 +682,17 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             default:
                             {
                                 char value_str[1024] = "";
+                                if(pmap->name != nullptr && strcmp(pmap->name, "shape") == 0)
+                                {
+                                    // copy value from pmap->raw to value_str
+                                    if(!pmap->raw.empty())
+                                    {
+                                        strncpy(value_str, pmap->raw.c_str(), sizeof(value_str));
+                                        value_str[sizeof(value_str) - 1] = '\0';
+                                        instance[pmap->name] = std::string(value_str);
+                                    }
+                                    break;
+                                }
                                 if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0
                                     && strlen(value_str) > 0
                                     && strcmp(value_str, "null") != 0 && strcmp(value_str, "NULL") != 0
