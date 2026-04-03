@@ -585,11 +585,6 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     nlohmann::json instance = nlohmann::json::object();
                     if (obj->name && strlen(obj->name) > 0)
                         instance["name"] = obj->name;
-                    else
-                    {
-                        instance["object_declaration"] = std::string(obj->oclass->name) + ":" + std::to_string(static_cast<int>(obj->id));
-                        classnameCounter++;
-                    }
                     if (obj->parent && obj->parent != nullptr)
                     {
                         if (obj->parent->name && strlen(obj->parent->name) > 0)

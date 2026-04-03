@@ -40,9 +40,33 @@ struct DiffEntry {
     std::string value_b;
 };
 
+static const std::vector<std::string> SKIP_KEYS = {"__preamble"};
+
+// Exact paths (rooted at "$") that are non-deterministic and should be ignored
+static const std::vector<std::string> SKIP_PATHS = {
+    "$.clock.starttime",
+    "$.globals.checkpoint_loaded",
+    "$.globals.randomseed",
+};    
+
+
+// Returns true when a comparison path should be skipped
+static bool should_skip_path(const std::string& path) {
+    for (const auto& p : SKIP_PATHS) {
+        if (path == p) return true;
+    }
+    // Skip any field named "rng_state" regardless of nesting depth
+    const std::string suffix = ".rng_state";
+    if (path.size() >= suffix.size() &&
+        path.compare(path.size() - suffix.size(), suffix.size(), suffix) == 0)
+        return true;
+    return false;
+}
+
 void compare_json(const nlohmann::json& a, const nlohmann::json& b,
                   const std::string& path, std::vector<DiffEntry>& diffs,
                   double tol) {
+    if (should_skip_path(path)) return;
     if (a.type() != b.type()) {
         diffs.push_back({path, a.dump(), b.dump()});
         return;
@@ -81,8 +105,6 @@ void compare_json(const nlohmann::json& a, const nlohmann::json& b,
         }
     }
 }
-
-static const std::vector<std::string> SKIP_KEYS = {"__preamble"};
 
 // ─── Main ────────────────────────────────────────────────────────
 
