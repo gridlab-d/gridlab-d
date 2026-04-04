@@ -257,10 +257,8 @@ int motor::create()
     Rs= 0.262;
     Xs= 1.206;
     rs_pu = -999;  // pu
-    lls = -999;  //  pu
     lm = -999;  // pu
     rr_pu = -999;  // pu
-    llr = -999;  // pu
 
     // Parameters are for 3000 W motor
     Kfric = 0.0;  // pu
@@ -303,6 +301,8 @@ int motor::init(OBJECT *parent)
 	enumeration temp_house_type;
 	gld_property *temp_gld_property;
 	unsigned int test_rlock = 0;
+	double lls;
+	double llr;
 
 	//See if we have a house connection defined -- if so, do this after that initializes (to get data)
 	if (mtr_house_pointer != nullptr)
@@ -993,7 +993,9 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	STATUS return_status_val;
 	bool temp_house_motor_state;
 	unsigned int  test_rlock = 0;
-	double deltat, deltat_ndiv;
+	double curr_delta_time;
+	double deltat; 
+	double deltat_ndiv;
 
 	// make sure to capture the current time
 	curr_delta_time = gl_globaldeltaclock;
@@ -1656,6 +1658,8 @@ void motor::TPIMStateOFF() {
 
 // Function to calculate the solution to the steady state SPIM model
 void motor::SPIMSteadyState(TIMESTAMP t1) {
+	gld::complex TF[16];
+	gld::complex ITF[16];
 	double wr_delta = 1;
     psi_sat = 1;
 	double psi = -1;
