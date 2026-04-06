@@ -143,7 +143,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default="docs/doxygen_divergence_report.md",
+        default="docs/src/doxygen_report/doxygen_divergence_report.md",
         help="Path to output markdown report.",
     )
     parser.add_argument(
