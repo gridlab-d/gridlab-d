@@ -54,6 +54,8 @@ csv_reader::csv_reader(MODULE *module){
 		oclass = gl_register_class(module,"csv_reader",sizeof(csv_reader), 0);
 		if (gl_publish_variable(oclass,
 			PT_int32,"index",PADDR(index),PT_ACCESS,PA_REFERENCE,
+			PT_timestamp,"next_ts",PADDR(next_ts),PT_ACCESS,PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_ts",
+			PT_timestamp,"last_ts",PADDR(last_ts),PT_ACCESS,PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_ts",
 			PT_char32,"city_name",PADDR(city_name),
 			PT_char32,"state_name",PADDR(state_name),
 			PT_double,"lat_deg",PADDR(lat_deg),

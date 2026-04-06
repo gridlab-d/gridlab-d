@@ -8059,42 +8059,42 @@ STATUS loadall(char *file)
 		return FAILED; /* not what they expected--do not proceed */
 	}
 
-	/* first time only */
-	if (loaded_files == 0)
-	{
-		/* load the gridlabd.conf file */
-		if (find_file("gridlabd.conf", nullptr, R_OK, conf, sizeof(conf)) == nullptr)
-			output_warning("gridlabd.conf was not found");
-		/* TROUBLESHOOT
-			The <code>gridlabd.conf</code> was not found in the <b>GLPATH</b> environment path.
-			This file is always loaded before a GLM file is loaded.
-			Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
-		 */
-		else
-		{
-			sprintf(filename, "gridlabd.conf");
-			if (loadall_glm_roll(conf) == FAILED)
-			{
-				return FAILED;
-			}
-		}
+	// /* first time only */
+	// if (loaded_files == 0)
+	// {
+	// 	/* load the gridlabd.conf file */
+	// 	if (find_file("gridlabd.conf", nullptr, R_OK, conf, sizeof(conf)) == nullptr)
+	// 		output_warning("gridlabd.conf was not found");
+	// 	/* TROUBLESHOOT
+	// 		The <code>gridlabd.conf</code> was not found in the <b>GLPATH</b> environment path.
+	// 		This file is always loaded before a GLM file is loaded.
+	// 		Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
+	// 	 */
+	// 	else
+	// 	{
+	// 		sprintf(filename, "gridlabd.conf");
+	// 		if (loadall_glm_roll(conf) == FAILED)
+	// 		{
+	// 			return FAILED;
+	// 		}
+	// 	}
 
-		/* load the debugger.conf file */
-		if (global_debug_mode)
-		{
-			char dbg[1024];
+	// 	/* load the debugger.conf file */
+	// 	if (global_debug_mode)
+	// 	{
+	// 		char dbg[1024];
 
-			if (find_file("debugger.conf", nullptr, R_OK, dbg, sizeof(dbg)) == nullptr)
-				output_warning("debugger.conf was not found");
-			/* TROUBLESHOOT
-				The <code>debugger.conf</code> was not found in the <b>GLPATH</b> environment path.
-				This file is loaded when the debugger is enabled.
-				Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
-			 */
-			// else if (loadall_glm_roll(dbg) == FAILED)
-			// return FAILED;
-		}
-	}
+	// 		if (find_file("debugger.conf", nullptr, R_OK, dbg, sizeof(dbg)) == nullptr)
+	// 			output_warning("debugger.conf was not found");
+	// 		/* TROUBLESHOOT
+	// 			The <code>debugger.conf</code> was not found in the <b>GLPATH</b> environment path.
+	// 			This file is loaded when the debugger is enabled.
+	// 			Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
+	// 		 */
+	// 		// else if (loadall_glm_roll(dbg) == FAILED)
+	// 		// return FAILED;
+	// 	}
+	// }
 
 	/* if nothing requested only config files are loaded */
 	if (file == nullptr)

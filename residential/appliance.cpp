@@ -30,6 +30,7 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 			PT_double_array, "durations",PADDR(duration),
 			PT_double_array, "transitions",PADDR(transition),
 			PT_double_array, "heatgains", PADDR(heatgain),
+			PT_object, "defaults", PADDR(defaults), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for appliance default object",
 			nullptr)<1 )
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -42,8 +43,30 @@ int appliance::create()
 	return res;
 }
 
+int appliance::shared_init(OBJECT *parent)
+{
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	transition_probabilities = nullptr;
+	n_states = 0;
+	state = 0;
+	next_t = TS_NEVER;
+	return 1;
+}
+
+int appliance::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	return residential_enduse::checkpoint_init(parent);
+}
+
 int appliance::init(OBJECT *parent)
 {
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 

@@ -880,6 +880,27 @@ static PROPERTY *get_property_at_addr(OBJECT *obj, void *addr)
 	return nullptr;
 }
 
+/** Check whether a property may be written to.
+ *  Emits an error and returns 0 if access is denied; returns 1 if writing is allowed.
+ **/
+static int object_check_write_access(OBJECT *obj, PROPERTY *prop)
+{
+	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN) && (prop->access != PA_REFERENCE))
+	{
+		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
+		/*	TROUBLESHOOT
+			The specified property was published by its object as private.  It may not be modified by other modules.
+		*/
+		return 0;
+	}
+	if (prop->access == PA_REFERENCE && !global_checkpoint_loaded)
+	{
+		output_error("trying to set the value of reference property %s in %s outside of checkpoint loading", prop->name, obj->oclass->name);
+		return 0;
+	}
+	return 1;
+}
+
 /** Set a property value by reference to its physical address
 	@return the character written to the buffer
  **/
@@ -891,14 +912,8 @@ int object_set_value_by_addr(OBJECT *obj,	 /**< the object to alter */
 	int result = 0;
 	if (prop == nullptr && (prop = get_property_at_addr(obj, addr)) == nullptr)
 		return 0;
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
-	{
-		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
-		/*	TROUBLESHOOT
-			The specified property was published by its object as private.  It may not be modified by other modules.
-		*/
+	if (!object_check_write_access(obj, prop))
 		return 0;
-	}
 
 	/* set the recalc bit if the property has a recalc trigger */
 	if (prop->flags & PF_RECALC)
@@ -1270,14 +1285,8 @@ int object_set_value_by_name(OBJECT *obj,		/**< the object to change */
 			return len > 0 ? (int)len : 1; /* empty string is not necessarily wrong */
 		}
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
-	{
-		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
-		/*	TROUBLESHOOT
-			The specified property was published by its object as private.  It may not be modified by other modules.
-		*/
+	if (!object_check_write_access(obj, prop))
 		return 0;
-	}
 	// addr = (void*)((char *)(obj+1)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	addr = reinterpret_cast<void *>(reinterpret_cast<std::uintptr_t>(obj + 1) + reinterpret_cast<std::uintptr_t>(prop->addr));
 	return object_set_value_by_addr(obj, addr, value, prop);
@@ -1293,14 +1302,8 @@ int object_set_int16_by_name(OBJECT *obj, const PROPERTYNAME name, int16 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
-	{
-		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
-		/*	TROUBLESHOOT
-			The specified property was published by its object as private.  It may not be modified by other modules.
-		*/
+	if (!object_check_write_access(obj, prop))
 		return 0;
-	}
 	if (prop->ptype != PT_int16)
 	{
 		output_error("property '%s' of '%s' is cannot be set like an int16", prop->name, obj->oclass->name);
@@ -1323,14 +1326,8 @@ int object_set_int32_by_name(OBJECT *obj, const PROPERTYNAME name, int32 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
-	{
-		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
-		/*	TROUBLESHOOT
-			The specified property was published by its object as private.  It may not be modified by other modules.
-		*/
+	if (!object_check_write_access(obj, prop))
 		return 0;
-	}
 	*(int32 *)((char *)(obj + 1) + (int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
 	return 1;
 }
@@ -1345,14 +1342,8 @@ int object_set_int64_by_name(OBJECT *obj, const PROPERTYNAME name, int64 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
-	{
-		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
-		/*	TROUBLESHOOT
-			The specified property was published by its object as private.  It may not be modified by other modules.
-		*/
+	if (!object_check_write_access(obj, prop))
 		return 0;
-	}
 	*(int64 *)((char *)(obj + 1) + (int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
 	return 1;
 }
@@ -1367,14 +1358,8 @@ int object_set_double_by_name(OBJECT *obj, const PROPERTYNAME name, double value
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
-	{
-		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
-		/*	TROUBLESHOOT
-			The specified property was published by its object as private.  It may not be modified by other modules.
-		*/
+	if (!object_check_write_access(obj, prop))
 		return 0;
-	}
 	*(double *)((char *)(obj + 1) + (int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
 	return 1;
 }
@@ -1389,14 +1374,8 @@ int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, gld::comple
 		errno = ENOENT;
 		return 0;
 	}
-	if ((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN))
-	{
-		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
-		/*	TROUBLESHOOT
-			The specified property was published by its object as private.  It may not be modified by other modules.
-		*/
+	if (!object_check_write_access(obj, prop))
 		return 0;
-	}
 	*(gld::complex *)((char *)(obj + 1) + (int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
 	return 1;
 }
@@ -1883,11 +1862,20 @@ int object_init(OBJECT *obj) /**< the object to initialize */
 	clock_t t = (clock_t)exec_clock();
 	int rv = 1;
 	obj->clock = global_starttime;
-	if (obj->oclass->init != nullptr)
+	if (global_checkpoint_loaded && obj->oclass->checkpoint_init != nullptr) 
+	{
+		rv = (int)(*(obj->oclass->checkpoint_init))(obj, obj->parent);
+	} 
+	else if (obj->oclass->init != nullptr) 
+	{
 		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
+	}
 	object_profile(obj, OPI_INIT, t);
 	if (global_debug_output > 0)
+	{
 		output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv ? "ok" : "failed");
+	}
+
 	return rv;
 }
 
@@ -1914,7 +1902,10 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
 	}
 	object_profile(obj, OPI_PRECOMMIT, t);
 	if (global_debug_output > 0)
+	{
 		output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv ? "ok" : "failed");
+	}
+
 	return rv;
 }
 
