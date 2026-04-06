@@ -308,11 +308,11 @@ nav:
       - authentication: reference/ReadMeConfig/authentication.md
       - getting-started: reference/ReadMeConfig/getting-started.md
       - my-requests: reference/ReadMeConfig/my-requests.md
-    # - Doxygen: 
-    #     - Groups: gridlabd/group__index.md
-    #     - Structs: gridlabd/structs__index.md
-    #     - Files: gridlabd/files.md
-    #     - Classes: gridlabd/classes.md
-    #     - Hierarchy: gridlabd/hierarchy.md
-    #     - Modules: gridlabd/modules.md
-    #     - Pages: gridlabd/pages.md
+    - Doxygen: 
+        - Groups: gridlabd/group__index.md
+        - Structs: gridlabd/structs__index.md
+        - Files: gridlabd/files.md
+        - Classes: gridlabd/classes.md
+        - Hierarchy: gridlabd/hierarchy.md
+        - Modules: gridlabd/modules.md
+        - Pages: gridlabd/pages.md
