@@ -11,6 +11,9 @@ build:
     python: "3.12"
   apt_packages:
     - doxygen 
+  jobs:
+    post_build:
+      - python docs/src/doxygen_report/doxygen_divergence_report.py --repo-root . --log docs/doxygen-warnings.log --output docs/doxygen_divergence_report.md
 
 mkdocs:
   configuration: mkdocs.yml

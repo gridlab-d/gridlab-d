@@ -39,6 +39,11 @@ plugins:
           doxy-cfg: 
             FILE_PATTERNS: "*.cpp *.h*" 
             RECURSIVE: True 
+            WARN_IF_UNDOCUMENTED: True
+            WARN_IF_DOC_ERROR: True
+            WARN_NO_PARAMDOC: True
+            WARN_AS_ERROR: False
+            WARN_LOGFILE: docs/doxygen-warnings.log
 markdown_extensions:
   - pymdownx.arithmatex:
       generic: true
