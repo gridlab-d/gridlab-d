@@ -573,10 +573,6 @@ Only the indoor air and mass temperature solution for fixed outdoor air and heat
   * [RG Pratt, **ETP Solution** , _Excel Workbook_ , 5/27/2008 (edited later)](https://github.com/gridlab-d/design/blob/master/ETP/)
 
 
-# TODO:
-
-TODO - Relevant - Should this go somewhere or is it no longer relevant?  
-
 ### **Heat Loss Coefficient ( $U_A$)**
 
 Compute exterior surface areas: 
