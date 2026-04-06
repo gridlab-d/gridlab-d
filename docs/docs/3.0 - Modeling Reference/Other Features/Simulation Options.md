@@ -4,7 +4,7 @@ This page outlines the different ways to run GridLAB-D™, using either the comm
 
 ## Installation Notes
 
-  * For installation instructions, refer to the [Installation Guide](../2.0%20New%20Users/Installation/).
+    * For installation instructions, refer to the [Installation Guide](../../2.0%20-%20New%20Users/2.1%20-%20Installation%20Guide.md).
 
   * Note that minimally, the environment variable `GLPATH` should be set to the directory where GridLAB-D™ is installed.
 
@@ -30,7 +30,7 @@ The GridLAB-D™ software can be run using the _command-line_ or the _server mod
 
 ### **GridLAB-D™ Command-Line Tool**
 
-GridLAB-D™ takes the path to a GridLAB-D™ model file (GLM file) as input. For more information about creating GLM files refer to the guide to [Creating GLM Files](../3.0%20Modeling/3.1%20Intro%20to%20Modeling/3.1.2%20-%20GLM%20Models.md). 
+GridLAB-D™ takes the path to a GridLAB-D™ model file (GLM file) as input. For more information about creating GLM files refer to the guide to [Creating GLM Files](../../2.0%20-%20New%20Users/Tutorial/2.5.2%20-%20GLM%20Models.md). 
 
 **Syntax Highlighting**
 

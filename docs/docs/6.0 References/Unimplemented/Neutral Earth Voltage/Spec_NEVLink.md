@@ -351,27 +351,27 @@ The underground_line_conductor class specifies the type of cable, concentric neu
 
 #### General
 
-What needs to come out of the underground_line class is an [2][N][N] impedance, shunt admittance, [N] from_terminal, and [N] to_terminal array where N is the number of conductors present in the line. These arrays then get fed into the NEVbranchdata structure in order to solve the powerflow of the system. It will also be able to provide current and power flowing through each conductor. 
+What needs to come out of the underground_line class is a `[2][N][N]` impedance array, a shunt admittance array, and `[N]` `from_terminal` and `[N]` `to_terminal` arrays where `N` is the number of conductors present in the line. These arrays then get fed into the `NEVbranchdata` structure in order to solve the powerflow of the system. It will also be able to provide current and power flowing through each conductor. 
 
 The number of conductors, N, present in the underground line is determined by number of entries in the conductor property of the line_configuration class along with the type property in the underground_line_conductor class. The impedance and shunt admittance arrays are split in the the real and imaginary parts of the calculated impedance and shunt admittance. The from_terminal and to_terminal arrays will be filled from the from_terminal and to_terminal property in such a way that each entry matches with the conductor row of the impedance and capacitance arrays. The from_terminal and to_terminal arrays grab their information from the the from_terminal and to_terminal properties of the underground_line class. 
 
-In order to populate the impedance array, a [N][2] position, [N][N] distance, and [N] resistance array need to be populated.The position array is populated with the x and y coordinates given in the cable_spacing property of the line_spacing class. Euclidean geometry and equations in Underground Line Equations are used to determine the absolute distance between conductors. These distances get place in the off-diagonals of the [N][N] distance array. The diagonals of the [N][N] distance array are populated with the geometric mean radius of the conductors that can be found in the underground_line_conductor class properties or can be calculated from the underground_line_conductor class properties according the the equations specified in Underground Line Equations. 
+In order to populate the impedance array, a `[N][2]` position array, an `[N][N]` distance array, and an `[N]` resistance array need to be populated. The position array is populated with the x and y coordinates given in the cable_spacing property of the `line_spacing` class. Euclidean geometry and equations in Underground Line Equations are used to determine the absolute distance between conductors. These distances get placed in the off-diagonals of the `[N][N]` distance array. The diagonals of the `[N][N]` distance array are populated with the geometric mean radius of the conductors that can be found in the `underground_line_conductor` class properties or can be calculated from the `underground_line_conductor` class properties according to the equations specified in Underground Line Equations. 
 
 The resistance array is populated with the resistance for each conductor either found in the underground_line_conductor class properties or calculated from the underground_line_conductor class properties according to the equations found in Underground Line Equations. 
 
 With the distance and resistance arrays fully populated, the self and mutual impedance for each conductor can be calculated according to Kersting (2007) and placed in the impedance array. The Specific equations can be found in Underground Line Equations. 
 
-When determining the shunt admittance array for an underground line, certain assumptions are made about the capacitance between conductors. Firstly, the electric field does not go beyond the cable insulation so that there is no capacitance between cables. Secondly, the only capacitance exists between the neutral conductor and phase conductor of an tape-shield cable or concentric neutral cable. The [N][N] shunt admittance array will only be populated with the admittance that exists between the neutral and phase conductors of the tape-shield and concentric neutral cables. The shunt admittance for underground concentric neutral and tape-shield cables will be calculated by using the information given in the underground_line_conductor class properties and the equations specified in Underground Line Equations. 
+When determining the shunt admittance array for an underground line, certain assumptions are made about the capacitance between conductors. Firstly, the electric field does not go beyond the cable insulation so that there is no capacitance between cables. Secondly, the only capacitance exists between the neutral conductor and phase conductor of a tape-shield cable or concentric neutral cable. The `[N][N]` shunt admittance array will only be populated with the admittance that exists between the neutral and phase conductors of the tape-shield and concentric neutral cables. The shunt admittance for underground concentric neutral and tape-shield cables will be calculated by using the information given in the `underground_line_conductor` class properties and the equations specified in Underground Line Equations. 
 
 #### Init
 
 During the Init of the underground_line class the following arrays must be populated 
 
-  * [N][2] position array (If conductor_spacing specifies coordinates)
-  * [N][N] distance array
-  * [N] resistance array
-  * [2][N][N] Series Impedance Array
-  * [2][N][N] Shunt Impedance Array
+     * `[N][2]` position array (if `conductor_spacing` specifies coordinates)
+     * `[N][N]` distance array
+     * `[N]` resistance array
+     * `[2][N][N]` series impedance array
+     * `[2][N][N]` shunt impedance array
   * The NEVBRANCHDATA structure must be updated with the series impedance array and shunt admittance array.
 Pseudo code: 
     
@@ -418,11 +418,11 @@ Pseudo code:
 
 During the Presync of the underground_line class if there is a change in the configuration of the line flagged due to a reconfiguration action of some sort, a fault, or degredation of cable parameters due to stress and aging then the following arrays must be repopulated. 
 
-  * [N][2] position array (IIF conductor_spacing specifies coordinates)
-  * [N][N] distance array
-  * [N] resistance array
-  * [2][N][N] Series Impedance Array
-  * [2][N][N] Shunt Impedance Array
+     * `[N][2]` position array (if `conductor_spacing` specifies coordinates)
+     * `[N][N]` distance array
+     * `[N]` resistance array
+     * `[2][N][N]` series impedance array
+     * `[2][N][N]` shunt impedance array
   * The NEVBRANCHDATA structure must be updated with the series impedance array and shunt admittance array.
 The following parameters of the link class must be cleared. 
 

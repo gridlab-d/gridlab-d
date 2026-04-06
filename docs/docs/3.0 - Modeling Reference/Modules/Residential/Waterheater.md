@@ -111,19 +111,19 @@ Property Name | Type | Unit | Description
 
 These properties are only relevant when `waterheater_model MULTILAYER`.
 
-Property Name | Type | Unit | Description
----|---|---|---
-**lower_tank_setpoint** | double | degF | Setpoint for the lower heating element thermostat. Defaults to `tank_setpoint`.
-**upper_tank_setpoint** | double | degF | Setpoint for the upper heating element thermostat. Defaults to `tank_setpoint`.
-**lower_tank_deadband** | double | degF | Deadband for the lower heating element thermostat. Defaults to `thermostat_deadband`.
-**upper_tank_deadband** | double | degF | Deadband for the upper heating element thermostat. Defaults to `thermostat_deadband`.
+Property Name | Type | Unit | Description | Default
+---|---|---|---|---
+**lower_tank_setpoint** | double | degF | Setpoint for the lower heating element thermostat. | `tank_setpoint`.
+**upper_tank_setpoint** | double | degF | Setpoint for the upper heating element thermostat. | `tank_setpoint`.
+**lower_tank_deadband** | double | degF | Deadband for the lower heating element thermostat. | `thermostat_deadband`.
+**upper_tank_deadband** | double | degF | Deadband for the upper heating element thermostat. | `thermostat_deadband`.
 **lower_tank_temperature** | double | degF | Read-only temperature at the lower element sensor location (layer 1).
 **upper_tank_temperature** | double | degF | Read-only temperature at the upper element sensor location (layer 10).
 **lower_heating_element_state** | enumeration | — | Read-only state of the lower heating element: `ON` or `OFF`.
 **upper_heating_element_state** | enumeration | — | Read-only state of the upper heating element: `ON` or `OFF`.
-**discrete_step_size** | double | s | Time step for the internal discrete dynamics loop. Valid range: 1–60 s. Default: 1 s.
-**circular_flow_rate** | double | gpm | Heuristic recirculation flow activated when a heating element turns on. Valid range: 1–3 gpm. Default: 2 gpm.
-**T_mixing_valve** | double | degF | Reference temperature at which the mixing valve operates. Should be set at or below `upper_tank_setpoint`. Defaults to `Tmin_upper` if unset.
+**discrete_step_size** | double | s | Time step for the internal discrete dynamics loop. Valid range: 1–60 s. | 1 s.
+**circular_flow_rate** | double | gpm | Heuristic recirculation flow activated when a heating element turns on. Valid range: 1–3 gpm. | 2 gpm.
+**T_mixing_valve** | double | degF | Reference temperature at which the mixing valve operates. Should be set at or below `upper_tank_setpoint`. | `Tmin_upper`
 
 ### Operating Modes
 

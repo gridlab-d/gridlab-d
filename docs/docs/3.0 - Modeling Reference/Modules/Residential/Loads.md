@@ -1,6 +1,6 @@
 # End Use Loads
 
-Residential loads can be explicit object definitions such as a water heater or EV charger that are added directly to the parent house as child objects or ZIP loads. Loads can also be modeled as implicit end uses, described here. Individual objects and ZIP loads have their own documentation pages, like the [water heater](../Residential/Waterheater.md) and [EV Charger](../Objects/Distributed%20Energy%20Resources/Evcharger_det.md), and [ZIP Loads](../Residential/ZIPload.md).
+Residential loads can be explicit object definitions such as a water heater or EV charger that are added directly to the parent house as child objects or ZIP loads. Loads can also be modeled as implicit end uses, described here. Individual objects and ZIP loads have their own documentation pages, like the [water heater](./Waterheater.md) and [EV Charger](./Evcharger_det.md), and [ZIP Loads](./ZIPload.md).
 
 ### Implicit End Use Loads
 
@@ -18,7 +18,7 @@ The differences a given house's load with and without the use of implicit enduse
 
 ### Figure 1. Implicit End Use Comparison
 
-Generic end uses can be implemented using the **residential_enduse** object. This object requires a schedule and a loadshape definition (see [Built in schedules and loadshapes](../../../2.0%20-%20New%20Users/2.5%20-%20Intro%20to%20Modeling/2.5.5%20-%20Schedules%20and%20Loadshapes.md)). All other end uses are (or will soon be) inheriting the properties and methods of the **residential_enduse** object. 
+Generic end uses can be implemented using the **residential_enduse** object. This object requires a schedule and a loadshape definition (see [Built in schedules and loadshapes](../../../2.0%20-%20New%20Users/Tutorial/2.5.5%20-%20Schedules%20and%20Loadshapes.md)). All other end uses are (or will soon be) inheriting the properties and methods of the **residential_enduse** object. 
 
 ## Enduse Structure
 
@@ -142,7 +142,7 @@ The object type used to represent weather in GridLAB-D™is called “climate”
 ### How does the wind influence solar panels? 
  A slightly off-topic exercise in digging through GridLAB-D™source code
 
-As you might expect, to determine which climate parameters are important to any other class, you’ll have to look on the [solar panels](../Objects/Distributed%20Energy%20Resources/Solar.md) and/or the source code (.../generators/solar.cpp). The documentation page makes it clear that these types of weather data are used by the solar PV object but to determine why they would be needed, we need to dig into the source code. Opening up “solar.cpp” we find the familiar table listing the class parameters with their names as they would appear in the model file and their default units; for example:
+As you might expect, to determine which climate parameters are important to any other class, you’ll have to look on the [solar panels](../Generators/Solar.md) and/or the source code (.../generators/solar.cpp). The documentation page makes it clear that these types of weather data are used by the solar PV object but to determine why they would be needed, we need to dig into the source code. Opening up “solar.cpp” we find the familiar table listing the class parameters with their names as they would appear in the model file and their default units; for example:
 
 ```
 ...
@@ -419,7 +419,7 @@ module residential{
 #include "appliance_schedules.glm";
 ```
 
-The first statement turns off all the `implcit_enduses`; if we left did nothing else the only load in each house would be the HVAC unit with no energy being consumed when the HVAC was off, as we've seen in an earlier example. To replace all those other loads we're going to use a combination of [ZIPloads](../Residential/ZIPload.md), [schedules](../../../2.0%20-%20New%20Users/2.5%20-%20Intro%20to%20Modeling/2.5.5%20-%20Schedules%20and%20Loadshapes.md) and a new statement called `schedule_skew`.
+The first statement turns off all the `implcit_enduses`; if we left did nothing else the only load in each house would be the HVAC unit with no energy being consumed when the HVAC was off, as we've seen in an earlier example. To replace all those other loads we're going to use a combination of [ZIPloads](./ZIPload.md), [schedules](../../../2.0%20-%20New%20Users/Tutorial/2.5.5%20-%20Schedules%20and%20Loadshapes.md) and a new statement called `schedule_skew`.
 
 First, to explain a tiny bit `#include` is a simple way to split up models into multiple files. It is entirely possible to never use them and simply put the entire model definition, all ten, twenty, or one hundred thousand lines in a single file; this has been done. The other extreme, which also is done, is to make the main model file a list of `#include`s with virtually no other content in that file. Which definitions go in which files is somewhat a matter of style but there is a strong case to made to separate out parts of the model that do lend themselves to modularity. In this case, having a single file that defines appliance schedules is very convenient as it can be copied and used by multiple models simply by `#include`-ing it. 
 
