@@ -74,7 +74,6 @@ int recloser::create()
 	phase_B_state = SW_CLOSED;
 	phase_C_state = SW_CLOSED;
 
-	prev_SW_time = 0;
 	retry_time = 0;
 	ntries = 0;
 	curr_tries = 0.0;

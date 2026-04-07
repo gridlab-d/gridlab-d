@@ -56,7 +56,6 @@ public:
 	double time_to_transition;		///< time until next transition [in seconds]
 
 	// Basic characteristics defined at creation...
-	double Tset_curtail;			///< lower limit before we cancel curtailment [F]
 	double Tinlet;					///< default will be set to 60 degF
 	enumeration location;			///< location of oven (inside or garage) [enum]
 	enumeration heat_mode;				///< method of heating the food (gas or electric) [enum]
@@ -69,7 +68,6 @@ public:
 	double Cw;						///< thermal mass of the the food item [Btu/F]
 
 	double dt1;
-	double dt2;
 
 	double enduse_demand_cooktop;	///< amount of demand added per hour (units/hr)
 	        
@@ -79,7 +77,6 @@ public:
 	double cycle_duration_cooktop;
 	double cycle_time_cooktop;
 	double cooktop_interval[3];     ///<length of time of each setting section for cooktop operation
-	double total_time;				///<tootal cooktop operating time
 	double cooktop_coil_power[3];   ///<installed heating coil power [W]
 	double enduse_queue_cooktop;	///< accumulated demand (units)
 
@@ -106,8 +103,6 @@ public:
 	double cooktop_energy_baseline;     ///<amount of energy needed to 
 	double cooktop_energy_needed;       ///<total energy needed to cook or warm up food with cooktop
 
-	bool cooktop_coil_1_check;			///<logic check to see if coil 1 is activated
-	bool cooktop_coil_2_check;			///<logic check to see if coil 2 is activated
 	bool oven_check;
 	bool remainon;
 
@@ -160,6 +155,8 @@ public:
 	~range(void);
 	int create();
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	void thermostat(TIMESTAMP t0, TIMESTAMP t1);					// Thermostat plc control code - determines whether to heat...
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);

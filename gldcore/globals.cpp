@@ -159,6 +159,7 @@ static struct s_varmap
 	{"clock", PT_timestamp, &global_clock, PA_PUBLIC, "global clock"},
 	{"starttime", PT_timestamp, &global_starttime, PA_PUBLIC, "simulation start time"},
 	{"stoptime", PT_timestamp, &global_stoptime, PA_PUBLIC, "simulation stop time"},
+	{"step_time", PT_timestamp, &global_step_time, PA_PUBLIC, "API step target time"},
 	{"double_format", PT_char32, &global_double_format, PA_PUBLIC, "format for writing double values"},
 	{"complex_format", PT_char256, &global_complex_format, PA_PUBLIC, "format for writing complex values"},
 	{"complex_output_format", PT_enumeration, &global_complex_output_format, PA_PUBLIC, "complex output representation", cnf_keys},
@@ -207,6 +208,7 @@ static struct s_varmap
 	{"checkpoint_seqnum", PT_int32, &global_checkpoint_seqnum, PA_PUBLIC, "checkpoint sequence number"},
 	{"checkpoint_interval", PT_int32, &global_checkpoint_interval, PA_PUBLIC, "checkpoint interval"},
 	{"checkpoint_keepall", PT_bool, &global_checkpoint_keepall, PA_PUBLIC, "checkpoint file keep enable flag"},
+	{"checkpoint_loaded", PT_bool, &global_checkpoint_loaded, PA_PUBLIC, "checkpoint loaded flag"},
 	{"check_version", PT_bool, &global_check_version, PA_PUBLIC, "check version enable flag"},
 	{"random_number_generator", PT_enumeration, &global_randomnumbergenerator, PA_PUBLIC, "random number generator version control flag", rng_keys},
 	{"mainloop_state", PT_enumeration, &global_mainloopstate, PA_PUBLIC, "main sync loop state flag", mls_keys},
@@ -631,7 +633,7 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 		int retval;
 		if (var == nullptr)
 		{
-			if (global_strictnames)
+			if (global_strictnames && !global_checkpoint_loaded)
 			{
 				output_error("strict naming prevents implicit creation of %s", name);
 				/* TROUBLESHOOT

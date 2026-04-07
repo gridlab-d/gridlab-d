@@ -457,7 +457,7 @@ int battery::init(OBJECT *parent)
 				pinverter_VA_Out = map_double_value(parent, "P_Out");
 
 				// Pull the initial voltage value, to be consistent
-				value_Circuit_V[0] = complex(pCircuit_V[0]->get_double(), 0.0);
+				value_Circuit_V[0] = gld::complex(pCircuit_V[0]->get_double(), 0.0);
 			}
 			else // Not a proper parent
 			{
@@ -1916,7 +1916,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				if (parent_is_inverter)
 				{
-					value_Circuit_V[0] = complex(pCircuit_V[0]->get_double(), 0.0);
+					value_Circuit_V[0] = gld::complex(pCircuit_V[0]->get_double(), 0.0);
 				}
 				else
 				{
@@ -1928,7 +1928,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				if (parent_is_inverter)
 				{
-					value_Line_I[0] = complex(pLine_I[0]->get_double(), 0.0);
+					value_Line_I[0] = gld::complex(pLine_I[0]->get_double(), 0.0);
 				}
 				else
 				{
@@ -2475,7 +2475,7 @@ double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigne
 	// Retrieve the inverter properties
 	if (parent_is_inverter)
 	{
-		inv_VA_out_value = complex(pinverter_VA_Out->get_double(), 0.0);
+		inv_VA_out_value = gld::complex(pinverter_VA_Out->get_double(), 0.0);
 		inv_eff_value = peff->get_double();
 	}
 

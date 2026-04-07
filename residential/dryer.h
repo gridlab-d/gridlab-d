@@ -57,7 +57,6 @@ public:
 	double controls_power;
 	double daily_dryer_demand;			///< amount of demand added per hour (units/hr)
 	double enduse_queue;				///< accumulated demand (units)
-	double cycle_duration;				///< typical cycle runtime (s)
 	double cycle_time;					///< remaining time in main cycle (s)
 	double state_time;					///< remaining time in current state (s)
 	
@@ -66,10 +65,6 @@ public:
 	double dryer_turn_on;
 	double queue_min;
 	double queue_max;
-
-	//****Changes by Niru
-	TIMESTAMP next_change_time;			///< time when the current change changes to the next state (s)
-	//***changes stop here
 
 	double stall_voltage;				///< voltage at which the motor stalls
 	double start_voltage;				///< voltage at which motor can start
@@ -90,11 +85,6 @@ public:
 	double motor_on_off;				///< boolean logic to track the state of dryer
 	double motor_coil_on_off;
 
-
-	TIMESTAMP time_state;				///< time in current state
-
-	TIMESTAMP return_time;
-
 	enumeration state;
 
 public:
@@ -105,6 +95,8 @@ public:
 	~dryer();
 	int create();
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP last_t;
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

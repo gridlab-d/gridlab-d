@@ -60,6 +60,7 @@ typedef struct s_loadmethod {
 	const char *name;
 	int (*call)(void*,char*);
 	struct s_loadmethod *next;
+    std::string args;
 } LOADMETHOD;
 
 /* Set operations */
@@ -98,6 +99,7 @@ struct s_class_list {
 	FUNCTION *fmap;
 	FUNCTIONADDR create;
 	FUNCTIONADDR init;
+	FUNCTIONADDR checkpoint_init;
 	FUNCTIONADDR precommit;
 	FUNCTIONADDR sync;
 	FUNCTIONADDR commit;

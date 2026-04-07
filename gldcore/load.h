@@ -69,6 +69,9 @@ int load_resolve_all();
 OBJECT *load_get_current_object(void);
 MODULE *load_get_current_module(void);
 
+static OBJECT *current_object = nullptr; /* context object */
+static MODULE *current_module = nullptr; /* context module */
+
 #ifdef __cplusplus
 }
 #endif

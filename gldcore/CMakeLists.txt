@@ -75,6 +75,8 @@ set(SOURCE_LIST
         list.h
         load.cpp
         load.h
+        loader.cpp
+        loader.h
         load_xml.cpp
         load_xml.h
         load_xml_handle.cpp
@@ -94,6 +96,8 @@ set(SOURCE_LIST
         module.h
         output.cpp
         output.h
+        parser.cpp
+        parser.h
         platform.h
         property.cpp
         property.h
@@ -195,11 +199,11 @@ endif()
 target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${GL_MODULES})
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 if (CURSES_FOUND)
-    #target_link_libraries(gldapi PRIVATE ${CURSES_LIBRARIES})
+    target_link_libraries(gldapi PRIVATE ${CURSES_LIBRARIES})
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CURSES_LIBRARIES})
 endif ()
 if (XercesC_FOUND)
-    #target_link_libraries(gldapi PRIVATE ${XercesC_LIBRARIES})
+    target_link_libraries(gldapi PRIVATE ${XercesC_LIBRARIES})
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${XercesC_LIBRARIES})
 endif ()
 
