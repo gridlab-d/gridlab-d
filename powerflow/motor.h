@@ -10,10 +10,6 @@ EXPORT SIMULATIONMODE interupdate_motor(OBJECT *obj, unsigned int64 delta_time, 
 
 class motor : public node
 {
-public:
-
-protected:
-
 private:
 	gld::complex TF[16];
 	gld::complex ITF[16];
@@ -153,12 +149,10 @@ private:
     gld::complex Is_prev;
     gld::complex motor_elec_power_prev;
     double Telec_prev;
-	double Tmech_prev;
     double wr_prev;
 	double psi_sat_prev;
 
     // Under voltage protection
-    double uv_relay_rand;
     double uv_relay_time;
     double uv_relay_trip_time;
     double uv_relay_trip_V;
@@ -173,8 +167,6 @@ private:
 		contactorCLOSED=1
 	} CONTACTOR_STATE;
 	enumeration contactor_state;
-    double contactor_open_rand;
-    double contactor_close_rand;
     double contactor_open_Vmin;
     double contactor_close_Vmax;
 
@@ -192,7 +184,6 @@ private:
 	double lm;
 	double lls;
 	double llr;
-	double TL_pu;  // actually applied mechanical torque
 	double Kfric;
 	gld::complex phips;
 	gld::complex phins_cj;
