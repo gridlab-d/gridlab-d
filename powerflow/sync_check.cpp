@@ -72,6 +72,10 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 								PT_double, "volt_B_ang_deg_diff", PADDR(volt_B_ang_deg_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase B voltage angle in degree",
 								PT_double, "volt_C_ang_deg_diff", PADDR(volt_C_ang_deg_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase C voltage angle in degree",
 								PT_double, "nominal_volt_v", PADDR(volt_norm), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement Property: Nominal voltage of from/to node of the parent switch",
+								PT_bool, "metrics_flag", PADDR(metrics_flag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Excitation flag for metrics",
+								PT_double, "t_sat", PADDR(t_sat), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Timer for checking the metrics",
+								PT_bool, "deltamode_trigger_keep_flag", PADDR(deltamode_trigger_keep_flag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Flag to keep deltamode trigger active",
+								PT_timestamp, "next_trigger_update_time", PADDR(next_trigger_update_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Next timestamp for trigger update check",
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
