@@ -39,6 +39,25 @@ controller_dg::controller_dg(MODULE *mod)
 			PT_double,"ki_QV", PADDR(ki_QV), PT_DESCRIPTION, "parameter of the propotional control for secondary voltage control",
 			PT_double,"kp_QV", PADDR(kp_QV), PT_DESCRIPTION, "parameter of the integral control for secondary voltage control",
 			PT_double,"gain_QV", PADDR(gain_QV), PT_DESCRIPTION, "Gain of the controller for secondary voltage control",
+
+			PT_bool, "first_run", PADDR(first_run), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first_run",
+			PT_bool, "flag_switchOn", PADDR(flag_switchOn), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for flag_switchOn",
+			PT_int64, "controlTime", PADDR(controlTime), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for controlTime",
+			PT_double, "predictor_vals.w_measured", PADDR(predictor_vals.w_measured), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.w_measured",
+								PT_double, "predictor_vals.x", PADDR(predictor_vals.x), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Predictor pass values of variables - x",
+								PT_double, "predictor_vals.Pref_ctrl", PADDR(predictor_vals.Pref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Predictor pass values of variables - Pref_ctrl",
+			PT_double, "predictor_vals.wref_ctrl", PADDR(predictor_vals.wref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.wref_ctrl",
+			PT_double, "predictor_vals.Vset_ref", PADDR(predictor_vals.Vset_ref), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.Vset_ref",
+			PT_double, "predictor_vals.x_QV", PADDR(predictor_vals.x_QV), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.x_QV",
+								PT_double, "predictor_vals.Vset_ctrl", PADDR(predictor_vals.Vset_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Predictor pass values of variables - Vset_ctrl",
+			PT_double, "corrector_vals.w_measured", PADDR(corrector_vals.w_measured), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.w_measured",
+								PT_double, "corrector_vals.x", PADDR(corrector_vals.x), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Corrector pass values of variables - x",
+			PT_double, "corrector_vals.Pref_ctrl", PADDR(corrector_vals.Pref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Corrector pass values of variables - Pref_ctrl",
+			PT_double, "corrector_vals.wref_ctrl", PADDR(corrector_vals.wref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.wref_ctrl",
+			PT_double, "corrector_vals.Vset_ref", PADDR(corrector_vals.Vset_ref), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.Vset_ref",
+			PT_double, "corrector_vals.x_QV", PADDR(corrector_vals.x_QV), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.x_QV",
+			PT_double, "corrector_vals.Vset_ctrl", PADDR(corrector_vals.Vset_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Corrector pass values of variables - Vset_ctrl",
+			// Note: prev_Pref_val and prev_Vset_val are dynamically allocated pointer arrays and cannot be published directly
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;

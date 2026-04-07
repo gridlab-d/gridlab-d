@@ -339,6 +339,70 @@ inverter::inverter(MODULE *module)
 			//Hidden variables for wind turbine checks
 			PT_bool, "WT_is_connected", PADDR(WT_is_connected), PT_DESCRIPTION, "Internal flag that indicates a wind turbine child is connected",
 
+			// Checkpoint variables
+			PT_enumeration, "pf_reg_status", PADDR(pf_reg_status), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pf_reg_status",
+				PT_KEYWORD, "REGULATING", (enumeration)REGULATING,
+				PT_KEYWORD, "IDLING", (enumeration)IDLING,
+			PT_enumeration, "load_follow_status", PADDR(load_follow_status), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Status variable for what the load_following mode is doing",
+				PT_KEYWORD, "IDLE", (enumeration)IDLE,
+				PT_KEYWORD, "DISCHARGE", (enumeration)DISCHARGE,
+				PT_KEYWORD, "CHARGE", (enumeration)CHARGE,
+			PT_complex, "last_current_A", PADDR(last_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (used to remove from parent so XML files look proper) - element 0",
+			PT_complex, "last_current_B", PADDR(last_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (used to remove from parent so XML files look proper) - element 1",
+			PT_complex, "last_current_C", PADDR(last_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (used to remove from parent so XML files look proper) - element 2",
+			PT_complex, "last_current_D", PADDR(last_current[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (used to remove from parent so XML files look proper) - element 3",
+			PT_complex, "last_power_A", PADDR(last_power[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (as constant power) - used to remove from parent so XML looks right - element 0",
+			PT_complex, "last_power_B", PADDR(last_power[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (as constant power) - used to remove from parent so XML looks right - element 1",
+			PT_complex, "last_power_C", PADDR(last_power[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (as constant power) - used to remove from parent so XML looks right - element 2",
+			PT_complex, "last_power_D", PADDR(last_power[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (as constant power) - used to remove from parent so XML looks right - element 3",
+			PT_bool, "inverter_first_step", PADDR(inverter_first_step), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for inverter_first_step",
+			PT_int64, "first_iteration_current_injection", PADDR(first_iteration_current_injection), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode",
+			PT_double, "m12", PADDR(m12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for m12",
+			PT_double, "b12", PADDR(b12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for b12",
+			PT_double, "m23", PADDR(m23), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for m23",
+			PT_double, "b23", PADDR(b23), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for b23",
+			PT_double, "m34", PADDR(m34), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for m34",
+			PT_double, "b34", PADDR(b34), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for b34",
+			PT_timestamp, "allowed_vv_action", PADDR(allowed_vv_action), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for allowed_vv_action",
+			PT_timestamp, "last_vv_check", PADDR(last_vv_check), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_vv_check",
+			PT_enumeration, "IEEE_1547_STATUS", PADDR(ieee_1547_version), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for ieee_1547_version",
+				PT_KEYWORD, "IEEE_NONE", (enumeration)IEEE_NONE,
+				PT_KEYWORD, "IEEE1547", (enumeration)IEEE1547,
+				PT_KEYWORD, "IEEE1547A", (enumeration)IEEE1547A,
+			PT_double, "over_freq_high_band_viol_time", PADDR(over_freq_high_band_viol_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: OF2 violation accumulator",
+			PT_double, "over_freq_low_band_viol_time", PADDR(over_freq_low_band_viol_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: OF1 violation accumulator",
+			PT_double, "under_freq_low_band_viol_time", PADDR(under_freq_low_band_viol_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: UF1 violation accumulator",
+			PT_double, "under_voltage_lowest_viol_time", PADDR(under_voltage_lowest_viol_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Lowest low voltage threshold violation accumulator",
+			PT_double, "under_voltage_middle_viol_time", PADDR(under_voltage_middle_viol_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Middle low voltage threshold violation accumulator",
+			PT_double, "under_voltage_high_viol_time", PADDR(under_voltage_high_viol_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Highest low voltage threshold violation accumulator",
+			PT_double, "over_voltage_low_viol_time", PADDR(over_voltage_low_viol_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Lowest high voltage threshold violation accumulator",
+			PT_double, "over_voltage_high_viol_time", PADDR(over_voltage_high_viol_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Highest high voltage threshold violation accumulator",
+			PT_double, "lf_dispatch_power", PADDR(lf_dispatch_power), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Amount of real power to try and dispatch to meet thresholds",
+			PT_timestamp, "next_update_time", PADDR(next_update_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: TIMESTAMP of next dispatching change allowed",
+			PT_bool, "lf_dispatch_change_allowed", PADDR(lf_dispatch_change_allowed), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Flag to indicate if a change in dispatch is allowed",
+			PT_bool, "pf_reg_dispatch_change_allowed", PADDR(pf_reg_dispatch_change_allowed), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Flag to indicate if a change in dispatch is allowed for power factor regulation",
+			PT_double, "pf_reg_dispatch_VAR", PADDR(pf_reg_dispatch_VAR), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: (Reactive only?) power dispatched to meet power factor regulation threshold",
+			PT_timestamp, "pf_reg_next_update_time", PADDR(pf_reg_next_update_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: TIMESTAMP of next dispatching change allowed",
+			PT_timestamp, "prev_time", PADDR(prev_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Tracking variable for previous \"new time\" run",
+			PT_double, "prev_time_dbl", PADDR(prev_time_dbl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Tracking variable for 1547 checks and ramp rates",
+			PT_double, "event_deltat", PADDR(event_deltat), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Event-driven delta-t variable",
+			PT_timestamp, "start_time", PADDR(start_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Recording start time of simulation",
+			PT_complex, "last_I_Out_A", PADDR(last_I_Out[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_I_Out[0]",
+			PT_complex, "last_I_Out_B", PADDR(last_I_Out[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_I_Out[1]",
+			PT_complex, "last_I_Out_C", PADDR(last_I_Out[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_I_Out[2]",
+			PT_double, "last_I_In", PADDR(last_I_In), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_I_In",
+			PT_double, "pa_vw_limited", PADDR(pa_vw_limited), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pa_vw_limited",
+			PT_double, "pb_vw_limited", PADDR(pb_vw_limited), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pb_vw_limited",
+			PT_double, "pc_vw_limited", PADDR(pc_vw_limited), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pc_vw_limited",
+			PT_double, "out_of_violation_time_total", PADDR(out_of_violation_time_total), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for out_of_violation_time_total",
+			PT_bool, "deltamode_inclusive", PADDR(deltamode_inclusive), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Boolean for deltamode calls - pulled from object flags",
+			PT_bool, "first_sync_delta_enabled", PADDR(first_sync_delta_enabled), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first_sync_delta_enabled",
+			PT_char8, "first_iter_counter", PADDR(first_iter_counter), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first_iter_counter",
+			PT_bool, "first_run", PADDR(first_run), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first_run",
+			PT_complex, "prev_value_IGenerated_A", PADDR(prev_value_IGenerated[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_value_IGenerated[0]",
+			PT_complex, "prev_value_IGenerated_B", PADDR(prev_value_IGenerated[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_value_IGenerated[1]",
+			PT_complex, "prev_value_IGenerated_C", PADDR(prev_value_IGenerated[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_value_IGenerated[2]",
+
                                 nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			defaults = this;
@@ -368,16 +432,11 @@ int inverter::create(void)
 	// Default values for Inverter object.
 	P_Out = 0;  // P_Out and Q_Out are set by the user as set values to output in CONSTANT_PQ mode
 	Q_Out = 0;
-	V_In_Set_A = gld::complex(480,0);
-	V_In_Set_B = gld::complex(-240, 415.69);
-	V_In_Set_C = gld::complex(-240,-415.69);
 	V_Set_A = 240;
 	V_Set_B = 240;
 	V_Set_C = 240;
 	margin = 10;
-	I_out_prev = 0;
 	I_step_max = 100;
-	C_Storage_In = 0;
 	power_factor = 1;
 	
 	// Parameters needed for droop curve
