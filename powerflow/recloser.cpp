@@ -34,6 +34,7 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 			PT_double, "retry_time[s]", PADDR(retry_time), PT_DESCRIPTION, "the amount of time in seconds to wait before the recloser attempts to close",
 			PT_double, "max_number_of_tries", PADDR(ntries), PT_DESCRIPTION, "the number of times the recloser will try to close before permanently opening",
 			PT_double, "number_of_tries", PADDR(curr_tries), PT_DESCRIPTION, "Current number of tries recloser has attempted",
+			PT_timestamp, "prev_rec_time", PADDR(prev_rec_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Previous recloser operation time",
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,"change_recloser_state",(FUNCTIONADDR)change_recloser_state)==nullptr)
