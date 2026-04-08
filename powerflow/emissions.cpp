@@ -151,8 +151,6 @@ emissions::emissions(MODULE *mod) : powerflow_object(mod)
 
 			PT_double, "Total_energy_out[kWh]", PADDR(Total_energy_out),
 
-			PT_double, "Region", PADDR(Region),
-
 			PT_double,"cycle_interval[s]", PADDR(cycle_interval),
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -445,6 +443,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 	gld::complex temp_power;
 	gld::complex energy_for_calc;
 	bool energy_requirement;
+	double dt_val;
 	OBJECT *obj = object_header(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);
 

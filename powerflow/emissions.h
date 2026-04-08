@@ -139,8 +139,6 @@ public:
 
 	double cycle_interval;
 
-	double Region;
-
 	//Link to the parent meter total power
 	gld_property *parent_meter_total_power;
 
@@ -161,7 +159,6 @@ private:
 	TIMESTAMP time_cycle_interval;
 	TIMESTAMP prev_cycle_time;
 	TIMESTAMP curr_cycle_time;
-	double dt_val;
 
 };
 
