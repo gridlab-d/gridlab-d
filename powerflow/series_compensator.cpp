@@ -110,6 +110,21 @@ series_compensator::series_compensator(MODULE *mod) : link_object(mod)
 				PT_KEYWORD, "BYPASS", (enumeration)ST_BYPASS,
 
 			PT_double, "series_compensator_resistance[Ohm]", PADDR(series_compensator_resistance), PT_DESCRIPTION, "Baseline resistance for the series compensator device - needed for NR",
+			PT_timestamp, "series_compensator_start_time", PADDR(series_compensator_start_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Start time of the series compensator",
+			PT_bool, "series_compensator_first_step", PADDR(series_compensator_first_step), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Flag indicating first step of series compensator",
+			PT_bool, "t_delay_low_flag", PADDR(t_delay_low_flag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Status flag for frequency measurement during under-frequency event",
+			PT_bool, "t_hold_low_flag", PADDR(t_hold_low_flag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Status flag for frequency controlled hold during under-frequency event",
+			PT_bool, "t_recover_low_flag", PADDR(t_recover_low_flag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Status flag for voltage recovery during under-frequency event",
+			PT_bool, "t_delay_high_flag", PADDR(t_delay_high_flag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Status flag for frequency measurement during over-frequency event",
+			PT_bool, "t_hold_high_flag", PADDR(t_hold_high_flag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Status flag for frequency controlled hold during over-frequency event",
+			PT_bool, "t_recover_high_flag", PADDR(t_recover_high_flag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Status flag for voltage recovery during over-frequency event",
+			PT_double, "t_count_low_delay", PADDR(t_count_low_delay), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Counter during under-frequency event frequency measurement",
+			PT_double, "t_count_low_hold", PADDR(t_count_low_hold), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Counter during under-frequency event hold",
+			PT_double, "t_count_high_delay", PADDR(t_count_high_delay), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Counter during over-frequency event frequency measurement",
+			PT_double, "t_count_high_hold", PADDR(t_count_high_hold), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Counter during over-frequency event hold",
+			PT_double, "prev_turns_ratio_A", PADDR(prev_turns_ratio[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Previous turns ratio for phase A",
+			PT_double, "prev_turns_ratio_B", PADDR(prev_turns_ratio[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Previous turns ratio for phase B",
+			PT_double, "prev_turns_ratio_C", PADDR(prev_turns_ratio[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Previous turns ratio for phase C",
 			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
