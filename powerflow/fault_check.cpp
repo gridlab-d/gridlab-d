@@ -39,6 +39,8 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 			PT_bool,"full_output_file",PADDR(full_print_output),PT_DESCRIPTION,"Flag to indicate if the output_filename report contains both supported and unsupported nodes -- if false, just does unsupported",
 			PT_bool,"grid_association",PADDR(grid_association_mode),PT_DESCRIPTION,"Flag to indicate if multiple, distinct grids are allowed in a GLM, or if anything not attached to the master swing is removed",
 			PT_object,"eventgen_object",PADDR(rel_eventgen),PT_DESCRIPTION,"Link to generic eventgen object to handle unexpected faults",
+			PT_timestamp, "prev_time", PADDR(prev_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous timestamp for initialization tracking",
+			PT_bool, "force_reassociation", PADDR(force_reassociation), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: flag to force island reassociation",
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 			if (gl_publish_function(oclass,"reliability_alterations",(FUNCTIONADDR)powerflow_alterations)==nullptr)
 				GL_THROW("Unable to publish remove from service function");
