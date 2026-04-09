@@ -152,6 +152,12 @@ emissions::emissions(MODULE *mod) : powerflow_object(mod)
 			PT_double, "Total_energy_out[kWh]", PADDR(Total_energy_out),
 
 			PT_double,"cycle_interval[s]", PADDR(cycle_interval),
+
+			PT_double, "accumulated_energy", PADDR(accumulated_energy), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: accumulated energy",
+			PT_double, "cycle_power", PADDR(cycle_power), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: power used in current cycle",
+			PT_timestamp, "time_cycle_interval", PADDR(time_cycle_interval), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: cycle interval as timestamp",
+			PT_timestamp, "prev_cycle_time", PADDR(prev_cycle_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous cycle time",
+			PT_timestamp, "curr_cycle_time", PADDR(curr_cycle_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: current cycle time",
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
