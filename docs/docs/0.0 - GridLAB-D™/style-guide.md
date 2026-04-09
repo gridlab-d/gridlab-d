@@ -106,8 +106,6 @@ Images can be either local (in the images folder), or refering an external url. 
 
 Note that figure labels are below the image and at a list-level of five. The same goes for tables, but table captions appear above the table.
 
-TODO - Figure Scaling - Have yet to figure out how to rescale an image that renders correctly in our documentation. Would like to add some auto-formatter to resize all images to be page-width in size. 
-
 ### Local Image Reference
 
 ![Dist syst switching capacitors.png](../../images/Dist_syst_switching_capacitors.png)
@@ -132,7 +130,7 @@ Note that you can double click a word or variable to highlight the entire text, 
 
 It may be useful to point readers to a specific page for more information or context. Those references work the same way an image or link reference does. For example:
 
-[Command Line Options](../../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md)
+[Command Line Options](../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md)
 
 Points to the page "Command Line Options"
 
@@ -140,7 +138,7 @@ It maybe even more useful to have a link go to a *specific header* within a file
 
 For example, to point specifically to Global Variables section of the previous file:
 
-[Global Variables](../../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md#Global-Variables)
+[Global Variables](../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md#Global-Variables)
 
 
 ### Bulleted Lists

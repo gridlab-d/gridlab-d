@@ -9,7 +9,7 @@
 
 # New Users
 
-- [ ] **Review tutorial pages, consider length and potentially splitting into smaller, more focused pages**
+- [X] **Review tutorial pages, consider length and potentially splitting into smaller, more focused pages**
 - [x] Keep metronome example? --> No, delete.
     - [x] Pull metronome mentions out of Getting Started and into a single metronome example 
     file (or delete if not kept) 

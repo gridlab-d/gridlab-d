@@ -738,7 +738,7 @@ int convert_from_char32(char *buffer, /**< pointer to the string buffer */
 	Converts a string to a \e char32 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
- // I’ve changed the signature so that `buffer` is a C-string
+ // I've changed the signature so that `buffer` is a C-string
  // and `data` is a char array of exactly 32 bytes.
 
 // signature unchanged
@@ -746,7 +746,7 @@ int convert_to_char32(const char* buffer,
 	void* data,
 	PROPERTY* prop)  
 {
-	// silence “unused” warning for prop
+	// silence ï¿½unusedï¿½ warning for prop
 	(void)prop;
 
 	// out is our 32-byte destination
@@ -903,7 +903,7 @@ int convert_to_char256(const char* buffer,
 	std::memcpy(out, token.data(), len);
 	out[len] = '\0';
 
-	// mimic sscanf’s return value: 1 if we actually stored something, else 0
+	// mimic sscanfï¿½s return value: 1 if we actually stored something, else 0
 	return (len > 0) ? 1 : 0;
 }
 

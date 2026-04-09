@@ -8,7 +8,7 @@ Though the utility of GridLAB-D™ is relatively broad (when thinking of it as s
 
 ### Building GridLAB-D™ with MATLAB
 
-To enable this interaction, GridLAB-D™ must first be compiled from source with additional options; see [Building GridLAB-D™ from Source](../4.0%20Developing/4.2%20Building%20from%20Source/). These options are enabled when running `./configure `:
+To enable this interaction, GridLAB-D™ must first be compiled from source with additional options; see [Building GridLAB-D™ from Source](../../4.0%20Developing%20Reference/4.2%20-%20Building%20from%20Source/4.2.1%20-%20Building_from_Source.md). These options are enabled when running `./configure `:
 
 ```
 ./configure --with-matlab=<path to MATLAB executable>
@@ -112,7 +112,7 @@ link MATLAB_energy_meter.link
 
 And that's it; that's the only change we need to make. We will still be referring to the specific variable names in the model file as we build the link file but this is the only edit that is needed.
 
-Now open up the [MATLAB_energy_meter.link](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%209%20-%20Interfacing%20with%20External%20Software/MATLAB%20Link/MATLAB_energy_meter.link) file itself. The comments in the link file are mostly self-explanatory and additional details can be found on the [Matlab link](../3.0%20Modeling/Modeling%20Reference/Matlab_link.md) page. The most important items in our case are:
+Now open up the [MATLAB_energy_meter.link](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%209%20-%20Interfacing%20with%20External%20Software/MATLAB%20Link/MATLAB_energy_meter.link) file itself. The comments in the link file are mostly self-explanatory and additional details can be found on the [Matlab link](./Link/Matlab_link.md) page. The most important items in our case are:
 
 * **on_init** -  This is the MATLAB command run prior to the start of the GridLAB-D™ simulation. In this case, we simply use it to initialize the variable we'll be using to zero. As the comments indicate, the state of `ans` can be used to to test whether the command succeeded. (Somewhat paradoxically, this value can be set explicitly by making the command:
 
@@ -151,7 +151,7 @@ The `on_init` and `on_term` play supporting roles with the former deleting any p
 
 When running the model, like before, MATLAB is called by GridLAB-D™, the simulation runs, and two output files are produced: the raw data CSV and an image of the graph MATLAB produced of that raw data.
 
-![Battery State](../../images/800px-Battery_State.png)
+![Battery State](../../../images/800px-Battery_State.png)
 
 As the graph shows, the simple controller functions as expected, keeping the battery with certain state-of-charge range. Though this is a very simple controller, it is easy to imagine a much more complex controller being implemented in MATLAB, using perhaps a wider variety of input data and running more complex calculations to determine the battery's output. Without having to learn the broader architecture of GridLAB-D™ source code, in this way MATLAB can be used to implement custom functionality.
 
