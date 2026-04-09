@@ -99,8 +99,36 @@ int sync_ctrl::create(void)
     return 1;
 }
 
+int sync_ctrl::shared_init(OBJECT *parent)
+{
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("sync_ctrl::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+    return 1;
+}
+
+int sync_ctrl::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
 int sync_ctrl::init(OBJECT *parent)
 {
+   	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
     init_data_sanity_check();
     init_deltamode_check();
 
@@ -427,6 +455,12 @@ EXPORT int init_sync_ctrl(OBJECT *obj)
         return my->init(obj->parent);
     }
     INIT_CATCHALL(sync_ctrl);
+}
+
+EXPORT int checkpoint_init_sync_ctrl(OBJECT *obj)
+{
+	sync_ctrl *my = object_data<sync_ctrl>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 /**

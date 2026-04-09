@@ -239,6 +239,77 @@ int solar::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
+int solar::shared_init(OBJECT *parent)
+{
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("solar::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	return 1;
+}
+
+int solar::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+
+	// find parent inverter, if not defined, use a default voltage
+	if (parent != nullptr)
+	{
+		if (gl_object_isa(parent, "inverter", "generators")) // SOLAR has a PARENT and PARENT is an INVERTER - old-school inverter
+		{
+			// Map the inverter voltage
+			inverter_voltage_property = new gld_property(parent, "V_In");
+			// Map the inverter current
+			inverter_current_property = new gld_property(parent, "I_In");
+			// Map the inverter power value
+			inverter_power_property = new gld_property(parent, "P_In");
+		}
+		else if (gl_object_isa(parent, "inverter_dyn", "generators")) // SOLAR has a PARENT and PARENT is an inverter_dyn object
+		{
+			// Map the inverter voltage
+			inverter_voltage_property = new gld_property(parent, "V_In");
+			// Map the inverter property pvc_pmax, which indicates the maximum power avaialbe from the PV now
+			inverter_pvc_Pmax_property = new gld_property(parent, "pvc_Pmax");
+			// Map the inverter current
+			inverter_current_property = new gld_property(parent, "I_In");
+			// Map the inverter power value
+			inverter_power_property = new gld_property(parent, "P_In");
+			// Map the inverter rated power value
+			inverter_rated_power_va_property = new gld_property(parent, "rated_power");
+			// Map the inverter dc voltage
+			inverter_rated_dc_voltage = new gld_property(parent, "rated_DC_Voltage");
+		} // End inverter_dyn
+		else // It's not an inverter - fail it.
+		{
+			GL_THROW("Solar panel can only have an inverter as its parent.");
+			/* TROUBLESHOOT
+			The solar panel can only have an INVERTER as parent, and no other object. Or it can be all by itself, without a parent.
+			*/
+		}
+	}
+	else // No parent
+	{	 // default values of voltage
+		OBJECT *obj = object_header(this);
+		// Map the inverter voltage
+		inverter_voltage_property = new gld_property(obj, "default_voltage_variable");
+		// Map the inverter current
+		inverter_current_property = new gld_property(obj, "default_current_variable");
+		// Map the inverter power
+		inverter_power_property = new gld_property(obj, "default_power_variable");
+	}
+
+    init_climate();
+	return rv;
+}
+
 /** Checks for climate object and maps the climate variables to the house object variables.
 Currently Tout, RHout and solar flux data from TMY files are used.  If no climate object is linked,
 then Tout will be set to 59 degF, RHout is set to 75% and solar flux will be set to zero for all orientations.
@@ -532,15 +603,9 @@ int solar::init(OBJECT *parent)
 	FUNCTIONADDR temp_fxn = nullptr;
 	STATUS fxn_return_status;
 
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
-			char objname[256];
-			gl_verbose("solar::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	if (panel_type_v == UNKNOWN)
 	{
@@ -1682,6 +1747,12 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(solar);
+}
+
+EXPORT int checkpoint_init_solar(OBJECT *obj)
+{
+	solar *my = object_data<solar>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

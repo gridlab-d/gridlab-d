@@ -84,6 +84,30 @@ int controller_dg::create(void)
 	return 1;
 }
 
+int controller_dg::shared_init(OBJECT *parent)
+{
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("controller_dg::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+	return 1;
+}
+
+int controller_dg::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
 /* Object initialization is called once after all object have been created */
 int controller_dg::init(OBJECT *parent)
 {
@@ -93,6 +117,10 @@ int controller_dg::init(OBJECT *parent)
 	gld_object *temp_from, *temp_to;
 	STATUS fxn_return_status;
 
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	
 	//See if the global flag is set - if so, add the object flag
 	if (all_generator_delta)
 	{
@@ -835,6 +863,12 @@ EXPORT int init_controller_dg(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(controller_dg);
+}
+
+EXPORT int checkpoint_init_controller_dg(OBJECT *obj)
+{
+	controller_dg *my = object_data<controller_dg>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_controller_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

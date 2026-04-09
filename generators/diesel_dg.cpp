@@ -675,6 +675,31 @@ int diesel_dg::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
+int diesel_dg::shared_init(OBJECT *parent)
+{
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("diesel_dg::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+	return 1;
+}
+
+int diesel_dg::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
+
 /* Object initialization is called once after all object have been created */
 int diesel_dg::init(OBJECT *parent)
 {
@@ -719,12 +744,9 @@ int diesel_dg::init(OBJECT *parent)
 	{
 		if (gl_object_isa(parent, "meter", "powerflow") || gl_object_isa(parent, "node", "powerflow") || gl_object_isa(parent, "load", "powerflow"))
 		{
-			// Check to make sure the parent is initalized - otherwise some things may not exist
-			if ((parent->flags & OF_INIT) != OF_INIT)
-			{
-				gl_verbose("diesel_dg::init(): diesel_dg:%d - %s - deferring initialization on parent node(s)", obj->id, (obj->name ? obj->name : "Unnamed"));
-				return 2; // defer
-			}
+			// Initialize non-published variables
+			int rv = shared_init(parent);
+			if (rv != 1) return rv;
 
 			// Flag us as a proper child
 			parent_is_powerflow = true;
@@ -5131,6 +5153,12 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(diesel_dg);
+}
+
+EXPORT int checkpoint_init_diesel_dg(OBJECT *obj)
+{
+	diesel_dg *my = object_data<diesel_dg>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

@@ -88,6 +88,30 @@ int central_dg_control::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
+int central_dg_control::shared_init(OBJECT *parent)
+{
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("central_dg_control::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+	return 1;
+}
+
+int central_dg_control::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
 /* Object initialization is called once after all object have been created */
 int central_dg_control::init(OBJECT *parent)
 {
@@ -101,6 +125,10 @@ int central_dg_control::init(OBJECT *parent)
 	all_battery_S_rated = 0;
 	all_solar_S_rated = 0;
 	int inverter_filled_to = -1;
+
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	//////////////////////////////////////////////////////////////////////////
 	// Assemble object maps
@@ -619,6 +647,12 @@ EXPORT int init_central_dg_control(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(central_dg_control);
+}
+
+EXPORT int checkpoint_init_central_dg_control(OBJECT *obj)
+{
+	central_dg_control *my = object_data<central_dg_control>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_central_dg_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

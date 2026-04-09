@@ -123,14 +123,9 @@ int sec_control::create(void)
 	return 1;					   /* return 1 on success, 0 on failure */
 }
 
-/* Object initialization is called once after all object have been created */
-int sec_control::init(OBJECT *parent)
+int sec_control::shared_init(OBJECT *parent)
 {
-	OBJECT *obj = object_header(this);
-	STATUS fxn_return_status;
-
-	// Deferred initialization code
-	if (parent != NULL)
+	if (parent != nullptr)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
 		{
@@ -139,6 +134,28 @@ int sec_control::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+	return 1;
+}
+
+int sec_control::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
+/* Object initialization is called once after all object have been created */
+int sec_control::init(OBJECT *parent)
+{
+	OBJECT *obj = object_header(this);
+	STATUS fxn_return_status;
+
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	// Map up the frequency pointer
 	pFrequency = new gld_property(parent, "measured_frequency");
@@ -1233,6 +1250,12 @@ EXPORT int init_sec_control(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(sec_control);
+}
+
+EXPORT int checkpoint_init_sec_control(OBJECT *obj)
+{
+	sec_control *my = object_data<sec_control>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

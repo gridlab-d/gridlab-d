@@ -546,6 +546,30 @@ int inverter_dyn::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
+int inverter_dyn::shared_init(OBJECT *parent)
+{
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("inverter_dyn::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+	return 1;
+}
+
+int inverter_dyn::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
 /* Object initialization is called once after all object have been created */
 int inverter_dyn::init(OBJECT *parent)
 {
@@ -7111,6 +7135,12 @@ EXPORT int init_inverter_dyn(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(inverter_dyn);
+}
+
+EXPORT int checkpoint_init_inverter_dyn(OBJECT *obj)
+{
+	inverter_dyn *my = object_data<inverter_dyn>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_inverter_dyn(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

@@ -200,6 +200,8 @@ public:
 	battery(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 	//double timestamp_to_hours(TIMESTAMP t);
 	TIMESTAMP rfb_event_time(TIMESTAMP t0, gld::complex power, double e);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);

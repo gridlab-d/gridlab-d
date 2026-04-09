@@ -24,6 +24,8 @@ public:
 
     int create(void);
     int init(OBJECT * = nullptr);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 
     TIMESTAMP presync(TIMESTAMP, TIMESTAMP);
     TIMESTAMP sync(TIMESTAMP, TIMESTAMP);

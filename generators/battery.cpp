@@ -217,15 +217,8 @@ int battery::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
-/* Object initialization is called once after all object have been created */
-int battery::init(OBJECT *parent)
+int battery::shared_init(OBJECT *parent)
 {
-	OBJECT *obj = object_header(this);
-	gld_property *temp_property_pointer;
-	double temp_value_SocReserve;
-	enumeration temp_value_control_mode;
-	STATUS fxn_return_status;
-
 	if (parent != nullptr)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
@@ -235,6 +228,31 @@ int battery::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+	return 1;
+}
+
+int battery::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
+/* Object initialization is called once after all object have been created */
+int battery::init(OBJECT *parent)
+{
+	OBJECT *obj = object_header(this);
+	gld_property *temp_property_pointer;
+	double temp_value_SocReserve;
+	enumeration temp_value_control_mode;
+	STATUS fxn_return_status;
+
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	// See if the global flag is set - if so, add the object flag
 	if (all_generator_delta)
@@ -2575,6 +2593,12 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(battery);
+}
+
+EXPORT int checkpoint_init_battery(OBJECT *obj)
+{
+	battery *my = object_data<battery>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

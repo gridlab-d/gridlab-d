@@ -626,6 +626,30 @@ int inverter::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
+int inverter::shared_init(OBJECT *parent)
+{
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("inverter::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+	return 1;
+}
+
+int inverter::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
 /* Object initialization is called once after all object have been created */
 int inverter::init(OBJECT *parent)
 {
@@ -657,13 +681,9 @@ int inverter::init(OBJECT *parent)
 	WT_is_connected = false;
 	STATUS fxn_return_status;
 
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("inverter::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
 	// construct circuit variable map to meter
 	std::string tempV, tempQ, tempf, tempP;
 	std::string VoltVArSchedInput, freq_pwrSchedInput;
@@ -9698,6 +9718,12 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(inverter);
+}
+
+EXPORT int checkpoint_init_inverter(OBJECT *obj)
+{
+	inverter *my = object_data<inverter>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

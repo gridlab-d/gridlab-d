@@ -88,6 +88,30 @@ int rectifier::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
+int rectifier::shared_init(OBJECT *parent)
+{
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("rectifier::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+	return 1;
+}
+
+int rectifier::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
 /* Object initialization is called once after all object have been created */
 int rectifier::init(OBJECT *parent)
 {
@@ -97,6 +121,10 @@ int rectifier::init(OBJECT *parent)
 
 	V_Rated = 360;
 
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	
 	if (parent!=nullptr && gl_object_isa(parent,"inverter"))
 	{
 		//Map the V_In property
@@ -270,6 +298,12 @@ EXPORT int init_rectifier(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(rectifier);
+}
+
+EXPORT int checkpoint_init_rectifier(OBJECT *obj)
+{
+	rectifier *my = object_data<rectifier>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_rectifier(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

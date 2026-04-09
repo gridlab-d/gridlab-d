@@ -94,14 +94,8 @@ int energy_storage::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
-/* Object initialization is called once after all object have been created */
-int energy_storage::init(OBJECT *parent)
+int energy_storage::shared_init(OBJECT *parent)
 {
-	OBJECT *obj = object_header(this);
-	FUNCTIONADDR temp_fxn;
-	STATUS fxn_return_status;
-
-
 	if (parent != nullptr)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
@@ -111,6 +105,29 @@ int energy_storage::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+
+	return 1;
+}
+
+int energy_storage::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
+/* Object initialization is called once after all object have been created */
+int energy_storage::init(OBJECT *parent)
+{
+	OBJECT *obj = object_header(this);
+	FUNCTIONADDR temp_fxn;
+	STATUS fxn_return_status;
+
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	prev_time = (double)gl_globalclock;
 
@@ -466,6 +483,12 @@ EXPORT int init_energy_storage(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(energy_storage);
+}
+
+EXPORT int checkpoint_init_energy_storage(OBJECT *obj)
+{
+	energy_storage *my = object_data<energy_storage>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_energy_storage(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
