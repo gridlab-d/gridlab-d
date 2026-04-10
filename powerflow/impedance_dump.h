@@ -20,24 +20,10 @@ typedef enum {
 class impedance_dump : public gld_object
 {
 public:
-	int first_run;
 	char32 group;
 	char256 filename;
-	link_object **pFuse;
-	line **pOhLine;
-	link_object **pRecloser;
-	regulator **pRegulator;
-	link_object **pRelay;
-	link_object **pSectionalizer;
-	link_object **pSeriesReactor;
-	switch_object **pSwitch;
-	transformer **pTransformer;
-	line **pTpLine;
-	line **pUgLine;
-	capacitor **pCapacitor;
 	TIMESTAMP runtime;
 	int32 runcount;
-	gld::complex *node_voltage;
 public:
 	static CLASS *oclass;
 public:

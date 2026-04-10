@@ -84,6 +84,19 @@ int impedance_dump::dump(TIMESTAMP t)
 	CLASS *obj_class;
 	char timestr[64];
 	PROPERTY *xfmrconfig;
+	link_object **pFuse;
+	line **pOhLine;
+	link_object **pRecloser;
+	regulator **pRegulator;
+	link_object **pRelay;
+	link_object **pSectionalizer;
+	link_object **pSeriesReactor;
+	switch_object **pSwitch;
+	transformer **pTransformer;
+	line **pTpLine;
+	line **pUgLine;
+	capacitor **pCapacitor;
+	gld::complex *node_voltage;
 
 	//find the link objects
 	if(group[0] == '\0'){
