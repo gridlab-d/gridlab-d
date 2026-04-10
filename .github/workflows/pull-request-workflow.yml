@@ -206,7 +206,7 @@ jobs:
   # macOS: AppleClang + Homebrew + Python validator
   # ─────────────────────────────────────────────
   macos-build-and-validate:
-    runs-on: macos-26-xlarge # ARM64 macOS runner
+    runs-on: macos-26
     timeout-minutes: 600
 
     steps:
@@ -323,7 +323,7 @@ jobs:
   # macOS (ARM64) with Homebrew GCC + Python validator
   # ─────────────────────────────────────────────
   mac-arm64-gcc:
-    runs-on: macos-26-large # Apple Silicon runner (ARM64)
+    runs-on: macos-26
     timeout-minutes: 600
 
     steps:
