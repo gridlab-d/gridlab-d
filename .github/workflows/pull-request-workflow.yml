@@ -104,33 +104,6 @@ jobs:
           # Run integration validation from repository root
           python validate_gld.py -T 1
 
-      - name: Re-run failing test directly (GLM + JSON)
-        if: always()   # ensures it runs even if validate_gld.py fails
-        working-directory: ${{ github.workspace }}
-        run: |
-          echo "Re-running direct GLM test_vfd_delta.glm..."
-          export PATH=$PATH:~/.temp/GridLAB-D/bin
-          export GLPATH="${PWD}:~/.temp/GridLAB-D"
-
-          # GLM version
-          echo "----- Running GLM test_vfd_delta.glm -----"
-          cd powerflow/autotest/test_vfd_delta
-          gridlabd test_vfd_delta.glm > ${GITHUB_WORKSPACE}/single_test_glm_output.txt 2>&1 || true
-          
-          # JSON version
-          echo "----- Running JSON test_vfd_delta_converted.json -----"
-          cd ../test_vfd_delta_converted
-
-      - name: Upload targeted test logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: vfd-delta-single-test
-          path: |
-            single_test_glm_output.txt
-            single_test_json_output.txt
-          if-no-files-found: ignore
-
       - name: Upload validation artifacts
         if: always()
         uses: actions/upload-artifact@v7
