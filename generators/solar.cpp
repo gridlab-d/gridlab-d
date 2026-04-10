@@ -102,6 +102,8 @@ solar::solar(MODULE *module)
 								PT_double, "Insolation[W/sf]", PADDR(Insolation),
 								PT_double, "Rinternal[Ohm]", PADDR(Rinternal),
 								PT_double, "Rated_Insolation[W/sf]", PADDR(Rated_Insolation),
+								PT_double, "Max_P[kW]", PADDR(Max_P), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_double, "Min_P[kW]", PADDR(Min_P), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
 								PT_double, "Pmax_temp_coeff", PADDR(Pmax_temp_coeff), // temp coefficient of rated Power in %/ deg C
 								PT_double, "Voc_temp_coeff", PADDR(Voc_temp_coeff),
 								PT_double, "V_Max[V]", PADDR(V_Max),	 // Vmax of solar module found on specs
@@ -252,15 +254,8 @@ int solar::shared_init(OBJECT *parent)
 	}
 	// These variables need intialized every time regardless of checkpoint load
 	// Non-published variables (not loaded from checkpoint) must be initialized here
-	return 1;
-}
 
-int solar::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-
-	// find parent inverter, if not defined, use a default voltage
+	// These property pointer variables need intialized every time regardless of checkpoint load
 	if (parent != nullptr)
 	{
 		if (gl_object_isa(parent, "inverter", "generators")) // SOLAR has a PARENT and PARENT is an INVERTER - old-school inverter
@@ -307,6 +302,20 @@ int solar::checkpoint_init(OBJECT *parent)
 	}
 
     init_climate();
+	// Initialize PV DC model, if desired
+	if (solar_power_model == PV_CURVE)
+	{
+		init_pub_vars_pvcurve_mode();
+	}
+//    update_cur_t_and_S();
+
+	return 1;
+}
+
+int solar::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
 	return rv;
 }
 

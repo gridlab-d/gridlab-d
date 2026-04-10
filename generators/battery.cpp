@@ -2264,52 +2264,6 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 }
 
-// Map Complex value
-gld_property *battery::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_complex())
-	{
-		GL_THROW("battery:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in battery.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
-// Map double value
-gld_property *battery::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_double())
-	{
-		GL_THROW("battery:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in battery.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
 // Function to resynch the various current accumulators
 // Unlike other objects, meter checks are inside (mostly for copy-paste laziness above)
 void battery::push_powerflow_currents(void)

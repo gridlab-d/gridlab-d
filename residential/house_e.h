@@ -511,8 +511,6 @@ public:
 // access methods
 public:
 	//Map function
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void pull_climate_values(void);
 };
 

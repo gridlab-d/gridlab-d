@@ -5511,52 +5511,6 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 // 	return SUCCESS; //Always succeeds right now
 // }
 
-//Map Complex value
-gld_property *inverter_dyn::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	//Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	//Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_complex())
-	{
-		GL_THROW("inverter_dyn:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in inverter.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	//return the pointer
-	return pQuantity;
-}
-
-//Map double value
-gld_property *inverter_dyn::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	//Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	//Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_double())
-	{
-		GL_THROW("inverter_dyn:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in inverter.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	//return the pointer
-	return pQuantity;
-}
-
 //Function to pull all the complex properties from powerflow into local variables
 void inverter_dyn::pull_complex_powerflow_values(void)
 {

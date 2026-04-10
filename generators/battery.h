@@ -217,8 +217,6 @@ public:
 	double calculate_efficiency(gld::complex voltage, gld::complex current);
 	gld::complex calculate_v_terminal(gld::complex v, gld::complex i);
 
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
 public:
 	static CLASS *oclass;
 	static battery *defaults;

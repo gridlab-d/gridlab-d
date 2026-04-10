@@ -2147,52 +2147,6 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
-// Map Complex value
-gld_property *diesel_dg::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_complex())
-	{
-		GL_THROW("diesel_dg:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in diesel_dg.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
-// Map double value
-gld_property *diesel_dg::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_double())
-	{
-		GL_THROW("diesel_dg:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in diesel_dg.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
 // Function to pull the various powerflow gld_property values into their storage arrays
 void diesel_dg::pull_powerflow_values(void)
 {

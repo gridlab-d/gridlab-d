@@ -103,8 +103,6 @@ private:
 	bool deltamode_inclusive;	   //Boolean for deltamode calls - pulled from object flags
 	double *mapped_freq_variable;  //Mapping to frequency variable in powerflow module - deltamode updates
 
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
 public:
 	char32 controlled_dgs;
 

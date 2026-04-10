@@ -191,8 +191,6 @@ public:
 	void compute_power_injection_pc(void);
 	STATUS updateCurrInjection(int64 iteration_count, bool *converged_failure);
 
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void push_complex_powerflow_values(void);
 	void push_complex_power_values(gld::complex inv_P);
 	

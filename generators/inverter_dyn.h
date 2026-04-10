@@ -110,8 +110,6 @@ private:
 	gld::complex e_droop_prev[3];
 
 	//Map functions
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void pull_complex_powerflow_values(void);
 	void reset_complex_powerflow_accumulators(void);
 	void push_complex_powerflow_values(bool update_voltage);

@@ -7812,9 +7812,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 	}
 }
 
-
 //Module-level post update call
-
 STATUS inverter::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
 	//If we have a meter, reset the accumulators
@@ -9147,52 +9145,6 @@ gld::complex inverter::complex_exp(double angle)
 	output_val = gld::complex(cos(angle),sin(angle));
 
 	return output_val;
-}
-
-//Map Complex value
-gld_property *inverter::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	//Map to the property of interest
-	pQuantity = new gld_property(obj,name);
-
-	//Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_complex())
-	{
-		GL_THROW("inverter:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in inverter.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	//return the pointer
-	return pQuantity;
-}
-
-//Map double value
-gld_property *inverter::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	//Map to the property of interest
-	pQuantity = new gld_property(obj,name);
-
-	//Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_double())
-	{
-		GL_THROW("inverter:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in inverter.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	//return the pointer
-	return pQuantity;
 }
 
 //Function to pull all the complex properties from powerflow into local variables

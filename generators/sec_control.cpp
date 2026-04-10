@@ -775,29 +775,6 @@ STATUS sec_control::post_deltaupdate(gld::complex *useful_value, unsigned int mo
 	return SUCCESS; // Always succeeds right now
 }
 
-// Map Complex value
-gld_property *sec_control::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
-	{
-		GL_THROW("sec_control:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in the secondary controller.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
 gld::complex sec_control::get_complex_value(OBJECT *obj, const char *name)
 {
 	gld::complex val;
@@ -805,29 +782,6 @@ gld::complex sec_control::get_complex_value(OBJECT *obj, const char *name)
 	val = ptr->get_complex();
 	delete ptr;
 	return val;
-}
-
-// Map double value
-gld_property *sec_control::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
-	{
-		GL_THROW("sec_control:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in the secondary controller.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
 }
 
 // Get gld_property double value
@@ -839,29 +793,6 @@ double sec_control::get_double_value(OBJECT *obj, const char *name)
 	val = ptr->get_double();
 	delete ptr;
 	return val;
-}
-
-// Map enumeration value
-gld_property *sec_control::map_enum_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Check it
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_enumeration() != true))
-	{
-		GL_THROW("sec_control:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in the secondary controller.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
 }
 
 // Get an enumberation value
