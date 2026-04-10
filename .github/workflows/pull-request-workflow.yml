@@ -3,6 +3,10 @@ name: GridLAB-D PR Validation
 on:
   workflow_dispatch:
 
+  push:
+    branches:
+      - '**'
+
   pull_request:
     branches:
       - feature/1478
