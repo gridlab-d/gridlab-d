@@ -21,7 +21,6 @@
 class jsondump : public gld_object
 {
 public:
-	int first_run;
 	char32 group;
 	char256 filename_dump_system;
 	char256 filename_dump_reliability;
@@ -29,26 +28,8 @@ public:
 	bool write_reliability;
 	bool write_per_unit;
 	double system_VA_base;
-	power_metrics **pPowerMetrics;
-	fuse **pFuse;
-	line **pOhLine;
-	recloser **pRecloser;
-	regulator **pRegulator;
-	//link_object **pRelay;
-	sectionalizer **pSectionalizer;
-	//link_object **pSeriesReactor;
-	switch_object **pSwitch;
-	line **pTpLine;
-	line **pUgLine;
-	OBJECT **pLineConf;
-	OBJECT **pTpLineConf;
-	OBJECT **pTransConf;
-	OBJECT **pRegConf;
-	capacitor **pCapacitor;
-	transformer **pTransformer;
 	TIMESTAMP runtime;
 	int32 runcount;
-	gld::complex *node_voltage;
 	double min_volt_value;
 	double max_volt_value;
 

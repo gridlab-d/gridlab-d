@@ -145,6 +145,22 @@ STATUS jsondump::dump_system(void)
 	enumeration temp_enum_value;
 	bool found_match_config;
 
+	fuse **pFuse;
+	line **pOhLine;
+	recloser **pRecloser;
+	regulator **pRegulator;
+	//link_object **pRelay;
+	sectionalizer **pSectionalizer;
+	//link_object **pSeriesReactor;
+	switch_object **pSwitch;
+	line **pTpLine;
+	line **pUgLine;
+	OBJECT **pLineConf;
+	OBJECT **pTpLineConf;
+	OBJECT **pTransConf;
+	OBJECT **pRegConf;
+	transformer **pTransformer;
+
 	// metrics JSON value
 	nlohmann::json metrics_lines;	// Output dictionary for line and line configuration metrics
 	nlohmann::json node_object;
