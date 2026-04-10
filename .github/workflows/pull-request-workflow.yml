@@ -191,7 +191,7 @@ jobs:
           $env:PATH   = "$env:PATH;$bin"
           $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
 
-          python validate_gld.py -T 0
+          python validate_gld.py -T 1
 
       - name: Upload validation artefacts (Windows)
         if: always()
