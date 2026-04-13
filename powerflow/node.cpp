@@ -295,7 +295,7 @@ int node::create(void)
 
 	NR_node_reference = -1;									   // Newton-Raphson bus index, set to -1 initially
 	house_present = false;									   // House attachment flag
-	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0; // Nominal house current variables
+	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = gld::complex(0.0, 0.0); // Nominal house current variables
 
 	prev_phases = 0x00;
 

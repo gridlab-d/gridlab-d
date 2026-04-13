@@ -11,7 +11,6 @@ class triplex_line_configuration : public line_configuration
 public:
 	double ins_thickness;
 	double diameter;
-	LINERATINGS winter, summer;
 	
 public:
 	static CLASS *oclass;
