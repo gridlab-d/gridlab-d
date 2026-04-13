@@ -52,7 +52,6 @@
 #include "exec.h"
 #include "kml.h"
 #include "kill.h"
-#include "threadpool.h"
 #include "cpp_threadpool.h"
 
 // #if defined(_WIN32) && defined(_DEBUG)

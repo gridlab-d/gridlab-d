@@ -39,7 +39,7 @@
 #include "globals.h"
 #include "module.h"
 #include "lock.h"
-#include "threadpool.h"
+#include "cpp_threadpool.h"
 #include "exec.h"
 #include "platform.h"
 

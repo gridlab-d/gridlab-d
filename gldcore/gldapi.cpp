@@ -24,7 +24,7 @@ extern size_t output_get_message_capture_limit();
 #include "load.h"
 #include "object.h"
 #include "save.h"
-#include "threadpool.h"
+#include "cpp_threadpool.h"
 #include <array>
 #include <cstdlib>
 #include <cstring>
@@ -675,10 +675,10 @@ GLDErrorCode GridLabD::run(std::optional<double> start_time,
   STATUS exec_result = exec_start(&passes, &tsteps);
 
   FILE *f4 = fopen("/tmp/gld_debug.log", "a");
-  if (f) {
-    fprintf(f, "DEBUG: exec_start returned: %d (FAILED=%d, SUCCESS=%d)\n",
+  if (f4) {
+    fprintf(f4, "DEBUG: exec_start returned: %d (FAILED=%d, SUCCESS=%d)\n",
             exec_result, FAILED, SUCCESS);
-    fclose(f);
+    fclose(f4);
   }
 
   if (exec_result == FAILED) {
