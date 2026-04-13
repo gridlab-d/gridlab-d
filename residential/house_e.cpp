@@ -1357,24 +1357,8 @@ int house_e::shared_init(OBJECT *parent)
 	heat_start = false;
 	air_density = 0.0735;		// density of air [lb/cf]
 	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
-	return 1;
-}
 
-int house_e::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-
-	// Set simulation beginning time
-	simulation_beginning_time = gl_globalclock;
-	simulation_beginning_time_dbl = (double)simulation_beginning_time;
-
-	// Re-initialize pMeterStatus if parent is available
-	if (parent != nullptr && pMeterStatus == nullptr) {
-		pMeterStatus = new gld_property(parent, "service_status");
-	}
-
+	// Map triplex circuit variables if not already mapped
 	bool is_triplex_parent = parent != nullptr &&
 		(gl_object_isa(parent, "triplex_meter", "powerflow") ||
 		gl_object_isa(parent, "triplex_node", "powerflow") ||
@@ -1402,7 +1386,23 @@ int house_e::checkpoint_init(OBJECT *parent)
 			pPower[2] = map_complex_value(parent, "power_12");
 		}
 	}
+	return 1;
+}
 
+int house_e::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
+	// Set simulation beginning time
+	simulation_beginning_time = gl_globalclock;
+	simulation_beginning_time_dbl = (double)simulation_beginning_time;
+
+	// Re-initialize pMeterStatus if parent is available
+	if (parent != nullptr && pMeterStatus == nullptr) {
+		pMeterStatus = new gld_property(parent, "service_status");
+	}
 
 	// Attach implicit enduses to the panel (built in create(), must be attached here as in init())
 	attach_implicit_enduses();
@@ -1471,27 +1471,6 @@ int house_e::init(OBJECT *parent)
 
 		//Remove the temp property
 		delete temp_gld_property;
-
-		//Map the other properties - voltage
-		pCircuit_V[0] = map_complex_value(parent,"voltage_12");
-		pCircuit_V[1] = map_complex_value(parent,"voltage_1N");
-		pCircuit_V[2] = map_complex_value(parent,"voltage_2N");
-
-		//Current
-		pLine_I[0] = map_complex_value(parent,"residential_nominal_current_1");
-		pLine_I[1] = map_complex_value(parent,"residential_nominal_current_2");
-		pLine_I[2] = map_complex_value(parent,"residential_nominal_current_12");
-
-		//Shunt
-		pShunt[0] = map_complex_value(parent,"shunt_1");
-		pShunt[1] = map_complex_value(parent,"shunt_2");
-		pShunt[2] = map_complex_value(parent,"shunt_12");
-
-		//Power
-		pPower[0] = map_complex_value(parent,"power_1");
-		pPower[1] = map_complex_value(parent,"power_2");
-		pPower[2] = map_complex_value(parent,"power_12");
-
 
 		//Map the status
 		pMeterStatus = new gld_property(parent,"service_status");

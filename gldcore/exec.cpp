@@ -524,7 +524,6 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
 
             // ── Collect objects by class ──
             std::map<std::string, std::vector<OBJECT *>> objects_by_class;
-            std::set<OBJECT *> processed_objects;
 
             auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str) -> nlohmann::json {
                 switch (ptype)
@@ -567,11 +566,8 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             OBJECT * iterator_object = object_get_first();
             while(iterator_object != nullptr)
             {
-                if (processed_objects.find(iterator_object) != processed_objects.end())
-                    continue;
                 std::string class_name = iterator_object->oclass->name;
                 objects_by_class[class_name].push_back(iterator_object);
-                processed_objects.insert(iterator_object);
                 iterator_object = object_get_next(iterator_object);
             }
 
@@ -623,7 +619,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     if (obj->heartbeat != 0 && obj->heartbeat != TS_NEVER)
                         instance["heartbeat"] = static_cast<int64_t>(obj->heartbeat);
                     if (obj->flags & OF_DELTAMODE)
-                        instance["flags"] = static_cast<uint32_t>(obj->flags);
+                        instance["flags"] = std::string("DELTAMODE");
 
                     std::set<std::string> processed_properties;
                     CLASS *current_class = obj->oclass;
