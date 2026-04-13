@@ -17,14 +17,14 @@ A minimal model could be created via:
 Property name | Type | Unit | Description | Default
 ---|---|---|---|---
 **pvc_Pmax_calc_simp_mode** | bool | n/a | If true, PV-curve max power is approximated as `pvc_U_m_V * pvc_I_m_A`. | TRUE
-**t_ref_cels[degC]** | double | degC | Reference cell temperature for PV-curve equations. | 25
-**S_ref_wpm2[W/m^2]** | double | W/m^2 | Reference insolation for PV-curve equations. | 1000
+**t_ref_cels** | double | degC | Reference cell temperature for PV-curve equations. | 25
+**S_ref_wpm2** | double | W/m^2 | Reference insolation for PV-curve equations. | 1000
 **pvc_a1_inv_cels** | double | 1/degC | PV-curve temperature coefficient for current term `dI`. | 0
 **pvc_b1_inv_cels** | double | 1/degC | PV-curve temperature coefficient for voltage term `dU`. | 0
-**pvc_U_oc_V[V]** | double | V | PV open-circuit voltage parameter. | 0 (auto-derived in PV_CURVE mode if needed)
-**pvc_I_sc_A[A]** | double | A | PV short-circuit current parameter. | 0 (auto-derived in PV_CURVE mode if needed)
-**pvc_U_m_V[V]** | double | V | PV voltage at maximum power point. | 0 (auto-derived in PV_CURVE mode if needed)
-**pvc_I_m_A[A]** | double | A | PV current at maximum power point. | 0 (auto-derived in PV_CURVE mode if needed)
+**pvc_U_oc_V** | double | V | PV open-circuit voltage parameter. | 0 (auto-derived in PV_CURVE mode if needed)
+**pvc_I_sc_A** | double | A | PV short-circuit current parameter. | 0 (auto-derived in PV_CURVE mode if needed)
+**pvc_U_m_V** | double | V | PV voltage at maximum power point. | 0 (auto-derived in PV_CURVE mode if needed)
+**pvc_I_m_A** | double | A | PV current at maximum power point. | 0 (auto-derived in PV_CURVE mode if needed)
 **MAX_NR_ITERATIONS** | int16 | n/a | Maximum Newton-Raphson iterations for PV_CURVE solver. | 32767
 **x0_root_rt** | double | n/a | Initial guess offset ratio for Newton-Raphson root search. | 0.15
 **DOA_NR_ITERATIONS** | double | n/a | Newton-Raphson degree-of-accuracy threshold. | 1e-5
@@ -40,27 +40,27 @@ Property name | Type | Unit | Description | Default
 **Tambient[degC]** | double | degC | Ambient temperature used in model calculations. | 25.0
 **wind_speed[mph]** | double | mph | Ambient wind speed (used in FLATPLATE mode). | 0.0
 **ambient_temperature[degF]** | double | degF | Ambient air temperature input. | 77
-**Insolation[W/sf]** | double | W/sf | Effective incident irradiance. | 0
-**Rinternal[Ohm]** | double | Ohm | Internal resistance (legacy placeholder). | 0.05
-**Rated_Insolation[W/sf]** | double | W/sf | Rated insolation value used in scaling. | 92.902
+**Insolation** | double | W/sf | Effective incident irradiance. | 0
+**Rinternal** | double | Ohm | Internal resistance (legacy placeholder). | 0.05
+**Rated_Insolation** | double | W/sf | Rated insolation value used in scaling. | 92.902
 **Pmax_temp_coeff** | double | n/a | Temperature coefficient for power output. | Panel-dependent (set during init)
 **Voc_temp_coeff** | double | n/a | Temperature coefficient for open-circuit voltage. | Panel-dependent (set during init)
-**V_Max[V]** | double | V | Maximum operating voltage of the PV module. | 27.1
-**Voc_Max[V]** | double | V | Maximum open-circuit voltage of the module. | 34.0
-**Voc[V]** | double | V | Current open-circuit voltage value. | 34.0
-**efficiency[unit]** | double | unit | Conversion efficiency from insolation to DC power. | Panel-dependent (defaults from panel type)
-**area[sf]** | double | sf | PV array area. | 0
-**soiling[pu]** | double | pu | Array soiling factor. | 0.95
-**derating[pu]** | double | pu | Panel derating factor. | 0.95
-**Tcell[degC]** | double | degC | PV cell temperature. | 21.0
-**rated_power[W]** | double | W | Rated array power (`Max_P`). | 0 (auto-derived if omitted)
-**P_Out[kW]** | double | kW | DC power output to inverter. | Computed
-**V_Out[V]** | double | V | DC output voltage to inverter. | Computed
-**I_Out[A]** | double | A | DC output current to inverter. | Computed
+**V_Max** | double | V | Maximum operating voltage of the PV module. | 27.1
+**Voc_Max** | double | V | Maximum open-circuit voltage of the module. | 34.0
+**Voc** | double | V | Current open-circuit voltage value. | 34.0
+**efficiency** | double | unit | Conversion efficiency from insolation to DC power. | Panel-dependent (defaults from panel type)
+**area** | double | sf | PV array area. | 0
+**soiling** | double | pu | Array soiling factor. | 0.95
+**derating** | double | pu | Panel derating factor. | 0.95
+**Tcell** | double | degC | PV cell temperature. | 21.0
+**rated_power** | double | W | Rated array power (`Max_P`). | 0 (auto-derived if omitted)
+**P_Out** | double | kW | DC power output to inverter. | Computed
+**V_Out** | double | V | DC output voltage to inverter. | Computed
+**I_Out** | double | A | DC output current to inverter. | Computed
 **weather** | object | n/a | Optional climate object reference. | auto-discovered if available
-**shading_factor[pu]** | double | pu | Irradiance scaling factor for shading. | 1.0
-**tilt_angle[deg]** | double | deg | PV array tilt angle. | 45
-**orientation_azimuth[deg]** | double | deg | Cardinal azimuth (0=N, 90=E, 180=S, 270=W). | 180
+**shading_factor** | double | pu | Irradiance scaling factor for shading. | 1.0
+**tilt_angle** | double | deg | PV array tilt angle. | 45
+**orientation_azimuth** | double | deg | Cardinal azimuth (0=N, 90=E, 180=S, 270=W). | 180
 **latitude_angle_fix** | bool | n/a | If true, tilt is set from climate latitude. | FALSE
 **default_voltage_variable** | double | n/a | Hidden placeholder voltage for headless operation. | hidden
 **default_current_variable** | double | n/a | Hidden placeholder current for headless operation. | hidden
