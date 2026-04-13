@@ -35,7 +35,7 @@
 #include "validate.h"
 #include "exec.h"
 #include "lock.h"
-#include "threadpool.h"
+#include "cpp_threadpool.h"
 #include "object.h"
 
 static std::mutex subprocess_launch_gate; // Mutex to protect subprocess launches

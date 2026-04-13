@@ -317,7 +317,6 @@ public:
 	double ki_Pconstant;		// ki for the PI controller implemented in P constant delta mode
 	double kp_Pconstant;		// kp for the PI controller implemented in P constant delta mode
 
-	bool P_constant_mode; 		// Flag indicating whether P constant mode is imployed
 	double ki_Qconstant;		// ki for the PI controller implemented in Q constant delta mode
 	double kp_Qconstant;		// kp for the PI controller implemented in Q constant delta mode
 	
@@ -368,7 +367,6 @@ public:
 	double gov_gast_KT;				//Governor temperature control loop gain
 	double gov_gast_VMAX;			//Governor actuator upper limit (p.u.)
 	double gov_gast_VMIN;			//Governor actuator lower limit (p.u.)
-//	double gov_gast_TD;				//Governor combustion delay (s)
 
 	//Governor properties (GGOV1)
 	double gov_ggv1_r;				//Permanent droop, p.u.

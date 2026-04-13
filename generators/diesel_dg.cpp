@@ -369,6 +369,9 @@ diesel_dg::diesel_dg(MODULE *module)
 								PT_double, "real_power_generation[W]", PADDR(real_power_gen), PT_DESCRIPTION, "The total real power generation",
 								PT_double, "reactive_power_generation[VAr]", PADDR(imag_power_gen), PT_DESCRIPTION, "The total reactive power generation",
 
+								PT_timestamp, "last_time", PADDR(last_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_time",
+								PT_double, "pwr_electric_init", PADDR(pwr_electric_init), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pwr_electric_init",
+
 								//-- This hides from modehelp -- PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);

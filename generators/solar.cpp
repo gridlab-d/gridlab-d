@@ -130,6 +130,12 @@ solar::solar(MODULE *module)
 								PT_double, "default_current_variable", PADDR(default_current_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default current value, when solar is run without an inverter",
 								PT_double, "default_power_variable", PADDR(default_power_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default power value, when solar is run without an inverter",
 
+								PT_double, "prevTemp", PADDR(prevTemp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prevTemp",
+								PT_double, "currTemp", PADDR(currTemp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for currTemp",
+								PT_timestamp, "prevTime", PADDR(prevTime), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prevTime",
+								PT_double, "last_DC_current", PADDR(last_DC_current), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_DC_current",
+								PT_double, "last_DC_power", PADDR(last_DC_power), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_DC_power",
+
 								PT_enumeration, "orientation", PADDR(orientation_type),
 								PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
 								PT_KEYWORD, "FIXED_AXIS", (enumeration)FIXED_AXIS,

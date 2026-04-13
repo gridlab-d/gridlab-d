@@ -1208,7 +1208,7 @@ inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
 }
 /** Create a loadshape
  **/
-inline loadshape *gl_loadshape_create(SCHEDULE *s)
+inline loadshape *gl_loadshape_create(SCHEDULE *s, unsigned int *rng_state_ptr)
 {
 	loadshape *ls = (loadshape *)malloc(sizeof(loadshape));
 	memset(ls, 0, sizeof(loadshape));
@@ -1217,6 +1217,7 @@ inline loadshape *gl_loadshape_create(SCHEDULE *s)
 		return NULL;
 	}
 	ls->schedule = s;
+	ls->obj_rng_state_ptr = rng_state_ptr;
 	return ls;
 }
 /** Get the current value of a loadshape

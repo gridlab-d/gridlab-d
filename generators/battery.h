@@ -165,7 +165,6 @@ public:
 
 	double deltat; // delta mode time interval in second
 	unsigned int64 state_change_time_delta;
-	double pre_soc; //store the soc value during iterations
 	double Pout_delta; //Power output from parent inverter
 
 	//*** LEGACY model parameters - ported from energy_storage before separation ***//
