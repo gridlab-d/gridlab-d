@@ -4025,52 +4025,6 @@ void house_e::check_controls()
     }
 }
 
-// Map Complex value
-gld_property *house_e::map_complex_value(OBJECT *obj, const char *name)
-{
-    gld_property *pQuantity;
-    OBJECT *objhdr = object_header(this);
-
-    // Map to the property of interest
-    pQuantity = new gld_property(obj, name);
-
-    // Make sure it worked
-    if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
-    {
-        GL_THROW("house_e:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-        /*  TROUBLESHOOT
-        While attempting to map a quantity from another object, an error occurred in house.  Please try again.
-        If the error persists, please submit your system and a bug report via the ticketing system.
-        */
-    }
-
-    // return the pointer
-    return pQuantity;
-}
-
-// Map double value
-gld_property *house_e::map_double_value(OBJECT *obj, const char *name)
-{
-    gld_property *pQuantity;
-    OBJECT *objhdr = object_header(this);
-
-    // Map to the property of interest
-    pQuantity = new gld_property(obj, name);
-
-    // Make sure it worked
-    if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
-    {
-        GL_THROW("house_e:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-        /*  TROUBLESHOOT
-        While attempting to map a quantity from another object, an error occurred in house.  Please try again.
-        If the error persists, please submit your system and a bug report via the ticketing system.
-        */
-    }
-
-    // return the pointer
-    return pQuantity;
-}
-
 // update the voltages from external power flow solver
 void house_e::check_external_voltage()
 {
