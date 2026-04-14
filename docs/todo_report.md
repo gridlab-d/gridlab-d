@@ -18,10 +18,6 @@ This report contains all TODO items found in Markdown files.
 - `1.0 - Prospective Users\GridLAB-D_Key_Attributes.md` - l.30 - The following is a sentence fragment. What is a general term? Is this supposed to be related to "Model?" If so, it should not be its own bullet** A general term to describe how a particular part of GridLAB-D™ functions or is represented in code. For example, "How does GridLAB-D™ model solar panels?"
 
 
-## Climate Actors
-- `3.0 - Modeling Reference\Modules\Climate\1.0 - Climate.md` - l.75 - what is a climate actor?
-
-
 ## Context
 - `0.0 - GridLAB-D™\0.1 - Introduction.md` - l.47 - Should people know what a "property call" is?**.
 
@@ -30,8 +26,16 @@ This report contains all TODO items found in Markdown files.
 - `1.0 - Prospective Users\Technical_Overview.md` - l.67 - Is this "Building Combined Heat and Power"? If so we should define it.** BCHP, and Grid-Friendly™ appliance controls creates a number of technology opportunities and challenges. GridLAB-D™ will permit utility managers to better evaluate the cost/benefit trade-off between infrastructure expansion investments and distributed resources investments by including the other economic benefits of DER (e.g., increase wholesale purchasing elasticity, improved reliability metrics, ancillary services products to sell in wholesale markets).
 
 
+## Definition
+- `3.0 - Modeling Reference\Modules\Tape\1.0 - Tape.md` - l.26 - Define gnuplot_path**
+
+
 ## Delete?
 - `1.0 - Prospective Users\Technical_Overview.md` - l.18 - This Transmission System module no longer exists in GLD?** The transmission system functionality is included to allow for the interconnection of multiple distribution feeders. If a transmission module was not included, each distribution system could only be solved independently of other systems. While distribution systems can be solved independently, as is common in current commercial software packages, GridLAB-D™ will have the ability to generate a power flow solution for multiple distributions systems interconnected via a transmission or sub-transmission network. Traditionally, the ability to examine interactions at this level has been limited by computational power. To address this limitation, GridLAB-D™ is being developed for execution on multiple processor systems. In the current version of GridLAB-D™, the AC power flow solution method used for the transmission system is the Gauss-Seidel (GS) method, chosen for its inherent ability to solve for poor initial conditions, and to remain numerically stable in multiprocessor environments.
+
+
+## Discuss API
+- `2.0 - New Users\Tutorial\2.5.2 - GLM Models.md` - l.484 - Talk about GLMModifier or API here instead**:
 
 
 ## EMPTY
@@ -43,20 +47,15 @@ This report contains all TODO items found in Markdown files.
 
 ## Empty
 - `1.0 - Prospective Users\Technical_Overview.md` - l.78 - Empty section? Remove or write**
-- `3.0 - Modeling Reference\Modules\Tape\3.3 - Violation Recorder.md` - l.5 - Write documentation for Violation Recorder*
 
 
 ## Examples
 - `2.0 - New Users\Tutorial\2.5.3.1 - SimulationTime.md` - l.212 - Check that this Discrete Time example satisfies the needs of a Quasi-static mode example
 - `2.0 - New Users\Tutorial\2.5.3.1 - SimulationTime.md` - l.370 - Transient Mode
-
-
-## Figure Scaling
-- `0.0 - GridLAB-D™\style-guide.md` - l.109 - Have yet to figure out how to rescale an image that renders correctly in our documentation. Would like to add some auto-formatter to resize all images to be page-width in size.
+- `3.0 - Modeling Reference\Modules\Residential\ZIPload.md` - l.211 - Examples for cycling, demand response and aggregate modes.**
 
 
 ## Incomplete
-- `3.0 - Modeling Reference\Modules\Climate\1.0 - Climate.md` - l.82 - Fill in the rest of these property descriptions
 - `3.0 - Modeling Reference\Other Features\Microgrids.md` - l.706 - Super-second implementation details will go here - AVR and Drooping
 
 
@@ -73,6 +72,10 @@ This report contains all TODO items found in Markdown files.
 
 ## LINK
 - `4.0 Developing Reference\4.5 - Testing and Debugging\Testing_and_Validation.md` - l.68 - I need to find a way to embed excel in wiki in order to display the traceability matrix.
+
+
+## More context
+- `3.0 - Modeling Reference\Modules\Residential\ZIPload.md` - l.87 - Document cycling, demand response and aggregate modes.**
 
 
 ## Needed?
@@ -93,10 +96,6 @@ This report contains all TODO items found in Markdown files.
 - `3.0 - Modeling Reference\Modules\Powerflow\Switch_object.md` - l.52 - Review whether this level of detail of model implementation is necessary
 
 
-## Relevant
-- `3.0 - Modeling Reference\Modules\Residential\ETP_closed_form_solution.md` - l.578 - Should this go somewhere or is it no longer relevant?
-
-
 ## Relevant?
 - `1.0 - Prospective Users\Technical_Overview.md` - l.71 - The following sentence - Does it do this? Will it? Should it?** GridLAB-D™ will even be able to evaluate the consumer rebound effect following one or more curtailment or load-shed events in a single day.
 
@@ -109,40 +108,23 @@ This report contains all TODO items found in Markdown files.
 
 ## Revisit
 - `0.0 - GridLAB-D™\0.1 - Introduction.md` - l.37 - When the online webinars are created, polish this preceding statement**
+- `2.0 - New Users\Tutorial\2.5.6 - Distributed_Generation.md` - l.138 - Update this description when energy_storage page and status has been updated.** The battery object is in a state of flux, containing some legacy models and some new models. In early versions of GridLAB-D™ (pre-v3.0), it was assumed that the model included both the battery and the inverter; the battery was connected directly to a meter (or `triplex_meter`) object. Post-v3.0, the inverter model has been separated from the battery object. In this case, the battery is connected as a child of an inverter object and the inverter is then connected to the meter object. This may cause some confusion - development of new models will focus on a full separation of the inverter and battery models, but legacy code still exists for those that are still using it.
 
 
 ## Status
 - `3.0 - Modeling Reference\Modules\Powerflow\1.0 - Power_Flow_User_Guide.md` - l.463 - This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**
 - `3.0 - Modeling Reference\Modules\Powerflow\4.0 - Reliability_User_Guide.md` - l.288 - is this still true?
 - `3.0 - Modeling Reference\Modules\Powerflow\Classes\09 - overhead_line_conductor.md` - l.21 - This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality**
+- `3.0 - Modeling Reference\Modules\Tape\2.0 - Player.md` - l.63 - The behavior of DST is not specified in transient mode, i.e., are timestamp in the localtime or standard time? (see ticket:563).**
 
 
 ## UNTAGGED
-- `0.0 - GridLAB-D™\0.1 - Introduction.md` - l.27 - )** page.
-- `0.0 - GridLAB-D™\0.2 - resources.md` - l.14 - **[Forum]**.
-- `0.0 - GridLAB-D™\0.5 - Version History.md` - l.155 - *
-- `2.0 - New Users\Tutorial\2.5.2 - GLM Models.md` - l.356 - - Example -  add necessary properties so this is a full example
-- `2.0 - New Users\Tutorial\2.5.3 - Modules.md` - l.437 - - Example - Reference either feeder generator or API functionality to show how taxonomy feeders can be used as the backbone of more complex models.
-- `2.0 - New Users\Tutorial\2.5.6 - Distributed_Generation.md` - l.138 - Keep this mention of energy_storage? or update page?** The battery object is in a state of flux, containing some legacy models and some new models. In early versions of GridLAB-D™ (pre-v3.0), it was assumed that the model included both the battery and the inverter; the battery was connected directly to a meter (or `triplex_meter`) object. Post-v3.0, the inverter model has been separated from the battery object. In this case, the battery is connected as a child of an inverter object and the inverter is then connected to the meter object. This may cause some confusion - development of new models will focus on a full separation of the inverter and battery models, but legacy code still exists for those that are still using it.
 - `2.0 - New Users\Tutorial\2.5.6 - Distributed_Generation.md` - l.146 - Can charging and discharging be controlled? It doesn't look like it based on the code**.)
-- `3.0 - Modeling Reference\Modules\Climate\1.0 - Climate.md` - l.3 - - Update - Update for [Hassayampa (Version 3.0)]
-- `3.0 - Modeling Reference\Modules\Climate\1.0 - Climate.md` - l.70 - - Incomplete - Climate (class) page is imcomplete
-- `3.0 - Modeling Reference\Modules\Generators\Energy_storage.md` - l.157 - :
-- `3.0 - Modeling Reference\Modules\Generators\Energy_storage.md` - l.161 - :
-- `3.0 - Modeling Reference\Modules\Generators\Solar.md` - l.33 - Description | 69.8 [degF]
-- `3.0 - Modeling Reference\Modules\Residential\ETP_closed_form_solution.md` - l.576 - :
-- `3.0 - Modeling Reference\Modules\Residential\ZIPload.md` - l.87 - : Document cycling, demand response and aggregate modes.
-- `3.0 - Modeling Reference\Modules\Residential\ZIPload.md` - l.211 - - Examples - Examples for cycling, demand response and aggregate modes.
-- `3.0 - Modeling Reference\Modules\Tape\1.0 - Tape.md` - l.26 - - Empty - Define gnuplot_path
-- `3.0 - Modeling Reference\Modules\Tape\2.0 - Player.md` - l.63 - The behavior of DST is not specified in transient mode, i.e., are timestamp in the localtime or standard time? (see ticket:563).
-- `3.0 - Modeling Reference\Modules\Tape\3.3 - Violation Recorder.md` - l.9 - :
+- `3.0 - Modeling Reference\Modules\Generators\Energy_storage.md` - l.157 - - Status - update with energy storage models status
+- `3.0 - Modeling Reference\Modules\Generators\Energy_storage.md` - l.161 - - Example - add example demonstrating energy storage model use case
 - `3.0 - Modeling Reference\Modules\Tape\5.0 - Collector.md` - l.12 - // other properties may not be documented
 - `3.0 - Modeling Reference\Other Features\Checkpoints.md` - l.5 - - Incomplete - Add in content from related checkpoint files
 - `3.0 - Modeling Reference\Other Features\CommandLineOptions.md` - l.72 - write your check code here
-- `3.0 - Modeling Reference\Other Features\Validate.md` - l.35 - - Redirect - pull in def for redirect). You can send all output to the console using `--redirect none command option`.
-- `3.0 - Modeling Reference\Other Features\Validate.md` - l.200 - : does not appear to do that.)
-- `3.0 - Modeling Reference\Other Features\Validate.md` - l.202 - : does not appear to do that.)
-- `3.0 - Modeling Reference\Other Features\Validate.md` - l.208 - : only checks syntax, does not check proper functionality).
 - `4.0 Developing Reference\4.7 - Release_Process.md` - l.2 - Update outline for release process section
 - `4.0 Developing Reference\4.7 - Release_Process.md` - l.4 - Write content for process section
 - `4.0 Developing Reference\4.0 - Feature Development\Checkpointing.md` - l.19 - detail what API calls
@@ -231,13 +213,18 @@ This report contains all TODO items found in Markdown files.
 
 
 ## Update
-- `2.0 - New Users\Tutorial\2.5.2 - GLM Models.md` - l.484 - Talk about GLMModifier or API here instead**:
 - `2.0 - New Users\Tutorial\2.5.6 - Distributed_Generation.md` - l.175 - the load following control mode currently only operates at unit power factor. A similar control mode for reactive load following is slated for 3.2 release in summer of 2015.
 - `3.0 - Modeling Reference\Modules\Generators\Inverters\Spec_sync_ctrl.md` - l.127 - Review flowchart for accuracy and update
 - `4.0 Developing Reference\4.3 - Software Architecture and Design\4.3.2 - Modules.md` - l.191 - The `test` function is relatively unused and was intended to support module tests.
 - `4.0 Developing Reference\4.3 - Software Architecture and Design\4.3.2 - Modules.md` - l.195 - The `stream` function will soon be required to support checkpoints.
 
 
+## Verify
+- `3.0 - Modeling Reference\Other Features\Validate.md` - l.200 - does not appear to do that.)
+- `3.0 - Modeling Reference\Other Features\Validate.md` - l.202 - does not appear to do that.)
+- `3.0 - Modeling Reference\Other Features\Validate.md` - l.208 - only checks syntax, does not check proper functionality).
+
+
 ---
 
-**Summary:** 155 TODO items found across 27 stages.
+**Summary:** 139 TODO items found across 28 stages.
