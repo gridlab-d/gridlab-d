@@ -1,0 +1,44 @@
+## Voltdump
+
+!!! warning
+    This page was automatically generated and requires review.
+
+This object allows the user to collect all of the voltages in the system into one *.csv file at a given run time. This can be used to determine the cause of convergence problems.Voltages are placed in the *.csv output file with format:
+
+node_name,  | voltA_real,  | voltA_imag,  | voltB_real,  | voltB_imag,  | voltC_real,  | voltC_imag,   
+---|---|---|---|---|---|---  
+**node_1**,  | 7200,  | 0,  | -3600,  | -6235.4,  | -3600,  | 6235.4   
+**node_2**,  | 2400,  | 0,  | -1200,  | -2078.5,  | -1200,  | 2078.5   
+
+### Voltdump Parameters
+
+#### Properties
+
+**voltdump** does not declare inherited parent classes.
+
+Input indicates properties you can set in models. Output marks properties produced or modified during simulation runtime.
+
+| Property Name | Type | Unit | Input | Output | Description |
+| --- | --- | --- | --- | --- | --- |
+| group | char32 | N/A |  | ✓ | Using the `group_id` feature, this allows only nodes with the matching `group_id` to be dumped into the output file. |
+| runtime | timestamp | N/A | ✓ | ✓ | Tells the object at what time to output the voltages of the system. Can be in either seconds from epoch (Unix time) or with a timestamp (&#x27;2006-01-01 00:00:00&#x27;). If not specified, the default is immediately after the first time step solution. |
+| filename | char256 | N/A | ✓ |  | Tells the object what file to print all information to. While a *.csv is not necessary, it is recommended as the formatted output is in *.csv format. |
+| file | char256 | N/A | ✓ |  | ⚠️ the file to dump the voltage data into |
+| runcount | int32 | N/A |  |  | The number of times the voltages have been dumped. |
+| mode | enumeration | N/A | ✓ | ✓ | Allows the user to choose between polar and rectangular coordinates when printing output. Valid choices are &lt;br/&gt; - `rect` rectangular coordinates &lt;br/&gt; - `polar` polar coordinates (default - in radians) Valid values: `RECT`, `POLAR`. |
+
+### Default Volt Dump
+
+The minimal amount of code to specify a **voltdump** object is 
+    
+    
+    object voltdump {
+           filename output_voltage.csv;
+           }
+    
+
+which will produce an output file of the given name in the format shown above, and will display the voltage of every node in the glm file. 
+
+### Volt Dump State of Development
+
+Volt Dump is considered a well developed, but unvalidated model. Additional features may be included as needed. 
