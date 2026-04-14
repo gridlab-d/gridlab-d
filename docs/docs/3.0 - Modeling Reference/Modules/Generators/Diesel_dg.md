@@ -78,6 +78,8 @@ By selecting `Exciter_Q_constant_mode` as true, the constant Q mode is selected.
 
 This table lists the properties related to diesel generator in PQ constant mode. Some parameters used by diesel_dg can be found in the diesel_dg documentation page. 
 
+##### Table 2 - diesel_dg property descriptions
+
 Property name | Type | Unit | Description   
 ---|---|---|---  
 **Gen_type** | enumeration | none | Defines type of diesel generator (INDUCTION  , SYNCHRONOUS, DYN_SYNCHRONOUS). <br/> Should choose DYN_SYNCHRONOUS for diesel generator in PQ constant mode.   
@@ -116,7 +118,7 @@ To run this case, please find in the autotest in GridLAB-D™ generator module.
 
 For **QSTS** mode, the follow properties are valid: 
 
-##### Table 2 - QSTS Parameters  
+##### Table 3 - QSTS Parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -137,7 +139,7 @@ Property  | Type  | Unit  | Description
 
 For transient mode-enabled simulations, the following variables are commonly available, or enable the specific controls detailed later: 
 
-##### Table 3 - Deltamode Base/Common Parameters  
+##### Table 4 - Deltamode Base/Common Parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -162,7 +164,7 @@ Property  | Type  | Unit  | Description
 **Exciter_type**  | enumeration  | N/A  | Selects the exciter/AVR control model applied to the diesel generator. Valid options are: <br/> -`NO_EXC` \- No exciter installed <br/> - `SEXS` \- Simplified Excitation System installed  
 **SEXS_mode**  | enumeration  | N/A  | Selects the mode of operation for the simple exciter model. Valid options are: <br/> - `CONSTANT_VOLTAGE` \- Maintains a voltage set point <br/> - `CONSTANT_Q` \- Maintains a desired reactive power set point <br/> - `Q_V_DROOP` \- Implements a Q-V droop functionality
   
-**General set-points/inputs for controls**  
+##### Table 5 - General set-points/inputs for controls
 
 Parameter | Type | Unit | Description
 -- | -- | -- | --
@@ -187,7 +189,7 @@ The underlying synchronous machine dynamics are modeled as a subtransient round-
 
 Parameters specific to the underlying machine model are: 
 
-##### Table 4 - Machine model parameters  
+##### Table 6 - Machine model parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -241,7 +243,7 @@ The **DEGOV1** governor represents a simple Woodward Diesel Governor model.
 
 Parameters specific to the **DEGOV1** model are: 
 
-##### Table 5 - **DEGOV1** model parameters  
+##### Table 7 - **DEGOV1** model parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -271,7 +273,7 @@ The `GAST` governor represents a simple
 
 Parameters specific to the GAST model are: 
 
-##### Table 6 - GAST model parameters  
+##### Table 8 - GAST model parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -296,7 +298,7 @@ The `GGOV1` governor models represent a combustion or combined cycle turbine gov
 
 Parameters specific to the GGOV1 model are: 
 
-##### Table 7 - GGOV1 model parameters  
+##### Table 9 - GGOV1 model parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -384,7 +386,7 @@ The `P_CONSTANT` governor model represents a governor to dispatch a desired real
 
 Parameters specific to the P_CONSTANT model are: 
 
-##### Table 8 - P_CONSTANT model parameters  
+##### Table 10 - P_CONSTANT model parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -421,7 +423,7 @@ Output voltage/reactive power on the **diesel_dg** object is controlled via a si
 
 Parameters specific to the SEXS model are: 
 
-##### Table 9 - SEXS model parameters  
+##### Table 11 - SEXS model parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -443,7 +445,7 @@ By default, the simple exciter is in `CONSTANT_VOLTAGE` operation mode, which re
 
 Parameters specific to the CONSTANT_VOLTAGE operation mode are: 
 
-##### Table 10 - CONSTANT_VOLTAGE mode parameters  
+##### Table 12 - CONSTANT_VOLTAGE mode parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -458,7 +460,7 @@ The `CONSTANT_Q` mode of operation allows the **diesel_dg** object to maintain a
 
 Parameters specific to the CONSTANT_Q operation mode are: 
 
-##### Table 11 - CONSTANT_Q mode parameters  
+##### Table 13 - CONSTANT_Q mode parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -472,7 +474,7 @@ The `Q_V_DROOP` mode of operation apply a droop curve to the voltage/reactive po
 
 Parameters specific to the Q_V_DROOP operation mode are: 
 
-##### Table 12 - Q_V_DROOP mode parameters  
+##### Table 14 - Q_V_DROOP mode parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -492,7 +494,7 @@ The exciter also supports an extension to all of the above operating modes, thou
 
 Parameters specific to the CVR operation mode are: 
 
-##### Table 13 - CVR mode parameters  
+##### Table 15 - CVR mode parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -526,7 +528,7 @@ The **diesel_dg** model has some very simple fuel, emissions, and "frequency met
 
 Parameters specific to the fuel emissions capabilities are: 
 
-##### Table 14 - Fuel emissions calculations parameters  
+##### Table 16 - Fuel emissions calculations parameters  
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  

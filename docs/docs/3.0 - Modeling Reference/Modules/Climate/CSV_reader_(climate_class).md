@@ -47,9 +47,10 @@ Property | Description
 **city_name** | The name of the city the weather data is associated with. 
 **state_name** | The name of the state that the city is in for the associated weather data. **lat_deg** | The whole degree latitude for the location that this weather data was recorded. North values are positive, south values are negative. 
 **lat_min** | The sub-degree minutes of latitude for the location that this weather data was recorded. 
-**ong_deg** | The whole degree longitude for the location that this weather data was recorded. West values are negative, east values are positive. 
+**long_deg** | The whole degree longitude for the location that this weather data was recorded. West values are negative, east values are positive. 
 **long_min** | The sub-degree minutes of longitude for the location that this weather data was recorded. 
 **high_temp** | The highest observed temperature in the data set. 
+**low_temp** | The lowest observed temperature in the data set. 
 **peak_solar** | The highest observed solar input recorded in the data set. 
 **status** | The current state of the weather reader. 
 **INIT** | The file has not been opened and no data has been read. 
