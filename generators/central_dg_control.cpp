@@ -407,7 +407,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	
 	P_gen_solar[0] = P_gen_solar[1] = P_gen_solar[2] = P_gen_solar_3p = 0.0;
-	Q_gen_solar[0] = Q_gen_solar[1] = Q_gen_solar[2] = Q_gen_solar_3p =0.0;
+	Q_gen_solar[0] = Q_gen_solar[1] = Q_gen_solar[2] = Q_gen_solar_3p = 0.0;
 	//Calculate solar inverter power output for this time step.
 	//This will be either after the first iteration where no control was present
 	//or after one iteration has run.

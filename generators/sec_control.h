@@ -135,10 +135,6 @@ public:
 	SEC_CNTRL_STATE next_state; // next state variables
 
 	/* utility functions */
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
-	gld_property *map_enum_value(OBJECT *obj, const char *name);
-
 	gld::complex get_complex_value(OBJECT *obj, const char *name);
 	double get_double_value(OBJECT *obj, const char *name);
 	enumeration get_enum_value(OBJECT *obj, const char *name);
@@ -174,6 +170,8 @@ public:
 
 	int create(void);
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 	// TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	// TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);

@@ -153,24 +153,23 @@ windturb_dg::windturb_dg(MODULE *module)
 
 								PT_double, "internal_model_current_convergence[pu]", PADDR(internal_model_current_convergence), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Convergence value for internal current calculations",
 
-								PT_complex, "Vapu", PADDR(Vapu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Vapu",
-								PT_complex, "Vbpu", PADDR(Vbpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Vbpu",
-								PT_complex, "Vcpu", PADDR(Vcpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Vcpu",
-								PT_complex, "Iapu", PADDR(Iapu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Iapu",
-								PT_complex, "Ibpu", PADDR(Ibpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Ibpu",
-								PT_complex, "Icpu", PADDR(Icpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Icpu",
-								PT_complex, "value_Circuit_V_A", PADDR(value_Circuit_V[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for voltage values - element 0",
-								PT_complex, "value_Circuit_V_B", PADDR(value_Circuit_V[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for voltage values - element 1",
-								PT_complex, "value_Circuit_V_C", PADDR(value_Circuit_V[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for voltage values - element 2",
-								PT_complex, "value_Line_I_A", PADDR(value_Line_I[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for current values - element 0",
-								PT_complex, "value_Line_I_B", PADDR(value_Line_I[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for current values - element 1",
-								PT_complex, "value_Line_I_C", PADDR(value_Line_I[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for current values - element 2",
-								PT_complex, "value_Line12", PADDR(value_Line12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for line current 12 in triplex metering",
-								PT_complex, "prev_current_A", PADDR(prev_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current[0]",
-								PT_complex, "prev_current_B", PADDR(prev_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current[1]",
-								PT_complex, "prev_current_C", PADDR(prev_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current[2]",
-								PT_bool, "NR_first_run", PADDR(NR_first_run), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for NR_first_run",
-								PT_complex, "prev_current12", PADDR(prev_current12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current12",
+								PT_double, "q", PADDR(q), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_double, "Max_P[kW]", PADDR(Max_P), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+//								PT_double, "Min_P[kW]", PADDR(Min_P), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_double, "Max_Q[kVAr]", PADDR(Max_Q), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+//								PT_double, "Min_Q[kVAr]", PADDR(Min_Q), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "value_Circuit_V_A[V]", PADDR(value_Circuit_V[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "value_Circuit_V_B[V]", PADDR(value_Circuit_V[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "value_Circuit_V_C[V]", PADDR(value_Circuit_V[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "value_Line_I_A[V]", PADDR(value_Line_I[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "value_Line_I_B[V]", PADDR(value_Line_I[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "value_Line_I_C[V]", PADDR(value_Line_I[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "value_Line12[V]", PADDR(value_Line12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "prev_current_A[A]", PADDR(prev_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "prev_current_B[A]", PADDR(prev_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "prev_current_C[A]", PADDR(prev_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_bool, "NR_first_run", PADDR(NR_first_run), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_complex, "prev_current12[A]", PADDR(prev_current12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
 
 								PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently triplex mode is only supported for power curve implementation",
 								PT_KEYWORD, "A", (gld::set)PHASE_A,
@@ -199,7 +198,6 @@ int windturb_dg::create(void)
 	Min_Ef = 0.8;
 	avg_ws = 8;				// This is wind speed in m/s at reference height (ref_height=10m)
 	wind_speed_hub_ht = 10; // This is wind speed at 37 m hub height
-	time_advance = 3600;	// amount of time to advance for WS data import in secs.
 
 	/* set the default values of all properties here */
 	Ridealgas = 8.31447;
@@ -264,78 +262,7 @@ int windturb_dg::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
-/* Checks for climate object and maps the climate variables to the windturb object variables.
-If no climate object is linked, then default pressure, temperature, and wind speed will be used. */
-int windturb_dg::init_climate()
-{
-	OBJECT *hdr = object_header(this);
-
-	// link to climate data
-	FINDLIST *climates = nullptr;
-
-	climates = gl_find_objects(FL_NEW, FT_CLASS, SAME, "climate", FT_END);
-	if (climates == nullptr)
-	{
-		// Flag as not found
-		climate_is_valid = false;
-
-		gl_warning("windturb_dg (id:%d)::init_climate(): no climate data found, using static data", hdr->id);
-
-		// default to mock data
-		value_WS = avg_ws;
-		value_Press = std_air_press;
-		value_Temp = std_air_temp;
-	}
-	else if (climates->hit_count > 1)
-	{
-		gl_verbose("windturb_dg: %d climates found, using first one defined", climates->hit_count);
-	}
-	// }
-	if (climates != nullptr)
-	{
-		if (climates->hit_count == 0)
-		{
-			// Flag as false
-			climate_is_valid = false;
-
-			// default to mock data
-			gl_warning("windturb_dg (id:%d)::init_climate(): no climate data found, using static data", hdr->id);
-
-			// default to mock data
-			value_WS = avg_ws;
-			value_Press = std_air_press;
-			value_Temp = std_air_temp;
-		}
-		else // climate data was found
-		{
-			// force rank of object w.r.t climate
-			OBJECT *obj = gl_find_next(climates, nullptr);
-			if (obj->rank <= hdr->rank)
-				gl_set_dependent(obj, hdr);
-
-			pWS = map_double_value(obj, "wind_speed");
-			pPress = map_double_value(obj, "pressure");
-			pTemp = map_double_value(obj, "temperature");
-
-			// Flag properly
-			climate_is_valid = true;
-		}
-	}
-	if (Wind_speed_source == DEFAULT)
-	{
-		if (climate_is_valid)
-		{
-			Wind_speed_source = CLIMATE_DATA;
-		}
-		else
-		{
-			Wind_speed_source = BUILT_IN;
-		}
-	}
-	return 1;
-}
-
-int windturb_dg::init(OBJECT *parent)
+int windturb_dg::shared_init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
 	double temp_double_value;
@@ -343,10 +270,20 @@ int windturb_dg::init(OBJECT *parent)
 	enumeration temp_enum;
 	gld::set temp_phases_set;
 	int temp_phases = 0;
-
 	double ZB = 0, SB = 0, EB = 0;
 	gld::complex tst, tst2, tst3, tst4;
 
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			gl_verbose("windturb_dg::init(): deferring initialization on %s", obj->id, (obj->name ? obj->name : "Unnamed"));
+			return 2; // defer
+		}
+	}
+
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
 	switch (Turbine_Model)
 	{
 	case GENERIC_IND_LARGE:
@@ -855,8 +792,7 @@ int windturb_dg::init(OBJECT *parent)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
 		{
-			char objname[256];
-			gl_verbose("windturb_dg::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			gl_verbose("windturb_dg::init(): deferring initialization on %s", obj->id, (obj->name ? obj->name : "Unnamed"));
 			return 2; // defer
 		}
 		if (gl_object_isa(parent, "meter", "powerflow")) // Attach to meter
@@ -1285,6 +1221,93 @@ int windturb_dg::init(OBJECT *parent)
 
 		return 0;
 	}
+
+	return 1;
+}
+
+int windturb_dg::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
+/* Checks for climate object and maps the climate variables to the windturb object variables.
+If no climate object is linked, then default pressure, temperature, and wind speed will be used. */
+int windturb_dg::init_climate()
+{
+	OBJECT *hdr = object_header(this);
+
+	// link to climate data
+	FINDLIST *climates = nullptr;
+
+	climates = gl_find_objects(FL_NEW, FT_CLASS, SAME, "climate", FT_END);
+	if (climates == nullptr)
+	{
+		// Flag as not found
+		climate_is_valid = false;
+
+		gl_warning("windturb_dg (id:%d)::init_climate(): no climate data found, using static data", hdr->id);
+
+		// default to mock data
+		value_WS = avg_ws;
+		value_Press = std_air_press;
+		value_Temp = std_air_temp;
+	}
+	else if (climates->hit_count > 1)
+	{
+		gl_verbose("windturb_dg: %d climates found, using first one defined", climates->hit_count);
+	}
+	// }
+	if (climates != nullptr)
+	{
+		if (climates->hit_count == 0)
+		{
+			// Flag as false
+			climate_is_valid = false;
+
+			// default to mock data
+			gl_warning("windturb_dg (id:%d)::init_climate(): no climate data found, using static data", hdr->id);
+
+			// default to mock data
+			value_WS = avg_ws;
+			value_Press = std_air_press;
+			value_Temp = std_air_temp;
+		}
+		else // climate data was found
+		{
+			// force rank of object w.r.t climate
+			OBJECT *obj = gl_find_next(climates, nullptr);
+			if (obj->rank <= hdr->rank)
+				gl_set_dependent(obj, hdr);
+
+			pWS = map_double_value(obj, "wind_speed");
+			pPress = map_double_value(obj, "pressure");
+			pTemp = map_double_value(obj, "temperature");
+
+			// Flag properly
+			climate_is_valid = true;
+		}
+	}
+	if (Wind_speed_source == DEFAULT)
+	{
+		if (climate_is_valid)
+		{
+			Wind_speed_source = CLIMATE_DATA;
+		}
+		else
+		{
+			Wind_speed_source = BUILT_IN;
+		}
+	}
+	return 1;
+}
+
+int windturb_dg::init(OBJECT *parent)
+{
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	return 1;
 }
@@ -2069,52 +2092,6 @@ void windturb_dg::compute_power_injection_pc(void)
 	}
 }
 
-// Map Complex value
-gld_property *windturb_dg::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_complex())
-	{
-		GL_THROW("windturb_dg:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in windturb_dg.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
-// Map double value
-gld_property *windturb_dg::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_double())
-	{
-		GL_THROW("windturb_dg:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in windturb_dg.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
 // Function to push up all changes of complex properties to powerflow from local variables
 void windturb_dg::push_complex_powerflow_values(void)
 {
@@ -2287,6 +2264,12 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(windturb_dg);
+}
+
+EXPORT int checkpoint_init_windturb_dg(OBJECT *obj)
+{
+	windturb_dg *my = object_data<windturb_dg>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

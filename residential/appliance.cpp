@@ -45,7 +45,7 @@ int appliance::create()
 
 int appliance::shared_init(OBJECT *parent)
 {
-	// These variables need intialized every time regardless of checkpoint load
+	// These variables need initialized every time regardless of checkpoint load
 	// Non-published variables (not loaded from checkpoint) must be initialized here
 	transition_probabilities = nullptr;
 	n_states = 0;

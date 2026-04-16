@@ -106,8 +106,6 @@ public:
 	double ref_height;
 	double Cp;
 
-	int64 time_advance;
-
 	double avg_ws;				//Default value for wind speed
 	double cut_in_ws;			//Values are used to find GENERIC Cp
 	double cut_out_ws;			// |
@@ -179,6 +177,8 @@ public:
 	windturb_dg(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 	int init_climate(void);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
@@ -189,8 +189,6 @@ public:
 	void compute_power_injection_pc(void);
 	STATUS updateCurrInjection(int64 iteration_count, bool *converged_failure);
 
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void push_complex_powerflow_values(void);
 	void push_complex_power_values(gld::complex inv_P);
 	

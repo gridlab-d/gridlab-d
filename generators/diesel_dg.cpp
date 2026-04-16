@@ -369,9 +369,6 @@ diesel_dg::diesel_dg(MODULE *module)
 								PT_double, "real_power_generation[W]", PADDR(real_power_gen), PT_DESCRIPTION, "The total real power generation",
 								PT_double, "reactive_power_generation[VAr]", PADDR(imag_power_gen), PT_DESCRIPTION, "The total reactive power generation",
 
-								PT_timestamp, "last_time", PADDR(last_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_time",
-								PT_double, "pwr_electric_init", PADDR(pwr_electric_init), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pwr_electric_init",
-
 								//-- This hides from modehelp -- PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
@@ -678,13 +675,11 @@ int diesel_dg::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
-/* Object initialization is called once after all object have been created */
-int diesel_dg::init(OBJECT *parent)
+int diesel_dg::shared_init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
-
 	int temp_idx_x, temp_idx_y;
 	double ZB, SB, EB;
 	double test_pf;
@@ -701,6 +696,17 @@ int diesel_dg::init(OBJECT *parent)
 	gld::set temp_phases;
 	bool childed_connection = false;
 	STATUS fxn_return_status;
+
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			gl_verbose("diesel_dg::init(): deferring initialization on %s", obj->id, (obj->name ? obj->name : "Unnamed"));
+			return 2; // defer
+		}
+	}
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
 
 	// See if the global flag is set - if so, add the object flag
 	if (all_generator_delta)
@@ -1680,6 +1686,13 @@ int diesel_dg::init(OBJECT *parent)
 		}
 		Kd2 = 1;
 	}
+	return 1;
+}
+
+int diesel_dg::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
 
 	// Initialize fuel usage function based on Rated_VA value
 	/* For 1000 kVA generator, the fuel usage equation is:
@@ -1688,15 +1701,29 @@ int diesel_dg::init(OBJECT *parent)
 	 */
 	dg_1000_a = 0.067;
 	dg_1000_b = 5.2435 / 1000 * (Rated_VA / 1000);
+	pdispatch_sync();
+	return rv;
+}
 
+/* Object initialization is called once after all object have been created */
+int diesel_dg::init(OBJECT *parent)
+{
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
+	// Initialize fuel usage function based on Rated_VA value
+	/* For 1000 kVA generator, the fuel usage equation is:
+	 % x = load (kVA), y = fuel (gallon)
+	 % y = 0.067x + 5.2435
+	 */
+	dg_1000_a = 0.067;
+	dg_1000_b = 5.2435 / 1000 * (Rated_VA / 1000);
 	// Update wref to w_ref, if necessary
 	if (gen_base_set_vals.w_ref > 0.0) // Effectively not -99
 	{
 		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
 	}
-
 	pdispatch_sync();
-
 	return 1;
 } // init ends here
 
@@ -2126,52 +2153,6 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
-}
-
-// Map Complex value
-gld_property *diesel_dg::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_complex())
-	{
-		GL_THROW("diesel_dg:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in diesel_dg.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
-// Map double value
-gld_property *diesel_dg::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_double())
-	{
-		GL_THROW("diesel_dg:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in diesel_dg.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
 }
 
 // Function to pull the various powerflow gld_property values into their storage arrays
@@ -5134,6 +5115,12 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(diesel_dg);
+}
+
+EXPORT int checkpoint_init_diesel_dg(OBJECT *obj)
+{
+	diesel_dg *my = object_data<diesel_dg>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

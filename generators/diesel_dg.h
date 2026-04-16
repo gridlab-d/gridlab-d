@@ -450,6 +450,8 @@ public:
 	void check_power_output();
 	int create(void);
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
@@ -471,8 +473,6 @@ public:
 	
 	friend class controller_dg;
 
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void pull_powerflow_values(void);
 	void push_powerflow_values(bool update_voltage);
 	void reset_powerflow_accumulators(void);

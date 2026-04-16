@@ -64,15 +64,6 @@ sec_control::sec_control(MODULE *module)
 								PT_double, "xi[MW]", PADDR(curr_state.xi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID integrator output",
 								PT_double, "PIDout[MW]", PADDR(curr_state.PIDout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID output",
 								PT_double, "dP[MW]", PADDR(curr_state.dP), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Delta P signal [MW]",
-								// Next state variables
-								PT_double, "next_state.perr(t)[MW]", PADDR(next_state.perr[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.perr[0]",
-								PT_double, "next_state.perr(t-1)[MW]", PADDR(next_state.perr[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.perr[1]",
-								PT_double, "next_state.uniterr[MW]", PADDR(next_state.uniterr), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.uniterr",
-								PT_double, "next_state.deltaf[Hz]", PADDR(next_state.deltaf), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.deltaf",
-								PT_double, "next_state.dxi[MW]", PADDR(next_state.dxi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.dxi",
-								PT_double, "next_state.xi[MW]", PADDR(next_state.xi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.xi",
-								PT_double, "next_state.PIDout[MW]", PADDR(next_state.PIDout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.PIDout",
-								PT_double, "next_state.dP[MW]", PADDR(next_state.dP), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.dP",
 								NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -132,22 +123,21 @@ int sec_control::create(void)
 	return 1;					   /* return 1 on success, 0 on failure */
 }
 
-/* Object initialization is called once after all object have been created */
-int sec_control::init(OBJECT *parent)
+int sec_control::shared_init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
 	STATUS fxn_return_status;
 
-	// Deferred initialization code
-	if (parent != NULL)
+	if (parent != nullptr)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
 		{
-			char objname[256];
-			gl_verbose("sec_control::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			gl_verbose("sec_control::init(): deferring initialization on %s", obj->id, (obj->name ? obj->name : "Unnamed"));
 			return 2; // defer
 		}
 	}
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
 
 	// Map up the frequency pointer
 	pFrequency = new gld_property(parent, "measured_frequency");
@@ -222,8 +212,6 @@ int sec_control::init(OBJECT *parent)
 	// Similarly for dp_dn_default and dp_up_default, we'd like to pick those on an object by object basis, e.g. rating
 	init_check(Tlp_default, -1.0, 0); // zero indicates that it will be ignored
 	init_check(f0, -1.0, 60);
-	init_check(underfrequency_limit, -1.0, 57.0);
-	init_check(overfrequency_limit, -1.0, 62.0);
 	init_check(frequency_delta_default, -1.0, 2.0);
 	init_check(deadband, -1.0, 0.2);	 // 200mHz deadband
 	init_check(tieline_tol, -1.0, 0.05); // 5% tie-line error
@@ -233,8 +221,29 @@ int sec_control::init(OBJECT *parent)
 	init_check(kiPID, -1.0, 0.0167); // pu/sec default is 1/(60 sec)
 	init_check(kdPID, -1.0, 0);
 
-	parse_praticipant_input(participant_input); // parse the participating objects
 
+	return 1;
+}
+
+int sec_control::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+
+	parse_praticipant_input(participant_input); // parse the participating objects
+	return rv;
+}
+
+/* Object initialization is called once after all object have been created */
+int sec_control::init(OBJECT *parent)
+{
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
+	init_check(underfrequency_limit, -1.0, 57.0);
+	init_check(overfrequency_limit, -1.0, 62.0);
+	parse_praticipant_input(participant_input); // parse the participating objects
 	return 1;
 }
 
@@ -767,29 +776,6 @@ STATUS sec_control::post_deltaupdate(gld::complex *useful_value, unsigned int mo
 	return SUCCESS; // Always succeeds right now
 }
 
-// Map Complex value
-gld_property *sec_control::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
-	{
-		GL_THROW("sec_control:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in the secondary controller.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
 gld::complex sec_control::get_complex_value(OBJECT *obj, const char *name)
 {
 	gld::complex val;
@@ -797,29 +783,6 @@ gld::complex sec_control::get_complex_value(OBJECT *obj, const char *name)
 	val = ptr->get_complex();
 	delete ptr;
 	return val;
-}
-
-// Map double value
-gld_property *sec_control::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
-	{
-		GL_THROW("sec_control:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in the secondary controller.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
 }
 
 // Get gld_property double value
@@ -831,29 +794,6 @@ double sec_control::get_double_value(OBJECT *obj, const char *name)
 	val = ptr->get_double();
 	delete ptr;
 	return val;
-}
-
-// Map enumeration value
-gld_property *sec_control::map_enum_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Check it
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_enumeration() != true))
-	{
-		GL_THROW("sec_control:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in the secondary controller.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
 }
 
 // Get an enumberation value
@@ -1242,6 +1182,12 @@ EXPORT int init_sec_control(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(sec_control);
+}
+
+EXPORT int checkpoint_init_sec_control(OBJECT *obj)
+{
+	sec_control *my = object_data<sec_control>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

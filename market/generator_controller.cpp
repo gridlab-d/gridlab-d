@@ -227,7 +227,7 @@ int generator_controller::init(OBJECT *parent)
 		if ((parent->flags & OF_INIT) != OF_INIT)
 		{
 			char objname[256];
-			gl_verbose("generator_controller::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			gl_verbose("generator_controller::init(): deferring initialization on %s", obj->id, (obj->name ? obj->name : "Unnamed"));
 			return 2; // defer
 		}
 		// Now mask it in

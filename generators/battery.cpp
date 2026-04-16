@@ -133,27 +133,10 @@ battery::battery(MODULE *module)
 								PT_double, "battery_load[W]", PADDR(bat_load), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the current power output of the battery.",
 								PT_double, "reserve_state_of_charge[pu]", PADDR(b_soc_reserve), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the reserve state of charge the battery can reach.",
 
-								PT_int64, "state_change_time_delta", PADDR(state_change_time_delta), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for state_change_time_delta",
-								PT_double, "margin", PADDR(margin), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for margin",
-								PT_double, "E_Next", PADDR(E_Next), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for E_Next",
-								PT_bool, "recalculate", PADDR(recalculate), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for recalculate",
-								PT_timestamp, "prev_time", PADDR(prev_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_time",
-								PT_int32, "first_time_step", PADDR(first_time_step), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first_time_step",
-								PT_int32, "prev_state", PADDR(prev_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: 1 is charging, 0 is nothing, -1 is discharging",
-								PT_double, "internal_battery_load", PADDR(internal_battery_load), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: the power out of the battery on the source side of the internal resistance",
-								PT_complex, "value_Circuit_V_A", PADDR(value_Circuit_V[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Circuit_V[0]",
-								PT_complex, "value_Circuit_V_B", PADDR(value_Circuit_V[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Circuit_V[1]",
-								PT_complex, "value_Circuit_V_C", PADDR(value_Circuit_V[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Circuit_V[2]",
-								PT_complex, "value_Line_I_A", PADDR(value_Line_I[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line_I[0]",
-								PT_complex, "value_Line_I_B", PADDR(value_Line_I[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line_I[1]",
-								PT_complex, "value_Line_I_C", PADDR(value_Line_I[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line_I[2]",
-								PT_complex, "value_Line12", PADDR(value_Line12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line12",
-								PT_double, "value_Tout", PADDR(value_Tout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Tout",
-								PT_bool, "parent_is_meter", PADDR(parent_is_meter), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_meter",
-								PT_bool, "parent_is_triplex", PADDR(parent_is_triplex), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_triplex",
-								PT_bool, "parent_is_inverter", PADDR(parent_is_inverter), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_inverter",
-								PT_bool, "climate_object_found", PADDR(climate_object_found), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for climate_object_found",
-
+								PT_double, "E_Next", PADDR(E_Next), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_bool, "recalculate", PADDR(recalculate), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_timestamp, "prev_time", PADDR(prev_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_double, "internal_battery_load", PADDR(internal_battery_load), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 		defaults = this;
@@ -238,12 +221,10 @@ int battery::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
-/* Object initialization is called once after all object have been created */
-int battery::init(OBJECT *parent)
+int battery::shared_init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
 	gld_property *temp_property_pointer;
-	double temp_value_SocReserve;
 	enumeration temp_value_control_mode;
 	STATUS fxn_return_status;
 
@@ -251,11 +232,12 @@ int battery::init(OBJECT *parent)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
 		{
-			char objname[256];
-			gl_verbose("battery::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			gl_verbose("battery::init(): deferring initialization on %s", obj->id, (obj->name ? obj->name : "Unnamed"));
 			return 2; // defer
 		}
 	}
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
 
 	// See if the global flag is set - if so, add the object flag
 	if (all_generator_delta)
@@ -619,16 +601,6 @@ int battery::init(OBJECT *parent)
 		if (power_set_high <= power_set_low && (gen_mode_v == GM_POWER_DRIVEN || gen_mode_v == GM_POWER_VOLTAGE_HYBRID))
 			gl_warning("power_set_high is less than power_set_low -- oscillations will most likely occur");
 
-		if (Energy < 0)
-		{
-			gl_warning("Initial Energy was not set, or set to a negative number.  Randomizing initial value.");
-			Energy = gl_random_normal(RNGSTATE, E_Max / 2, E_Max / 20);
-		}
-
-		recalculate = true;
-		power_transferred = 0;
-
-		first_time_step = 0;
 	}
 	else // Use the internal battery model
 	{
@@ -742,26 +714,63 @@ int battery::init(OBJECT *parent)
 
 		// Delete the property pointer
 		delete temp_property_pointer;
+		// Enable battery delta mode flag if its parent control mode is FQM_CONSTANT_PQ
+		if ((temp_value_control_mode == 1) || (temp_value_control_mode == 9))
+		{
+			enableDelta = true;
+		}
+    }
+	return 1;
+}
 
+int battery::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+
+	if (!use_internal_battery_model)
+	{
+    	first_time_step = 1;
+    }
+	else // Use the internal battery model
+	{
+	}
+
+	return rv;
+}
+
+/* Object initialization is called once after all object have been created */
+int battery::init(OBJECT *parent)
+{
+	OBJECT *obj = object_header(this);
+	double temp_value_SocReserve;
+
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
+	if (!use_internal_battery_model)
+	{
+		if (Energy < 0)
+		{
+			gl_warning("Initial Energy was not set, or set to a negative number.  Randomizing initial value.");
+			Energy = gl_random_normal(RNGSTATE, E_Max / 2, E_Max / 20);
+		}
+
+		recalculate = true;
+		power_transferred = 0;
+		first_time_step = 0;
+    }
+	else // Use the internal battery model
+	{
 		// Fetch the initial value of SocReserve for testing
 		temp_value_SocReserve = pSocReserve->get_double();
+		b_soc_reserve = temp_value_SocReserve;
 
-		if (temp_value_SocReserve == 0)
-		{
-			b_soc_reserve = 0;
-		}
-		else
-		{
-			b_soc_reserve = temp_value_SocReserve;
-		}
 		if (battery_state == BS_EMPTY && soc != b_soc_reserve)
-		{
 			soc = b_soc_reserve;
-		}
 		if (battery_state == BS_FULL && soc != 1)
-		{
 			soc = 1;
-		}
 		if (soc < 0)
 		{
 			gl_warning("no initial state of charge given -- using default value (battery: %s)", obj->name);
@@ -774,14 +783,7 @@ int battery::init(OBJECT *parent)
 			soc = 1;
 			battery_state = BS_FULL;
 		}
-
-		// Enable battery delta mode flag if its parent control mode is FQM_CONSTANT_PQ
-		if ((temp_value_control_mode == 1) || (temp_value_control_mode == 9))
-		{
-			enableDelta = true;
-		}
 	}
-
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -2267,52 +2269,6 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 }
 
-// Map Complex value
-gld_property *battery::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_complex())
-	{
-		GL_THROW("battery:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in battery.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
-// Map double value
-gld_property *battery::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	// Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	// Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_double())
-	{
-		GL_THROW("battery:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in battery.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	// return the pointer
-	return pQuantity;
-}
-
 // Function to resynch the various current accumulators
 // Unlike other objects, meter checks are inside (mostly for copy-paste laziness above)
 void battery::push_powerflow_currents(void)
@@ -2461,7 +2417,6 @@ void battery::update_soc(unsigned int64 delta_time)
 			}
 		}
 	}
-
 	// Push the SOC up
 	pSoc->setp<double>(soc, test_rlock);
 }
@@ -2596,6 +2551,12 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(battery);
+}
+
+EXPORT int checkpoint_init_battery(OBJECT *obj)
+{
+	battery *my = object_data<battery>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

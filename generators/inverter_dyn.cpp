@@ -546,8 +546,7 @@ int inverter_dyn::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
-/* Object initialization is called once after all object have been created */
-int inverter_dyn::init(OBJECT *parent)
+int inverter_dyn::shared_init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
 	double temp_volt_mag;
@@ -567,17 +566,16 @@ int inverter_dyn::init(OBJECT *parent)
 	bool childed_connection = false;
 	STATUS fxn_return_status;
 
-	//Deferred initialization code
 	if (parent != nullptr)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
 		{
-			char objname[256];
-			gl_verbose("inverter_dyn::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			gl_verbose("inverter_dyn::init(): deferring initialization on %s", obj->id, (obj->name ? obj->name : "Unnamed"));
 			return 2; // defer
 		}
 	}
-
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
 	// Data sanity check
 	if (S_base <= 0)
 	{
@@ -1415,6 +1413,34 @@ int inverter_dyn::init(OBJECT *parent)
 
 	//Other initialization variables
 	inverter_start_time = gl_globalclock;
+	//Init tracking variables
+	prev_timestamp_dbl = (double)gl_globalclock;
+	prev_time_dbl_IEEE1547 = prev_timestamp_dbl;	//Just init it, regardless of if 1547 is enabled or not
+
+	return 1;
+}
+
+int inverter_dyn::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+
+	VA_Out = gld::complex(Pref, Qref);
+	Idc_base = S_base / Vdc_base;
+
+	pdispatch_sync(); //sync up pdispatch and reference point settings
+
+	return rv;
+}
+
+/* Object initialization is called once after all object have been created */
+int inverter_dyn::init(OBJECT *parent)
+{
+	OBJECT *obj = object_header(this);
+
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
 
 	//Initalize w_ref, if needed
 	if (w_ref < 0.0)
@@ -1475,10 +1501,6 @@ int inverter_dyn::init(OBJECT *parent)
 		power_val[1] = VA_Out / 3.0;
 		power_val[2] = VA_Out / 3.0;
 	}
-
-	//Init tracking variables
-	prev_timestamp_dbl = (double)gl_globalclock;
-	prev_time_dbl_IEEE1547 = prev_timestamp_dbl;	//Just init it, regardless of if 1547 is enabled or not
 
 	// Link P_f_droop to mp
 	if (P_f_droop != -100)
@@ -5487,52 +5509,6 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 // 	return SUCCESS; //Always succeeds right now
 // }
 
-//Map Complex value
-gld_property *inverter_dyn::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	//Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	//Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_complex())
-	{
-		GL_THROW("inverter_dyn:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in inverter.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	//return the pointer
-	return pQuantity;
-}
-
-//Map double value
-gld_property *inverter_dyn::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	//Map to the property of interest
-	pQuantity = new gld_property(obj, name);
-
-	//Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_double())
-	{
-		GL_THROW("inverter_dyn:%d %s - Unable to map property %s from object:%d %s", objhdr->id, (objhdr->name ? objhdr->name : "Unnamed"), name, obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in inverter.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	//return the pointer
-	return pQuantity;
-}
-
 //Function to pull all the complex properties from powerflow into local variables
 void inverter_dyn::pull_complex_powerflow_values(void)
 {
@@ -7111,6 +7087,12 @@ EXPORT int init_inverter_dyn(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(inverter_dyn);
+}
+
+EXPORT int checkpoint_init_inverter_dyn(OBJECT *obj)
+{
+	inverter_dyn *my = object_data<inverter_dyn>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_inverter_dyn(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

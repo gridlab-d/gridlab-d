@@ -168,7 +168,7 @@ int dryer::shared_init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	// These variables need intialized every time regardless of checkpoint load
+	// These variables need initialized every time regardless of checkpoint load
 	// Non-published variables (not loaded from checkpoint) must be initialized here
 	last_t = 0;
 	return 1;

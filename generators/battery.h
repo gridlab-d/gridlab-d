@@ -199,6 +199,8 @@ public:
 	battery(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 	//double timestamp_to_hours(TIMESTAMP t);
 	TIMESTAMP rfb_event_time(TIMESTAMP t0, gld::complex power, double e);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
@@ -214,8 +216,6 @@ public:
 	double calculate_efficiency(gld::complex voltage, gld::complex current);
 	gld::complex calculate_v_terminal(gld::complex v, gld::complex i);
 
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
 public:
 	static CLASS *oclass;
 	static battery *defaults;

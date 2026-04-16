@@ -40,24 +40,10 @@ controller_dg::controller_dg(MODULE *mod)
 			PT_double,"kp_QV", PADDR(kp_QV), PT_DESCRIPTION, "parameter of the integral control for secondary voltage control",
 			PT_double,"gain_QV", PADDR(gain_QV), PT_DESCRIPTION, "Gain of the controller for secondary voltage control",
 
-			PT_bool, "first_run", PADDR(first_run), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first_run",
-			PT_bool, "flag_switchOn", PADDR(flag_switchOn), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for flag_switchOn",
-			PT_int64, "controlTime", PADDR(controlTime), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for controlTime",
-			PT_double, "predictor_vals.w_measured", PADDR(predictor_vals.w_measured), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.w_measured",
-								PT_double, "predictor_vals.x", PADDR(predictor_vals.x), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Predictor pass values of variables - x",
-								PT_double, "predictor_vals.Pref_ctrl", PADDR(predictor_vals.Pref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Predictor pass values of variables - Pref_ctrl",
-			PT_double, "predictor_vals.wref_ctrl", PADDR(predictor_vals.wref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.wref_ctrl",
-			PT_double, "predictor_vals.Vset_ref", PADDR(predictor_vals.Vset_ref), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.Vset_ref",
-			PT_double, "predictor_vals.x_QV", PADDR(predictor_vals.x_QV), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.x_QV",
-								PT_double, "predictor_vals.Vset_ctrl", PADDR(predictor_vals.Vset_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Predictor pass values of variables - Vset_ctrl",
-			PT_double, "corrector_vals.w_measured", PADDR(corrector_vals.w_measured), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.w_measured",
-								PT_double, "corrector_vals.x", PADDR(corrector_vals.x), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Corrector pass values of variables - x",
-			PT_double, "corrector_vals.Pref_ctrl", PADDR(corrector_vals.Pref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Corrector pass values of variables - Pref_ctrl",
-			PT_double, "corrector_vals.wref_ctrl", PADDR(corrector_vals.wref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.wref_ctrl",
-			PT_double, "corrector_vals.Vset_ref", PADDR(corrector_vals.Vset_ref), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.Vset_ref",
-			PT_double, "corrector_vals.x_QV", PADDR(corrector_vals.x_QV), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.x_QV",
-			PT_double, "corrector_vals.Vset_ctrl", PADDR(corrector_vals.Vset_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Corrector pass values of variables - Vset_ctrl",
-			// Note: prev_Pref_val and prev_Vset_val are dynamically allocated pointer arrays and cannot be published directly
+            PT_bool, "first_run", PADDR(first_run), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+            PT_bool, "flag_switchOn", PADDR(flag_switchOn), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+//			PT_int64, "controlTime", PADDR(controlTime), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;
@@ -92,7 +78,6 @@ int controller_dg::create(void)
 
 	first_run = true;
 	flag_switchOn = false;
-
 	controlTime = 0;
 
 	pDG = nullptr;
@@ -103,14 +88,23 @@ int controller_dg::create(void)
 	return 1;
 }
 
-/* Object initialization is called once after all object have been created */
-int controller_dg::init(OBJECT *parent)
+int controller_dg::shared_init(OBJECT *parent)
 {
-	OBJECT *thisobj = object_header(this);
-	OBJECT *obj;
+	OBJECT *obj = object_header(this);
 	gld_property *temp_prop;
 	gld_object *temp_from, *temp_to;
 	STATUS fxn_return_status;
+
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			gl_verbose("controller_dg::init(): deferring initialization on %s", obj->id, (obj->name ? obj->name : "Unnamed"));
+			return 2; // defer
+		}
+	}
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
 
 	//See if the global flag is set - if so, add the object flag
 	if (all_generator_delta)
@@ -119,7 +113,7 @@ int controller_dg::init(OBJECT *parent)
 	}
 
 	//Set the deltamode flag, if desired
-	if ((thisobj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
 		deltamode_inclusive = true;	//Set the flag and off we go
 	}
@@ -143,7 +137,6 @@ int controller_dg::init(OBJECT *parent)
 			/*  TROUBLESHOOT
 			While trying to put together a list of all dg objects with the specified controller groupid, no such dg objects were found.
 			*/
-
 			return 0;
 		}
 	}
@@ -189,11 +182,6 @@ int controller_dg::init(OBJECT *parent)
 			pDG[index].Vset_prop = map_double_value(obj,"Vset");
 			pDG[index].omega_prop = map_double_value(obj,"rotor_speed");
 
-			//Pull the values
-			pDG[index].Pref = pDG[index].Pref_prop->get_double();
-			pDG[index].Vset = pDG[index].Vset_prop->get_double();
-			pDG[index].omega = pDG[index].omega_prop->get_double();
-
 			//Pull the omega_ref (one time)
 			temp_prop = map_double_value(obj,"omega_ref");
 			pDG[index].omega_ref = temp_prop->get_double();
@@ -206,11 +194,6 @@ int controller_dg::init(OBJECT *parent)
 			GenPobj[index].voltage_A_prop = map_complex_value(GenPobj[index].obj,"voltage_A");
 			GenPobj[index].voltage_B_prop = map_complex_value(GenPobj[index].obj,"voltage_B");
 			GenPobj[index].voltage_C_prop = map_complex_value(GenPobj[index].obj,"voltage_C");
-
-			//Get initial values
-			GenPobj[index].voltage_A = GenPobj[index].voltage_A_prop->get_complex();
-			GenPobj[index].voltage_B = GenPobj[index].voltage_B_prop->get_complex();
-			GenPobj[index].voltage_C = GenPobj[index].voltage_C_prop->get_complex();
 
 			//Get nominal voltage (temporary)
 			temp_prop = map_double_value(GenPobj[index].obj,"nominal_voltage");
@@ -246,12 +229,7 @@ int controller_dg::init(OBJECT *parent)
 			ctrlGen[i]->curr_state = (CTRL_VARS*)gl_malloc(sizeof(CTRL_VARS));
 			ctrlGen[i]->next_state = (CTRL_VARS*)gl_malloc(sizeof(CTRL_VARS));
 
-			prev_Pref_val[i] = 0; //Assign value to each prev_Pref_val
-			prev_Vset_val[i] = 0; //Assign value to each prev_Vset_val
-			ctrlGen[i]->curr_state->Vset_ref = -1; // Assign negative initial values to Vset_ref as an indicator
 		}
-
-
 	}
 
 	// Obtain the pointer to the switch objects
@@ -295,7 +273,7 @@ int controller_dg::init(OBJECT *parent)
 			// Double check the validity
 			if (!temp_prop->is_valid() || !temp_prop->is_objectref())
 			{
-				GL_THROW("controller_dg:%d %s Failed to map the switch property 'from'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+				GL_THROW("controller_dg:%d %s Failed to map the switch property 'from'!",obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to map the a property from the switch object, an error occurred.  Please try again.
 				If the error persists, please submit your GLM and a bug report to the ticketing system.
@@ -310,7 +288,7 @@ int controller_dg::init(OBJECT *parent)
 			// Double check the validity
 			if (!temp_prop->is_valid() || !temp_prop->is_objectref())
 			{
-				GL_THROW("controller_dg:%d %s Failed to map the switch property 'to'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+				GL_THROW("controller_dg:%d %s Failed to map the switch property 'to'!",obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to map the a property to the switch object, an error occurred.  Please try again.
 				If the error persists, please submit your GLM and a bug report to the ticketing system.
@@ -336,9 +314,6 @@ int controller_dg::init(OBJECT *parent)
 				Switch_Froms[dgswitchFound].voltage_A_prop = map_complex_value(fnd_obj,"voltage_A");
 				Switch_Froms[dgswitchFound].voltage_B_prop = map_complex_value(fnd_obj,"voltage_B");
 				Switch_Froms[dgswitchFound].voltage_C_prop = map_complex_value(fnd_obj,"voltage_C");
-				Switch_Froms[dgswitchFound].voltage_A = Switch_Froms[dgswitchFound].voltage_A_prop->get_complex();
-				Switch_Froms[dgswitchFound].voltage_B = Switch_Froms[dgswitchFound].voltage_B_prop->get_complex();
-				Switch_Froms[dgswitchFound].voltage_C = Switch_Froms[dgswitchFound].voltage_C_prop->get_complex();
 
 				//Get nominal voltage (temporary)
 				temp_prop = map_double_value(fnd_obj,"nominal_voltage");
@@ -360,23 +335,14 @@ int controller_dg::init(OBJECT *parent)
 				//Check it
 				if (!pSwitchObjs[dgswitchFound].status_prop->is_valid() || !pSwitchObjs[dgswitchFound].status_prop->is_enumeration())
 				{
-					GL_THROW("controller_dg:%d %s Failed to map the switch property 'status'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+					GL_THROW("controller_dg:%d %s Failed to map the switch property 'status'!",obj->id, (obj->name ? obj->name : "Unnamed"));
 					/*  TROUBLESHOOT
 					While attempting to map the a property to the switch object, an error occurred.  Please try again.
 					If the error persists, please submit your GLM and a bug report to the ticketing system.
 					*/
 				}
-
-				//Pull the values
-				pSwitchObjs[dgswitchFound].power_out_A = pSwitchObjs[dgswitchFound].power_out_A_prop->get_complex();
-				pSwitchObjs[dgswitchFound].power_out_B = pSwitchObjs[dgswitchFound].power_out_B_prop->get_complex();
-				pSwitchObjs[dgswitchFound].power_out_C = pSwitchObjs[dgswitchFound].power_out_C_prop->get_complex();
-				pSwitchObjs[dgswitchFound].power_in = pSwitchObjs[dgswitchFound].power_in_prop->get_complex();
-				pSwitchObjs[dgswitchFound].status_val = pSwitchObjs[dgswitchFound].status_prop->get_enumeration();
-
 				dgswitchFound++;
 			}
-
 			++index;
 		}
 	}
@@ -433,9 +399,57 @@ int controller_dg::init(OBJECT *parent)
 	}
 
 	// Set rank as 1 so that the controller_dg can be executed after the generators (ranked 0) in sync (and delta-mode) process
-	obj = object_header(this);
 	gl_set_rank(obj,1);
+	return 1;
+}
 
+int controller_dg::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
+/* Object initialization is called once after all object have been created */
+int controller_dg::init(OBJECT *parent)
+{
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
+
+	if (dgs != nullptr) {
+		for (int i = 0; i < dgs->hit_count; ++i) {
+			// initial runtime state values
+			pDG[i].Pref = pDG[i].Pref_prop->get_double();
+			pDG[i].Vset = pDG[i].Vset_prop->get_double();
+			pDG[i].omega = pDG[i].omega_prop->get_double();
+
+			// sensor / parent initial snapshots (will be re-read during runtime)
+			if (GenPobj[i].voltage_A_prop) GenPobj[i].voltage_A = GenPobj[i].voltage_A_prop->get_complex();
+			if (GenPobj[i].voltage_B_prop) GenPobj[i].voltage_B = GenPobj[i].voltage_B_prop->get_complex();
+			if (GenPobj[i].voltage_C_prop) GenPobj[i].voltage_C = GenPobj[i].voltage_C_prop->get_complex();
+
+			// initial tracker/state
+			prev_Pref_val[i] = 0.0;
+			prev_Vset_val[i] = 0.0;
+			if (ctrlGen[i] && ctrlGen[i]->curr_state) ctrlGen[i]->curr_state->Vset_ref = -1;
+		}
+
+		// initialize switch-related runtime fields
+		for (int j = 0; j < dgswitchFound; ++j) {
+			//Pull the values
+			if (Switch_Froms[j].voltage_A_prop) Switch_Froms[j].voltage_A = Switch_Froms[j].voltage_A_prop->get_complex();
+			if (Switch_Froms[j].voltage_B_prop) Switch_Froms[j].voltage_B = Switch_Froms[j].voltage_B_prop->get_complex();
+			if (Switch_Froms[j].voltage_C_prop) Switch_Froms[j].voltage_C = Switch_Froms[j].voltage_C_prop->get_complex();
+
+			if (pSwitchObjs[j].power_out_A_prop) pSwitchObjs[j].power_out_A = pSwitchObjs[j].power_out_A_prop->get_complex();
+			if (pSwitchObjs[j].power_out_B_prop) pSwitchObjs[j].power_out_B = pSwitchObjs[j].power_out_B_prop->get_complex();
+			if (pSwitchObjs[j].power_out_C_prop) pSwitchObjs[j].power_out_C = pSwitchObjs[j].power_out_C_prop->get_complex();
+			if (pSwitchObjs[j].power_in_prop) pSwitchObjs[j].power_in = pSwitchObjs[j].power_in_prop->get_complex();
+			if (pSwitchObjs[j].status_prop) pSwitchObjs[j].status_val = pSwitchObjs[j].status_prop->get_enumeration();
+		}
+	}
 	return 1;
 }
 
@@ -601,8 +615,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 				}
 
 				// Set delay so that all switches will not be opened together
-				controlTime == delta_time + 100*dt;
-
+				controlTime = delta_time + 100*dt;
 			}
 		}
 	}
@@ -776,53 +789,6 @@ STATUS controller_dg::init_dynamics(CTRL_VARS *curr_time, int index)
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }
 
-//Map Complex value
-gld_property *controller_dg::map_complex_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	//Map to the property of interest
-	pQuantity = new gld_property(obj,name);
-
-	//Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_complex())
-	{
-		GL_THROW("controller_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in controller_dg.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	//return the pointer
-	return pQuantity;
-}
-
-//Map double value
-gld_property *controller_dg::map_double_value(OBJECT *obj, const char *name)
-{
-	gld_property *pQuantity;
-	OBJECT *objhdr = object_header(this);
-
-	//Map to the property of interest
-	pQuantity = new gld_property(obj,name);
-
-	//Make sure it worked
-	if (!pQuantity->is_valid() || !pQuantity->is_double())
-	{
-		GL_THROW("controller_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map a quantity from another object, an error occurred in controller_dg.  Please try again.
-		If the error persists, please submit your system and a bug report via the ticketing system.
-		*/
-	}
-
-	//return the pointer
-	return pQuantity;
-}
-
-
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -854,6 +820,12 @@ EXPORT int init_controller_dg(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(controller_dg);
+}
+
+EXPORT int checkpoint_init_controller_dg(OBJECT *obj)
+{
+	controller_dg *my = object_data<controller_dg>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_controller_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

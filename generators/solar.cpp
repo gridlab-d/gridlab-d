@@ -128,11 +128,13 @@ solar::solar(MODULE *module)
 								PT_double, "default_current_variable", PADDR(default_current_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default current value, when solar is run without an inverter",
 								PT_double, "default_power_variable", PADDR(default_power_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default power value, when solar is run without an inverter",
 
-								PT_double, "prevTemp", PADDR(prevTemp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prevTemp",
-								PT_double, "currTemp", PADDR(currTemp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for currTemp",
-								PT_timestamp, "prevTime", PADDR(prevTime), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prevTime",
-								PT_double, "last_DC_current", PADDR(last_DC_current), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_DC_current",
-								PT_double, "last_DC_power", PADDR(last_DC_power), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_DC_power",
+								PT_double, "Max_P[kW]", PADDR(Max_P), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_double, "Min_P[kW]", PADDR(Min_P), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_double, "prevTemp[degC]", PADDR(prevTemp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_double, "currTemp[degC]", PADDR(currTemp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_timestamp, "prevTime", PADDR(prevTime), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_double, "last_DC_current[V]", PADDR(last_DC_current), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
+								PT_double, "last_DC_power[kW]", PADDR(last_DC_power), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Checkpoint variable not to be used by modeler",
 
 								PT_enumeration, "orientation", PADDR(orientation_type),
 								PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
@@ -245,286 +247,7 @@ int solar::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
-/** Checks for climate object and maps the climate variables to the house object variables.
-Currently Tout, RHout and solar flux data from TMY files are used.  If no climate object is linked,
-then Tout will be set to 59 degF, RHout is set to 75% and solar flux will be set to zero for all orientations.
-**/
-int solar::init_climate()
-{
-	OBJECT *hdr = object_header(this);
-	OBJECT *obj = nullptr;
-
-	// link to climate data
-	FINDLIST *climates = nullptr;
-
-	if (solar_model_tilt != PLAYERVAL)
-	{
-		if (weather != nullptr)
-		{
-			if (!gl_object_isa(weather, "climate"))
-			{
-				// strcmp failure
-				gl_error("weather property refers to a(n) \"%s\" object and not a climate object", weather->oclass->name);
-				/*  TROUBLESHOOT
-				While attempting to map a climate property, the solar array encountered an object that is not a climate object.
-				Please check to make sure a proper climate object is present, and/or specified.  If the bug persists, please
-				submit your code and a bug report via the trac website.
-				*/
-				return 0;
-			}
-			obj = weather;
-		}
-		else // No weather specified, search
-		{
-			climates = gl_find_objects(FL_NEW, FT_CLASS, SAME, "climate", FT_END);
-			if (climates == nullptr)
-			{
-				// Ensure weather is set to nullptr - catch below
-				weather = nullptr;
-			}
-			else if (climates->hit_count == 0)
-			{
-				// Ensure weather is set to nullptr - catch below
-				weather = nullptr;
-			}
-			else // climate data must have been found
-			{
-				if (climates->hit_count > 1)
-				{
-					gl_warning("solarpanel: %d climates found, using first one defined", climates->hit_count);
-					/*  TROUBLESHOOT
-					More than one climate object was found, so only the first one will be used by the solar array object
-					*/
-				}
-
-				gl_verbose("solar init: climate data was found!");
-				// force rank of object w.r.t climate
-				obj = gl_find_next(climates, nullptr);
-				weather = obj;
-			}
-
-			// Free up the list
-			gl_free((void **)&climates);
-		}
-
-		// Make sure it actually found one
-		if (weather == nullptr)
-		{
-			// Replicate above warning
-			gl_warning("solarpanel: no climate data found, using static data");
-			/*  TROUBLESHOOT
-			No climate object was found and player mode was not enabled, so the solar array object
-			is utilizing default values for all relevant weather variables.
-			*/
-
-			// default to mock data - for the two fields that exist (temperature and windspeed)
-			// All others just put in the one equation that uses them
-			Tamb = 59.0;
-			wind_speed = 0.0;
-
-			if (orientation_type == FIXED_AXIS)
-			{
-				GL_THROW("FIXED_AXIS requires a climate file!");
-				/*  TROUBLESHOOT
-				The FIXED_AXIS model for the PV array requires climate data to properly function.
-				Please specify such data, or consider using a different tilt model.
-				*/
-			}
-		}
-		else if (!gl_object_isa(weather, "climate")) // Semi redundant for "weather"
-		{
-			GL_THROW("weather object is not a climate object!");
-			/*  TROUBLESHOOT
-			The object specified for the weather property is not a climate object and will not work
-			with the solar object.  Please specify a valid climate object, or let the solar object
-			automatically connect.
-			*/
-		}
-		else // Must be a proper object
-		{
-			// Deferred init used to be here - handled in mainline init now
-
-			// Check our rank
-			if (obj->rank <= hdr->rank)
-				gl_set_dependent(obj, hdr);
-
-			// Check and see if we have a lat/long set -- if not, pull the one from the climate
-			if (isnan(hdr->longitude))
-			{
-				// Pull the value from the climate
-				hdr->longitude = obj->longitude;
-			}
-
-			// Do the same for latitude
-			if (isnan(hdr->latitude))
-			{
-				// Pull the value from the climate
-				hdr->latitude = obj->latitude;
-			}
-
-			// Map the properties - temperature
-			pTout = new gld_property(obj, "temperature");
-
-			// Check it
-			if (!pTout->is_valid() || !pTout->is_double())
-			{
-				GL_THROW("solar:%d - %s - Failed to map outside temperature", hdr->id, (hdr->name ? hdr->name : "Unnamed"));
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the outside air temperature.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			// Map the wind speed
-			pWindSpeed = new gld_property(obj, "wind_speed");
-
-			// Check tit
-			if (!pWindSpeed->is_valid() || !pWindSpeed->is_double())
-			{
-				GL_THROW("solar:%d - %s - Failed to map wind speed", hdr->id, (hdr->name ? hdr->name : "Unnamed"));
-				/*  TROUBLESHOOT
-				The solar PV array failed to map the wind speed.  Ensure this is
-				properly specified in your climate data and try again.
-				*/
-			}
-
-			// If climate data was found, check other related variables
-			if (fix_angle_lat)
-			{
-				if (hdr->latitude < 0) // Southern hemisphere
-				{
-					// Get the latitude from the climate file
-					tilt_angle = -hdr->latitude;
-				}
-				else // Northern
-				{
-					// Get the latitude from the climate file
-					tilt_angle = hdr->latitude;
-				}
-			}
-
-			// Check the tilt angle for absurdity
-			if (tilt_angle < 0)
-			{
-				GL_THROW("Invalid tilt_angle - tilt must be between 0 and 90 degrees");
-				/*  TROUBLESHOOT
-				A negative tilt angle was specified.  This implies the array is under the ground and will
-				not receive any meaningful solar irradiation.  Please correct the tilt angle and try again.
-				*/
-			}
-			else if (tilt_angle > 90.0)
-			{
-				GL_THROW("Invalid tilt angle - values above 90 degrees are unsupported!");
-				/*  TROUBLESHOOT
-				An tilt angle over 90 degrees (straight up and down) was specified.  Beyond this angle, the
-				tilt algorithm does not function properly.  Please specific the tilt angle between 0 and 90 degrees
-				and try again.
-				*/
-			}
-
-			// Check the solar method
-			// CDC: This method of determining solar model based on tracking type seemed flawed. They should be independent of each other.
-			if (orientation_type == DEFAULT)
-			{
-				calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj, "calc_solar_ideal_shading_position_radians"));
-			}
-			else if (orientation_type == FIXED_AXIS)
-			{
-				// See which function we want to use
-				if (solar_model_tilt == LIUJORDAN)
-				{
-					// Map up the "classic" function
-					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj, "calculate_solar_radiation_shading_position_radians"));
-				}
-				else if (solar_model_tilt == SOLPOS) // Use the solpos/Perez tilt model
-				{
-					// Map up the updated function
-					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj, "calculate_solpos_radiation_shading_position_radians"));
-				}
-
-				// Make sure it was found
-				if (calc_solar_radiation == nullptr)
-				{
-					GL_THROW("Unable to map solar radiation function on %s in %s", obj->name, hdr->name);
-					/*  TROUBLESHOOT
-					While attempting to initialize the photovoltaic array mapping of the solar radiation function.
-					Please try again.  If the bug persists, please submit your GLM and a bug report via the trac website.
-					*/
-				}
-
-				// Check azimuth for absurdity as well
-				if ((orientation_azimuth < 0.0) || (orientation_azimuth > 360.0))
-				{
-					GL_THROW("orientation_azimuth must be a value representing a valid cardinal direction of 0 to 360 degrees!");
-					/*  TROUBLESHOOT
-					The orientation_azimuth property is expected values on the cardinal points degree system.  For this convention, 0 or
-					360 is north, 90 is east, 180 is south, and 270 is west.  Please specify a direction within the 0 to 360 degree bound and try again.
-					*/
-				}
-
-				// Map up our azimuth now too, if needed - Liu & Jordan model assumes 0 = equator facing
-				if (solar_model_tilt == LIUJORDAN)
-				{
-					if (obj->latitude > 0.0) // North - "south" is equatorial facing
-					{
-						orientation_azimuth_corrected = 180.0 - orientation_azimuth;
-					}
-					else if (obj->latitude < 0.0) // South - "north" is equatorial facing
-					{
-						gl_warning("solar:%s - Default solar position model is not recommended for southern hemisphere!", hdr->name);
-						/*  TROUBLESHOOT
-						The Liu-Jordan (default) solar position and tilt model was built around the northern
-						hemisphere.  As such, operating in the southern hemisphere does not provide completely accurate
-						results.  They are close, but tilted surfaces are not properly accounted for.  It is recommended
-						that the SOLAR_TILT_MODEL SOLPOS be used for southern hemisphere operations.
-						*/
-
-						if ((orientation_azimuth >= 0.0) && (orientation_azimuth <= 180.0))
-						{
-							orientation_azimuth_corrected = orientation_azimuth; // East positive
-						}
-						else if (orientation_azimuth == 360.0) // Special case for those who like 360 as North
-						{
-							orientation_azimuth_corrected = 0.0;
-						}
-						else // Must be west
-						{
-							orientation_azimuth_corrected = orientation_azimuth - 360.0;
-						}
-					}
-					else // Equator - erm....
-					{
-						GL_THROW("Exact equator location of array detected - unknown how to handle orientation");
-						/*  TROUBLESHOOT
-						The solar orientation algorithm implemented inside GridLAB-D does not understand how to orient
-						itself for an array exactly on the equator.  Shift it north or south a little bit to get valid results.
-						*/
-					}
-				}
-				else
-				{ // Right now only SOLPOS, which is "correct" - if another is implemented, may need another case
-					orientation_azimuth_corrected = orientation_azimuth;
-				}
-			}
-			// Defaulted else for now - don't do anything
-		} // End valid weather - mapping check
-	}
-	else // Player mode, just drop a message
-	{
-		gl_warning("Solar object:%s is in player mode - be sure to specify relevant values", hdr->name);
-		/*  TROUBLESHOOT
-		The solar array object is in player mode.  It will not take values from climate files or objects.
-		Be sure to specify the Insolation, ambient_temperature, and wind_speed values as necessary.  It also
-		will not incorporate any tilt functionality, since the Insolation value is expected to already include
-		this adjustment.
-		*/
-	}
-
-	return 1;
-}
-
-/* Object initialization is called once after all object have been created */
-int solar::init(OBJECT *parent)
+int solar::shared_init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
 	int climate_result;
@@ -542,12 +265,13 @@ int solar::init(OBJECT *parent)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
 		{
-			char objname[256];
-			gl_verbose("solar::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			gl_verbose("solar::init(): deferring initialization on %s", obj->id, (obj->name ? obj->name : "Unnamed"));
 			return 2; // defer
 		}
 	}
 
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
 	if (panel_type_v == UNKNOWN)
 	{
 		gl_warning("Solar panel type is unknown! Using default: SINGLE_CRYSTAL_SILICON");
@@ -593,62 +317,6 @@ int solar::init(OBJECT *parent)
 		break;
 	}
 
-	// efficiency dictates how much of the rate insolation the panel can capture and
-	// turn into electricity
-	// Rated power output
-	if (solar_power_model != PV_CURVE) // Get rid of the warning when PV_CURVE mode is used
-	{
-		if (Max_P == 0)
-		{
-			Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
-			gl_verbose("solar:%d %s - Max_P was not specified.  Calculating from other defaults.", obj->id, (obj->name ? obj->name : "Unnamed"));
-			/* TROUBLESHOOT
-			The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
-			was not set, using this equation to calculate it.
-			*/
-
-			if (Max_P == 0)
-			{
-				gl_warning("solar:%d %s - Max_P and {area or Rated_Insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.", obj->id, (obj->name ? obj->name : "Unnamed"));
-				/* TROUBLESHOOT
-				The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
-				was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
-				*/
-			}
-		}
-		else
-		{
-			if (efficiency != 0 && area != 0 && Rated_Insolation != 0)
-			{
-				double temp = Rated_Insolation * efficiency * area;
-
-				if (temp < Max_P * .99 || temp > Max_P * 1.01)
-				{
-					Max_P = temp;
-					gl_warning("solar:%d %s - Max_P is not within 99% to 101% of Rated_Insolation * efficiency * area.  Ignoring Max_P.", obj->id, (obj->name ? obj->name : "Unnamed"));
-					/* TROUBLESHOOT
-					The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. However, the model
-					can be overspecified. In the case that it is, we have defaulted to old versions of GridLAB-D and ignored the Max_P and re-calculated it using
-					the other values.  If you would like to use Max_P, please only specify Rated_Insolation and Max_P.
-					*/
-				}
-			}
-		}
-	}
-
-	if (Rated_Insolation == 0)
-	{
-		if (area != 0 && efficiency != 0)
-			Rated_Insolation = Max_P / area / efficiency;
-		else
-		{
-			gl_error("solar:%d %s - Rated Insolation was not specified (or zero).  Power outputs cannot be calculated without a rated insolation value.", obj->id, (obj->name ? obj->name : "Unnamed"));
-			/* TROUBLESHOOT
-			The relationship is described by Rated_Insolation = Max_P / area / efficiency.  Nonezero values of area
-			and efficiency are required for this calculation.  Please specify both.
-			*/
-		}
-	}
 
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != nullptr)
@@ -1116,7 +784,361 @@ int solar::init(OBJECT *parent)
 		init_pub_vars_pvcurve_mode();
 	}
 
-	return climate_result; /* return 1 on success, 0 on failure */
+	return climate_result; /* return 1 on success, 0 on failure */;
+}
+
+int solar::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	return rv;
+}
+
+/** Checks for climate object and maps the climate variables to the house object variables.
+Currently Tout, RHout and solar flux data from TMY files are used.  If no climate object is linked,
+then Tout will be set to 59 degF, RHout is set to 75% and solar flux will be set to zero for all orientations.
+**/
+int solar::init_climate()
+{
+	OBJECT *hdr = object_header(this);
+	OBJECT *obj = nullptr;
+
+	// link to climate data
+	FINDLIST *climates = nullptr;
+
+	if (solar_model_tilt != PLAYERVAL)
+	{
+		if (weather != nullptr)
+		{
+			if (!gl_object_isa(weather, "climate"))
+			{
+				// strcmp failure
+				gl_error("weather property refers to a(n) \"%s\" object and not a climate object", weather->oclass->name);
+				/*  TROUBLESHOOT
+				While attempting to map a climate property, the solar array encountered an object that is not a climate object.
+				Please check to make sure a proper climate object is present, and/or specified.  If the bug persists, please
+				submit your code and a bug report via the trac website.
+				*/
+				return 0;
+			}
+			obj = weather;
+		}
+		else // No weather specified, search
+		{
+			climates = gl_find_objects(FL_NEW, FT_CLASS, SAME, "climate", FT_END);
+			if (climates == nullptr)
+			{
+				// Ensure weather is set to nullptr - catch below
+				weather = nullptr;
+			}
+			else if (climates->hit_count == 0)
+			{
+				// Ensure weather is set to nullptr - catch below
+				weather = nullptr;
+			}
+			else // climate data must have been found
+			{
+				if (climates->hit_count > 1)
+				{
+					gl_warning("solarpanel: %d climates found, using first one defined", climates->hit_count);
+					/*  TROUBLESHOOT
+					More than one climate object was found, so only the first one will be used by the solar array object
+					*/
+				}
+
+				gl_verbose("solar init: climate data was found!");
+				// force rank of object w.r.t climate
+				obj = gl_find_next(climates, nullptr);
+				weather = obj;
+			}
+
+			// Free up the list
+			gl_free((void **)&climates);
+		}
+
+		// Make sure it actually found one
+		if (weather == nullptr)
+		{
+			// Replicate above warning
+			gl_warning("solarpanel: no climate data found, using static data");
+			/*  TROUBLESHOOT
+			No climate object was found and player mode was not enabled, so the solar array object
+			is utilizing default values for all relevant weather variables.
+			*/
+
+			// default to mock data - for the two fields that exist (temperature and windspeed)
+			// All others just put in the one equation that uses them
+			Tamb = 59.0;
+			wind_speed = 0.0;
+
+			if (orientation_type == FIXED_AXIS)
+			{
+				GL_THROW("FIXED_AXIS requires a climate file!");
+				/*  TROUBLESHOOT
+				The FIXED_AXIS model for the PV array requires climate data to properly function.
+				Please specify such data, or consider using a different tilt model.
+				*/
+			}
+		}
+		else if (!gl_object_isa(weather, "climate")) // Semi redundant for "weather"
+		{
+			GL_THROW("weather object is not a climate object!");
+			/*  TROUBLESHOOT
+			The object specified for the weather property is not a climate object and will not work
+			with the solar object.  Please specify a valid climate object, or let the solar object
+			automatically connect.
+			*/
+		}
+		else // Must be a proper object
+		{
+			// Deferred init used to be here - handled in mainline init now
+
+			// Check our rank
+			if (obj->rank <= hdr->rank)
+				gl_set_dependent(obj, hdr);
+
+			// Check and see if we have a lat/long set -- if not, pull the one from the climate
+			if (isnan(hdr->longitude))
+			{
+				// Pull the value from the climate
+				hdr->longitude = obj->longitude;
+			}
+
+			// Do the same for latitude
+			if (isnan(hdr->latitude))
+			{
+				// Pull the value from the climate
+				hdr->latitude = obj->latitude;
+			}
+
+			// Map the properties - temperature
+			pTout = new gld_property(obj, "temperature");
+
+			// Check it
+			if (!pTout->is_valid() || !pTout->is_double())
+			{
+				GL_THROW("solar:%d - %s - Failed to map outside temperature", hdr->id, (hdr->name ? hdr->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				The solar PV array failed to map the outside air temperature.  Ensure this is
+				properly specified in your climate data and try again.
+				*/
+			}
+
+			// Map the wind speed
+			pWindSpeed = new gld_property(obj, "wind_speed");
+
+			// Check tit
+			if (!pWindSpeed->is_valid() || !pWindSpeed->is_double())
+			{
+				GL_THROW("solar:%d - %s - Failed to map wind speed", hdr->id, (hdr->name ? hdr->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				The solar PV array failed to map the wind speed.  Ensure this is
+				properly specified in your climate data and try again.
+				*/
+			}
+
+			// If climate data was found, check other related variables
+			if (fix_angle_lat)
+			{
+				if (hdr->latitude < 0) // Southern hemisphere
+				{
+					// Get the latitude from the climate file
+					tilt_angle = -hdr->latitude;
+				}
+				else // Northern
+				{
+					// Get the latitude from the climate file
+					tilt_angle = hdr->latitude;
+				}
+			}
+
+			// Check the tilt angle for absurdity
+			if (tilt_angle < 0)
+			{
+				GL_THROW("Invalid tilt_angle - tilt must be between 0 and 90 degrees");
+				/*  TROUBLESHOOT
+				A negative tilt angle was specified.  This implies the array is under the ground and will
+				not receive any meaningful solar irradiation.  Please correct the tilt angle and try again.
+				*/
+			}
+			else if (tilt_angle > 90.0)
+			{
+				GL_THROW("Invalid tilt angle - values above 90 degrees are unsupported!");
+				/*  TROUBLESHOOT
+				An tilt angle over 90 degrees (straight up and down) was specified.  Beyond this angle, the
+				tilt algorithm does not function properly.  Please specific the tilt angle between 0 and 90 degrees
+				and try again.
+				*/
+			}
+
+			// Check the solar method
+			// CDC: This method of determining solar model based on tracking type seemed flawed. They should be independent of each other.
+			if (orientation_type == DEFAULT)
+			{
+				calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj, "calc_solar_ideal_shading_position_radians"));
+			}
+			else if (orientation_type == FIXED_AXIS)
+			{
+				// See which function we want to use
+				if (solar_model_tilt == LIUJORDAN)
+				{
+					// Map up the "classic" function
+					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj, "calculate_solar_radiation_shading_position_radians"));
+				}
+				else if (solar_model_tilt == SOLPOS) // Use the solpos/Perez tilt model
+				{
+					// Map up the updated function
+					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj, "calculate_solpos_radiation_shading_position_radians"));
+				}
+
+				// Make sure it was found
+				if (calc_solar_radiation == nullptr)
+				{
+					GL_THROW("Unable to map solar radiation function on %s in %s", obj->name, hdr->name);
+					/*  TROUBLESHOOT
+					While attempting to initialize the photovoltaic array mapping of the solar radiation function.
+					Please try again.  If the bug persists, please submit your GLM and a bug report via the trac website.
+					*/
+				}
+
+				// Check azimuth for absurdity as well
+				if ((orientation_azimuth < 0.0) || (orientation_azimuth > 360.0))
+				{
+					GL_THROW("orientation_azimuth must be a value representing a valid cardinal direction of 0 to 360 degrees!");
+					/*  TROUBLESHOOT
+					The orientation_azimuth property is expected values on the cardinal points degree system.  For this convention, 0 or
+					360 is north, 90 is east, 180 is south, and 270 is west.  Please specify a direction within the 0 to 360 degree bound and try again.
+					*/
+				}
+
+				// Map up our azimuth now too, if needed - Liu & Jordan model assumes 0 = equator facing
+				if (solar_model_tilt == LIUJORDAN)
+				{
+					if (obj->latitude > 0.0) // North - "south" is equatorial facing
+					{
+						orientation_azimuth_corrected = 180.0 - orientation_azimuth;
+					}
+					else if (obj->latitude < 0.0) // South - "north" is equatorial facing
+					{
+						gl_warning("solar:%s - Default solar position model is not recommended for southern hemisphere!", hdr->name);
+						/*  TROUBLESHOOT
+						The Liu-Jordan (default) solar position and tilt model was built around the northern
+						hemisphere.  As such, operating in the southern hemisphere does not provide completely accurate
+						results.  They are close, but tilted surfaces are not properly accounted for.  It is recommended
+						that the SOLAR_TILT_MODEL SOLPOS be used for southern hemisphere operations.
+						*/
+
+						if ((orientation_azimuth >= 0.0) && (orientation_azimuth <= 180.0))
+						{
+							orientation_azimuth_corrected = orientation_azimuth; // East positive
+						}
+						else if (orientation_azimuth == 360.0) // Special case for those who like 360 as North
+						{
+							orientation_azimuth_corrected = 0.0;
+						}
+						else // Must be west
+						{
+							orientation_azimuth_corrected = orientation_azimuth - 360.0;
+						}
+					}
+					else // Equator - erm....
+					{
+						GL_THROW("Exact equator location of array detected - unknown how to handle orientation");
+						/*  TROUBLESHOOT
+						The solar orientation algorithm implemented inside GridLAB-D does not understand how to orient
+						itself for an array exactly on the equator.  Shift it north or south a little bit to get valid results.
+						*/
+					}
+				}
+				else
+				{ // Right now only SOLPOS, which is "correct" - if another is implemented, may need another case
+					orientation_azimuth_corrected = orientation_azimuth;
+				}
+			}
+			// Defaulted else for now - don't do anything
+		} // End valid weather - mapping check
+	}
+	else // Player mode, just drop a message
+	{
+		gl_warning("Solar object:%s is in player mode - be sure to specify relevant values", hdr->name);
+		/*  TROUBLESHOOT
+		The solar array object is in player mode.  It will not take values from climate files or objects.
+		Be sure to specify the Insolation, ambient_temperature, and wind_speed values as necessary.  It also
+		will not incorporate any tilt functionality, since the Insolation value is expected to already include
+		this adjustment.
+		*/
+	}
+
+	return 1;
+}
+
+/* Object initialization is called once after all object have been created */
+int solar::init(OBJECT *parent)
+{
+	OBJECT *obj = object_header(this);
+
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
+	// efficiency dictates how much of the rate insolation the panel can capture and
+	// turn into electricity
+	// Rated power output
+	if (solar_power_model != PV_CURVE) // Get rid of the warning when PV_CURVE mode is used
+	{
+		if (Max_P == 0)
+		{
+			Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
+			gl_verbose("solar:%d %s - Max_P was not specified.  Calculating from other defaults.", obj->id, (obj->name ? obj->name : "Unnamed"));
+			/* TROUBLESHOOT
+			The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
+			was not set, using this equation to calculate it.
+			*/
+
+			if (Max_P == 0)
+			{
+				gl_warning("solar:%d %s - Max_P and {area or Rated_Insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.", obj->id, (obj->name ? obj->name : "Unnamed"));
+				/* TROUBLESHOOT
+				The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
+				was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
+				*/
+			}
+		}
+		else
+		{
+			if (efficiency != 0 && area != 0 && Rated_Insolation != 0)
+			{
+				double temp = Rated_Insolation * efficiency * area;
+
+				if (temp < Max_P * .99 || temp > Max_P * 1.01)
+				{
+					Max_P = temp;
+					gl_warning("solar:%d %s - Max_P is not within 99% to 101% of Rated_Insolation * efficiency * area.  Ignoring Max_P.", obj->id, (obj->name ? obj->name : "Unnamed"));
+					/* TROUBLESHOOT
+					The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. However, the model
+					can be overspecified. In the case that it is, we have defaulted to old versions of GridLAB-D and ignored the Max_P and re-calculated it using
+					the other values.  If you would like to use Max_P, please only specify Rated_Insolation and Max_P.
+					*/
+				}
+			}
+		}
+	}
+
+	if (Rated_Insolation == 0)
+	{
+		if (area != 0 && efficiency != 0)
+			Rated_Insolation = Max_P / area / efficiency;
+		else
+		{
+			gl_error("solar:%d %s - Rated Insolation was not specified (or zero).  Power outputs cannot be calculated without a rated insolation value.", obj->id, (obj->name ? obj->name : "Unnamed"));
+			/* TROUBLESHOOT
+			The relationship is described by Rated_Insolation = Max_P / area / efficiency.  Nonezero values of area
+			and efficiency are required for this calculation.  Please specify both.
+			*/
+		}
+	}
+
+	return 1;
 }
 
 TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
@@ -1688,6 +1710,12 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(solar);
+}
+
+EXPORT int checkpoint_init_solar(OBJECT *obj)
+{
+	solar *my = object_data<solar>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

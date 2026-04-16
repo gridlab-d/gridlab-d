@@ -103,8 +103,6 @@ private:
 	bool deltamode_inclusive;	   //Boolean for deltamode calls - pulled from object flags
 	double *mapped_freq_variable;  //Mapping to frequency variable in powerflow module - deltamode updates
 
-	gld_property *map_complex_value(OBJECT *obj, const char *name);
-	gld_property *map_double_value(OBJECT *obj, const char *name);
 public:
 	char32 controlled_dgs;
 
@@ -133,6 +131,8 @@ public:
 	controller_dg(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
+	int shared_init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
