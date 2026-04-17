@@ -130,7 +130,7 @@ def plot_coupled_signals_plotly(
 
 # User-defined parameters
 step_size = 300
-microstep_max = 2
+microstep_max = 3
 plotting_tool = "matplotlib"  # Options: "matplotlib" or "plotly"
 
 
@@ -232,7 +232,8 @@ for step in range(num_steps - 1):
     status, sim_time = gld.get_time()    
     sim_time_obj = datetime.fromisoformat(sim_time)
     while microstep_count < microstep_max:
-        current_time = gld.get_time()
+        status, current_time = gld.get_time()
+        current_time_obj = datetime.fromisoformat(current_time)
         pp.run.runpp(net118, calculate_voltage_angles=True)
         pp_voltage_pu = net118.res_bus.at[pp_bus_coupling_index, "vm_pu"]
         gld_substation_voltage = float(
