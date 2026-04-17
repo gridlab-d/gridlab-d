@@ -139,11 +139,13 @@ gld.run(start_time=calc_starttime, stop_time=calc_stoptime)
 
 
 ### Controlling Simulation Time
-Managing simulation time is one of the fundamental tasks in running a time-series simulation; this example walks through the how to advance simulation time through GridLAB-D's provided `step_to()` and `step()` methods. The example file is "example_sim_stepping.py" **TODO** - examples - Update example file name once finalized
+Managing simulation time is one of the fundamental tasks in running a time-series simulation; this example walks through how to advance simulation time through GridLAB-D's provided `step_to()` and `step()` methods. The example file is "example_sim_stepping.py" **TODO** - examples - Update example file name once finalized
 
 As shown in the previous example (**TODO** - examples - add link to appropriate example), it is possible to programmatically set the start and stop time of a simulation prior to actually simulating the model. If you're using the GridLAB-D API to manage running multiple models, this may be all you need to do. It is common, though, to need to interact with the model while running and to do that, you need to control the simulation time such that its advancement pauses at the times of our choosing so that we can interact with the model as we need. To facilitate this, there are two methods we can use: `step_to()` and `step()`.
 
-`step_to()` provides the ability to advance simulation time to a specific time 
+`step_to()` provides the ability to advance simulation time to a time specified a timestamp string. `step()` allows the user to advance through simulation time at regular step sizes (specifed by `set_time_step()`). Becuase of how GridLAB-D simulates objects internally, there may be other times that are simulated internally but GridLAB-D will not pause the simulation at these times. As far as you, the programmer, are concerned, you are asking to step to a specific time or take a time step of a specific size and GridLAB-D will do what it takes to advance simulation time to that point and then pause, returning control back to the script that called that API.
+
+This example shows the use of both API called. The first call is to `step_to()` specifying a time 20 minutes after the "starttime" of the model. After reaching this point, the simulation is advanced a few time steps with the `step()` API. Lastly, the script demonstrates the fatal error that is generated when trying to step beyond the end of the specified "stoptime" in the simulation.
 
 ### Monitoring Console Messages
 Covered in "example_get_messages.py"
