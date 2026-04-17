@@ -57,9 +57,25 @@ print(f"New start time: {new_starttime}")
 print(f"New stop time: {new_stoptime}")
 
 
-gld.run()
+# gld.run()
 # Can also call `run()` with start and stop time defined
-# gld.run(start_time=calc_start_time, stop_time=calc_stop_time)
-# Above fails, Github issue #1725
+gld.run(start_time=calc_start_time, stop_time=calc_stop_time)
+
+# Check for errors
+messages = gld.get_messages()
+filtered_messages = [
+    message for message in messages
+    if message.get("type") in {"ERROR"}
+]
+pprint(filtered_messages)
+gld.clear_messages()
+
+# Test to see what happens when 
+# you try stepping beyond end of simulation
+gld.clear_messages()
+step_return_code, sim_time = gld.step()
+messages = gld.get_messages()
+
+
 gld.stop()
 gld.exit_gld()
