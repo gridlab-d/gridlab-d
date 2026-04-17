@@ -43,20 +43,23 @@ The Python API will be distributed as a PyPI package that users will be able to 
 
 ## API Examples
 
-TODO - Update all examples with appropriate `.get_messages()` to make sure nothing bad is happening.
-
 The Python API enables a broad range of applications for GridLAB-D, from simply running a model to integrating GridLAB-D into a larger code base where it serves as a modeling engine alongside a wide range of Python-enabled functionality. The API fundamentally changes GridLAB-D from a command-line simulation tool to a simulation engine that can be used in a much broader range of applications. Below are a few examples of how we envision GridLAB-D being used via this new API and fully expect users to go even further to meet a broad range of power system simulation needs.
 
 ### General API Notes
 
-- **TODO** - Make sure this is correct in the final version: The data types used when interacting with the model match the types used by GridLAB-D. That is, if a GridLAB-D model specifies that a value is a complex number, that is the data type returned when using the API to ask for that parameter from the specified object and the data type expected when writing to that parameter via the API.
-- **TODO** - Make sure this is correct in the final version:Simulation time is always represented by and ISO 8601 string which is easily converted to a Python datetime object. (Or maybe in the final version with the user-facing API it is a datetime object already).
+- **TODO** - exmaples - Verify in final version that the following comment on data types is correct.
+The data types used when interacting with the model match the types used by GridLAB-D. That is, if a GridLAB-D model specifies that a value is a complex number, that is the data type returned when using the API to ask for that parameter from the specified object and the data type expected when writing to that parameter via the API.
+- **TODO** - examples - Verify in final version that the following comment on simulation time strings is correct.
+Simulation time is always represented by and ISO 8601 string which is easily converted to a Python datetime object. (Or maybe in the final version with the user-facing API it is a datetime object already).
 - Messages produced by the GridLAB-D engine that are normally printed on the console are supressed by default and are instead as a list of JSON strings whenever the simulation is stopped via the `get_messages()` method. 
-- **TODO** - Make sure this is correct in the final version: Trying to write an object parameter that is read-only via the API will produce a warning.
+- **TODO** - examples - Verify in final version that the following comment on read-only parameters is correct.
+Trying to write an object parameter that is read-only via the API will produce a warning.
 
 ### Installation
 
-PyPI, baby: `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ gridlabd==1.0.10`
+PyPI, baby: `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ gridlabd==1.0.13`
+
+**TODO** - examples - Update the installation command we have a release version.
 
 
 ### Simple Model Run
@@ -69,7 +72,7 @@ import gridlabd
 gld = gridlabd.GridLabD()
 
 # Load the model
-gld.load("houses.glm")
+gld.load("model.glm")
 
 # Simulate the model
 gld.run()
@@ -78,21 +81,62 @@ gld.run()
 gld.exit_gld()
 ```
 
-Though this simple example shows no new additional functionality as compared to 
+Though this simple example shows no new additional functionality as compared to running the model from the command line 
 
 ### API Best Practices
-TODO - Add best practices when using the API and link to sections that demonstrate each of them.
+**TODO** - examples - Add best practices when using the API and link to sections that demonstrate each of them.
  - Check GridLAB-D messages programmatically with `.get_messages()`
  - Use datetime objects to track simulation time (makes any time math easier)
- - Make checkpoints at judicious times (especially when using `house` objects that take a few days to initialize)
+ - Make checkpoints at judicious times (especially when using `house` objects that take a few days to initialize) **TODO** examples - - Waiting for checkpoints to be completed to demonstrate this.
  - Double-check simulation start and stop times 
- - Check return codes on API calls to make sure they succeeded
+ - Check return codes on API calls to make sure they succeeded (**TODO** - examples - Github #1745 requests that developers add these checks in the APIs so users don't have to.)
 
 ### Running Multiple Models in Parallel
 Waiting on resolution of [Github issue 1720](https://github.com/gridlab-d/gridlab-d/issues/1720).
 
 ### Controlling Simulation Start and Stop Time
-Covered in "example_sim_start_stop.py".
+Managing simulation time is one of the fundamental tasks in running a time-series simulation; this example walks through the how to control the start and stop time of the simulation, using Python's "datetime" library to do the heavy lifting for any time math. The example file is "example_sim_start_stop.py" **TODO** - exmaples - Update example file name once finalized
+
+GridLAB-D defines the simulation start and stop time inside the model file itself inside the "clock" object. This is a special object and isn't accessible via the normal object APIs (which we'll get to later) but instead uses a few dedicated APIs:
+
+```python
+gld = gridlabd.GridLabD()
+starttime = gld.get_starttime()
+stoptime = gld.get_stoptime()
+gld.set_starttime(starttime)
+gld.set_stoptime(stoptime)
+```
+These methods work exactly as you might guess based on their names, allowing you to get and set the start- and stop-time of the simulation. The values returned and accepted by these methods are [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) strings. Not by accident at all, Python's "datetime" library can convert these strings into datetime objects and convert datetime objects into these strings.
+
+```python
+from datetime import datetime, timedelta
+starttime = datetime.fromisoformat(gld.get_starttime())
+stoptime = datetime.fromisoformat(gld.get_stoptime())
+gld.set_starttime(starttime.isoformat())
+gld.set_stoptime(stoptime.isoformat())
+```
+
+The use of Python datetime objects avoids any of the common pitfalls when doing time-related string formatting or math. In this example, after getting the start and stop time into datetime objects, we can easily calculate the existing duration of the simulation, add an hour to it, and add half of that new time to the beginning and end of the simulation.
+
+```python
+old_sim_duration = stoptime - starttime
+new_sim_duration = old_sim_duration + timedelta(hours=1)
+sim_duration_half = new_sim_duration / 2
+calc_starttime = datetime.isoformat(starttime - sim_duration_half)
+calc_stoptime = datetime.isoformat(stoptime + sim_duration_half)
+gld.set_starttime(calc_starttime.isoformat())
+gld.set_stoptime(calcstoptime.isoformat())
+```
+
+After adjusting these simulation times, we can just run the simulation directly. Add, as a bonus, it is also possible pass in new simulation start and/or stop times when calling `run()`
+
+```python
+gld.run()
+
+# Alternatively, call `run()` with start and stop time defined
+gld.run(start_time=calc_starttime, stop_time=calc_stoptime)
+```
+
 
 ### Controlling Simulation Time
 Covered in "example_sim_stepping.py".
@@ -120,9 +164,7 @@ Covered in "sim_monitor_gui_demo.py"
 ### Example Application 3: Integration with pandapower
 Covered in "pp_gld_pf.py"
 
-### Example Application 4: Integration with OCHRE
-
-### Example Application 5: Co-Simulation with GLD as a HELICS Federate
+### Example Application 4: Co-Simulation with GLD as a HELICS Federate
 
 ### Simulation Control with Model Reading and Writing
 GridLAB-D, as an existing part of its core functionality, loads properly formatted models from a file into memory as a part of preparing for simulation. The Python API is able to leverage that model parsing and allow access to the model in memory via API calls. This allows users to read and write to the model directly, both before and during the execution of the simulation proper. 
@@ -157,7 +199,9 @@ GridLAB-D has many existing data collection capabilities that are often sufficie
 
 
 
+## User-Facing GridLAB-D Class
 
+**TODO** this class is proposed but may or may not be implemented by the initial release of the GridLAB-D API. This documentation is being kept here for now as design notes and needs to find an appropriate permanent home.
 
 ```mermaid
 classDiagram

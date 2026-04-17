@@ -45,10 +45,10 @@ new_sim_duration = old_sim_duration + timedelta(hours=1)
 sim_duration_half = new_sim_duration / 2
 
 # Calculate and set new start and stop times
-calc_start_time = datetime.isoformat(starttime - sim_duration_half)
-calc_stop_time = datetime.isoformat(stoptime + sim_duration_half)
-gld.set_starttime(calc_start_time)
-gld.set_stoptime(calc_stop_time)
+calc_starttime = datetime.isoformat(starttime - sim_duration_half)
+calc_stoptime = datetime.isoformat(stoptime + sim_duration_half)
+gld.set_starttime(calc_starttime)
+gld.set_stoptime(calc_stoptime)
 
 # Confirm changes to start and stop times
 new_starttime = datetime.fromisoformat(gld.get_starttime())
@@ -56,26 +56,22 @@ new_stoptime = datetime.fromisoformat(gld.get_stoptime())
 print(f"New start time: {new_starttime}")
 print(f"New stop time: {new_stoptime}")
 
+# Run model with new simulation start and stop times set
+gld.run()
 
-# gld.run()
-# Can also call `run()` with start and stop time defined
-gld.run(start_time=calc_start_time, stop_time=calc_stop_time)
+# Alternatively call `run()` with start and stop time defined
+# gld.run(start_time=calc_starttime, stop_time=calc_stoptime)
 
-# Check for errors
+# Check for errors after running simulation
 messages = gld.get_messages()
 filtered_messages = [
     message for message in messages
     if message.get("type") in {"ERROR"}
 ]
-pprint(filtered_messages)
+# Only print if there are error messages to print
+if filtered_messages:
+    pprint(filtered_messages)
 gld.clear_messages()
-
-# Test to see what happens when 
-# you try stepping beyond end of simulation
-gld.clear_messages()
-step_return_code, sim_time = gld.step()
-messages = gld.get_messages()
-
 
 gld.stop()
 gld.exit_gld()
