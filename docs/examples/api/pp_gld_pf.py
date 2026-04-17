@@ -11,6 +11,8 @@ time (1 second steps). Pandapower is stateless so for just solving powerflow
 so no need to do anything fancy there, just rerun the powerflow with the 
 updated load from GridLAB-D at each microstep. Users can set the number of 
 microsteps to take at each main time step with the `microstep_max` parameter.
+Minimum value of `microstep_max` is 1, which means the simulation will just 
+step forward in increments of the main time step size (i.e. no microstepping).
 
 Also included are two plotting methods, one using matplotlib and one using 
 plotly. Pick the one you want by setting the "plotting_tool" parameter to 
@@ -128,7 +130,7 @@ def plot_coupled_signals_plotly(
 
 # User-defined parameters
 step_size = 300
-microstep_max = 5
+microstep_max = 2
 plotting_tool = "matplotlib"  # Options: "matplotlib" or "plotly"
 
 
