@@ -747,15 +747,19 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             break;
         }
         // When loading a checkpoint, objects have no object_declaration (id==-1) so
-        // load_set_index is not called above.  Register the newly created object's
-        // actual ID so that class:id references (e.g. "climate:0") can be resolved.
+        // load_set_index is not called above.  Use the "_id" written by the checkpoint
+        // writer (the object's original numeric ID) so that class:id references resolve
+        // correctly.  Fall back to the assigned ID if "_id" is absent.
         if (id == -1 && global_checkpoint_loaded)
         {
-            this->parse.load_set_index(obj, obj->id);
+            OBJECTNUM original_id = obj->id;
+            if (objInstance.contains("_id") && objInstance["_id"].is_number_integer())
+                original_id = static_cast<OBJECTNUM>(objInstance["_id"].get<int64_t>());
+            this->parse.load_set_index(obj, original_id);
         }
         for (auto &[propName, propValue] : objInstance.items())
         {
-            if (propName == "inline_comments" || propName == "outside_comments" || propName == "inside_comments" || propName == "object_declaration")
+            if (propName == "inline_comments" || propName == "outside_comments" || propName == "inside_comments" || propName == "object_declaration" || propName == "_id")
             {
                 continue;
             }
@@ -773,9 +777,13 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             // After init() runs (which may reset published properties to defaults),
             // object_restore_checkpoint_properties() re-applies these values so the
             // saved checkpoint state takes precedence.
+            // Skip PT_object properties — they are resolved via the unresolved-reference
+            // mechanism during load and init() does not reset them.
             if (global_checkpoint_loaded)
             {
-                object_store_checkpoint_property(obj, propName.c_str(), propValueStr.c_str());
+                PROPERTY *cprop = class_find_property(oClass, propName.c_str());
+                if (cprop == nullptr || cprop->ptype != PT_object)
+                    object_store_checkpoint_property(obj, propName.c_str(), propValueStr.c_str());
             }
         }
         if (rv == FAILED)

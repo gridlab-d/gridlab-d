@@ -1791,7 +1791,6 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 			{
 				saturation_calculated_vals[index_loop] = gld::complex(0.0,0.0);
 			}
-			saturation_calculated_vals_enabled = true;
 
 			//Check the winding type
 			//1 = primary, 2 = secondary, 3 = both

@@ -181,6 +181,11 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 								PT_double, "emergency_rating_C[A]", PADDR(link_rating[1][2]), PT_DESCRIPTION, "Emergency rating for phase C of this link object (set individual line segments)",
 								PT_double, "inrush_convergence_value[V]", PADDR(inrush_tol_value), PT_DESCRIPTION, "Tolerance, as change in line voltage drop between iterations, for deltamode in-rush completion",
 
+								PT_double, "inrush_vdiffmag_prev_A", PADDR(inrush_vdiffmag_prev[0]), PT_ACCESS, PA_HIDDEN,
+								PT_double, "inrush_vdiffmag_prev_B", PADDR(inrush_vdiffmag_prev[1]), PT_ACCESS, PA_HIDDEN,
+								PT_double, "inrush_vdiffmag_prev_C", PADDR(inrush_vdiffmag_prev[2]), PT_ACCESS, PA_HIDDEN,
+								PT_double, "saturation_calculated_vals", PADDR(saturation_calculated_vals), PT_ACCESS, PA_HIDDEN,
+
 								// Hidden properties to do linking better
 								PT_complex, "triplex_neutral_1_value", PADDR(tn[0]), PT_ACCESS, PA_HIDDEN, // Exposed version of tn[0]
 								PT_complex, "triplex_neutral_2_value", PADDR(tn[1]), PT_ACCESS, PA_HIDDEN, // Exposed version of tn[1]

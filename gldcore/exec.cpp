@@ -569,6 +569,11 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                 for (OBJECT *obj : class_pair.second)
                 {
                     nlohmann::json instance = nlohmann::json::object();
+                    // Always record the object's numeric ID so the loader can
+                    // re-register it in the parser index under the correct ID,
+                    // enabling class:id references (e.g. "overhead_line_conductor:0")
+                    // to resolve correctly when restoring from a checkpoint.
+                    instance["_id"] = static_cast<int>(obj->id);
                     if (obj->name && strlen(obj->name) > 0)
                         instance["name"] = obj->name;
                     if (obj->parent && obj->parent != nullptr)
@@ -611,6 +616,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     if (obj->flags & OF_DELTAMODE)
                         instance["flags"] = std::string("DELTAMODE");
 
+
                     std::set<std::string> processed_properties;
                     CLASS *current_class = obj->oclass;
                     while (current_class != nullptr)
@@ -624,10 +630,120 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             if (processed_properties.find(prop_name) != processed_properties.end())
                                 continue;
                             processed_properties.insert(prop_name);
+                            // Check if this property is a linear transform target.
+                            // Walk the global transform list for a match on (obj, pmap).
+                            // If found, reconstruct the expression string (e.g.
+                            // "SRC_OBJ.src_prop*scale+bias") so the transform
+                            // relationship is re-established when the checkpoint is
+                            // restored.  pmap->raw is intentionally NOT used here
+                            // because it is per-class (shared across all instances),
+                            // not per-object.
+                            {
+                                std::string xform_expr;
+                                TRANSFORM *xf = transform_getnext(nullptr);
+                                while (xf != nullptr)
+                                {
+                                    if (xf->target_obj == obj &&
+                                        xf->target_prop == pmap &&
+                                        xf->function_type == XT_LINEAR)
+                                    {
+                                        if (xf->source_type == XS_SCHEDULE &&
+                                            xf->source_schedule != nullptr)
+                                        {
+                                            xform_expr = xf->source_schedule->name;
+                                            if (xf->scale != 1.0)
+                                            {
+                                                char sbuf[64];
+                                                snprintf(sbuf, sizeof(sbuf), "*%g", xf->scale);
+                                                xform_expr += sbuf;
+                                            }
+                                            if (xf->bias != 0.0)
+                                            {
+                                                char bbuf[64];
+                                                snprintf(bbuf, sizeof(bbuf),
+                                                         xf->bias > 0 ? "+%g" : "%g", xf->bias);
+                                                xform_expr += bbuf;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // Reverse-lookup source object/property by address
+                                            for (OBJECT *so = object_get_first();
+                                                 so != nullptr && xform_expr.empty();
+                                                 so = object_get_next(so))
+                                            {
+                                                CLASS *sc = so->oclass;
+                                                while (sc != nullptr && xform_expr.empty())
+                                                {
+                                                    for (PROPERTY *sp = sc->pmap;
+                                                         sp != nullptr; sp = sp->next)
+                                                    {
+                                                        void *addr = object_get_addr(so, sp->name);
+                                                        if (addr != nullptr &&
+                                                            static_cast<double *>(addr) == xf->source)
+                                                        {
+                                                            char sname[256] = "";
+                                                            object_name(so, sname, sizeof(sname));
+                                                            xform_expr = std::string(sname) + "." + sp->name;
+                                                            if (xf->scale != 1.0)
+                                                            {
+                                                                char sbuf[64];
+                                                                snprintf(sbuf, sizeof(sbuf), "*%g", xf->scale);
+                                                                xform_expr += sbuf;
+                                                            }
+                                                            if (xf->bias != 0.0)
+                                                            {
+                                                                char bbuf[64];
+                                                                snprintf(bbuf, sizeof(bbuf),
+                                                                         xf->bias > 0 ? "+%g" : "%g",
+                                                                         xf->bias);
+                                                                xform_expr += bbuf;
+                                                            }
+                                                            break;
+                                                        }
+                                                    }
+                                                    sc = sc->parent;
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    }
+                                    xf = transform_getnext(xf);
+                                }
+                                if (!xform_expr.empty())
+                                {
+                                    instance[pmap->name] = xform_expr;
+                                    continue;
+                                }
+                            }
                             switch (pmap->ptype)
                             {
                             case PT_double:
                             {
+                                // saturation_calculated_vals is published as PT_double but
+                                // is actually a gld::complex* pointer.  Dereference it and
+                                // emit all 12 elements as a JSON array of complex strings.
+                                if (strcmp(pmap->name, "saturation_calculated_vals") == 0)
+                                {
+                                    double *dptr = object_get_double_quick(obj, pmap);
+                                    if (dptr != nullptr)
+                                    {
+                                        gld::complex *carray = *reinterpret_cast<gld::complex **>(dptr);
+                                        if (carray != nullptr)
+                                        {
+                                            nlohmann::json arr = nlohmann::json::array();
+                                            for (int ci = 0; ci < 12; ci++)
+                                            {
+                                                char cbuf[64];
+                                                snprintf(cbuf, sizeof(cbuf), "%+lg%+lgj",
+                                                         carray[ci].Re(), carray[ci].Im());
+                                                arr.push_back(std::string(cbuf));
+                                            }
+                                            instance[pmap->name] = arr;
+                                        }
+                                    }
+                                    break;
+                                }
                                 double *dptr = object_get_double_quick(obj, pmap);
                                 if (dptr != nullptr)
                                 {
@@ -683,7 +799,8 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                                     && strlen(value_str) > 0
                                     && strcmp(value_str, "null") != 0 && strcmp(value_str, "NULL") != 0
                                     && strcmp(value_str, "\"\"") != 0 && strcmp(value_str, "''") != 0
-                                    && strcmp(value_str, "NAN") != 0 && strcmp(value_str, "nan") != 0)
+                                    && strcmp(value_str, "NAN") != 0 && strcmp(value_str, "nan") != 0
+                                    && strstr(value_str, "nan") == nullptr && strstr(value_str, "NAN") == nullptr)
                                 {
                                     instance[pmap->name] = std::string(value_str);
                                 }

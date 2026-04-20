@@ -159,10 +159,10 @@ public:
 private:
 	bool deltamode_inclusive;
 	bool inrush_computations_needed;	///< Flag for in-rush computations to determine when an exit from deltamode would be allowed
-	double inrush_vdiffmag_prev[3];		///< Tracking variable to determine when in-rush has run its course and inrush_computations_needed can be deflagged
 	double deltamode_prev_time;	///< Tracking variable to tell when new deltamode timesteps have occurred (in-rush)
 
 public:
+	double inrush_vdiffmag_prev[3];		///< Tracking variable to determine when in-rush has run its course and inrush_computations_needed can be deflagged
 	gld::complex *ahrlstore;			///< Pointer for array used to store line history constant ahrl -- associated with inductance
 	gld::complex *bhrlstore;			///< Pointer for array used to store line history constant bhrl -- associated with inductance
 	gld::complex *ahmstore;			///< Pointer for array used to store magnetic history constant ahtr -- associated with transformers
