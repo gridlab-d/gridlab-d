@@ -54,8 +54,28 @@
 #endif
 
 #include <algorithm> // Ensure std::min is available
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 using std::isnan;
+
+// ---------------------------------------------------------------------------
+// Checkpoint property restore store
+// Maps object id -> list of (property name, property value) pairs captured
+// during loadObjects().  After init() runs and potentially resets published
+// properties to defaults, object_restore_checkpoint_properties() re-applies
+// these saved values so the checkpoint state takes precedence.
+// ---------------------------------------------------------------------------
+static std::unordered_map<OBJECTNUM, std::vector<std::pair<std::string,std::string>>>
+    checkpoint_prop_store;
+
+void object_store_checkpoint_property(OBJECT *obj, const char *name, const char *value)
+{
+    if (obj == nullptr || name == nullptr || value == nullptr) return;
+    checkpoint_prop_store[obj->id].emplace_back(name, value);
+}
 
 /* object list */
 static OBJECTNUM next_object_id = 0;
@@ -1134,6 +1154,40 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
     /* should never get here */
 }
 
+STATUS object_restore_checkpoint_properties(OBJECT *obj)
+{
+    if (obj == nullptr) return SUCCESS;
+    auto it = checkpoint_prop_store.find(obj->id);
+    if (it == checkpoint_prop_store.end()) return SUCCESS;
+    for (auto& [name, value] : it->second)
+    {
+        PROPERTY *prop = class_find_property(obj->oclass, name.c_str());
+        if (prop == nullptr)
+        {
+            // Header properties (in_svc, out_svc, parent, name, etc.) are set
+            // correctly during loadObject() and init() does not reset them.
+            // Skip restoring them here to avoid spurious warnings.
+            continue;
+        }
+        if (!object_check_write_access(obj, prop))
+            continue;
+        // Use object_set_value_by_addr to bypass schedule-detection in
+        // object_set_value_by_name — checkpoint values are literal, never schedules.
+        void *addr = reinterpret_cast<void *>(
+            reinterpret_cast<std::uintptr_t>(obj + 1) +
+            reinterpret_cast<std::uintptr_t>(prop->addr));
+        char val_buf[4096] = "";
+        snprintf(val_buf, sizeof(val_buf), "%s", value.c_str());
+        if (object_set_value_by_addr(obj, addr, val_buf, prop) == 0)
+        {
+            output_warning("object_restore_checkpoint_properties(): could not restore "
+                           "property '%s' on %s:%d",
+                           name.c_str(), obj->oclass->name, obj->id);
+        }
+    }
+    return SUCCESS;
+}
+
 // Add this at the top of your file or in an appropriate header
 #ifdef _WIN32
 // Windows-specific includes and definitions
@@ -1866,24 +1920,28 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
  **/
 int object_init(OBJECT *obj) /**< the object to initialize */
 {
-    clock_t t = (clock_t)exec_clock();
-    int rv = 1;
-    obj->clock = global_starttime;
-    if (global_checkpoint_loaded && obj->oclass->checkpoint_init != nullptr)
-    {
-        rv = (int)(*(obj->oclass->checkpoint_init))(obj, obj->parent);
-    }
-    else if (obj->oclass->init != nullptr)
-    {
-        rv = (int)(*(obj->oclass->init))(obj, obj->parent);
-    }
-    object_profile(obj, OPI_INIT, t);
-    if (global_debug_output > 0)
-    {
-        output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv ? "ok" : "failed");
-    }
+	clock_t t = (clock_t)exec_clock();
+	int rv = 1;
+	obj->clock = global_starttime;
+	if (obj->oclass->init != nullptr)
+	{
+		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
+	}
+	// When restoring from a checkpoint, re-apply saved property values after
+	// init() so that checkpoint state overrides any defaults set by init().
+	// Only restore on a successful (non-deferred) init return.
+	if (rv == 1 && global_checkpoint_loaded)
+	{
+		if (object_restore_checkpoint_properties(obj) != SUCCESS)
+			rv = 0;
+	}
+	object_profile(obj, OPI_INIT, t);
+	if (global_debug_output > 0)
+	{
+		output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv ? "ok" : "failed");
+	}
 
-    return rv;
+	return rv;
 }
 
 /** Run events that should only occur at the start of a timestep.

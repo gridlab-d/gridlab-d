@@ -25,13 +25,12 @@ private:
 	void update_next_t(void);
 	void update_power(void);
 	void update_state(void);
-	int shared_init(OBJECT *parent); ///<Shared initialization for non-published variables used by both checkpoint_init and init
+	int shared_init(OBJECT *parent); ///< Helper for initializing non-published variables; called by init()
 public:
 	appliance(MODULE *module);
 	~appliance() { if (defaults) delete defaults; }
 	int create();
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
 	int isa(char *classname);
 	int precommit(TIMESTAMP t1);
 	inline TIMESTAMP presync(TIMESTAMP t1);

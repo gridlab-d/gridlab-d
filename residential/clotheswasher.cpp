@@ -181,14 +181,6 @@ int clotheswasher::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int clotheswasher::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int clotheswasher::init(OBJECT *parent)
 {
 	OBJECT *hdr = object_header(this);
@@ -803,12 +795,6 @@ EXPORT int init_clotheswasher(OBJECT *obj)
 {
 	clotheswasher *my = object_data<clotheswasher>(obj);
 	return my->init(obj->parent);
-}
-
-EXPORT int checkpoint_init_clotheswasher(OBJECT *obj)
-{
-	clotheswasher *my = object_data<clotheswasher>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT int isa_clotheswasher(OBJECT *obj, char *classname)

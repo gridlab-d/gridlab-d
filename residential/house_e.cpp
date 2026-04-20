@@ -1475,44 +1475,7 @@ int house_e::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int house_e::checkpoint_init(OBJECT *parent)
-{
-    // Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-    int rv = shared_init(parent);
-    if (rv != 1)
-        return rv;
 
-    // Set simulation beginning time
-    simulation_beginning_time = gl_globalclock;
-    simulation_beginning_time_dbl = (double)simulation_beginning_time;
-
-    // Re-initialize pMeterStatus if parent is available
-    if (parent != nullptr && pMeterStatus == nullptr)
-    {
-        pMeterStatus = new gld_property(parent, "service_status");
-    }
-
-    // Attach implicit enduses to the panel (built in create(), must be attached here as in init())
-    attach_implicit_enduses();
-
-	// Re-initialize pHVAC_EnduseLoad
-	if(pHVAC_EnduseLoad == nullptr){
-		if (hvac_breaker_rating == 0)
-		{
-			load.breaker_amps = 200;
-			hvac_breaker_rating = 200;
-		}
-		else{
-			load.breaker_amps = hvac_breaker_rating;
-			load.config = EUC_IS220;
-		}
-		pHVAC_EnduseLoad = attach(object_header(this), hvac_breaker_rating, true, &load);
-	}
-
-	init_climate();
-		
-	return SUCCESS;
-}
 
 /** Map circuit variables to meter.  Initalize house_e and HVAC model properties,
 and internal gain variables.
@@ -4623,13 +4586,6 @@ EXPORT STATUS postupdate_house_e(OBJECT *obj)
         gl_error("postupdate_house_e(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
         return status;
     }
-}
-
-// EXPORTed checkpoint_init for module loader
-EXPORT int checkpoint_init_house(OBJECT *obj, OBJECT *parent)
-{
-    house_e *my = object_data<house_e>(obj);
-    return my->checkpoint_init(parent);
 }
 
 /**@}**/

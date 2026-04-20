@@ -296,13 +296,6 @@ int waterheater::shared_init(OBJECT *parent)
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
  **/
-int waterheater::checkpoint_init(OBJECT *parent)
-{
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 /** Initialize water heater model properties - randomized defaults for all published variables
  **/
 int waterheater::init(OBJECT *parent)
@@ -2058,11 +2051,6 @@ EXPORT int isa_waterheater(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_waterheater(OBJECT *obj)
-{
-	return object_data<waterheater>(obj)->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

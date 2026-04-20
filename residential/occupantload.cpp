@@ -80,14 +80,6 @@ int occupantload::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int occupantload::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return SUCCESS;
-}
-
 int occupantload::init(OBJECT *parent)
 {
 	// Initialize non-published variables
@@ -225,12 +217,6 @@ EXPORT int isa_occupantload(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_occupantload(OBJECT *obj)
-{
-	occupantload *my = object_data<occupantload>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_occupantload(OBJECT *obj, TIMESTAMP t0)

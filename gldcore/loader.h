@@ -9,6 +9,7 @@
 #include "class.h"
 #include "globals.h"
 #include "module.h"
+#include "object.h"
 #include "output.h"
 #include "parser.h"
 #include "property.h"

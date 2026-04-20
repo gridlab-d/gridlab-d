@@ -110,15 +110,6 @@ int residential_enduse::shared_init(OBJECT *parent)
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
  **/
-int residential_enduse::checkpoint_init(OBJECT *parent)
-{
-    set_flags(get_flags() | OF_SKIPSAFE);
-    int rv = shared_init(parent);
-    if (rv != 1)
-        return rv;
-    return SUCCESS;
-}
-
 int residential_enduse::init(OBJECT *parent)
 {
     set_flags(get_flags() | OF_SKIPSAFE);
@@ -202,11 +193,6 @@ EXPORT int isa_residential_enduse(OBJECT *obj, char *classname)
     {
         return 0;
     }
-}
-
-EXPORT int checkpoint_init_residential_enduse(OBJECT *obj)
-{
-    return object_data<residential_enduse>(obj)->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t1)

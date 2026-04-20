@@ -107,14 +107,6 @@ int ZIPload::shared_init(OBJECT *parent)
 }
 
 // Called after checkpoint load to reinitialize non-published variables
-int ZIPload::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published. If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int ZIPload::create() 
 {
 	int res = residential_enduse::create();
@@ -650,13 +642,6 @@ EXPORT TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0)
 		return t1;
 	}
 	SYNC_CATCHALL(ZIPload);
-}
-
-// EXPORTed checkpoint_init for module loader
-EXPORT int checkpoint_init_ZIPload(OBJECT *obj, OBJECT *parent)
-{
-	ZIPload *my = object_data<ZIPload>(obj);
-	return my->checkpoint_init(parent);
 }
 
 /**@}**/

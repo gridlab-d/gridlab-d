@@ -174,14 +174,6 @@ int dryer::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int dryer::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int dryer::init(OBJECT *parent)
 {
 	// Initialize non-published variables
@@ -944,12 +936,6 @@ EXPORT int init_dryer(OBJECT *obj)
 {
 	dryer *my = object_data<dryer>(obj);
 	return my->init(obj->parent);
-}
-
-EXPORT int checkpoint_init_dryer(OBJECT *obj)
-{
-	dryer *my = object_data<dryer>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT int isa_dryer(OBJECT *obj, char *classname)

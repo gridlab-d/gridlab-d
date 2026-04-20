@@ -268,13 +268,6 @@ int thermal_storage::shared_init(OBJECT *parent)
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
  **/
-int thermal_storage::checkpoint_init(OBJECT *parent)
-{
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int thermal_storage::init(OBJECT *parent)
 {
 	OBJECT *hdr = object_header(this);
@@ -559,11 +552,6 @@ EXPORT int isa_thermal_storage(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_thermal_storage(OBJECT *obj)
-{
-	return object_data<thermal_storage>(obj)->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_thermal_storage(OBJECT *obj, TIMESTAMP t1)

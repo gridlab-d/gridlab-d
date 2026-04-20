@@ -367,14 +367,6 @@ int evcharger::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int evcharger::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int evcharger::init(OBJECT *parent)
 {
 	// Initialize non-published variables
@@ -666,12 +658,6 @@ EXPORT int isa_evcharger(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_evcharger(OBJECT *obj)
-{
-	evcharger *my = object_data<evcharger>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_evcharger(OBJECT *obj, TIMESTAMP t0)

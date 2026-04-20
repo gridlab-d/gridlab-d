@@ -54,14 +54,6 @@ int appliance::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int appliance::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int appliance::init(OBJECT *parent)
 {
 	// Initialize non-published variables

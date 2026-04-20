@@ -216,14 +216,6 @@ int dishwasher::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int dishwasher::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int dishwasher::init(OBJECT *parent)
 {
 	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
@@ -1520,12 +1512,6 @@ EXPORT int init_dishwasher(OBJECT *obj)
 {
 	dishwasher *my = object_data<dishwasher>(obj);
 	return my->init(obj->parent);
-}
-
-EXPORT int checkpoint_init_dishwasher(OBJECT *obj)
-{
-	dishwasher *my = object_data<dishwasher>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT int isa_dishwasher(OBJECT *obj, char *classname)

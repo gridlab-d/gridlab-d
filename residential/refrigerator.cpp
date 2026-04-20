@@ -199,13 +199,6 @@ int refrigerator::shared_init(OBJECT *parent)
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
  **/
-int refrigerator::checkpoint_init(OBJECT *parent)
-{
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int refrigerator::init(OBJECT *parent)
 {
 	OBJECT *hdr = object_header(this);
@@ -860,11 +853,6 @@ EXPORT int isa_refrigerator(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_refrigerator(OBJECT *obj)
-{
-	return object_data<refrigerator>(obj)->checkpoint_init(obj->parent);
 }
 
 /*	determine if we're turning the motor on or off and nothing else. */

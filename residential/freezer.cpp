@@ -130,14 +130,6 @@ int freezer::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int freezer::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int freezer::init(OBJECT *parent)
 {
 	// Initialize non-published variables
@@ -377,12 +369,6 @@ EXPORT int isa_freezer(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_freezer(OBJECT *obj)
-{
-	freezer *my = object_data<freezer>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 /*	determine if we're turning the motor on or off and nothing else. */

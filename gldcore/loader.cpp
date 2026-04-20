@@ -746,6 +746,13 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             rv = FAILED;
             break;
         }
+        // When loading a checkpoint, objects have no object_declaration (id==-1) so
+        // load_set_index is not called above.  Register the newly created object's
+        // actual ID so that class:id references (e.g. "climate:0") can be resolved.
+        if (id == -1 && global_checkpoint_loaded)
+        {
+            this->parse.load_set_index(obj, obj->id);
+        }
         for (auto &[propName, propValue] : objInstance.items())
         {
             if (propName == "inline_comments" || propName == "outside_comments" || propName == "inside_comments" || propName == "object_declaration")
@@ -761,6 +768,14 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             if (rv == FAILED)
             {
                 break;
+            }
+            // Store property value for post-init restore when loading a checkpoint.
+            // After init() runs (which may reset published properties to defaults),
+            // object_restore_checkpoint_properties() re-applies these values so the
+            // saved checkpoint state takes precedence.
+            if (global_checkpoint_loaded)
+            {
+                object_store_checkpoint_property(obj, propName.c_str(), propValueStr.c_str());
             }
         }
         if (rv == FAILED)
@@ -1045,12 +1060,12 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 {
                     obj->longitude = this->loadLongitude(propValue.data());
                 }
-                else if (propName.compare("in") == 0)
+                else if (propName.compare("in") == 0 || propName.compare("in_svc") == 0)
                 {
                     obj->in_svc = convert_to_timestamp_delta(propValue.c_str(), &obj->in_svc_micro,
                                                              &obj->in_svc_double);
                 }
-                else if (propName.compare("out") == 0)
+                else if (propName.compare("out") == 0 || propName.compare("out_svc") == 0)
                 {
                     obj->out_svc = convert_to_timestamp_delta(propValue.c_str(), &obj->out_svc_micro,
                                                               &obj->out_svc_double);

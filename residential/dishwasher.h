@@ -132,7 +132,6 @@ public:
 	~dishwasher();
 	int create();
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
 	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP last_t;

@@ -37,7 +37,6 @@ public:
 	residential_enduse() {}
 	int create(bool connect_shape=true);
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
 	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

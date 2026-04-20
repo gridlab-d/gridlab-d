@@ -123,14 +123,6 @@ int lights::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int lights::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int lights::init(OBJECT *parent)
 {
 	// Initialize non-published variables
@@ -309,12 +301,6 @@ EXPORT int isa_lights(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_lights(OBJECT *obj)
-{
-	lights *my = object_data<lights>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t1)

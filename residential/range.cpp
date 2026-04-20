@@ -266,13 +266,6 @@ int range::shared_init(OBJECT *parent)
 
 /** Called when restoring from checkpoint to reinitialize non-published variables
  **/
-int range::checkpoint_init(OBJECT *parent)
-{
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 /** Initialize oven model properties - randomized defaults for all published variables
  **/
 int range::init(OBJECT *parent)
@@ -1295,11 +1288,6 @@ EXPORT int isa_range(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_range(OBJECT *obj)
-{
-	return object_data<range>(obj)->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
