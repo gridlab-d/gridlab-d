@@ -1,4 +1,5 @@
 #include "loader.h"
+#include <regex>
 #include <unordered_set>
 
 unsigned int64 loader::polynomialHasher(string key)
@@ -77,7 +78,7 @@ STATUS loader::convert(ojson value, string &out)
     }
     else
     {
-        output_error_raw("loader::convert() parsing file, %s:  unable to convert value to string: %s",
+        output_debug("loader::convert() parsing file, %s:  unable to convert value to string: %s",
                          this->filename.string().c_str(), value.dump(4).c_str());
     }
     return FAILED;
@@ -765,12 +766,28 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             }
             if (this->convert(propValue, propValueStr) == FAILED)
             {
-                rv = FAILED;
-                break;
+                // The JSON value is an array or object (e.g. saturation_calculated_vals
+                // stored as a 12-element complex array).  We can't convert it to a plain
+                // string, so skip it — it needs special post-init handling elsewhere.
+                output_debug("loader::loadObject(): skipping non-scalar property '%s' on %s (array/object value)",
+                             propName.c_str(), className.c_str());
+                continue;
             }
             rv = this->objectProperties(oClass, obj, propName, propValueStr);
             if (rv == FAILED)
             {
+                if (global_checkpoint_loaded)
+                {
+                    // When restoring a checkpoint, some properties written by the
+                    // checkpoint writer may not be settable (e.g. read-only outputs
+                    // like player::value).  Skip them with a debug message rather
+                    // than aborting the entire load.
+                    output_debug("loader::loadObject(): skipping unrestorable property '%s' on %s:%s in checkpoint",
+                                 propName.c_str(), className.c_str(),
+                                 obj->name ? obj->name : "?");
+                    rv = SUCCESS;
+                    continue;
+                }
                 break;
             }
             // Store property value for post-init restore when loading a checkpoint.
@@ -779,10 +796,21 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             // saved checkpoint state takes precedence.
             // Skip PT_object properties — they are resolved via the unresolved-reference
             // mechanism during load and init() does not reset them.
+            // Skip transform expressions (word.word patterns) — the transform is
+            // established during loading via linear_transform() and does not need
+            // re-application; object_set_value_by_addr can't parse them anyway.
             if (global_checkpoint_loaded)
             {
                 PROPERTY *cprop = class_find_property(oClass, propName.c_str());
-                if (cprop == nullptr || cprop->ptype != PT_object)
+                bool is_transform_expr = false;
+                if (cprop != nullptr && cprop->ptype != PT_object && !propValueStr.empty())
+                {
+                    // Quick check: if the value contains "word.word" it is a transform
+                    // expression that was already wired up by linear_transform() above.
+                    static const std::regex transform_pat(R"([A-Za-z_]\w*\.[A-Za-z_]\w*)");
+                    is_transform_expr = std::regex_search(propValueStr, transform_pat);
+                }
+                if (cprop == nullptr || (cprop->ptype != PT_object && !is_transform_expr))
                     object_store_checkpoint_property(obj, propName.c_str(), propValueStr.c_str());
             }
         }
