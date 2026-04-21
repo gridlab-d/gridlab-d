@@ -660,6 +660,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
     nameObj.name = clsName;
     int64 id = -1;
     int64 id2 = -1;
+    bool idSpecified = false;
     if (objInstance.contains("object_declaration"))
     {
         string objectDeclaration = objInstance["object_declaration"].get<string>();
@@ -700,6 +701,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
         }
         else
         {
+            idSpecified = true;
             id = stoll(classNameStripped);
         }
     }
@@ -763,6 +765,29 @@ STATUS loader::loadObject(const string className, ojson objInstance)
                 break;
             }
         }
+        if (obj->name == nullptr)
+        {
+            if (idSpecified)
+            {
+                string objName = className + ":" + to_string(id);
+                if (object_set_name(obj, objName.data()) == nullptr)
+                {
+                    output_error_raw("loader::loadObject() parsing file, %s: property name %s could not be used",
+                                     this->filename.string().c_str(), objName.c_str());
+                    rv = FAILED;
+                }
+            }
+            else
+            {
+                string objName = className + ":" + to_string(obj->id);
+                if (object_set_name(obj, objName.data()) == nullptr)
+                {
+                    output_error_raw("loader::loadObject() parsing file, %s: property name %s could not be used",
+                                     this->filename.string().c_str(), objName.c_str());
+                    rv = FAILED;
+                }
+            }
+        }
         if (rv == FAILED)
         {
             break;
@@ -778,7 +803,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
     }
 
     // Override rng_state with name (if present) and randomseed (if present) based hash
-    if (global_randomseed > 0 && obj->flags & OF_RANDOMSEEDSET != OF_RANDOMSEEDSET)
+    if (rv != FAILED && global_randomseed > 0 && obj->flags & OF_RANDOMSEEDSET != OF_RANDOMSEEDSET)
     {
         if (obj->name == nullptr)
         {
