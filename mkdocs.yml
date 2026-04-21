@@ -195,25 +195,25 @@ nav:
         - Collector: docs/3.0 - Modeling Reference/Modules/Tape/5.0 - Collector.md
         - Metrics collector: docs/3.0 - Modeling Reference/Modules/Tape/6.0 - Metrics_collector.md
         - Metrics collector writer: docs/3.0 - Modeling Reference/Modules/Tape/6.1 - Metrics_collector_writer.md
-  - Python API:
-    - Python API Introdution: docs/3.0 - Modeling Reference/Python API/1.0 - Python API Overview.md
-    - GridLAB-D Python API Quick Start: docs/3.0 - Modeling Reference/Python API/2.0 - Python API Quick Start.md
-    - 3.0 - Python API Basics:
-      - Python API Basics: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.0 - Python API Basics.md
-      - Running Multiple Models: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.1 - Running Multiple Models.md
-      - Controlling Simulation Start and Stop Time: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.2 - Controlling Simulation Start and Stop Times.md
-      - Controlling Simulation Time: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.3 - Controlling Simulation Time.md
-      - Monitoring Console Messages: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.4 - Monitoring Console Messages.md
-      - Reading Data from the Model: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.5 - Reading Data from the Model.md
-      - Writing Data to the Model: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.6 - Writing Data to the Model.md
-      - Working with Checkpoints: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.7 - Working with Checkpoints.md
-      - Working in Transient Mode: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.8 - Working in Transient Mode.md
-    - 4.0 - Application Examples:
-      - Python API Application Examples: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.0 - Application Examples.md
-      - GUI for Model Modification: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.1 - GUI for Model Modification.md
-      - Runtime Monitoring: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.2 - Runtime Monitoring.md
-      - Integrated T+D Powerflow: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.3 - Integrated T+D Powerflow.md
-      - Integration with the HELICS Co-Simulation Platform: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.4 - GridLAB-D HELICS Integration.md
+    - Python API:
+      - Python API Introdution: docs/3.0 - Modeling Reference/Python API/1.0 - Python API Overview.md
+      - GridLAB-D Python API Quick Start: docs/3.0 - Modeling Reference/Python API/2.0 - Python API Quick Start.md
+      - 3.0 - Python API Basics:
+        - Python API Basics: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.0 - Python API Basics.md
+        - Running Multiple Models: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.1 - Running Multiple Models.md
+        - Controlling Simulation Start and Stop Time: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.2 - Controlling Simulation Start and Stop Times.md
+        - Controlling Simulation Time: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.3 - Controlling Simulation Time.md
+        - Monitoring Console Messages: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.4 - Monitoring Console Messages.md
+        - Reading Data from the Model: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.5 - Reading Data from the Model.md
+        - Writing Data to the Model: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.6 - Writing Data to the Model.md
+        - Working with Checkpoints: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.7 - Working with Checkpoints.md
+        - Working in Transient Mode: docs/3.0 - Modeling Reference/Python API/3.0 - Python API Basics/3.8 - Working in Transient Mode.md
+      - 4.0 - Application Examples:
+        - Python API Application Examples: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.0 - Application Examples.md
+        - GUI for Model Modification: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.1 - GUI for Model Modification.md
+        - Runtime Monitoring: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.2 - Runtime Monitoring.md
+        - Integrated T+D Powerflow: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.3 - Integrated T+D Powerflow.md
+        - Integration with the HELICS Co-Simulation Platform: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.4 - GridLAB-D HELICS Integration.md
   - Other Features:
     - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
     - Command Line Options: docs/3.0 - Modeling Reference/Other Features/CommandLineOptions.md
