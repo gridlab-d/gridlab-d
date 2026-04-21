@@ -214,17 +214,17 @@ nav:
       - Runtime Monitoring: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.2 - Runtime Monitoring.md
       - Integrated T+D Powerflow: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.3 - Integrated T+D Powerflow.md
       - Integration with the HELICS Co-Simulation Platform: docs/3.0 - Modeling Reference/Python API/4.0 - Application Examples/4.4 - GridLAB-D HELICS Integration.md
-    - Other Features:
-      - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
-      - Command Line Options: docs/3.0 - Modeling Reference/Other Features/CommandLineOptions.md
-      - Complex Numbers: docs/3.0 - Modeling Reference/Other Features/ComplexNumbers.md
-      - Microgrids: docs/3.0 - Modeling Reference/Other Features/Microgrids.md
-      - Options: docs/3.0 - Modeling Reference/Other Features/Options.md
-      - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
-      - Simulation Options: docs/3.0 - Modeling Reference/Other Features/Simulation Options.md
-      - Sync Check: docs/3.0 - Modeling Reference/Other Features/Spec_sync_check.md
-      - Units: docs/3.0 - Modeling Reference/Other Features/Units.md
-      - Validate: docs/3.0 - Modeling Reference/Other Features/Validate.md
+  - Other Features:
+    - Checkpoints: docs/3.0 - Modeling Reference/Other Features/Checkpoints.md
+    - Command Line Options: docs/3.0 - Modeling Reference/Other Features/CommandLineOptions.md
+    - Complex Numbers: docs/3.0 - Modeling Reference/Other Features/ComplexNumbers.md
+    - Microgrids: docs/3.0 - Modeling Reference/Other Features/Microgrids.md
+    - Options: docs/3.0 - Modeling Reference/Other Features/Options.md
+    - Performance profiling: docs/3.0 - Modeling Reference/Other Features/Performance_profiling.md
+    - Simulation Options: docs/3.0 - Modeling Reference/Other Features/Simulation Options.md
+    - Sync Check: docs/3.0 - Modeling Reference/Other Features/Spec_sync_check.md
+    - Units: docs/3.0 - Modeling Reference/Other Features/Units.md
+    - Validate: docs/3.0 - Modeling Reference/Other Features/Validate.md
   - 4.0 Developing Reference:
     - 4.0 - Feature Development:
       - Checkpointing: docs/4.0 Developing Reference/4.0 - Feature Development/Checkpointing.md
