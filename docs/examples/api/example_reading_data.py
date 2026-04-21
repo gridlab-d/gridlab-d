@@ -26,6 +26,7 @@ import h5py
 import numpy as np
 import re
 import matplotlib.pyplot as plt
+import pprint
 
 step_size = 60
 
@@ -260,7 +261,21 @@ while sim_time_obj < stop_time_obj:
     # Set step size and advance one step
     gld.set_time_step(step_size)
     error_code, sim_time = gld.step()
+    if error_code != 0:
+        raise RuntimeError(f"Simulation step failed at {sim_time} with error code {error_code}.")
     sim_time_obj = datetime.fromisoformat(sim_time)
+
+    # Check for errors
+    messages = gld.get_messages()
+    filtered_messages = [
+        message for message in messages
+        if message.get("type") in {"ERROR"}
+    ]
+  # Only print if there are error messages to print
+    if filtered_messages:
+        pprint(filtered_messages)
+    gld.clear_messages()
+
 
     # Collect data for all houses at current time step
     air_dict = gld.get_properties_by_class("house", "air_temperature") 
