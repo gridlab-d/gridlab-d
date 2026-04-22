@@ -45,6 +45,8 @@ plugins:
             WARN_AS_ERROR: False
             WARN_LOGFILE: docs/doxygen-warnings.log
 markdown_extensions:
+  - fenced_code
+  - codehilite 
   - pymdownx.arithmatex:
       generic: true
   - markdown_include.include:
