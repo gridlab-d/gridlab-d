@@ -410,7 +410,7 @@ The regulator output ($V_R$) can be further constrained by limiting values. Thes
 
 Terminal voltage for the exciter control is taken as the magnitude of the positive sequence component of all connected voltage terminals. 
 
-This equation set represents an implementation where all possible components of the DC exciter are implemented (compensators, stabilizers, and amplifiers). These devices may not all always be present, so appropriate catches and checks need to be in place to "remove" unneeded portions of the equations.[R1.2.3][R1.2.4]
+This equation set represents an implementation where all possible components of the DC exciter are implemented (compensators, stabilizers, and amplifiers). These devices may not all always be present, so appropriate catches and checks need to be in place to "remove" unneeded portions of the equations (R1.2.3, R1.2.4).
 
 ### Thyristor Rectifier Exciter
 
@@ -430,7 +430,7 @@ The value of $V_{in}$ can be constrained by limiting values of $V_{IMIN}$ and $V
 
 The key development for the microgrids capability in GridLAB-D™ is the inclusion of a power system dynamic solver that interfaces with the appropriate objects within the GridLAB-D™ environment. Initially, this is expected to be predominately the powerflow module. 
 
-Updates to voltage and frequency values should be made apparent for the next "quasi-steady-state" powerflow iteration. These values should be implemented in such a way that powerflow will not significantly override the control actions from the generator or load, with regards to voltage or frequency. An incremental powerflow solution is required at all dynamic timesteps to ensure the system is properly responding, so this incremental powerflow solution should coincide with the static solution at "quasi-steady-state" points.[R3.4][R3.5]
+Updates to voltage and frequency values should be made apparent for the next "quasi-steady-state" powerflow iteration. These values should be implemented in such a way that powerflow will not significantly override the control actions from the generator or load, with regards to voltage or frequency. An incremental powerflow solution is required at all dynamic timesteps to ensure the system is properly responding, so this incremental powerflow solution should coincide with the static solution at "quasi-steady-state" points (R3.4, R3.5).
 
 The implemented solver shall be done as a modified Euler, predictor-corrector solution method1. This implementation provides the basic structure laid out in the Power System Toolbox (PST) for MATLAB 3. Utilizing the modified Euler method allows the flexibility of the different timestep sizes and progression outlined in the Solution Timesteps section below. 
 
@@ -494,7 +494,7 @@ Variable | Definition
 **frequency_change** | Pointer to frequency change in the local frequency solution between previous and current timestep   
 **machine_parameters** | Pointer to machine parameters - includes exciter, pss, and governor properties   
   
-`NULL` fields will be ignored as "no equipment present" to the solver. The pointer for this data structure is passed to the dynamic solver capability during the solver's initialization routine.[R2.1][R2.2]
+`NULL` fields will be ignored as "no equipment present" to the solver. The pointer for this data structure is passed to the dynamic solver capability during the solver's initialization routine (R2.1, R2.2).
 
 ### Solver external functions
 
@@ -543,7 +543,7 @@ After these two steps complete, the simulation advances to the next timestep. Th
 
 Timestep progression is handled in a manner similar to GridLAB-D's core functionality. All objects requesting a dynamic solution update will request a time for recalculation. The minimum value will drive the simulation forward. The solver shall be implemented as a predictor-corrector solver, so larger timestep progression should be possible. A "maximum dynamic" timestep will also be specified to ensure any unexpected "passive" element (not requesting a timestep update) are handled.[R3.2]
 
-The initial solver time resolution is 1 ms. Timestep updates occur in multiples of 1 ms, but are not allowed to be any less than 1 ms.[R3][R3.1]
+The initial solver time resolution is 1 ms. Timestep updates occur in multiples of 1 ms, but are not allowed to be any less than 1 ms (R3, R3.1).
 
 ### Solver Call Timing
 

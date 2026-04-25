@@ -26,50 +26,53 @@ If apropriate, document the feature using class or sequence diagrams.
 
 ```mermaid
 classDiagram
-      GLD <|-- GLDModel
-      GLDModel <|-- GLDObjHolder
-      GLDObjHolder <|-- GLDObj
-      GLD: gld - GridLAB-D
-      GLD: wd - Path
-      GLD: sim_running - bool
-      GLD: sim_time - DateTime
 
-      GLD:get_model()
-      GLD:set_install_root(path|str) -> None
-      GLD:get_install_root() -> str
-      GLD:get_executable_path() -> str
+class SimulationEngine {
+  +currentTime
+  +objectRegistry
+  +solverState
+  +rngState
+  +run()
+  +step()
+  +saveCheckpoint()
+  +loadCheckpoint()
+}
 
-      class GLDModel{
-            model: _GLDObjHolder
-            extendable: bool
+class CheckpointManager {
+  +checkpointFile
+  +format
+  +write(state)
+  +read()
+  +validate()
+}
 
-            _load_model() -> None
-            }
-        class GLDObjHolder{
-            _model: dict[_GLDObj]
-            extendable: bool
+class SimulationState {
+  +time
+  +objectStates
+  +solverState
+  +rngState
+  +serialize()
+  +deserialize()
+}
 
-            __init__()
-            __setitem__(key: str, value: Any) -> str
-            __getitem__(key: str) -> _GLDObj
-            __delitem__(key: str) -> str
-            __iter__()
-            __reversed__()
-            __contains__(key: str)
-            __repr__() -> str
-            }
-        class GLDObj{
-            _data = dict
+class SimObject {
+  <<abstract>>
+  +saveState()
+  +loadState()
+}
 
-            __init__()
-            __setitem__(key: str, value: Any) -> str
-            __getitem__(key: str) -> Any
-            __iter__()
-            __reversed__()
-            __contains__(key: str)
-            __repr__() -> str
-            }
+class LoadObject
+class GeneratorObject
+class NetworkNode
+
+SimulationEngine --> CheckpointManager
+SimulationEngine --> SimulationState
+SimulationState --> SimObject
+SimObject <|-- LoadObject
+SimObject <|-- GeneratorObject
+SimObject <|-- NetworkNode
 ```
+
 
 
 ## Itemized Subfeatures

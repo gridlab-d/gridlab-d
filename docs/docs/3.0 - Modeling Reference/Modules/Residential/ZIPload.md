@@ -9,7 +9,7 @@ Thus far the loads on the systems we’ve been modeling have been fairly abstrac
 * For constant power, the power will remain unchanged and the current will increase linearly with the voltage change.
 
 ![ZipLoad](../../../../images/ZIPLoads.png)
-### Figure 1. ZIPLoad Model
+#### Figure 1. ZIPLoad Model
 
 In parallel with the real power components, ZIP loading can also be applied to the reactive power component; that is, these loads can all be expressed as complex values in GridLAB-D™, as you have seen in previous examples. In a three phase system, the load on each phase can be described independently, giving a total of nine complex load values to fully define a three-phase load.
 
@@ -84,7 +84,7 @@ _These variables are used for various aggregate and demand response modes._
 **recovery_duty_cycle**  | double  | pu  | [Used with cycling mode and [passive_controller] duty cycle mode.] Fraction of time in the on state, while in recovery interval.   
 **multiplier**  | double  | pu  | [Used with cycling mode and [passive_controller] duty cycle mode.] This variable is used to modify the base power as a function of multiplier times base_power.   
   
-**TODO**: : Document cycling, demand response and aggregate modes. 
+**TODO - More context - Document cycling, demand response and aggregate modes.** 
 
 ## Example models
 
@@ -208,7 +208,7 @@ This model is representative of a "pool pump" or cycling model that is using a D
     
 
   
-**TODO** - Examples - Examples for cycling, demand response and aggregate modes. 
+**TODO - Examples - Examples for cycling, demand response and aggregate modes.** 
 
 
 ### ZIPload State of Development

@@ -152,13 +152,13 @@ Property Name	| Type	| Unit | 	Description
 **battery_load**	| double | 	W | 	Battery's current load. This is the value of power_in from the parent inverter.
 **reserve_state_of_charge**	| double | 	pu	| The state of charge which the battery may not go below
 
-## Remarks
+## Status 
 
-**TODO**: 
+**TODO** - Status - update with energy storage models status
 
 ## Example
 
-**TODO**: 
+**TODO** - Example - add example demonstrating energy storage model use case
 
 # Related Concepts:
 

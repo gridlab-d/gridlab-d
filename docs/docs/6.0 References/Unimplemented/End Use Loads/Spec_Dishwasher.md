@@ -14,7 +14,7 @@ The purpose of this document is to describe the specifications of the dishwasher
   * The dishwasher model was designed as a multi-state machine model. These states are defined by the level of their electricity consumption.
   * Eight different time intervals are considered in this model, and these intervals determine the transition times between the states.
 
-![Dishwasher representative cycle](../../../images/300px-Dishwasher_states.png)
+![Dishwasher representative cycle](../../../../images/300px-Dishwasher_states.png)
 
 ##### Figure 1. Dishwasher representative cycle
 
@@ -22,13 +22,13 @@ The dishwasher model developed in GridLAB-D is a multi-state load model and it i
 
 Each state in the model is governed by a ZIP model with transitions between states determined by internal state transition rules. The multi-state dishwasher model is shown Figure 2. 
 
-![Dishwasher multi-state model](../../../images/300px-Dishwasher_multi-state_model.png)
+![Dishwasher multi-state model](../../../../images/300px-Dishwasher_multi-state_model.png)
 
 ##### Figure 2. Dishwasher multi-state model
 
 ##### Figure 3 shows the time intervals considered in the multi-state model of the dishwasher. These time intervals determine the transition times between the states. There are eight different time intervals are considered in this model and they are not fixed. It means user do have an option to change the time intervals between states. If user does not specify any inputs, the default values will be used. The default values are estimated based on the energy consumption profile of the dishwasher [1]. 
 
-![ Dishwasher time intervals](../../../images/300px-Dishwasher_time_intervals.png)
+![ Dishwasher time intervals](../../../../images/300px-Dishwasher_time_intervals.png)
 
 ##### Figure 3. Dishwasher time intervals
 
@@ -153,7 +153,7 @@ $\begin{align} queue(0) &= q _0\end{align}$ | 1.2
   
 where $E_k$ denotes the energy consumed by the dishwasher over the $k^{th}$ time step as specified by ELCAP(integral of an ELCAP curve such as the one shown in Figure 4 between $(k-1)T$ )$kT$) and $E_{tot}$ denotes the total energy consumed by the appliance over the course of a day as specified by ELCAP. The ratio $Ek/E_{tot}$ gives a measure of the percentage of daily appliance consumption over the $k^{th}$ time step, and a plot of $E_k/E_{tot}$ as a function of $kT$ gives the normalized ELCAP dishwasher load shape. The difference Equation (1.1) is initialized to a random number $q_o$ (1.2). 
 
-![ELCAP Dishwasher Load Shape](../../../images/300px-ELCAP_Dishwasher_Load_Shape.png)
+![ELCAP Dishwasher Load Shape](../../../../images/300px-ELCAP_Dishwasher_Load_Shape.png)
 
 ##### Figure 4. ELCAP Dishwasher Load Shape
 

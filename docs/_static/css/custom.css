@@ -13,3 +13,10 @@
 .wy-table-responsive {
     overflow-x: visible;   /* disable horizontal scroll on the wrapper */
 }
+
+/* Scale documentation images to the page width while preserving aspect ratio. */
+.rst-content img,
+.wy-nav-content img {
+    width: 100%;
+    height: auto;
+}
