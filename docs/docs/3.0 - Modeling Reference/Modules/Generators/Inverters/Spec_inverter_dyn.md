@@ -1,6 +1,8 @@
 # inverter_dyn
 
-These represent the specifications and some examples for the **inverter_dyn** object, which is to represent grid-forming and grid-following inverters. The **inverter_dyn** is a reworked inverter object. The **inverter_dyn** object was created to focus on dynamic responses of the inverter, especially in a microgrid or islanded system scenario. The existing inverter object has significant extra modes and some incompatible code. In order to maintain backwards compatibility with that functionality, the inverter was left, as-is, and the **inverter_dyn** was created to handle the new dynamics-oriented development.
+!!! note "The following paragraph has been paraphrased in the Introducton section, and could be removed from here."
+
+	These represent the specifications and some examples for the **inverter_dyn** object, which is to represent grid-forming and grid-following inverters. The **inverter_dyn** is a reworked inverter object. The **inverter_dyn** object was created to focus on dynamic responses of the inverter, especially in a microgrid or islanded system scenario. The existing inverter object has significant extra modes and some incompatible code. In order to maintain backwards compatibility with that functionality, the inverter was left, as-is, and the **inverter_dyn** was created to handle the new dynamics-oriented development.
 
 ## Grid-Forming Inverter
 

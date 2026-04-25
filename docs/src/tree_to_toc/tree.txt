@@ -37,7 +37,11 @@
       - Diesel dg: docs/3.0 - Modeling Reference/Modules/Generators/Diesel_dg.md
       - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Energy_storage.md
       - Inverters:
-        - Inverter: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter.md
+        - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/01 - Introduction.md
+        - Notes and questions: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/99 - Notes and questions.md
+        - Updated Comparison Report: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Comparison Report Inverter-WiKi-VS-source.md
+        - Inverter-initial: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter-initial.md
+        - GridLAB-D Published Variables: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_publish_variable.md
         - ibr blackboxmodels: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_ibr_blackboxmodels.md
         - ibr grayboxmodels: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_ibr_grayboxmodels.md
         - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_inverter_dyn.md

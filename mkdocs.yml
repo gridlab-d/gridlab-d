@@ -91,7 +91,11 @@ nav:
         - Diesel dg: docs/3.0 - Modeling Reference/Modules/Generators/Diesel_dg.md
         - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Energy_storage.md
         - Inverters:
-          - Inverter: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter.md
+          - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/01 - Introduction.md
+          - Notes and questions: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/99 - Notes and questions.md
+          - Updated Comparison Report: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Comparison Report Inverter-WiKi-VS-source.md
+          - Inverter-initial: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter-initial.md
+          - GridLAB-D Published Variables: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_publish_variable.md
           - ibr blackboxmodels: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_ibr_blackboxmodels.md
           - ibr grayboxmodels: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_ibr_grayboxmodels.md
           - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_inverter_dyn.md
@@ -302,11 +306,8 @@ nav:
         - Spec:NEVSolver: docs/6.0 References/Unimplemented/Neutral Earth Voltage/Spec_NEVSolver.md
       - Transmission: docs/6.0 References/Unimplemented/Transmission.md
     - Base Python API: docs/6.0 References/python_api.md
-  - reference:
-    - ReadMeConfig:
-      - authentication: reference/ReadMeConfig/authentication.md
-      - getting-started: reference/ReadMeConfig/getting-started.md
-      - my-requests: reference/ReadMeConfig/my-requests.md
+  - GridLAB-D™ Documentation Outline: docs/outline.md
+
     # - Doxygen: 
     #     - Groups: gridlabd/group__index.md
     #     - Structs: gridlabd/structs__index.md
