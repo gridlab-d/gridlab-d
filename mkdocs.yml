@@ -30,31 +30,30 @@ plugins:
         python:
           options:
             docstring_style: sphinx
-  - mkdoxy:
-      doxygen-bin-path:
-      projects:
-       gridlabd:
-          src-dirs: assert autotest build climate comm commercial connection control debug generators gldcore GldEditor market matlab matpower mysql network optimize plc powerflow python reliability residential rest tape tape_file tape_memory tape_plot utilities
-          full-doc: True 
-          doxy-cfg: 
-            FILE_PATTERNS: "*.cpp *.h*" 
-            RECURSIVE: True 
-            WARN_IF_UNDOCUMENTED: True
-            WARN_IF_DOC_ERROR: True
-            WARN_NO_PARAMDOC: True
-            WARN_AS_ERROR: False
-            WARN_LOGFILE: docs/doxygen-warnings.log
+  # - mkdoxy:
+  #     doxygen-bin-path:
+  #     projects:
+  #      gridlabd:
+  #         src-dirs: assert autotest build climate comm commercial connection control debug generators gldcore GldEditor market matlab matpower mysql network optimize plc powerflow python reliability residential rest tape tape_file tape_memory tape_plot utilities
+  #         full-doc: True 
+  #         doxy-cfg: 
+  #           FILE_PATTERNS: "*.cpp *.h*" 
+  #           RECURSIVE: True 
+  #           WARN_IF_UNDOCUMENTED: True
+  #           WARN_IF_DOC_ERROR: True
+  #           WARN_NO_PARAMDOC: True
+  #           WARN_AS_ERROR: False
+  #           WARN_LOGFILE: docs/doxygen-warnings.log
 markdown_extensions:
   - fenced_code
-  - codehilite 
+  - codehilite:
+      guess_lang: false
   - pymdownx.arithmatex:
       generic: true
   - markdown_include.include:
       base_path: docs/
   - admonition
-  - codehilite
   - pymdownx.details
-  - pymdownx.superfences
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
@@ -217,6 +216,7 @@ nav:
       - Functionality:
         - Introduction: docs/3.0 - Modeling Reference/Python API/Functionality/3.0 - Python API Basics.md
         - Running Multiple Models: docs/3.0 - Modeling Reference/Python API/Functionality/3.1 - Running Multiple Models.md
+        - Testing.. testing...: docs/3.0 - Modeling Reference/Python API/Functionality/test block.md
         - Controlling Simulation Start and Stop Time: docs/3.0 - Modeling Reference/Python API/Functionality/3.2 - Controlling Simulation Start and Stop Times.md
         - Controlling Simulation Time: docs/3.0 - Modeling Reference/Python API/Functionality/3.3 - Controlling Simulation Time.md
         - Monitoring Console Messages: docs/3.0 - Modeling Reference/Python API/Functionality/3.4 - Monitoring Console Messages.md
@@ -334,16 +334,17 @@ nav:
         - 10.0 - User-Facing Class: docs/6.0 References/Unimplemented/Python API/10.0 - User-Facing Class.md
       - Transmission: docs/6.0 References/Unimplemented/Transmission.md
     - Base Python API: docs/6.0 References/python_api.md
-  - reference:
-    - ReadMeConfig:
-      - authentication: reference/ReadMeConfig/authentication.md
-      - getting-started: reference/ReadMeConfig/getting-started.md
-      - my-requests: reference/ReadMeConfig/my-requests.md
-    - Doxygen: 
-        - Groups: gridlabd/group__index.md
-        - Structs: gridlabd/structs__index.md
-        - Files: gridlabd/files.md
-        - Classes: gridlabd/classes.md
-        - Hierarchy: gridlabd/hierarchy.md
-        - Modules: gridlabd/modules.md
-        - Pages: gridlabd/pages.md
+  # commented out as they take too long to rebuild for testing purposes.
+  # - reference:
+  #   - ReadMeConfig:
+  #     - authentication: reference/ReadMeConfig/authentication.md
+  #     - getting-started: reference/ReadMeConfig/getting-started.md
+  #     - my-requests: reference/ReadMeConfig/my-requests.md
+  #   - Doxygen: 
+  #       - Groups: gridlabd/group__index.md
+  #       - Structs: gridlabd/structs__index.md
+  #       - Files: gridlabd/files.md
+  #       - Classes: gridlabd/classes.md
+  #       - Hierarchy: gridlabd/hierarchy.md
+  #       - Modules: gridlabd/modules.md
+  #       - Pages: gridlabd/pages.md
