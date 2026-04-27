@@ -272,6 +272,19 @@ nav:
   - 5.0 Examples:
     - Placeholder: docs/5.0 Examples/placeholder.md
   - 6.0 References:
+    - Base Python API: docs/6.0 References/python_api.md
+    - ReadMeConfig:
+      - authentication: reference/ReadMeConfig/authentication.md
+      - getting-started: reference/ReadMeConfig/getting-started.md
+      - my-requests: reference/ReadMeConfig/my-requests.md
+    - Doxygen: 
+        - Groups: gridlabd/group__index.md
+        - Structs: gridlabd/structs__index.md
+        - Files: gridlabd/files.md
+        - Classes: gridlabd/classes.md
+        - Hierarchy: gridlabd/hierarchy.md
+        - Modules: gridlabd/modules.md
+        - Pages: gridlabd/pages.md
     - Unimplemented:
       - Introduction: docs/6.0 References/Unimplemented/1.0 - Introduction.md
       - Aggregate Demand Response Model: docs/6.0 References/Unimplemented/Aggregate_demand_response_model.md
@@ -329,17 +342,3 @@ nav:
       - Python API:
         - 10.0 - User-Facing Class: docs/6.0 References/Unimplemented/Python API/10.0 - User-Facing Class.md
       - Transmission: docs/6.0 References/Unimplemented/Transmission.md
-    - Base Python API: docs/6.0 References/python_api.md
-  - reference:
-    - ReadMeConfig:
-      - authentication: reference/ReadMeConfig/authentication.md
-      - getting-started: reference/ReadMeConfig/getting-started.md
-      - my-requests: reference/ReadMeConfig/my-requests.md
-    - Doxygen: 
-        - Groups: gridlabd/group__index.md
-        - Structs: gridlabd/structs__index.md
-        - Files: gridlabd/files.md
-        - Classes: gridlabd/classes.md
-        - Hierarchy: gridlabd/hierarchy.md
-        - Modules: gridlabd/modules.md
-        - Pages: gridlabd/pages.md

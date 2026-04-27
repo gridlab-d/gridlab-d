@@ -7,7 +7,13 @@ The CSV reader class is a helper object for the **climate** class in the **clima
 The CSV reader is intentionally designed to have no active components. It does nothing during the create, init, and sync steps. 
 
 ## CSV reader actors
-TODO - CSV reader actors - what is a CSV reader actor?
+
+A CSV reader actor is any runtime participant that directly takes part in CSV weather ingestion or delivery. CSV reader actors are the climate object (which drives initialization and update requests), the csv_reader object (which parses and schedules CSV data), and weather sample objects (which hold each parsed record). The CSV file acts as the external data source these actors operate on.
+
+- **climate object** - decides CSV mode, requires a linked reader, calls open during init, and calls get_data during sync to fetch the current weather values
+- **csv reader object** - parses property lines, header columns, and weather rows, stores samples, and returns time-appropriate data
+- **weather sample objects** - each parsed row is materialized as a weather sample and linked/stored for lookup
+- **csv input file** -contributes metadata via `$property=value` lines and time-series weather rows consumed by csv_reader open/read_line logic
 
 ### Climate object
 
