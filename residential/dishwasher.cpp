@@ -152,6 +152,10 @@ dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 			PT_double,"count_control_only",PADDR(count_control_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles",
 			PT_double,"count_control_only1",PADDR(count_control_only1), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles 1",
 			PT_timestamp,"next_change_time",PADDR(next_change_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next change time",
+			PT_timestamp,"last_t",PADDR(last_t), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal last timestamp",
+			PT_double,"cycle_time",PADDR(cycle_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal cycle timer",
+			PT_double,"state_time",PADDR(state_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal state timer",
+			PT_bool,"new_running_state",PADDR(new_running_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal running-state latch",
 			PT_double,"heat_fraction",PADDR(heat_fraction), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for heat fraction",
 
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",

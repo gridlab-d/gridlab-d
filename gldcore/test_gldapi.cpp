@@ -124,6 +124,8 @@ int main(int argc, char* argv[]) {
     bool checkpoint_mode = false;
     bool restore_mode    = false;
     bool compare_mode    = false;
+    bool detailed_output = false;
+    bool gld_verbose     = false;
     int  num_steps       = 2;
     double tolerance     = 0;
     std::string output_file;
@@ -133,6 +135,8 @@ int main(int argc, char* argv[]) {
         if (arg == "--checkpoint")        checkpoint_mode = true;
         else if (arg == "--restore")      restore_mode = true;
         else if (arg == "--compare")      compare_mode = true;
+        else if (arg == "--details")      detailed_output = true;
+        else if (arg == "--verbose")      gld_verbose = true;
         else if (arg == "--steps"     && i + 1 < argc) num_steps = std::stoi(argv[++i]);
         else if (arg == "--tolerance" && i + 1 < argc) tolerance = std::stod(argv[++i]);
         else if (arg == "--output"    && i + 1 < argc) output_file = argv[++i];
@@ -169,13 +173,16 @@ int main(int argc, char* argv[]) {
             printf("\n  TEST PASSED: Checkpoints match.\n\n");
             return 0;
         } else {
-            printf("\n  TEST FAILED: %zu difference(s):\n\n", diffs.size());
-            printf("  %-60s | %-30s | %-30s\n", "Path", "Full Run", "Restored");
-            printf("  %s\n", std::string(125, '-').c_str());
-            for (const auto& d : diffs) {
-                printf("  %-60s | %-30s | %-30s\n",
-                       d.path.c_str(), d.value_a.c_str(), d.value_b.c_str());
+            printf("\n  TEST FAILED: %zu difference(s).\n", diffs.size());
+            if (detailed_output) {
+                printf("\n  %-60s | %-30s | %-30s\n", "Path", "Full Run", "Restored");
+                printf("  %s\n", std::string(125, '-').c_str());
+                for (const auto& d : diffs) {
+                    printf("  %-60s | %-30s | %-30s\n",
+                           d.path.c_str(), d.value_a.c_str(), d.value_b.c_str());
+                }
             }
+            printf("\n");
             return 1;
         }
     }
@@ -201,7 +208,10 @@ int main(int argc, char* argv[]) {
     }
 
     // Build argv for load_glm
-    std::vector<const char*> args = {loadFile.c_str(), "--verbose"};
+    std::vector<const char*> args = {loadFile.c_str()};
+    if (gld_verbose) {
+        args.push_back("--verbose");
+    }
     int test_argc = static_cast<int>(args.size());
     std::vector<char*> test_argv;
     for (auto& a : args) test_argv.push_back(const_cast<char*>(a));
@@ -225,7 +235,7 @@ int main(int argc, char* argv[]) {
         printf("Checkpoint saved to: %s\n", output_file.c_str());
     }
     else if (restore_mode) {
-        if (!gld.gld_model.is_null()) {
+        if (detailed_output && !gld.gld_model.is_null()) {
             std::cout << gld.gld_model.dump(4) << std::endl;
         }
         gld.run();

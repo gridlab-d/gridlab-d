@@ -749,20 +749,29 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             rv = FAILED;
             break;
         }
-        // When loading a checkpoint, objects have no object_declaration (id==-1) so
-        // load_set_index is not called above.  Use the "_id" written by the checkpoint
-        // writer (the object's original numeric ID) so that class:id references resolve
-        // correctly.  Fall back to the assigned ID if "_id" is absent.
-        if (id == -1 && global_checkpoint_loaded)
+        // For checkpoint restore, ensure object has its saved unique name before
+        // property iteration so post-init checkpoint values can be keyed by name.
+        if (global_checkpoint_loaded && obj->name == nullptr &&
+            objInstance.contains("name") && objInstance["name"].is_string())
         {
-            OBJECTNUM original_id = obj->id;
-            if (objInstance.contains("_id") && objInstance["_id"].is_number_integer())
-                original_id = static_cast<OBJECTNUM>(objInstance["_id"].get<int64_t>());
-            this->parse.load_set_index(obj, original_id);
+            std::string checkpoint_name = objInstance["name"].get<std::string>();
+            if (!checkpoint_name.empty() && object_set_name(obj, checkpoint_name.data()) == nullptr)
+            {
+                output_error_raw("loader::loadObject() parsing file, %s: property name %s could not be used",
+                                 this->filename.string().c_str(), checkpoint_name.c_str());
+                rv = FAILED;
+                break;
+            }
         }
         for (auto &[propName, propValue] : objInstance.items())
         {
             if (propName == "inline_comments" || propName == "outside_comments" || propName == "inside_comments" || propName == "object_declaration" || propName == "_id")
+            {
+                continue;
+            }
+            // Name is assigned before this loop during checkpoint restore. Skip
+            // re-applying it to avoid duplicate-name collisions in the object tree.
+            if (global_checkpoint_loaded && propName == "name")
             {
                 continue;
             }
@@ -807,10 +816,19 @@ STATUS loader::loadObject(const string className, ojson objInstance)
                 bool is_transform_expr = false;
                 if (cprop != nullptr && cprop->ptype != PT_object && !propValueStr.empty())
                 {
-                    // Quick check: if the value contains "word.word" it is a transform
-                    // expression that was already wired up by linear_transform() above.
+                    // Treat both object.property and schedule-name expressions as
+                    // transforms already handled by linear_transform().
                     static const std::regex transform_pat(R"([A-Za-z_]\w*\.[A-Za-z_]\w*)");
                     is_transform_expr = std::regex_search(propValueStr, transform_pat);
+                    if (!is_transform_expr)
+                    {
+                        TRANSFORMSOURCE cp_xstype = XS_UNKNOWN;
+                        void *cp_source = nullptr;
+                        double cp_scale = 1.0;
+                        double cp_bias = 0.0;
+                        is_transform_expr = this->parse.linear_transform(propValueStr, &cp_xstype, &cp_source,
+                                                                         &cp_scale, &cp_bias, obj) > 0;
+                    }
                 }
                 if (cprop == nullptr || (cprop->ptype != PT_object && !is_transform_expr))
                     object_store_checkpoint_property(obj, propName.c_str(), propValueStr.c_str());
@@ -918,6 +936,13 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
     else
     {
         PROPERTY *prop = class_find_property(oClass, propName.c_str());
+        // Legacy dishwasher checkpoints may contain "myshape" even though the
+        // published residential_enduse property is "shape".
+        if (global_checkpoint_loaded && prop == nullptr && propName == "myshape")
+        {
+            propName = "shape";
+            prop = class_find_property(oClass, propName.c_str());
+        }
         if (prop != nullptr)
             prop->raw = propValue;
         this->currentObject = obj;
@@ -1024,6 +1049,10 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                     ival = ival64 = (int64)dval;
                     rv = object_set_int64_by_name(obj, propName.c_str(), ival64);
                     break;
+                case PT_timestamp:
+                    ival = ival64 = (int64)dval;
+                    rv = object_set_int64_by_name(obj, propName.c_str(), ival64);
+                    break;
                 default:
                     output_error("loader::objectProperties() parsing file, %s: function_int operating on a "
                                  "non-integer (we shouldn't be here!)",
@@ -1040,7 +1069,12 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 }
             }
         }
-        else if (prop != nullptr && ((prop->ptype >= PT_double && prop->ptype <= PT_int64) || (prop->ptype >= PT_bool && prop->ptype <= PT_timestamp) || (prop->ptype >= PT_float && prop->ptype <= PT_enduse)) && this->parse.linear_transform(propValue, &xstype, &source, &scale, &bias, obj) > 0)
+                else if (prop != nullptr &&
+                                 (((prop->ptype >= PT_double && prop->ptype <= PT_int64) ||
+                                     (prop->ptype >= PT_bool && prop->ptype <= PT_timestamp) ||
+                                     (prop->ptype >= PT_float && prop->ptype <= PT_enduse) ||
+                                     prop->ptype == PT_enumeration || prop->ptype == PT_set) &&
+                                    this->parse.linear_transform(propValue, &xstype, &source, &scale, &bias, obj) > 0))
         {
             void *target = (void *)((char *)(obj + 1) + (int64)prop->addr);
             /* add the transform list */
@@ -1227,7 +1261,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
 
 int loader::isInt(PROPERTYTYPE pt)
 {
-    if (pt == PT_int16 || pt == PT_int32 || pt == PT_int64)
+    if (pt == PT_int16 || pt == PT_int32 || pt == PT_int64 || pt == PT_timestamp)
     {
         return (int)pt;
     }
@@ -1317,7 +1351,23 @@ STATUS loader::loadSchedules()
         {
             break;
         }
-        if (schedule.is_array())
+        if (schedule.is_string())
+        {
+            cron_schedule = schedule.get<std::string>();
+            sch = schedule_create(name.data(), cron_schedule.data());
+            if (sch != nullptr)
+            {
+                sch->raw = cron_schedule;
+            }
+            else
+            {
+                output_error_raw("loader::loadSchedules() parsing file, %s: schedule '%s' could not be created",
+                                 this->filename.string().c_str(), name.data());
+                rv = FAILED;
+                break;
+            }
+        }
+        else if (schedule.is_array())
         {
             cron_schedule = "";
             numberOfBlocks = schedule.size();

@@ -475,10 +475,15 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_voltage[1].SetPolar(voltage[1].Mag(),voltage[1].Arg());
 	measured_voltage[2].SetPolar(voltage[2].Mag(),voltage[2].Arg());
 
-	if (t1 > last_t)
+	TIMESTAMP sync_t = t1;
+	// In some restore/event-jump paths, postsync may receive a non-advancing t1
+	// while t0 advances. Fall back to t0 so dt/energy accumulation is preserved.
+	if (sync_t <= last_t && t0 > last_t)
+		sync_t = t0;
+	if (sync_t > last_t)
 	{
-		dt = t1 - last_t;
-		last_t = t1;
+		dt = sync_t - last_t;
+		last_t = sync_t;
 	}
 	else
 		dt = 0;

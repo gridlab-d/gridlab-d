@@ -68,13 +68,22 @@ using std::isnan;
 // properties to defaults, object_restore_checkpoint_properties() re-applies
 // these saved values so the checkpoint state takes precedence.
 // ---------------------------------------------------------------------------
-static std::unordered_map<OBJECTNUM, std::vector<std::pair<std::string,std::string>>>
+static std::unordered_map<std::string, std::vector<std::pair<std::string,std::string>>>
     checkpoint_prop_store;
 
 void object_store_checkpoint_property(OBJECT *obj, const char *name, const char *value)
 {
-    if (obj == nullptr || name == nullptr || value == nullptr) return;
-    checkpoint_prop_store[obj->id].emplace_back(name, value);
+    if (obj == nullptr || obj->name == nullptr || name == nullptr || value == nullptr) return;
+    auto &props = checkpoint_prop_store[obj->name];
+    for (auto &entry : props)
+    {
+        if (entry.first == name)
+        {
+            entry.second = value;
+            return;
+        }
+    }
+    props.emplace_back(name, value);
 }
 
 /* object list */
@@ -1156,8 +1165,8 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 
 STATUS object_restore_checkpoint_properties(OBJECT *obj)
 {
-    if (obj == nullptr) return SUCCESS;
-    auto it = checkpoint_prop_store.find(obj->id);
+    if (obj == nullptr || obj->name == nullptr) return SUCCESS;
+    auto it = checkpoint_prop_store.find(obj->name);
     if (it == checkpoint_prop_store.end()) return SUCCESS;
     for (auto& [name, value] : it->second)
     {
@@ -1178,13 +1187,24 @@ STATUS object_restore_checkpoint_properties(OBJECT *obj)
             reinterpret_cast<std::uintptr_t>(prop->addr));
         char val_buf[4096] = "";
         snprintf(val_buf, sizeof(val_buf), "%s", value.c_str());
-        if (object_set_value_by_addr(obj, addr, val_buf, prop) == 0)
+        int set_rv = 0;
+        if (prop->ptype == PT_timestamp)
+        {
+            *((int64 *)addr) = (int64)atoll(value.c_str());
+            set_rv = 1;
+        }
+        else
+        {
+            set_rv = object_set_value_by_addr(obj, addr, val_buf, prop);
+        }
+        if (set_rv == 0)
         {
             output_warning("object_restore_checkpoint_properties(): could not restore "
                            "property '%s' on %s:%d",
                            name.c_str(), obj->oclass->name, obj->id);
         }
     }
+    checkpoint_prop_store.erase(it);
     return SUCCESS;
 }
 

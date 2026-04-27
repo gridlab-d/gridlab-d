@@ -1832,6 +1832,10 @@ int parser::resolve_object(UNRESOLVED_REF *item, char *filename)
 			return FAILED;
 		}
 	}
+	else if ((obj = object_find_name(item->id)) != nullptr)
+	{
+		/* found by name — use it directly (handles auto-generated names like class:id) */
+	}
 	else if (sscanf(item->id, global_object_scan, classname, &id) == 2)
 	{
 		obj = load_get_index(id);
@@ -1858,10 +1862,6 @@ int parser::resolve_object(UNRESOLVED_REF *item, char *filename)
                              this->filename.c_str(), this->format_object(item->by), item->id.get_string());
 			return FAILED;
 		}
-	}
-	else if ((obj = object_find_name(item->id)) != nullptr)
-	{
-		/* found it already*/
 	}
 	else
 	{

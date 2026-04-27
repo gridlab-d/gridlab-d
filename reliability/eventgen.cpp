@@ -164,7 +164,7 @@ int eventgen::init(OBJECT *parent)
 {
 	OBJECT *hdr = object_header(this);
 	int index, comma_count;
-	TIMESTAMP tempTime, globStartTimeVal;
+	TIMESTAMP tempTime, globCurrentTimeVal;
 	FINDLIST *ObjListVals;
 	OBJECT *temp_obj;
 	double temp_double, temp_val, temp_time_double;
@@ -202,8 +202,9 @@ int eventgen::init(OBJECT *parent)
 		*/
 	}
 
-	// Get simulation start time
-	globStartTimeVal = gl_globalclock;
+	// Get the current simulation clock at init. During checkpoint restore this
+	// reflects the restored timestamp, not the original simulation start time.
+	globCurrentTimeVal = gl_globalclock;
 
 	// If a minimum timestep is present, make sure things are set appropriately
 	if (off_nominal_time == true)
@@ -451,7 +452,7 @@ int eventgen::init(OBJECT *parent)
 				UnreliableObjs[index].obj_made_int = nullptr;
 
 				// Check to make sure failures start AFTER the simulation has started
-				if (temp_time_A >= globStartTimeVal)
+				if (temp_time_A >= globCurrentTimeVal)
 				{
 					// Store failure time
 					UnreliableObjs[index].fail_time = temp_time_A;

@@ -569,13 +569,12 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                 for (OBJECT *obj : class_pair.second)
                 {
                     nlohmann::json instance = nlohmann::json::object();
-                    // Always record the object's numeric ID so the loader can
-                    // re-register it in the parser index under the correct ID,
-                    // enabling class:id references (e.g. "overhead_line_conductor:0")
-                    // to resolve correctly when restoring from a checkpoint.
-                    instance["_id"] = static_cast<int>(obj->id);
+                    // Always export a stable name so object references (including
+                    // class:id forms) resolve consistently when restoring.
                     if (obj->name && strlen(obj->name) > 0)
                         instance["name"] = obj->name;
+                    else
+                        instance["name"] = std::string(obj->oclass->name) + ":" + std::to_string(static_cast<int>(obj->id));
                     if (obj->parent && obj->parent != nullptr)
                     {
                         if (obj->parent->name && strlen(obj->parent->name) > 0)
@@ -776,7 +775,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             }
                             case PT_timestamp:
                             {
-                                int64 *tptr = object_get_int64(obj, pmap);
+                                TIMESTAMP *tptr = (TIMESTAMP *)object_get_addr(obj, pmap->name);
                                 if (tptr != nullptr)
                                     instance[pmap->name] = static_cast<int64_t>(*tptr);
                                 break;
@@ -802,7 +801,17 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                                     && strcmp(value_str, "NAN") != 0 && strcmp(value_str, "nan") != 0
                                     && strstr(value_str, "nan") == nullptr && strstr(value_str, "NAN") == nullptr)
                                 {
-                                    instance[pmap->name] = std::string(value_str);
+                                    std::string out_value(value_str);
+                                    // Some PT_char* properties are returned with an extra quoted layer
+                                    // (e.g., "\"a,b,c\""). Strip one outer pair so checkpoints
+                                    // preserve plain string values.
+                                    if ((pmap->ptype == PT_char8 || pmap->ptype == PT_char32 ||
+                                         pmap->ptype == PT_char256 || pmap->ptype == PT_char1024) &&
+                                        out_value.size() >= 2 && out_value.front() == '"' && out_value.back() == '"')
+                                    {
+                                        out_value = out_value.substr(1, out_value.size() - 2);
+                                    }
+                                    instance[pmap->name] = out_value;
                                 }
                                 break;
                             }
@@ -813,6 +822,39 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     instances.push_back(instance);
                 }
                 checkpoint["objects"][class_pair.first]["instances"] = instances;
+            }
+
+            // ── User-defined classes (module == nullptr) ──
+            {
+                nlohmann::ordered_json classes = nlohmann::ordered_json::object();
+                for (CLASS *cl = class_get_first_class(); cl != nullptr; cl = cl->next)
+                {
+                    if (cl->module != nullptr)
+                        continue; // skip module-registered classes
+                    nlohmann::json props = nlohmann::json::array();
+                    for (PROPERTY *p = cl->pmap; p != nullptr; p = p->next)
+                    {
+                        const char *type_name = class_get_property_typename(p->ptype);
+                        if (type_name == nullptr)
+                            continue;
+                        nlohmann::json prop_entry = nlohmann::json::object();
+                        prop_entry["type"] = std::string(type_name);
+                        // Include unit in name if present (e.g. "value[W]")
+                        if (p->unit != nullptr && p->unit->name[0] != '\0')
+                        {
+                            prop_entry["name"] = std::string(p->name) + "[" + p->unit->name + "]";
+                        }
+                        else
+                        {
+                            prop_entry["name"] = std::string(p->name);
+                        }
+                        props.push_back(prop_entry);
+                    }
+                    if (!props.empty())
+                        classes[cl->name] = props;
+                }
+                if (!classes.empty())
+                    checkpoint["classes"] = classes;
             }
 
             // ── Modules and globals ──
@@ -899,31 +941,44 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             SCHEDULE *schedule = nullptr;
             while ((schedule = schedule_getnext(schedule)) != nullptr)
             {
-                if(!schedule->raw.empty())
+                bool parsed_as_json = false;
+                if (!schedule->raw.empty())
                 {
-                    // Count on this to be valid JSON — if it is, we'll parse and include it as structured data; if not, we'll just skip it
-                    bool parsed_as_json = false;
-                    try {
+                    // If raw contains converted JSON schedule data, preserve it as-is.
+                    try
+                    {
                         nlohmann::ordered_json parsed = nlohmann::ordered_json::parse(schedule->raw);
-                        if (parsed.is_array()) {
-                            if (!schedules.contains(schedule->name)) {
+                        if (parsed.is_array())
+                        {
+                            if (!schedules.contains(schedule->name))
+                            {
                                 schedules[schedule->name] = nlohmann::ordered_json::array();
                             }
-                            for (const auto& elem : parsed) {
+                            for (const auto &elem : parsed)
+                            {
                                 schedules[schedule->name].push_back(elem);
                             }
                             parsed_as_json = true;
-                        } else if (parsed.is_object()) {
-                            if (!schedules.contains(schedule->name)) {
+                        }
+                        else if (parsed.is_object())
+                        {
+                            if (!schedules.contains(schedule->name))
+                            {
                                 schedules[schedule->name] = nlohmann::ordered_json::array();
                             }
                             schedules[schedule->name].push_back(parsed);
                             parsed_as_json = true;
                         }
-                    } catch (...) {
-                        // Not valid JSON
-                        throw std::runtime_error("Schedule raw data is not valid JSON");
                     }
+                    catch (...)
+                    {
+                        // Non-JSON raw schedule (typical GLM input): fall back to definition.
+                    }
+                }
+
+                if (!parsed_as_json && schedule->definition != nullptr && strlen(schedule->definition) > 0)
+                {
+                    schedules[schedule->name] = std::string(schedule->definition);
                 }
             }
             checkpoint["schedules"] = schedules;
