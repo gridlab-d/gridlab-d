@@ -153,7 +153,7 @@ nav:
           - series_reactor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/39-series_reactor.md
           - sectionalizer: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/40-sectionalizer.md
           - power_metrics: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/41-power_metrics.md
-          - ated Concepts:: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/42-emissions.md
+          - emissions: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/42-emissions.md
           - jsondump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/43-jsondump.md
           - load_tracker: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/44-load_tracker.md
           - performance_motor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/45-performance_motor.md
