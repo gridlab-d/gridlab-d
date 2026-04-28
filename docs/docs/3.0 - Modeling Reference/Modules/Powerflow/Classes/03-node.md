@@ -92,71 +92,72 @@ These properties expose the node's topological parent relationship and its runti
 | topological_parent | object | N/A | O | Topological parent of this node as determined during initialization. Reflects the object's `parent` field. |
 | behaving_as_swing | bool | N/A | O | Whether this bus is currently acting as a reference voltage source. Only meaningful for `SWING` or `SWING_PQ` bus types. |
 
-<details>
-<summary>Internal Properties</summary>
+<!-- <details>
+<summary>Internal Properties</summary> -->
 
-#### Developer Properties
+??? note "Internal Properties"
 
-These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
+	#### Developer Properties
+	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
-| Property Name | Type | Unit | I/O | Description |
-| --- | --- | --- | --- | --- |
-| current_A | complex | A | O | The current load on phase A (wye) or phase AB (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
-| current_B | complex | A | O | The current load on phase B (wye) or phase BC (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
-| current_C | complex | A | O | The current load on phase C (wye) or phase CA (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
-| power_A | complex | VA | O | The power load on phase A (wye) or phase AB (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
-| power_B | complex | VA | O | The power load on phase B (wye) or phase BC (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
-| power_C | complex | VA | O | The power load on phase C (wye) or phase CA (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
-| shunt_A | complex | S | O | The shunt admittance load on phase A (wye) or phase AB (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
-| shunt_B | complex | S | O | The shunt admittance load on phase B (wye) or phase BC (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
-| shunt_C | complex | S | O | The shunt admittance load on phase C (wye) or phase CA (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
-| prerotated_current_A | complex | A | O | Deltamode bus current injection on phase A (in = positive). Not rotated by powerflow for off-nominal frequency. Accumulator only. |
-| prerotated_current_B | complex | A | O | Deltamode bus current injection on phase B (in = positive). Not rotated by powerflow for off-nominal frequency. Accumulator only. |
-| prerotated_current_C | complex | A | O | Deltamode bus current injection on phase C (in = positive). Not rotated by powerflow for off-nominal frequency. Accumulator only. |
-| deltamode_generator_current_A | complex | A | O | Deltamode direct generator current injection on phase A (in = positive). May be overwritten internally. Accumulator only. |
-| deltamode_generator_current_B | complex | A | O | Deltamode direct generator current injection on phase B (in = positive). May be overwritten internally. Accumulator only. |
-| deltamode_generator_current_C | complex | A | O | Deltamode direct generator current injection on phase C (in = positive). May be overwritten internally. Accumulator only. |
-| deltamode_PGenTotal | complex | N/A | — | Deltamode power value for a diesel generator. Accumulator only. |
-| deltamode_full_Y_matrix | complex_array | N/A | — | Deltamode full admittance matrix exposed for generator Norton equivalent interactions. |
-| deltamode_full_Y_all_matrix | complex_array | N/A | O | Deltamode full admittance matrix (including all contributions) exposed for generator Norton equivalent interactions. |
-| NR_powerflow_parent | object | N/A | — | Actual powerflow parent in Newton-Raphson. Used by generators accessing child objects. |
-| current_inj_A | complex | A | O | Bus current injection on phase A (in = positive). Not rotated for off-nominal frequency. Accumulator only. |
-| current_inj_B | complex | A | O | Bus current injection on phase B (in = positive). Not rotated for off-nominal frequency. Accumulator only. |
-| current_inj_C | complex | A | O | Bus current injection on phase C (in = positive). Not rotated for off-nominal frequency. Accumulator only. |
-| current_AB | complex | A | O | Bus current delta-connected injection on phases AB (in = positive). Accumulator only. |
-| current_BC | complex | A | O | Bus current delta-connected injection on phases BC (in = positive). Accumulator only. |
-| current_CA | complex | A | O | Bus current delta-connected injection on phases CA (in = positive). Accumulator only. |
-| current_AN | complex | A | O | Bus current wye-connected injection on phase A (in = positive). Accumulator only. |
-| current_BN | complex | A | O | Bus current wye-connected injection on phase B (in = positive). Accumulator only. |
-| current_CN | complex | A | O | Bus current wye-connected injection on phase C (in = positive). Accumulator only. |
-| power_AB | complex | VA | O | Bus power delta-connected injection on phases AB (in = positive). Accumulator only. |
-| power_BC | complex | VA | O | Bus power delta-connected injection on phases BC (in = positive). Accumulator only. |
-| power_CA | complex | VA | O | Bus power delta-connected injection on phases CA (in = positive). Accumulator only. |
-| power_AN | complex | VA | O | Bus power wye-connected injection on phase A (in = positive). Accumulator only. |
-| power_BN | complex | VA | O | Bus power wye-connected injection on phase B (in = positive). Accumulator only. |
-| power_CN | complex | VA | O | Bus power wye-connected injection on phase C (in = positive). Accumulator only. |
-| shunt_AB | complex | S | O | Bus shunt delta-connected admittance on phases AB. Accumulator only. |
-| shunt_BC | complex | S | O | Bus shunt delta-connected admittance on phases BC. Accumulator only. |
-| shunt_CA | complex | S | O | Bus shunt delta-connected admittance on phases CA. Accumulator only. |
-| shunt_AN | complex | S | O | Bus shunt wye-connected admittance on phase A. Accumulator only. |
-| shunt_BN | complex | S | O | Bus shunt wye-connected admittance on phase B. Accumulator only. |
-| shunt_CN | complex | S | O | Bus shunt wye-connected admittance on phase C. Accumulator only. |
-| residential_nominal_current_A | complex | A | O | Posted current on phase A from a residential object, if attached. |
-| residential_nominal_current_B | complex | A | O | Posted current on phase B from a residential object, if attached. |
-| residential_nominal_current_C | complex | A | O | Posted current on phase C from a residential object, if attached. |
-| residential_nominal_current_A_real | double | A | O | Posted current on phase A from a residential object, real component. |
-| residential_nominal_current_A_imag | double | A | O | Posted current on phase A from a residential object, imaginary component. |
-| residential_nominal_current_B_real | double | A | O | Posted current on phase B from a residential object, real component. |
-| residential_nominal_current_B_imag | double | A | O | Posted current on phase B from a residential object, imaginary component. |
-| residential_nominal_current_C_real | double | A | O | Posted current on phase C from a residential object, real component. |
-| residential_nominal_current_C_imag | double | A | O | Posted current on phase C from a residential object, imaginary component. |
-| house_present | bool | N/A | O | Flag indicating whether a house object is attached to this node. |
-| Norton_dynamic | bool | N/A | — | Flag indicating a Norton-equivalent connection is present. Used for generators and deltamode. |
-| Norton_dynamic_child | bool | N/A | — | Flag indicating a Norton-equivalent connection is made by a childed node object. Used for generators and deltamode. |
-| generator_dynamic | bool | N/A | — | Flag indicating a voltage-sourcing or swing-type generator is present. Used for generators and deltamode. |
-| reset_disabled_island_state | bool | N/A | O | Deltamode/multi-island flag used to reset disabled status and reform an island. |
+	| Property Name | Type | Unit | I/O | Description |
+	| --- | --- | --- | --- | --- |
+	| current_A | complex | A | O | The current load on phase A (wye) or phase AB (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
+	| current_B | complex | A | O | The current load on phase B (wye) or phase BC (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
+	| current_C | complex | A | O | The current load on phase C (wye) or phase CA (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
+	| power_A | complex | VA | O | The power load on phase A (wye) or phase AB (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
+	| power_B | complex | VA | O | The power load on phase B (wye) or phase BC (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
+	| power_C | complex | VA | O | The power load on phase C (wye) or phase CA (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
+	| shunt_A | complex | S | O | The shunt admittance load on phase A (wye) or phase AB (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
+	| shunt_B | complex | S | O | The shunt admittance load on phase B (wye) or phase BC (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
+	| shunt_C | complex | S | O | The shunt admittance load on phase C (wye) or phase CA (delta) of the node. Typically handled through the **load** object; modification is not recommended. |
+	| prerotated_current_A | complex | A | O | Deltamode bus current injection on phase A (in = positive). Not rotated by powerflow for off-nominal frequency. Accumulator only. |
+	| prerotated_current_B | complex | A | O | Deltamode bus current injection on phase B (in = positive). Not rotated by powerflow for off-nominal frequency. Accumulator only. |
+	| prerotated_current_C | complex | A | O | Deltamode bus current injection on phase C (in = positive). Not rotated by powerflow for off-nominal frequency. Accumulator only. |
+	| deltamode_generator_current_A | complex | A | O | Deltamode direct generator current injection on phase A (in = positive). May be overwritten internally. Accumulator only. |
+	| deltamode_generator_current_B | complex | A | O | Deltamode direct generator current injection on phase B (in = positive). May be overwritten internally. Accumulator only. |
+	| deltamode_generator_current_C | complex | A | O | Deltamode direct generator current injection on phase C (in = positive). May be overwritten internally. Accumulator only. |
+	| deltamode_PGenTotal | complex | N/A | — | Deltamode power value for a diesel generator. Accumulator only. |
+	| deltamode_full_Y_matrix | complex_array | N/A | — | Deltamode full admittance matrix exposed for generator Norton equivalent interactions. |
+	| deltamode_full_Y_all_matrix | complex_array | N/A | O | Deltamode full admittance matrix (including all contributions) exposed for generator Norton equivalent interactions. |
+	| NR_powerflow_parent | object | N/A | — | Actual powerflow parent in Newton-Raphson. Used by generators accessing child objects. |
+	| current_inj_A | complex | A | O | Bus current injection on phase A (in = positive). Not rotated for off-nominal frequency. Accumulator only. |
+	| current_inj_B | complex | A | O | Bus current injection on phase B (in = positive). Not rotated for off-nominal frequency. Accumulator only. |
+	| current_inj_C | complex | A | O | Bus current injection on phase C (in = positive). Not rotated for off-nominal frequency. Accumulator only. |
+	| current_AB | complex | A | O | Bus current delta-connected injection on phases AB (in = positive). Accumulator only. |
+	| current_BC | complex | A | O | Bus current delta-connected injection on phases BC (in = positive). Accumulator only. |
+	| current_CA | complex | A | O | Bus current delta-connected injection on phases CA (in = positive). Accumulator only. |
+	| current_AN | complex | A | O | Bus current wye-connected injection on phase A (in = positive). Accumulator only. |
+	| current_BN | complex | A | O | Bus current wye-connected injection on phase B (in = positive). Accumulator only. |
+	| current_CN | complex | A | O | Bus current wye-connected injection on phase C (in = positive). Accumulator only. |
+	| power_AB | complex | VA | O | Bus power delta-connected injection on phases AB (in = positive). Accumulator only. |
+	| power_BC | complex | VA | O | Bus power delta-connected injection on phases BC (in = positive). Accumulator only. |
+	| power_CA | complex | VA | O | Bus power delta-connected injection on phases CA (in = positive). Accumulator only. |
+	| power_AN | complex | VA | O | Bus power wye-connected injection on phase A (in = positive). Accumulator only. |
+	| power_BN | complex | VA | O | Bus power wye-connected injection on phase B (in = positive). Accumulator only. |
+	| power_CN | complex | VA | O | Bus power wye-connected injection on phase C (in = positive). Accumulator only. |
+	| shunt_AB | complex | S | O | Bus shunt delta-connected admittance on phases AB. Accumulator only. |
+	| shunt_BC | complex | S | O | Bus shunt delta-connected admittance on phases BC. Accumulator only. |
+	| shunt_CA | complex | S | O | Bus shunt delta-connected admittance on phases CA. Accumulator only. |
+	| shunt_AN | complex | S | O | Bus shunt wye-connected admittance on phase A. Accumulator only. |
+	| shunt_BN | complex | S | O | Bus shunt wye-connected admittance on phase B. Accumulator only. |
+	| shunt_CN | complex | S | O | Bus shunt wye-connected admittance on phase C. Accumulator only. |
+	| residential_nominal_current_A | complex | A | O | Posted current on phase A from a residential object, if attached. |
+	| residential_nominal_current_B | complex | A | O | Posted current on phase B from a residential object, if attached. |
+	| residential_nominal_current_C | complex | A | O | Posted current on phase C from a residential object, if attached. |
+	| residential_nominal_current_A_real | double | A | O | Posted current on phase A from a residential object, real component. |
+	| residential_nominal_current_A_imag | double | A | O | Posted current on phase A from a residential object, imaginary component. |
+	| residential_nominal_current_B_real | double | A | O | Posted current on phase B from a residential object, real component. |
+	| residential_nominal_current_B_imag | double | A | O | Posted current on phase B from a residential object, imaginary component. |
+	| residential_nominal_current_C_real | double | A | O | Posted current on phase C from a residential object, real component. |
+	| residential_nominal_current_C_imag | double | A | O | Posted current on phase C from a residential object, imaginary component. |
+	| house_present | bool | N/A | O | Flag indicating whether a house object is attached to this node. |
+	| Norton_dynamic | bool | N/A | — | Flag indicating a Norton-equivalent connection is present. Used for generators and deltamode. |
+	| Norton_dynamic_child | bool | N/A | — | Flag indicating a Norton-equivalent connection is made by a childed node object. Used for generators and deltamode. |
+	| generator_dynamic | bool | N/A | — | Flag indicating a voltage-sourcing or swing-type generator is present. Used for generators and deltamode. |
+	| reset_disabled_island_state | bool | N/A | O | Deltamode/multi-island flag used to reset disabled status and reform an island. |
 
-</details>
+<!-- </details> -->
 
 ### Default Node
 
