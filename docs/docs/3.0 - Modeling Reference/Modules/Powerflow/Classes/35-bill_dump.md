@@ -16,15 +16,15 @@ meter_name,  | previous_monthly_bill,  | previous_monthly_energy
 
 **billdump** does not declare inherited parent classes.
 
-Input indicates properties you can set in models. Output marks properties produced or modified during simulation runtime.
+The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-| Property Name | Type | Unit | Input | Output | Description |
-| --- | --- | --- | --- | --- | --- |
-| group | char32 | N/A |  | ✓ | Using the `groupid` feature, this allows only triplex meters with the matching `groupid` to be dumped into the output file. If this is not specified, every triplex meter in the system will be recorded. |
-| runtime | timestamp | N/A | ✓ | ✓ | Tells the object at what time to output the bills of the system. Can be in either seconds from epoch (Unix time) or with a timestamp (&#x27;2006-01-01 00:00:00&#x27;). If not specified, the default is immediately after the first time step solution. |
-| filename | char256 | N/A | ✓ |  | Tells the object what file to print all information to. While a *.csv is not necessary, it is recommended as the formatted output is in *.csv format. |
-| runcount | int32 | N/A |  |  | ⚠️ the number of times the file has been written to |
-| meter_type | enumeration | N/A | ✓ | ✓ | ⚠️ describes whether to collect from 3-phase or S-phase meters Valid values: `TRIPLEX_METER`, `METER`. |
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| group | char32 | N/A | I | Using the `groupid` feature, this allows only triplex meters with the matching `groupid` to be dumped into the output file. If this is not specified, every triplex meter in the system will be recorded. |
+| runtime | timestamp | N/A | IO | Tells the object at what time to output the bills of the system. Can be in either seconds from epoch (Unix time) or with a timestamp ('2006-01-01 00:00:00'). If not specified, the default is immediately after the first time step solution. |
+| filename | char256 | N/A | I | Tells the object what file to print all information to. While a *.csv is not necessary, it is recommended as the formatted output is in *.csv format. |
+| runcount | int32 | N/A | — | ⚠️ the number of times the file has been written to |
+| meter_type | enumeration | N/A | I | ⚠️ describes whether to collect from 3-phase or S-phase meters Valid values: `TRIPLEX_METER`, `METER`. |
 
 ### Default Bill Dump
 

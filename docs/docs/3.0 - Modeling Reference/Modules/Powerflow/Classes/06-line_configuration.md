@@ -1,5 +1,7 @@
 ## Line Configuration
 
+!!! warning
+    This page was automatically generated and requires review.
 
 Both `underground_line` and `overhead_line` objects take line configuration information to describe the particular line being implemented, or they can be described in their raw z-matrix values. A typical `line_configuration` object would be implemented as 
     
@@ -62,39 +64,41 @@ It is highly recommended to use the `line_spacing` and `overhead_line_conductor`
 
 ### Line Configuration Parameters
 
+#### Properties
+
 **line_configuration** does not declare inherited parent classes.
 
-Input indicates properties you can set in models. Output marks properties produced or modified during simulation runtime.
+The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-| Property Name | Type | Unit | Input | Output | Description |
-| --- | --- | --- | --- | --- | --- |
-| conductor_A | object | N/A | ✓ |  | Object describing the conductor of phase A in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
-| conductor_B | object | N/A | ✓ |  | Object describing the conductor of phase B in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
-| conductor_C | object | N/A | ✓ |  | Object describing the conductor of phase C in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
-| conductor_N | object | N/A | ✓ |  | Object describing the conductor of phase N in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
-| spacing | object | N/A | ✓ |  | `line_spacing` object describing how the conductors are physically oriented on the pole or in the bundle. |
-| z11 | complex | Ohm/mile | ✓ |  |  |
-| z12 | complex | Ohm/mile | ✓ |  |  |
-| z13 | complex | Ohm/mile | ✓ |  |  |
-| z21 | complex | Ohm/mile | ✓ |  |  |
-| z22 | complex | Ohm/mile | ✓ |  |  |
-| z23 | complex | Ohm/mile | ✓ |  |  |
-| z31 | complex | Ohm/mile | ✓ |  |  |
-| z32 | complex | Ohm/mile | ✓ |  |  |
-| z33 | complex | Ohm/mile | ✓ |  |  |
-| c11 | double | nF/mile | ✓ |  |  |
-| c12 | double | nF/mile | ✓ |  |  |
-| c13 | double | nF/mile | ✓ |  |  |
-| c21 | double | nF/mile | ✓ |  |  |
-| c22 | double | nF/mile | ✓ |  |  |
-| c23 | double | nF/mile | ✓ |  |  |
-| c31 | double | nF/mile | ✓ |  |  |
-| c32 | double | nF/mile | ✓ |  |  |
-| c33 | double | nF/mile | ✓ |  |  |
-| rating.summer.continuous | double | A | ✓ |  | ⚠️ amp rating in summer, continuous |
-| rating.summer.emergency | double | A | ✓ |  | ⚠️ amp rating in summer, short term |
-| rating.winter.continuous | double | A | ✓ |  | ⚠️ amp rating in winter, continuous |
-| rating.winter.emergency | double | A | ✓ |  | ⚠️ amp rating in winter, short term |
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| conductor_A | object | N/A | I | Object describing the conductor of phase A in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
+| conductor_B | object | N/A | I | Object describing the conductor of phase B in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
+| conductor_C | object | N/A | I | Object describing the conductor of phase C in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
+| conductor_N | object | N/A | I | Object describing the conductor of phase N in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
+| spacing | object | N/A | I | `line_spacing` object describing how the conductors are physically oriented on the pole or in the bundle. |
+| z11 | complex | Ohm/mile | I |  |
+| z12 | complex | Ohm/mile | I |  |
+| z13 | complex | Ohm/mile | I |  |
+| z21 | complex | Ohm/mile | I |  |
+| z22 | complex | Ohm/mile | I |  |
+| z23 | complex | Ohm/mile | I |  |
+| z31 | complex | Ohm/mile | I |  |
+| z32 | complex | Ohm/mile | I |  |
+| z33 | complex | Ohm/mile | I |  |
+| c11 | double | nF/mile | I |  |
+| c12 | double | nF/mile | I |  |
+| c13 | double | nF/mile | I |  |
+| c21 | double | nF/mile | I |  |
+| c22 | double | nF/mile | I |  |
+| c23 | double | nF/mile | I |  |
+| c31 | double | nF/mile | I |  |
+| c32 | double | nF/mile | I |  |
+| c33 | double | nF/mile | I |  |
+| rating.summer.continuous | double | A | I | ⚠️ amp rating in summer, continuous |
+| rating.summer.emergency | double | A | I | ⚠️ amp rating in summer, short term |
+| rating.winter.continuous | double | A | I | ⚠️ amp rating in winter, continuous |
+| rating.winter.emergency | double | A | I | ⚠️ amp rating in winter, short term |
 
 ### Line configuration properties
 

@@ -52,13 +52,12 @@ The other common property is nominal voltage, which is passed into the objects u
 
 **powerflow_object** does not declare inherited parent classes.
 
-Input indicates properties you can set in models. Updates marks properties that are modified during simulation runtime.
+The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-
-| Property Name | Type | Unit | Input | Updates | Description |
-| --- | --- | --- | --- | --- | --- |
-| phases | set | N/A | ✓ |  | Valid values: `G`, `S`, `N`, `D`, `C`, `B`, `A`. |
-| nominal_voltage | double | V | ✓ |  |  |
-| inrush_integration_method | enumeration | N/A | ✓ |  | Integration method for in-rush Valid values: `NONE`, `TRAPEZOIDAL`, `BACKWARD_EULER`. |
-| condition | set | N/A | ✓ | ✓ | Valid values: `OPEN`, `CONTACT`, `NORMAL`, `SN`, `S2`, `S1`, `G`, `N`, `C`, `B`, `A`. |
-| solution | enumeration | N/A | ✓ | ✓ | Valid values: `NORMAL`, `OUTAGE`. |
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| phases | set | N/A | I | Valid values: `G`, `S`, `N`, `D`, `C`, `B`, `A`. |
+| nominal_voltage | double | V | I |  |
+| inrush_integration_method | enumeration | N/A | I | Integration method for in-rush Valid values: `NONE`, `TRAPEZOIDAL`, `BACKWARD_EULER`. |
+| condition | set | N/A | IO | Valid values: `OPEN`, `CONTACT`, `NORMAL`, `SN`, `S2`, `S1`, `G`, `N`, `C`, `B`, `A`. |
+| solution | enumeration | N/A | IO | Valid values: `NORMAL`, `OUTAGE`. |
