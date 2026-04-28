@@ -4,7 +4,7 @@ This document describes GridLAB-D™ implementation of voltage source inverter (
 
 ![VSI Norton to Thevenin](../../../../../images/500px-VSI_Norton_to_Thevenin.png)
 
-#### Figure 1. VSI Norton to Thevenin
+##### Figure 1. VSI Norton to Thevenin
 
 Two VSI modes are implemented: isochronous mode and droop mode. 
 
@@ -13,7 +13,7 @@ Two VSI modes are implemented: isochronous mode and droop mode.
 
 ![Voltage control of e_source](../../../../../images/400px-Voltage_control_of_e_source.png)
 
-#### Figure 2. Voltage control of e_source
+##### Figure 2. Voltage control of e_source
 
 The slew rate limits for both real and reactive power have been implemented in the isochronous mode VSI. An export function in the inverter object is defined to update the VSI current injection **IGenerated** to the grid in each power flow iteration.
 In each power flow iteration in solver_nr.cpp, if the VSI bus has the export function (`current_injection_update`) mapped, the export function will be executed. In this function, when the ramp rate check for real power is enabled, the real power output change from the last time step (either delta-mode time step, or steady-state mode time step) is calculated, and compared with the ramp rate limit. The ramp rate up and down limits have been defined in glm file, or given as default values. If the change exceeds the limit, the real power value is updated based on the value in the last time step, and the ramp rate limit. The updated real power output will also change the VSI current injection **IGenerated** , as well as the **e_source** value correspondingly.  
@@ -28,7 +28,7 @@ The droop mode VSI includes two droops: $f/p$ and $v/q$. Based on measured (dela
 
 ![VSI Droop](../../../../../images/500px-VSI_droop.png)
 
-#### Figure 3. VSI Droop
+##### Figure 3. VSI Droop
 
 The slew rate limits for both real and reactive power have been implemented in the droop mode VSI. Similar to the implementation for the isochronous mode VSI, the real power slew rate check is executed in each power flow iteration. In addition, the real and reactive power changes are examined in each transient mode time step in `inter_deltaupdate` function.  
 
@@ -180,7 +180,7 @@ At 12:00:8.001 PST, the part of the feeder is reconnected. Outputs from the two 
 
 ![IsochronousVSI](../../../../../images/700px-IsochronousVSI_droopVSI.png)
 
-#### Figure 4. Isochronous VSI
+##### Figure 4. Isochronous VSI
 
 ### Case 2 - Droop Mode
 
@@ -191,11 +191,11 @@ Part of the feeder is disconnected at 12:00:05.0001 PST. As seem from the real p
 
 ![TwoDroopVSI](../../../../../images/700px-TwoDroopVSIs.png)
 
-#### Figure 4. Two Droop VSI
+##### Figure 4. Two Droop VSI
 
 ![Frequency](../../../../../images/700px-Frequency.png)
 
-#### Figure 6. Frequency
+##### Figure 6. Frequency
   
 To run these cases, please find in the autotest in GridLAB-D™ generator module. 
 

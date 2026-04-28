@@ -137,7 +137,7 @@ gridlabd.xml
 *.pyc
 *.0
 *.1
-*.csv
+.csv
 *.sh
 
 # Python cache files

@@ -29,7 +29,7 @@ In a GLM file:
     #set browser=program
 
   
-#### Table 1. Default browser by OS
+##### Table 1. Default browser by OS
 
 OS | Default Browswer
 --| --
