@@ -114,7 +114,6 @@ nav:
         - Newton-Raphson Distribution Powerflow Solver: docs/3.0 - Modeling Reference/Modules/Powerflow/5.0 - Newton-Raphson_Distribution_Powerflow_Solver.md
         - Classes:
           - Powerflow Classes: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/00-index.md
-          - 01-inherited_classes: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/01-inherited_classes.md
           - 02-powerflow_object: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/02-powerflow_object.md
           - 03-node: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/03-node.md
           - 04-link: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/04-link.md
