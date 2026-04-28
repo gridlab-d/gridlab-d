@@ -66,6 +66,10 @@ fncs_msg::fncs_msg(MODULE *module)
 			// PT_KEYWORD, "JSON_SB", enumeration(MT_JSON_SB), PT_DESCRIPTION, "use this for wanting to subsribe a bundled json formatted message in a single topic",
 		PT_bool, "aggregate_publications", PADDR(aggregate_pub), PT_DESCRIPTION, "enable FNCS flag to aggregate publications",
 		PT_bool, "aggregate_subscriptions", PADDR(aggregate_sub), PT_DESCRIPTION, "enable FNCS flag to aggregate subscriptions",
+		PT_timestamp, "last_approved_fncs_time", PADDR(last_approved_fncs_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_approved_fncs_time",
+		PT_timestamp, "gridappsd_publish_time", PADDR(gridappsd_publish_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for gridappsd_publish_time",
+		PT_double, "last_delta_fncs_time", PADDR(last_delta_fncs_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_delta_fncs_time",
+		PT_bool, "exitDeltamode", PADDR(exitDeltamode), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for exitDeltamode",
 		// TODO add published properties here
 		nullptr)<1)
 			throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish properties of connection:fncs_msg";

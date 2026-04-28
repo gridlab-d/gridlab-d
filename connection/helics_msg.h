@@ -235,7 +235,6 @@ private:
 	vector<json_helics_endpoint_subscription*> json_helics_endpoint_subscriptions;
 	vector<json_helics_endpoint_publication*> json_helics_endpoint_publications;
 #endif
-	vector<string> *inFunctionTopics;
 	varmap *vmap[14];
 #if HAVE_HELICS
 	helicscpp::CombinationFederate *gld_helics_federate;

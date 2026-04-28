@@ -62,6 +62,10 @@ helics_msg::helics_msg(MODULE *module)
 			PT_KEYWORD, "GENERAL", enumeration(HMT_GENERAL), PT_DESCRIPTION, "use this for sending a general HELICS topic/value pair.",
 			PT_KEYWORD, "JSON", enumeration(HMT_JSON), PT_DESCRIPTION, "use this for want to send a bundled json formatted messag in a single topic.",
 			PT_int32, "publish_period", PADDR(publish_period), PT_DESCRIPTION, "use this with json bundling to set the period [s] at which data is published.",
+		PT_timestamp, "last_approved_helics_time", PADDR(last_approved_helics_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_approved_helics_time",
+		PT_timestamp, "publish_time", PADDR(publish_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for publish_time",
+		PT_double, "last_delta_helics_time", PADDR(last_delta_helics_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_delta_helics_time",
+		PT_bool, "exitDeltamode", PADDR(exitDeltamode), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for exitDeltamode",
 		// TODO add published properties here
 		nullptr)<1)
 			throw "connection/helics_msg::helics_msg(MODULE*): unable to publish properties of connection:helics_msg";
