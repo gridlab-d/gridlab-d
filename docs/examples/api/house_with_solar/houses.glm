@@ -139,10 +139,10 @@ object line_spacing {
 object substation {
      name network_node;
      bustype SWING;
-     nominal_voltage 240000;
+     nominal_voltage 140000;
      base_power 12MVA;
      phases ABCN;
-     positive_sequence_voltage 240000;
+     positive_sequence_voltage 140000;
 }
 
 object transformer {
