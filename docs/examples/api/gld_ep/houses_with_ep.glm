@@ -1,7 +1,7 @@
 clock {
   timezone PST+8PDT;
-  timestamp '2023-07-01 00:00:00';
-  stoptime '2023-07-01 01:00:00';
+  timestamp '2005-07-21 00:00:00';
+  stoptime '2005-07-22 00:00:00';
 }
 
 #set profiler=1
@@ -30,20 +30,19 @@ module residential {
 }
 
 object regulator_configuration {     
-      name regulator_configuration_3887;     
-      name feeder_reg_cfg;     
-      Control OUTPUT_VOLTAGE;     
-      band_center 7900.0;     
-      band_width 133;     
-      connect_type WYE_WYE;     
-      time_delay 30;     
-      raise_taps 16;     
-      lower_taps 16;     
-      regulation 0.10;     
-      tap_pos_A 0;     
-      tap_pos_B 0;     
-      tap_pos_C 0;     
-}   
+     name feeder_reg_cfg;     
+     Control OUTPUT_VOLTAGE; 
+     band_center 7520.0; 
+     band_width 120; 
+     connect_type WYE_WYE; 
+     time_delay 30; 
+     raise_taps 16; 
+     lower_taps 16; 
+     regulation 0.10; 
+     tap_pos_A 0; 
+     tap_pos_B 0; 
+     tap_pos_C 0; 
+}  
 object transformer_configuration {
      name trans_config_to_feeder;
      connect_type WYE_WYE;
@@ -177,6 +176,52 @@ object meter {
       voltage_C -3983.72+6900j;     
 }   
 
+// Three phase for commercial load in EnergyPlus
+
+object transformer_configuration { 
+     name EPtransformer_config;
+     connect_type WYE_WYE; 
+     install_type PADMOUNT; 
+     primary_voltage 12500.000 V; 
+     secondary_voltage 480 V; 
+     power_rating 300.0; 
+     resistance 0.00667; 
+     reactance 0.03333; 
+     shunt_impedance 318.750+347.082j;
+} 
+
+object transformer { 
+     name EPtransformer; 
+     phases ABCN; 
+     from R4-12-47-1_meter_76; 
+     to EPmeter; 
+     configuration EPtransformer_config; 
+} 
+
+object meter { 
+     name EPmeter; 
+     phases ABCN;  
+     nominal_voltage 480; 
+} 
+
+object load { 
+     name EPload; 
+     parent EPmeter; 
+     phases ABCN; 
+     voltage_A 7200+0.0j; 
+     voltage_B -3600-6235j; 
+     voltage_C -3600+6235j; 
+     constant_power_A 58277.754+35997.618j; 
+     constant_power_B 59917.157+36239.5414j; 
+     constant_power_C 59476.619+35995.6939j; 
+     nominal_voltage 480; 
+} 
+
+
+
+
+
+// Residential loads
 // Phase A
 object overhead_line {     
      groupid Distribution_Line;

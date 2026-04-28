@@ -1,4 +1,4 @@
-﻿## Waterheater
+﻿## waterheater
 
 Typical residential water heaters range in size from about 30 gallons up to 120 gallons or so, with most tanks falling in the range of about 40 to 80 gallons. Hot water is drawn from the top of the tank to service the home's water loads, with cold make-up water injected near the bottom of the tank. When a hot water draw is in progress, the tank will tend to have a layer of cold water at the bottom.
 
@@ -28,13 +28,13 @@ will be constructed into a semi-consistent state. The "default waterheater" ends
        tank_diameter 1.5 ft;
        tank_height 3.782 ft;
        inlet_water_temperature 60.0 degF;
-       location GARAGE;           // 80% probability; 20% INSIDE
+       location GARAGE;                  // 80% probability; 20% INSIDE
        heat_mode ELECTRIC;
-       waterheater_model NONE;    // auto-selects ONENODE or TWONODE at runtime
-       tank_setpoint random.normal(125,5);        // bound [90, 160]
+       waterheater_model NONE;           // auto-selects ONENODE or TWONODE at runtime
+       tank_setpoint random.normal(125,5);                  // bound [90, 160]
        thermostat_deadband (1 + fabs(random.normal(2,1)));  // bound [1, 10]
-       tank_UA random.normal(2.0, 0.2) * tank_volume/50;   // bound [0.1, 10]
-       heating_element_capacity 4.5 kW;   // tanks >= 50 gal; smaller tanks may be 3.2 or 3.5 kW
+       tank_UA random.normal(2.0, 0.2) * tank_volume/50;    // bound [0.1, 10]
+       heating_element_capacity 4.5 kW;  // tanks >= 50 gal; smaller tanks may be 3.2 or 3.5 kW
        re_override OV_NORMAL;
     }
 
@@ -129,9 +129,9 @@ Property Name | Type | Unit | Description | Default
 
 #### ELECTRIC:  Electric Resistance
 
-```
-heat_mode ELECTRIC;
-```
+
+    heat_mode ELECTRIC;
+
 
 The default heating mode. One or two resistive heating elements immersed in the tank heat the water directly. The thermostat compares `temperature` to `tank_setpoint` ± `thermostat_deadband`/2 and turns the element on or off accordingly. `heating_element_capacity` defaults to 4.5 kW for tanks ≥ 50 gallons and is randomly chosen from 3.2, 3.5, or 4.5 kW for smaller tanks if not specified.
 
@@ -139,9 +139,8 @@ Heat losses from the element dissipate into the location of the tank (`INSIDE` o
 
 #### GASHEAT: Natural Gas
 
-```
-heat_mode GASHEAT;
-```
+    heat_mode GASHEAT;
+
 
 A natural gas burner heats the water. The thermodynamic tank model (ONENODE/TWONODE) is the same as for ELECTRIC; only the power source differs. Two additional properties capture the auxiliary electrical loads:
 
@@ -152,10 +151,10 @@ The `heating_element_capacity` property represents the gas burner's thermal outp
 
 #### HEAT_PUMP: Heat Pump Water Heater
 
-```
-heat_mode HEAT_PUMP;
-waterheater_model NONE;   // uses built-in empirical HPWH model (not FORTRAN)
-```
+
+    heat_mode HEAT_PUMP;
+    waterheater_model NONE;   // uses built-in empirical HPWH model (not FORTRAN)
+
 
 A refrigerant-cycle heat pump extracts heat from the surrounding air and deposits it into the tank water, achieving a COP greater than 1.0. A backup electric resistance element activates when the heat pump cannot keep up with demand.
 
@@ -304,9 +303,9 @@ where $cA$ and $cb$ are the numerically computed coefficients from the discretiz
 
 #### FORTRAN Model
 
-```
-waterheater_model FORTRAN;
-```
+
+    waterheater_model FORTRAN;
+
 
 The FORTRAN model uses a high-fidelity physics-based simulation originally written in Fortran. It is restricted to **40-gallon** and **80-gallon** tanks only; other volumes will cause a simulation error.
 
@@ -335,9 +334,9 @@ Use `dr_signal` to send a demand-response on/off command to the Fortran model. T
 
 #### MULTILAYER Model
 
-```
-waterheater_model MULTILAYER;
-```
+
+    waterheater_model MULTILAYER;
+
 
 The MULTILAYER model discretizes the tank vertically into 10 internal layers (12 total states including boundary nodes), providing a higher-resolution temperature profile than the TWONODE approach. It is computationally more expensive and numerical stability is sensitive to the choice of `discrete_step_size`.
 

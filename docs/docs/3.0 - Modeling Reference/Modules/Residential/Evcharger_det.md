@@ -1,4 +1,4 @@
-# Evcharger det
+# evcharger_det
 
 Deterministic electric or hybrid vehicle charging 
 
@@ -6,7 +6,7 @@ The EV charger object is part of the residential module, added under the parenta
 
 ![Object Hierarchy](../../../../images/Module-Object-Parentage-Hierarchy.png)
 
-#### Figure 1. Object hierarchy of DER that may be attached to a house. Note that EV chargers belong to the Residential Module but solar and energy storage objects are generators.
+##### Figure 1. Object hierarchy of DER that may be attached to a house. Note that EV chargers belong to the Residential Module but solar and energy storage objects are generators.
 
 ## Synopsis
     
