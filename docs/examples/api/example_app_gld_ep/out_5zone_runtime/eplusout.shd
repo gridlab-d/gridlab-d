@@ -1,0 +1,3700 @@
+Shadowing Combinations
+..Solar Distribution=FullInteriorAndExterior
+..In the following, only the first 10 reference surfaces will be shown.
+..But all surfaces are used in the calculations.
+==================================
+Surface=ENTRY CANOPY is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=12
+..Surface=W_CORRIDORFLR1_16_0_0
+..Surface=W_CORRIDORFLR2_15_0_0
+..Surface=W_CORRIDORFLR3_15_0_0
+..Surface=W_CORRIDORFLR4_15_0_0
+..Surface=W_FRONTLOUNGEFLR1_4_0_0
+..Surface=W_FRONTSTAIRSFLR1_4_0_0
+..Surface=W_FRONTSTAIRSFLR2_4_0_0
+..Surface=W_FRONTSTAIRSFLR3_4_0_0
+..Surface=W_FRONTSTAIRSFLR4_4_0_0
+..Surface=W_GUESTROOM201_4_0_0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=Mir-ENTRY CANOPY is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=3
+..Surface=W_CORRIDORFLR1_16_0_0
+..Surface=W_FRONTLOUNGEFLR1_4_0_0
+..Surface=W_FRONTSTAIRSFLR1_4_0_0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_10003_0_10002 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_11_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_12_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_13_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_14_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_15_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_17_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_18_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_19_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_21_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_22_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_23_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_24_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_25_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_26_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_27_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_5_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_6_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_7_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_8_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR1_9_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR1_10_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR1_16_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=1
+..Surface=Mir-ENTRY CANOPY
+Number of back surfaces=30
+...Surface=P_CORRIDORFLR1_10003_0_10002
+...Surface=P_CORRIDORFLR1_11_0_0
+...Surface=P_CORRIDORFLR1_12_0_0
+...Surface=P_CORRIDORFLR1_13_0_0
+...Surface=P_CORRIDORFLR1_14_0_0
+...Surface=P_CORRIDORFLR1_15_0_0
+...Surface=P_CORRIDORFLR1_17_0_0
+...Surface=P_CORRIDORFLR1_18_0_0
+...Surface=P_CORRIDORFLR1_19_0_0
+...Surface=P_CORRIDORFLR1_21_0_0
+Number of receiving sub surfaces=1
+....Surface=D_CORRIDORFLR1_16_0_0_0_0
+==================================
+Surface=D_CORRIDORFLR1_16_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR1_20_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=30
+...Surface=P_CORRIDORFLR1_10003_0_10002
+...Surface=P_CORRIDORFLR1_11_0_0
+...Surface=P_CORRIDORFLR1_12_0_0
+...Surface=P_CORRIDORFLR1_13_0_0
+...Surface=P_CORRIDORFLR1_14_0_0
+...Surface=P_CORRIDORFLR1_15_0_0
+...Surface=P_CORRIDORFLR1_17_0_0
+...Surface=P_CORRIDORFLR1_18_0_0
+...Surface=P_CORRIDORFLR1_19_0_0
+...Surface=P_CORRIDORFLR1_21_0_0
+Number of receiving sub surfaces=1
+....Surface=W_CORRIDORFLR1_20_0_0_0_0
+==================================
+Surface=W_CORRIDORFLR1_20_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR1_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=30
+...Surface=P_CORRIDORFLR1_10003_0_10002
+...Surface=P_CORRIDORFLR1_11_0_0
+...Surface=P_CORRIDORFLR1_12_0_0
+...Surface=P_CORRIDORFLR1_13_0_0
+...Surface=P_CORRIDORFLR1_14_0_0
+...Surface=P_CORRIDORFLR1_15_0_0
+...Surface=P_CORRIDORFLR1_17_0_0
+...Surface=P_CORRIDORFLR1_18_0_0
+...Surface=P_CORRIDORFLR1_19_0_0
+...Surface=P_CORRIDORFLR1_21_0_0
+Number of receiving sub surfaces=1
+....Surface=W_CORRIDORFLR1_2_0_0_0_0
+==================================
+Surface=W_CORRIDORFLR1_2_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_CORRIDORFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_CORRIDORFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_CORRIDORFLR1_1_1_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=CORRIDORFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_10100_0_10062 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_10_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_11_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_12_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_13_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_14_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_16_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_17_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_18_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_19_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_20_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_21_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_5_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_6_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_7_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR2_8_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR2_15_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=22
+...Surface=P_CORRIDORFLR2_10100_0_10062
+...Surface=P_CORRIDORFLR2_10_0_0
+...Surface=P_CORRIDORFLR2_11_0_0
+...Surface=P_CORRIDORFLR2_12_0_0
+...Surface=P_CORRIDORFLR2_13_0_0
+...Surface=P_CORRIDORFLR2_14_0_0
+...Surface=P_CORRIDORFLR2_16_0_0
+...Surface=P_CORRIDORFLR2_17_0_0
+...Surface=P_CORRIDORFLR2_18_0_0
+...Surface=P_CORRIDORFLR2_19_0_0
+Number of receiving sub surfaces=1
+....Surface=W_CORRIDORFLR2_15_0_0_0_0
+==================================
+Surface=W_CORRIDORFLR2_15_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR2_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=22
+...Surface=P_CORRIDORFLR2_10100_0_10062
+...Surface=P_CORRIDORFLR2_10_0_0
+...Surface=P_CORRIDORFLR2_11_0_0
+...Surface=P_CORRIDORFLR2_12_0_0
+...Surface=P_CORRIDORFLR2_13_0_0
+...Surface=P_CORRIDORFLR2_14_0_0
+...Surface=P_CORRIDORFLR2_16_0_0
+...Surface=P_CORRIDORFLR2_17_0_0
+...Surface=P_CORRIDORFLR2_18_0_0
+...Surface=P_CORRIDORFLR2_19_0_0
+Number of receiving sub surfaces=1
+....Surface=W_CORRIDORFLR2_2_0_0_0_0
+==================================
+Surface=W_CORRIDORFLR2_2_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR2_9_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_CORRIDORFLR2_10004_0_10003 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_CORRIDORFLR2_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=CORRIDORFLR2 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_10198_0_10107 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_10_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_11_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_12_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_13_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_14_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_16_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_17_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_18_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_19_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_20_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_21_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_5_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_6_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_7_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR3_8_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR3_15_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=22
+...Surface=P_CORRIDORFLR3_10198_0_10107
+...Surface=P_CORRIDORFLR3_10_0_0
+...Surface=P_CORRIDORFLR3_11_0_0
+...Surface=P_CORRIDORFLR3_12_0_0
+...Surface=P_CORRIDORFLR3_13_0_0
+...Surface=P_CORRIDORFLR3_14_0_0
+...Surface=P_CORRIDORFLR3_16_0_0
+...Surface=P_CORRIDORFLR3_17_0_0
+...Surface=P_CORRIDORFLR3_18_0_0
+...Surface=P_CORRIDORFLR3_19_0_0
+Number of receiving sub surfaces=1
+....Surface=W_CORRIDORFLR3_15_0_0_0_0
+==================================
+Surface=W_CORRIDORFLR3_15_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR3_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=22
+...Surface=P_CORRIDORFLR3_10198_0_10107
+...Surface=P_CORRIDORFLR3_10_0_0
+...Surface=P_CORRIDORFLR3_11_0_0
+...Surface=P_CORRIDORFLR3_12_0_0
+...Surface=P_CORRIDORFLR3_13_0_0
+...Surface=P_CORRIDORFLR3_14_0_0
+...Surface=P_CORRIDORFLR3_16_0_0
+...Surface=P_CORRIDORFLR3_17_0_0
+...Surface=P_CORRIDORFLR3_18_0_0
+...Surface=P_CORRIDORFLR3_19_0_0
+Number of receiving sub surfaces=1
+....Surface=W_CORRIDORFLR3_2_0_0_0_0
+==================================
+Surface=W_CORRIDORFLR3_2_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR3_9_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_CORRIDORFLR3_10102_0_10063 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_CORRIDORFLR3_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=CORRIDORFLR3 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_10287_0_10151 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_10_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_11_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_12_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_13_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_14_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_16_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_17_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_18_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_19_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_20_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_21_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_5_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_6_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_7_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_CORRIDORFLR4_8_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR4_15_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=22
+...Surface=P_CORRIDORFLR4_10287_0_10151
+...Surface=P_CORRIDORFLR4_10_0_0
+...Surface=P_CORRIDORFLR4_11_0_0
+...Surface=P_CORRIDORFLR4_12_0_0
+...Surface=P_CORRIDORFLR4_13_0_0
+...Surface=P_CORRIDORFLR4_14_0_0
+...Surface=P_CORRIDORFLR4_16_0_0
+...Surface=P_CORRIDORFLR4_17_0_0
+...Surface=P_CORRIDORFLR4_18_0_0
+...Surface=P_CORRIDORFLR4_19_0_0
+Number of receiving sub surfaces=1
+....Surface=W_CORRIDORFLR4_15_0_0_0_0
+==================================
+Surface=W_CORRIDORFLR4_15_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR4_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=22
+...Surface=P_CORRIDORFLR4_10287_0_10151
+...Surface=P_CORRIDORFLR4_10_0_0
+...Surface=P_CORRIDORFLR4_11_0_0
+...Surface=P_CORRIDORFLR4_12_0_0
+...Surface=P_CORRIDORFLR4_13_0_0
+...Surface=P_CORRIDORFLR4_14_0_0
+...Surface=P_CORRIDORFLR4_16_0_0
+...Surface=P_CORRIDORFLR4_17_0_0
+...Surface=P_CORRIDORFLR4_18_0_0
+...Surface=P_CORRIDORFLR4_19_0_0
+Number of receiving sub surfaces=1
+....Surface=W_CORRIDORFLR4_2_0_0_0_0
+==================================
+Surface=W_CORRIDORFLR4_2_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_CORRIDORFLR4_9_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_CORRIDORFLR4_10200_0_10108 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_CORRIDORFLR4_1_0_0 is used as Receiving Surface in calculations and is non-convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=CORRIDORFLR4 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR1_10011_0_10009 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR1_10012_0_10010 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR1_10075_0_10050 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_ELEVATORCOREFLR1_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_ELEVATORCOREFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_ELEVATORCOREFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=ELEVATORCOREFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR2_10107_0_10067 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR2_10108_0_10068 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR2_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_ELEVATORCOREFLR2_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_ELEVATORCOREFLR2_10077_0_10051 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_ELEVATORCOREFLR2_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR3_10205_0_10112 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR3_10206_0_10113 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR3_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_ELEVATORCOREFLR3_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_ELEVATORCOREFLR3_10166_0_10095 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_ELEVATORCOREFLR3_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR4_10293_0_10155 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR4_10294_0_10156 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_ELEVATORCOREFLR4_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_ELEVATORCOREFLR4_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_ELEVATORCOREFLR4_10257_0_10140 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_ELEVATORCOREFLR4_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_EMPLOYEELOUNGEFLR1_10009_0_10007 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_EMPLOYEELOUNGEFLR1_10066_0_10045 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_EMPLOYEELOUNGEFLR1_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_EMPLOYEELOUNGEFLR1_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_EMPLOYEELOUNGEFLR1_10009_0_10007
+...Surface=P_EMPLOYEELOUNGEFLR1_10066_0_10045
+...Surface=P_EMPLOYEELOUNGEFLR1_4_0_0
+...Surface=S_EMPLOYEELOUNGEFLR1_0_0_0
+...Surface=C_EMPLOYEELOUNGEFLR1_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_EMPLOYEELOUNGEFLR1_3_0_0_0_0
+==================================
+Surface=W_EMPLOYEELOUNGEFLR1_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_EMPLOYEELOUNGEFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_EMPLOYEELOUNGEFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=EMPLOYEELOUNGEFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_EXERCISECENTERFLR1_10013_0_10011 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_EXERCISECENTERFLR1_10014_0_10012 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_EXERCISECENTERFLR1_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_EXERCISECENTERFLR1_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_EXERCISECENTERFLR1_10013_0_10011
+...Surface=P_EXERCISECENTERFLR1_10014_0_10012
+...Surface=P_EXERCISECENTERFLR1_4_0_0
+...Surface=S_EXERCISECENTERFLR1_0_0_0
+...Surface=C_EXERCISECENTERFLR1_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_EXERCISECENTERFLR1_3_0_0_0_0
+==================================
+Surface=W_EXERCISECENTERFLR1_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_EXERCISECENTERFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_EXERCISECENTERFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=EXERCISECENTERFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTLOUNGEFLR1_10018_0_10016 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTLOUNGEFLR1_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTLOUNGEFLR1_4_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=1
+..Surface=Mir-ENTRY CANOPY
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTLOUNGEFLR1_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=6
+...Surface=P_FRONTLOUNGEFLR1_10018_0_10016
+...Surface=P_FRONTLOUNGEFLR1_2_0_0
+...Surface=W_FRONTLOUNGEFLR1_4_0_0
+...Surface=S_FRONTLOUNGEFLR1_0_0_0
+...Surface=C_FRONTLOUNGEFLR1_1_0_0
+...Surface=C_FRONTLOUNGEFLR1_1_1_0
+Number of receiving sub surfaces=5
+....Surface=W_FRONTLOUNGEFLR1_5_0_0_0_0
+....Surface=W_FRONTLOUNGEFLR1_5_0_0_0_1
+....Surface=W_FRONTLOUNGEFLR1_5_0_0_0_2
+....Surface=W_FRONTLOUNGEFLR1_5_0_0_0_3
+....Surface=W_FRONTLOUNGEFLR1_5_0_0_0_4
+==================================
+Surface=W_FRONTLOUNGEFLR1_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTLOUNGEFLR1_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTLOUNGEFLR1_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTLOUNGEFLR1_5_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTLOUNGEFLR1_5_0_0_0_4 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_FRONTLOUNGEFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTLOUNGEFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTLOUNGEFLR1_1_1_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTLOUNGEFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTOFFICEFLR1_10015_0_10013 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTOFFICEFLR1_10083_0_10053 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTOFFICEFLR1_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTOFFICEFLR1_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=6
+...Surface=P_FRONTOFFICEFLR1_10015_0_10013
+...Surface=P_FRONTOFFICEFLR1_10083_0_10053
+...Surface=P_FRONTOFFICEFLR1_4_0_0
+...Surface=S_FRONTOFFICEFLR1_0_0_0
+...Surface=C_FRONTOFFICEFLR1_1_0_0
+...Surface=C_FRONTOFFICEFLR1_1_1_0
+Number of receiving sub surfaces=4
+....Surface=W_FRONTOFFICEFLR1_3_0_0_0_0
+....Surface=W_FRONTOFFICEFLR1_3_0_0_0_1
+....Surface=W_FRONTOFFICEFLR1_3_0_0_0_2
+....Surface=W_FRONTOFFICEFLR1_3_0_0_0_3
+==================================
+Surface=W_FRONTOFFICEFLR1_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTOFFICEFLR1_3_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTOFFICEFLR1_3_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTOFFICEFLR1_3_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_FRONTOFFICEFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTOFFICEFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTOFFICEFLR1_1_1_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTOFFICEFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTAIRSFLR1_10017_0_10015 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTAIRSFLR1_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTAIRSFLR1_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTAIRSFLR1_4_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=1
+..Surface=Mir-ENTRY CANOPY
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_FRONTSTAIRSFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTSTAIRSFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTSTAIRSFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTAIRSFLR2_10113_0_10073 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTAIRSFLR2_10189_0_10103 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTAIRSFLR2_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTAIRSFLR2_4_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_FRONTSTAIRSFLR2_10090_0_10057 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTSTAIRSFLR2_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTSTAIRSFLR2 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTAIRSFLR3_10211_0_10118 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTAIRSFLR3_10279_0_10148 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTAIRSFLR3_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTAIRSFLR3_4_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_FRONTSTAIRSFLR3_10192_0_10104 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTSTAIRSFLR3_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTSTAIRSFLR3 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTAIRSFLR4_10299_0_10161 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTAIRSFLR4_10354_0_10178 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTAIRSFLR4_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTAIRSFLR4_4_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_FRONTSTAIRSFLR4_10282_0_10149 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_FRONTSTAIRSFLR4_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTSTAIRSFLR4 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR1_10016_0_10014 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR1_10088_0_10056 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR1_10091_0_10058 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTORAGEFLR1_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_FRONTSTORAGEFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTSTORAGEFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTSTORAGEFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR2_10112_0_10072 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR2_10184_0_10101 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR2_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTORAGEFLR2_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_FRONTSTORAGEFLR2_10093_0_10059 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTSTORAGEFLR2_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTSTORAGEFLR2 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR3_10210_0_10117 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR3_10274_0_10146 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR3_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTORAGEFLR3_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_FRONTSTORAGEFLR3_10187_0_10102 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_FRONTSTORAGEFLR3_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTSTORAGEFLR3 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR4_10298_0_10160 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR4_10350_0_10177 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_FRONTSTORAGEFLR4_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_FRONTSTORAGEFLR4_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_FRONTSTORAGEFLR4_10277_0_10147 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_FRONTSTORAGEFLR4_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=FRONTSTORAGEFLR4 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM101_10024_0_10022 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM101_10045_0_10036 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM101_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM101_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM101_10024_0_10022
+...Surface=P_GUESTROOM101_10045_0_10036
+...Surface=P_GUESTROOM101_2_0_0
+...Surface=S_GUESTROOM101_0_0_0
+...Surface=C_GUESTROOM101_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM101_5_0_0_0_0
+==================================
+Surface=W_GUESTROOM101_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_GUESTROOM101_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM101_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM101 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM102_10025_0_10023 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM102_10049_0_10038 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM102_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM102_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM102_10025_0_10023
+...Surface=P_GUESTROOM102_10049_0_10038
+...Surface=P_GUESTROOM102_2_0_0
+...Surface=S_GUESTROOM102_0_0_0
+...Surface=C_GUESTROOM102_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM102_5_0_0_0_0
+==================================
+Surface=W_GUESTROOM102_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_GUESTROOM102_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM102_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM102 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM103_10026_0_10024 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM103_10030_0_10027 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM103_10053_0_10040 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM103_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM103_10026_0_10024
+...Surface=P_GUESTROOM103_10030_0_10027
+...Surface=P_GUESTROOM103_10053_0_10040
+...Surface=S_GUESTROOM103_0_0_0
+...Surface=C_GUESTROOM103_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM103_5_0_0_0_0
+==================================
+Surface=W_GUESTROOM103_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_GUESTROOM103_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM103_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM103 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM104_10002_0_10001 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM104_10007_0_10005 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM104_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM104_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM104_10002_0_10001
+...Surface=P_GUESTROOM104_10007_0_10005
+...Surface=P_GUESTROOM104_4_0_0
+...Surface=S_GUESTROOM104_0_0_0
+...Surface=C_GUESTROOM104_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM104_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM104_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_GUESTROOM104_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM104_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM104 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM105_10008_0_10006 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM105_10062_0_10043 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM105_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM105_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM105_10008_0_10006
+...Surface=P_GUESTROOM105_10062_0_10043
+...Surface=P_GUESTROOM105_4_0_0
+...Surface=S_GUESTROOM105_0_0_0
+...Surface=C_GUESTROOM105_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM105_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM105_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_GUESTROOM105_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM105_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM105 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM201_10114_0_10074 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM201_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM201_4_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM201_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM201_10114_0_10074
+...Surface=P_GUESTROOM201_2_0_0
+...Surface=W_GUESTROOM201_4_0_0
+...Surface=F_GUESTROOM201_10031_0_10028
+...Surface=C_GUESTROOM201_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM201_5_0_0_0_0
+==================================
+Surface=W_GUESTROOM201_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM201_10031_0_10028 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM201_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM201 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM202_205_10115_0_10075 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM202_205_10126_0_10083 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM202_205_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM202_205_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM202_205_10115_0_10075
+...Surface=P_GUESTROOM202_205_10126_0_10083
+...Surface=P_GUESTROOM202_205_2_0_0
+...Surface=F_GUESTROOM202_205_10032_0_10029
+...Surface=C_GUESTROOM202_205_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM202_205_5_0_0_0_0
+....Surface=W_GUESTROOM202_205_5_0_0_0_1
+....Surface=W_GUESTROOM202_205_5_0_0_0_2
+....Surface=W_GUESTROOM202_205_5_0_0_0_3
+==================================
+Surface=W_GUESTROOM202_205_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM202_205_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM202_205_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM202_205_5_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM202_205_10032_0_10029 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM202_205_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM202_205 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM206_208_10116_0_10076 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM206_208_10130_0_10085 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM206_208_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM206_208_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=7
+...Surface=P_GUESTROOM206_208_10116_0_10076
+...Surface=P_GUESTROOM206_208_10130_0_10085
+...Surface=P_GUESTROOM206_208_2_0_0
+...Surface=F_GUESTROOM206_208_10005_0_10004
+...Surface=F_GUESTROOM206_208_10035_0_10031
+...Surface=F_GUESTROOM206_208_10039_0_10032
+...Surface=C_GUESTROOM206_208_1_0_0
+Number of receiving sub surfaces=3
+....Surface=W_GUESTROOM206_208_5_0_0_0_0
+....Surface=W_GUESTROOM206_208_5_0_0_0_1
+....Surface=W_GUESTROOM206_208_5_0_0_0_2
+==================================
+Surface=W_GUESTROOM206_208_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM206_208_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM206_208_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM206_208_10005_0_10004 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM206_208_10035_0_10031 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM206_208_10039_0_10032 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM206_208_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM206_208 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM209_212_10117_0_10077 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM209_212_10137_0_10087 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM209_212_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM209_212_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=8
+...Surface=P_GUESTROOM209_212_10117_0_10077
+...Surface=P_GUESTROOM209_212_10137_0_10087
+...Surface=P_GUESTROOM209_212_2_0_0
+...Surface=F_GUESTROOM209_212_10040_0_10033
+...Surface=F_GUESTROOM209_212_10044_0_10035
+...Surface=F_GUESTROOM209_212_10048_0_10037
+...Surface=F_GUESTROOM209_212_10052_0_10039
+...Surface=C_GUESTROOM209_212_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM209_212_5_0_0_0_0
+....Surface=W_GUESTROOM209_212_5_0_0_0_1
+....Surface=W_GUESTROOM209_212_5_0_0_0_2
+....Surface=W_GUESTROOM209_212_5_0_0_0_3
+==================================
+Surface=W_GUESTROOM209_212_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM209_212_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM209_212_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM209_212_5_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM209_212_10040_0_10033 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM209_212_10044_0_10035 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM209_212_10048_0_10037 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM209_212_10052_0_10039 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM209_212_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM209_212 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM213_10118_0_10078 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM213_10123_0_10081 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM213_10145_0_10089 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM213_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM213_10118_0_10078
+...Surface=P_GUESTROOM213_10123_0_10081
+...Surface=P_GUESTROOM213_10145_0_10089
+...Surface=F_GUESTROOM213_10056_0_10041
+...Surface=C_GUESTROOM213_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM213_5_0_0_0_0
+==================================
+Surface=W_GUESTROOM213_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM213_10056_0_10041 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM213_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM213 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM214_10099_0_10061 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM214_10104_0_10064 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM214_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM214_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM214_10099_0_10061
+...Surface=P_GUESTROOM214_10104_0_10064
+...Surface=P_GUESTROOM214_4_0_0
+...Surface=F_GUESTROOM214_10060_0_10042
+...Surface=C_GUESTROOM214_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM214_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM214_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM214_10060_0_10042 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM214_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM214 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM215_218_10105_0_10065 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM215_218_10156_0_10092 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM215_218_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM215_218_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=7
+...Surface=P_GUESTROOM215_218_10105_0_10065
+...Surface=P_GUESTROOM215_218_10156_0_10092
+...Surface=P_GUESTROOM215_218_4_0_0
+...Surface=F_GUESTROOM215_218_10064_0_10044
+...Surface=F_GUESTROOM215_218_10068_0_10046
+...Surface=F_GUESTROOM215_218_10072_0_10048
+...Surface=C_GUESTROOM215_218_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM215_218_3_0_0_0_0
+....Surface=W_GUESTROOM215_218_3_0_0_0_1
+....Surface=W_GUESTROOM215_218_3_0_0_0_2
+....Surface=W_GUESTROOM215_218_3_0_0_0_3
+==================================
+Surface=W_GUESTROOM215_218_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM215_218_3_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM215_218_3_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM215_218_3_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM215_218_10064_0_10044 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM215_218_10068_0_10046 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM215_218_10072_0_10048 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM215_218_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM215_218 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM219_10106_0_10066 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM219_10163_0_10094 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM219_10167_0_10096 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM219_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM219_10106_0_10066
+...Surface=P_GUESTROOM219_10163_0_10094
+...Surface=P_GUESTROOM219_10167_0_10096
+...Surface=F_GUESTROOM219_10073_0_10049
+...Surface=C_GUESTROOM219_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM219_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM219_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM219_10073_0_10049 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM219_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM219 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM220_223_10109_0_10069 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM220_223_10110_0_10070 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM220_223_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM220_223_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=6
+...Surface=P_GUESTROOM220_223_10109_0_10069
+...Surface=P_GUESTROOM220_223_10110_0_10070
+...Surface=P_GUESTROOM220_223_4_0_0
+...Surface=F_GUESTROOM220_223_10081_0_10052
+...Surface=F_GUESTROOM220_223_10085_0_10054
+...Surface=C_GUESTROOM220_223_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM220_223_3_0_0_0_0
+....Surface=W_GUESTROOM220_223_3_0_0_0_1
+....Surface=W_GUESTROOM220_223_3_0_0_0_2
+....Surface=W_GUESTROOM220_223_3_0_0_0_3
+==================================
+Surface=W_GUESTROOM220_223_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM220_223_3_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM220_223_3_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM220_223_3_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM220_223_10081_0_10052 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM220_223_10085_0_10054 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM220_223_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM220_223 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM224_10111_0_10071 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM224_10179_0_10099 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM224_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM224_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM224_10111_0_10071
+...Surface=P_GUESTROOM224_10179_0_10099
+...Surface=P_GUESTROOM224_4_0_0
+...Surface=F_GUESTROOM224_10086_0_10055
+...Surface=C_GUESTROOM224_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM224_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM224_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM224_10086_0_10055 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM224_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM224 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM301_10212_0_10119 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM301_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM301_4_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM301_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM301_10212_0_10119
+...Surface=P_GUESTROOM301_2_0_0
+...Surface=W_GUESTROOM301_4_0_0
+...Surface=F_GUESTROOM301_10125_0_10082
+...Surface=C_GUESTROOM301_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM301_5_0_0_0_0
+==================================
+Surface=W_GUESTROOM301_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM301_10125_0_10082 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM301_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM301 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM302_305_10213_0_10120 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM302_305_10224_0_10128 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM302_305_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM302_305_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM302_305_10213_0_10120
+...Surface=P_GUESTROOM302_305_10224_0_10128
+...Surface=P_GUESTROOM302_305_2_0_0
+...Surface=F_GUESTROOM302_305_10129_0_10084
+...Surface=C_GUESTROOM302_305_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM302_305_5_0_0_0_0
+....Surface=W_GUESTROOM302_305_5_0_0_0_1
+....Surface=W_GUESTROOM302_305_5_0_0_0_2
+....Surface=W_GUESTROOM302_305_5_0_0_0_3
+==================================
+Surface=W_GUESTROOM302_305_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM302_305_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM302_305_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM302_305_5_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM302_305_10129_0_10084 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM302_305_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM302_305 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM306_308_10214_0_10121 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM306_308_10228_0_10130 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM306_308_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM306_308_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM306_308_10214_0_10121
+...Surface=P_GUESTROOM306_308_10228_0_10130
+...Surface=P_GUESTROOM306_308_2_0_0
+...Surface=F_GUESTROOM306_308_10136_0_10086
+...Surface=C_GUESTROOM306_308_1_0_0
+Number of receiving sub surfaces=3
+....Surface=W_GUESTROOM306_308_5_0_0_0_0
+....Surface=W_GUESTROOM306_308_5_0_0_0_1
+....Surface=W_GUESTROOM306_308_5_0_0_0_2
+==================================
+Surface=W_GUESTROOM306_308_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM306_308_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM306_308_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM306_308_10136_0_10086 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM306_308_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM306_308 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM309_312_10215_0_10122 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM309_312_10233_0_10132 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM309_312_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM309_312_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM309_312_10215_0_10122
+...Surface=P_GUESTROOM309_312_10233_0_10132
+...Surface=P_GUESTROOM309_312_2_0_0
+...Surface=F_GUESTROOM309_312_10144_0_10088
+...Surface=C_GUESTROOM309_312_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM309_312_5_0_0_0_0
+....Surface=W_GUESTROOM309_312_5_0_0_0_1
+....Surface=W_GUESTROOM309_312_5_0_0_0_2
+....Surface=W_GUESTROOM309_312_5_0_0_0_3
+==================================
+Surface=W_GUESTROOM309_312_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM309_312_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM309_312_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM309_312_5_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM309_312_10144_0_10088 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM309_312_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM309_312 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM313_10216_0_10123 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM313_10221_0_10126 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM313_10238_0_10134 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM313_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM313_10216_0_10123
+...Surface=P_GUESTROOM313_10221_0_10126
+...Surface=P_GUESTROOM313_10238_0_10134
+...Surface=F_GUESTROOM313_10149_0_10090
+...Surface=C_GUESTROOM313_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM313_5_0_0_0_0
+==================================
+Surface=W_GUESTROOM313_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM313_10149_0_10090 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM313_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM313 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM314_10197_0_10106 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM314_10202_0_10109 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM314_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM314_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM314_10197_0_10106
+...Surface=P_GUESTROOM314_10202_0_10109
+...Surface=P_GUESTROOM314_4_0_0
+...Surface=F_GUESTROOM314_10154_0_10091
+...Surface=C_GUESTROOM314_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM314_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM314_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM314_10154_0_10091 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM314_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM314 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM315_318_10203_0_10110 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM315_318_10249_0_10137 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM315_318_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM315_318_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM315_318_10203_0_10110
+...Surface=P_GUESTROOM315_318_10249_0_10137
+...Surface=P_GUESTROOM315_318_4_0_0
+...Surface=F_GUESTROOM315_318_10161_0_10093
+...Surface=C_GUESTROOM315_318_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM315_318_3_0_0_0_0
+....Surface=W_GUESTROOM315_318_3_0_0_0_1
+....Surface=W_GUESTROOM315_318_3_0_0_0_2
+....Surface=W_GUESTROOM315_318_3_0_0_0_3
+==================================
+Surface=W_GUESTROOM315_318_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM315_318_3_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM315_318_3_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM315_318_3_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM315_318_10161_0_10093 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM315_318_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM315_318 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM319_10204_0_10111 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM319_10254_0_10139 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM319_10258_0_10141 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM319_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM319_10204_0_10111
+...Surface=P_GUESTROOM319_10254_0_10139
+...Surface=P_GUESTROOM319_10258_0_10141
+...Surface=F_GUESTROOM319_10171_0_10097
+...Surface=C_GUESTROOM319_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM319_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM319_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM319_10171_0_10097 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM319_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM319 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM320_323_10207_0_10114 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM320_323_10208_0_10115 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM320_323_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM320_323_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM320_323_10207_0_10114
+...Surface=P_GUESTROOM320_323_10208_0_10115
+...Surface=P_GUESTROOM320_323_4_0_0
+...Surface=F_GUESTROOM320_323_10177_0_10098
+...Surface=C_GUESTROOM320_323_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM320_323_3_0_0_0_0
+....Surface=W_GUESTROOM320_323_3_0_0_0_1
+....Surface=W_GUESTROOM320_323_3_0_0_0_2
+....Surface=W_GUESTROOM320_323_3_0_0_0_3
+==================================
+Surface=W_GUESTROOM320_323_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM320_323_3_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM320_323_3_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM320_323_3_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM320_323_10177_0_10098 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM320_323_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM320_323 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM324_10209_0_10116 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM324_10269_0_10144 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM324_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM324_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM324_10209_0_10116
+...Surface=P_GUESTROOM324_10269_0_10144
+...Surface=P_GUESTROOM324_4_0_0
+...Surface=F_GUESTROOM324_10182_0_10100
+...Surface=C_GUESTROOM324_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM324_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM324_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM324_10182_0_10100 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_GUESTROOM324_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM324 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM401_10300_0_10162 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM401_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM401_4_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM401_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM401_10300_0_10162
+...Surface=P_GUESTROOM401_2_0_0
+...Surface=W_GUESTROOM401_4_0_0
+...Surface=F_GUESTROOM401_10223_0_10127
+...Surface=R_GUESTROOM401_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM401_5_0_0_0_0
+==================================
+Surface=W_GUESTROOM401_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM401_10223_0_10127 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM401_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM401 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM402_405_10301_0_10163 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM402_405_10310_0_10169 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM402_405_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM402_405_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM402_405_10301_0_10163
+...Surface=P_GUESTROOM402_405_10310_0_10169
+...Surface=P_GUESTROOM402_405_2_0_0
+...Surface=F_GUESTROOM402_405_10227_0_10129
+...Surface=R_GUESTROOM402_405_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM402_405_5_0_0_0_0
+....Surface=W_GUESTROOM402_405_5_0_0_0_1
+....Surface=W_GUESTROOM402_405_5_0_0_0_2
+....Surface=W_GUESTROOM402_405_5_0_0_0_3
+==================================
+Surface=W_GUESTROOM402_405_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM402_405_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM402_405_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM402_405_5_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM402_405_10227_0_10129 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM402_405_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM402_405 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM406_408_10302_0_10164 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM406_408_10313_0_10170 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM406_408_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM406_408_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM406_408_10302_0_10164
+...Surface=P_GUESTROOM406_408_10313_0_10170
+...Surface=P_GUESTROOM406_408_2_0_0
+...Surface=F_GUESTROOM406_408_10232_0_10131
+...Surface=R_GUESTROOM406_408_1_0_0
+Number of receiving sub surfaces=3
+....Surface=W_GUESTROOM406_408_5_0_0_0_0
+....Surface=W_GUESTROOM406_408_5_0_0_0_1
+....Surface=W_GUESTROOM406_408_5_0_0_0_2
+==================================
+Surface=W_GUESTROOM406_408_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM406_408_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM406_408_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM406_408_10232_0_10131 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM406_408_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM406_408 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM409_412_10303_0_10165 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM409_412_10317_0_10171 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM409_412_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM409_412_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM409_412_10303_0_10165
+...Surface=P_GUESTROOM409_412_10317_0_10171
+...Surface=P_GUESTROOM409_412_2_0_0
+...Surface=F_GUESTROOM409_412_10237_0_10133
+...Surface=R_GUESTROOM409_412_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM409_412_5_0_0_0_0
+....Surface=W_GUESTROOM409_412_5_0_0_0_1
+....Surface=W_GUESTROOM409_412_5_0_0_0_2
+....Surface=W_GUESTROOM409_412_5_0_0_0_3
+==================================
+Surface=W_GUESTROOM409_412_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM409_412_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM409_412_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM409_412_5_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM409_412_10237_0_10133 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM409_412_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM409_412 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM413_10304_0_10166 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM413_10308_0_10168 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM413_10321_0_10172 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM413_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM413_10304_0_10166
+...Surface=P_GUESTROOM413_10308_0_10168
+...Surface=P_GUESTROOM413_10321_0_10172
+...Surface=F_GUESTROOM413_10242_0_10135
+...Surface=R_GUESTROOM413_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM413_5_0_0_0_0
+==================================
+Surface=W_GUESTROOM413_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM413_10242_0_10135 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM413_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM413 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM414_10286_0_10150 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM414_10290_0_10152 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM414_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM414_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM414_10286_0_10150
+...Surface=P_GUESTROOM414_10290_0_10152
+...Surface=P_GUESTROOM414_4_0_0
+...Surface=F_GUESTROOM414_10247_0_10136
+...Surface=R_GUESTROOM414_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM414_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM414_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM414_10247_0_10136 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM414_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM414 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM415_418_10291_0_10153 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM415_418_10330_0_10173 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM415_418_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM415_418_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM415_418_10291_0_10153
+...Surface=P_GUESTROOM415_418_10330_0_10173
+...Surface=P_GUESTROOM415_418_4_0_0
+...Surface=F_GUESTROOM415_418_10252_0_10138
+...Surface=R_GUESTROOM415_418_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM415_418_3_0_0_0_0
+....Surface=W_GUESTROOM415_418_3_0_0_0_1
+....Surface=W_GUESTROOM415_418_3_0_0_0_2
+....Surface=W_GUESTROOM415_418_3_0_0_0_3
+==================================
+Surface=W_GUESTROOM415_418_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM415_418_3_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM415_418_3_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM415_418_3_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM415_418_10252_0_10138 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM415_418_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM415_418 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM419_10292_0_10154 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM419_10334_0_10174 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM419_10337_0_10175 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM419_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM419_10292_0_10154
+...Surface=P_GUESTROOM419_10334_0_10174
+...Surface=P_GUESTROOM419_10337_0_10175
+...Surface=F_GUESTROOM419_10262_0_10142
+...Surface=R_GUESTROOM419_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM419_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM419_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM419_10262_0_10142 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM419_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM419 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM420_423_10295_0_10157 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM420_423_10296_0_10158 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM420_423_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM420_423_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM420_423_10295_0_10157
+...Surface=P_GUESTROOM420_423_10296_0_10158
+...Surface=P_GUESTROOM420_423_4_0_0
+...Surface=F_GUESTROOM420_423_10267_0_10143
+...Surface=R_GUESTROOM420_423_1_0_0
+Number of receiving sub surfaces=4
+....Surface=W_GUESTROOM420_423_3_0_0_0_0
+....Surface=W_GUESTROOM420_423_3_0_0_0_1
+....Surface=W_GUESTROOM420_423_3_0_0_0_2
+....Surface=W_GUESTROOM420_423_3_0_0_0_3
+==================================
+Surface=W_GUESTROOM420_423_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM420_423_3_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM420_423_3_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM420_423_3_0_0_0_3 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM420_423_10267_0_10143 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM420_423_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM420_423 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM424_10297_0_10159 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM424_10346_0_10176 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_GUESTROOM424_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_GUESTROOM424_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=5
+...Surface=P_GUESTROOM424_10297_0_10159
+...Surface=P_GUESTROOM424_10346_0_10176
+...Surface=P_GUESTROOM424_4_0_0
+...Surface=F_GUESTROOM424_10272_0_10145
+...Surface=R_GUESTROOM424_1_0_0
+Number of receiving sub surfaces=1
+....Surface=W_GUESTROOM424_3_0_0_0_0
+==================================
+Surface=W_GUESTROOM424_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_GUESTROOM424_10272_0_10145 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_GUESTROOM424_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=GUESTROOM424 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_LAUNDRYROOMFLR1_10010_0_10008 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_LAUNDRYROOMFLR1_10070_0_10047 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_LAUNDRYROOMFLR1_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_LAUNDRYROOMFLR1_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=6
+...Surface=P_LAUNDRYROOMFLR1_10010_0_10008
+...Surface=P_LAUNDRYROOMFLR1_10070_0_10047
+...Surface=P_LAUNDRYROOMFLR1_4_0_0
+...Surface=S_LAUNDRYROOMFLR1_0_0_0
+...Surface=C_LAUNDRYROOMFLR1_1_0_0
+...Surface=C_LAUNDRYROOMFLR1_1_1_0
+Number of receiving sub surfaces=3
+....Surface=W_LAUNDRYROOMFLR1_3_0_0_0_0
+....Surface=W_LAUNDRYROOMFLR1_3_0_0_0_1
+....Surface=W_LAUNDRYROOMFLR1_3_0_0_0_2
+==================================
+Surface=W_LAUNDRYROOMFLR1_3_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_LAUNDRYROOMFLR1_3_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_LAUNDRYROOMFLR1_3_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_LAUNDRYROOMFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_LAUNDRYROOMFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_LAUNDRYROOMFLR1_1_1_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=LAUNDRYROOMFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_MECHANICALROOMFLR1_10023_0_10021 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_MECHANICALROOMFLR1_10041_0_10034 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_MECHANICALROOMFLR1_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_MECHANICALROOMFLR1_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_MECHANICALROOMFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_MECHANICALROOMFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=MECHANICALROOMFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_MEETINGROOMFLR1_10021_0_10019 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_MEETINGROOMFLR1_10022_0_10020 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_MEETINGROOMFLR1_2_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_MEETINGROOMFLR1_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=6
+...Surface=P_MEETINGROOMFLR1_10021_0_10019
+...Surface=P_MEETINGROOMFLR1_10022_0_10020
+...Surface=P_MEETINGROOMFLR1_2_0_0
+...Surface=S_MEETINGROOMFLR1_0_0_0
+...Surface=C_MEETINGROOMFLR1_1_0_0
+...Surface=C_MEETINGROOMFLR1_1_1_0
+Number of receiving sub surfaces=3
+....Surface=W_MEETINGROOMFLR1_5_0_0_0_0
+....Surface=W_MEETINGROOMFLR1_5_0_0_0_1
+....Surface=W_MEETINGROOMFLR1_5_0_0_0_2
+==================================
+Surface=W_MEETINGROOMFLR1_5_0_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_MEETINGROOMFLR1_5_0_0_0_1 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_MEETINGROOMFLR1_5_0_0_0_2 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_MEETINGROOMFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_MEETINGROOMFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_MEETINGROOMFLR1_1_1_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=MEETINGROOMFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTAIRSFLR1_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTAIRSFLR1_5_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTAIRSFLR1_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTAIRSFLR1_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_REARSTAIRSFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_REARSTAIRSFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=REARSTAIRSFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTAIRSFLR2_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTAIRSFLR2_5_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTAIRSFLR2_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTAIRSFLR2_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_REARSTAIRSFLR2_10001_0_10000 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_REARSTAIRSFLR2_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=REARSTAIRSFLR2 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTAIRSFLR3_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTAIRSFLR3_5_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTAIRSFLR3_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTAIRSFLR3_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_REARSTAIRSFLR3_10098_0_10060 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_REARSTAIRSFLR3_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=REARSTAIRSFLR3 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTAIRSFLR4_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTAIRSFLR4_5_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTAIRSFLR4_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTAIRSFLR4_3_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_REARSTAIRSFLR4_10196_0_10105 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_REARSTAIRSFLR4_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=REARSTAIRSFLR4 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTORAGEFLR1_10027_0_10025 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTORAGEFLR1_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTORAGEFLR1_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTORAGEFLR1_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_REARSTORAGEFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_REARSTORAGEFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=REARSTORAGEFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTORAGEFLR2_10119_0_10079 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTORAGEFLR2_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTORAGEFLR2_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTORAGEFLR2_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_REARSTORAGEFLR2_10028_0_10026 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_REARSTORAGEFLR2_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=REARSTORAGEFLR2 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTORAGEFLR3_10217_0_10124 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTORAGEFLR3_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTORAGEFLR3_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTORAGEFLR3_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_REARSTORAGEFLR3_10121_0_10080 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_REARSTORAGEFLR3_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=REARSTORAGEFLR3 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTORAGEFLR4_10305_0_10167 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_REARSTORAGEFLR4_4_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTORAGEFLR4_2_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_REARSTORAGEFLR4_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=F_REARSTORAGEFLR4_10219_0_10125 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=R_REARSTORAGEFLR4_1_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=REARSTORAGEFLR4 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_RESTROOMFLR1_10019_0_10017 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_RESTROOMFLR1_10020_0_10018 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=P_RESTROOMFLR1_10033_0_10030 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=W_RESTROOMFLR1_5_0_0 is used as Receiving Surface in calculations and is convex.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=S_RESTROOMFLR1_0_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=C_RESTROOMFLR1_1_0_0 is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
+==================================
+Surface=RESTROOMFLR1 INTERNAL MASS is not used as Receiving Surface in calculations.
+Number of general casting surfaces=0
+Number of back surfaces=0
+Number of receiving sub surfaces=0
