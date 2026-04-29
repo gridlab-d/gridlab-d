@@ -1,5 +1,8 @@
 ## Line Spacing
 
+!!! warning
+    This page was automatically generated and requires review.
+
 The line spacing object describe how the individual conductors of a distribution line are arranged underground or on the support pole. A typical implementation of a `line_spacing` object is 
     
     
@@ -19,20 +22,20 @@ The line spacing object describe how the individual conductors of a distribution
 
 **line_spacing** does not declare inherited parent classes.
 
-Input indicates properties you can set in models. Output marks properties produced or modified during simulation runtime.
+The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-| Property Name | Type | Unit | Input | Output | Description |
-| --- | --- | --- | --- | --- | --- |
-| distance_AB | double | ft | ✓ |  | Distance between conductors of phase A and phase B. |
-| distance_BC | double | ft | ✓ |  | Distance between conductors of phase B and phase C. |
-| distance_AC | double | ft | ✓ |  | Distance between conductors of phase C and phase A. |
-| distance_AN | double | ft | ✓ |  | Distance between conductors of phase A and the neutral phase. |
-| distance_BN | double | ft | ✓ |  | Distance between conductors of phase B and the neutral phase. |
-| distance_CN | double | ft | ✓ |  | Distance between conductors of phase C and the neutral phase. |
-| distance_AE | double | ft | ✓ |  | Distance between conductor of phase A and the earth (ground). |
-| distance_BE | double | ft | ✓ |  | Distance between conductor of phase B and the earth (ground). |
-| distance_CE | double | ft | ✓ |  | Distance between conductor of phase C and the earth (ground). |
-| distance_NE | double | ft | ✓ |  | Distance between conductor of the neutral phase (phase N) and the earth (ground). |
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| distance_AB | double | ft | I | Distance between conductors of phase A and phase B. |
+| distance_BC | double | ft | I | Distance between conductors of phase B and phase C. |
+| distance_AC | double | ft | I | Distance between conductors of phase C and phase A. |
+| distance_AN | double | ft | I | Distance between conductors of phase A and the neutral phase. |
+| distance_BN | double | ft | I | Distance between conductors of phase B and the neutral phase. |
+| distance_CN | double | ft | I | Distance between conductors of phase C and the neutral phase. |
+| distance_AE | double | ft | I | Distance between conductor of phase A and the earth (ground). |
+| distance_BE | double | ft | I | Distance between conductor of phase B and the earth (ground). |
+| distance_CE | double | ft | I | Distance between conductor of phase C and the earth (ground). |
+| distance_NE | double | ft | I | Distance between conductor of the neutral phase (phase N) and the earth (ground). |
 
 ### Line Spacing State of Development
 

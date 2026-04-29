@@ -1,5 +1,8 @@
 ## Underground Line
 
+!!! warning
+    This page was automatically generated and requires review.
+
 Underground lines represent burial distribution cables in a powerflow system. In terms of GridLAB-D™ implementation, they are nearly identical to the `overhead_line` objects. A typical `underground_line` object would be written as 
     
     

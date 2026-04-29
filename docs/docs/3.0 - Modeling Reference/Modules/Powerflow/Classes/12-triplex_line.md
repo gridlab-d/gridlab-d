@@ -1,5 +1,8 @@
 ## Triplex Line
 
+!!! warning
+    This page was automatically generated and requires review.
+
 The third type of line available in the **powerflow** module is the triplex lines. Triplex lines represent the distribution wires coming from the transformer into a typical residential home. That is, they are typically composed of one neutral wire and two "hot" wires. Triplex lines require the phase `S` to be specified as part of the `phases` parameter for proper implementation. A typical triplex line would be implemented in a similar fashion to 
     
     

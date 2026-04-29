@@ -18,15 +18,15 @@ Or in polar (radians)
 
 **currdump** does not declare inherited parent classes.
 
-Input indicates properties you can set in models. Output marks properties produced or modified during simulation runtime.
+The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-| Property Name | Type | Unit | Input | Output | Description |
-| --- | --- | --- | --- | --- | --- |
-| group | char32 | N/A |  | ✓ | Using the `group_id` feature, this allows only nodes with the matching `group_id` to be dumped into the output file. |
-| runtime | timestamp | N/A | ✓ | ✓ | Tells the object at what time to output the currents of the system. Can be in either seconds from epoch (Unix time) or with a timestamp (&#x27;2006-01-01 00:00:00&#x27;). If not specified, the default is immediately after the first time step solution. |
-| filename | char256 | N/A | ✓ |  | Tells the object what file to print all information to. While a *.csv is not necessary, it is recommended as the formatted output is in *.csv format. |
-| runcount | int32 | N/A |  |  | ⚠️ the number of times the file has been written to |
-| mode | enumeration | N/A | ✓ | ✓ | Allows the user to choose between polar and rectangular coordinates when printing output. Valid choices are &lt;br/&gt; - `rect` rectangular coordinates (default) &lt;br/&gt; - `polar` polar coordinates (in radians) Valid values: `RECT`, `POLAR`. |
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| group | char32 | N/A | I | Using the `group_id` feature, this allows only nodes with the matching `group_id` to be dumped into the output file. |
+| runtime | timestamp | N/A | IO | Tells the object at what time to output the currents of the system. Can be in either seconds from epoch (Unix time) or with a timestamp ('2006-01-01 00:00:00'). If not specified, the default is immediately after the first time step solution. |
+| filename | char256 | N/A | I | Tells the object what file to print all information to. While a *.csv is not necessary, it is recommended as the formatted output is in *.csv format. |
+| runcount | int32 | N/A | — | ⚠️ the number of times the file has been written to |
+| mode | enumeration | N/A | I | Allows the user to choose between polar and rectangular coordinates when printing output. Valid choices are <br/> - `rect` rectangular coordinates (default) <br/> - `polar` polar coordinates (in radians) Valid values: `RECT`, `POLAR`. |
 
 ### Default Current Dump
 

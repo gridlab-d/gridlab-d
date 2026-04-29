@@ -19,14 +19,14 @@ with the $\displaystyle{}b$ matrix typically representing the traditional impeda
 
 **impedance_dump** does not declare inherited parent classes.
 
-Input indicates properties you can set in models. Output marks properties produced or modified during simulation runtime.
+The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-| Property Name | Type | Unit | Input | Output | Description |
-| --- | --- | --- | --- | --- | --- |
-| group | char32 | N/A |  | ✓ | Using the `groupid` feature, specific objects to be included in the output file. If left blank, all link-based objects will be part of the output file. |
-| filename | char256 | N/A | ✓ |  | Tells the object what file to print all information to. The file will be an XML-formatted text file. |
-| runtime | timestamp | N/A |  | ✓ | Tells the object at what time to output the impedance dump. Can be in either seconds from epoch (Unix time) or with a timestamp (&#x27;2006-01-01 00:00:00&#x27;). If not specified, the default is immediately after the first time step solution. |
-| runcount | int32 | N/A |  |  | Indicates the number of times the impedance dump has executed (See Remarks). |
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| group | char32 | N/A | I | Using the `groupid` feature, specific objects to be included in the output file. If left blank, all link-based objects will be part of the output file. |
+| filename | char256 | N/A | I | Tells the object what file to print all information to. The file will be an XML-formatted text file. |
+| runtime | timestamp | N/A | O | Tells the object at what time to output the impedance dump. Can be in either seconds from epoch (Unix time) or with a timestamp ('2006-01-01 00:00:00'). If not specified, the default is immediately after the first time step solution. |
+| runcount | int32 | N/A | — | Indicates the number of times the impedance dump has executed (See Remarks). |
 
 ### Default Impedance Dump
 

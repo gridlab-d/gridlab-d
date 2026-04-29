@@ -1,5 +1,8 @@
 ## Underground Line Conductor
 
+!!! warning
+    This page was automatically generated and requires review.
+
 Underground lines often contain concentric shielding layers around the central conductor. As a result, they require more parameters than the `overhead_line_conductor` objects to fully describe them. A typical `underground_line_object` is: 
     
     
@@ -23,27 +26,27 @@ Underground lines often contain concentric shielding layers around the central c
 
 **underground_line_conductor** does not declare inherited parent classes.
 
-Input indicates properties you can set in models. Output marks properties produced or modified during simulation runtime.
+The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-| Property Name | Type | Unit | Input | Output | Description |
-| --- | --- | --- | --- | --- | --- |
-| outer_diameter | double | in | ✓ |  | Diameter of the outside of the cable, including jacketing and shielding. |
-| conductor_gmr | double | ft | ✓ |  | Geometric mean radius of the conductor at the center of the concentric cable. |
-| conductor_diameter | double | in | ✓ |  | Diameter of the conductor at the center of the concentric cable. |
-| conductor_resistance | double | Ohm/mile | ✓ |  | Resistance of the conductor at the center of the concentric cable. |
-| neutral_gmr | double | ft | ✓ |  | Geometric mean radius of the concentric neutral of the cable. |
-| neutral_diameter | double | in | ✓ |  | Diameter of the concentric neutral of the cable. |
-| neutral_resistance | double | Ohm/mile | ✓ |  | Resistance of the concentric neutral of the cable. |
-| neutral_strands | int16 | N/A | ✓ |  | Number of strands composing the concentric neutral conductor. |
-| shield_thickness | double | in | ✓ |  | ⚠️ The thickness of Tape shield in inches |
-| shield_diameter | double | in | ✓ |  | ⚠️ The outside diameter of Tape shield in inches |
-| insulation_relative_permitivitty | double | unit | ✓ |  | ⚠️ Permitivitty of insulation, relative to air |
-| shield_gmr | double | ft | ✓ |  | Geometric mean radius of the shielding of the cable. |
-| shield_resistance | double | Ohm/mile | ✓ |  | Resistance of the cable shielding. |
-| rating.summer.continuous | double | A | ✓ |  | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| rating.summer.emergency | double | A | ✓ |  | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| rating.winter.continuous | double | A | ✓ |  | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| rating.winter.emergency | double | A | ✓ |  | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| outer_diameter | double | in | I | Diameter of the outside of the cable, including jacketing and shielding. |
+| conductor_gmr | double | ft | I | Geometric mean radius of the conductor at the center of the concentric cable. |
+| conductor_diameter | double | in | I | Diameter of the conductor at the center of the concentric cable. |
+| conductor_resistance | double | Ohm/mile | I | Resistance of the conductor at the center of the concentric cable. |
+| neutral_gmr | double | ft | I | Geometric mean radius of the concentric neutral of the cable. |
+| neutral_diameter | double | in | I | Diameter of the concentric neutral of the cable. |
+| neutral_resistance | double | Ohm/mile | I | Resistance of the concentric neutral of the cable. |
+| neutral_strands | int16 | N/A | I | Number of strands composing the concentric neutral conductor. |
+| shield_thickness | double | in | I | ⚠️ The thickness of Tape shield in inches |
+| shield_diameter | double | in | I | ⚠️ The outside diameter of Tape shield in inches |
+| insulation_relative_permitivitty | double | unit | I | ⚠️ Permitivitty of insulation, relative to air |
+| shield_gmr | double | ft | I | Geometric mean radius of the shielding of the cable. |
+| shield_resistance | double | Ohm/mile | I | Resistance of the cable shielding. |
+| rating.summer.continuous | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| rating.summer.emergency | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| rating.winter.continuous | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| rating.winter.emergency | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
 
 ### Underground Line Conductor State of Development
 

@@ -1,0 +1,65 @@
+Program Version,EnergyPlus, Version 25.2.0-cf7368216c (No OpenGL), YMD=2026.04.27 19:33,
+   ** Warning ** Version: in IDF="26.1" not the same as expected="25.2"
+   ** Warning ** Version: in IDF="26.1" not the same as expected="25.2"
+   ************* Beginning Zone Sizing Calculations
+   ** Warning ** Weather file location will be used rather than entered (IDF) Location object.
+   **   ~~~   ** ..Location object=USA IL-CHICAGO-OHARE
+   **   ~~~   ** ..Weather File Location=Pasco-Tri-Cities AP WA USA TMY3 WMO#=727845
+   **   ~~~   ** ..due to location differences, Latitude difference=[4.50] degrees, Longitude difference=[31.37] degrees.
+   **   ~~~   ** ..Time Zone difference=[2.0] hour(s), Elevation difference=[28.42] percent, [54.00] meters.
+   ** Warning ** Calculated design cooling load for zone=FRONTSTAIRSFLR1 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=FRONTSTAIRSFLR2 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=FRONTSTAIRSFLR3 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=FRONTSTAIRSFLR4 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=FRONTSTORAGEFLR1 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design heating load for zone=FRONTSTORAGEFLR1 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=FRONTSTORAGEFLR2 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design heating load for zone=FRONTSTORAGEFLR2 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=FRONTSTORAGEFLR3 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design heating load for zone=FRONTSTORAGEFLR3 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=FRONTSTORAGEFLR4 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=REARSTAIRSFLR1 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=REARSTAIRSFLR2 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=REARSTAIRSFLR3 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=REARSTAIRSFLR4 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=REARSTORAGEFLR1 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=REARSTORAGEFLR2 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=REARSTORAGEFLR3 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ** Warning ** Calculated design cooling load for zone=REARSTORAGEFLR4 is zero.
+   **   ~~~   ** Check Sizing:Zone and ZoneControl:Thermostat inputs.
+   ************* Beginning System Sizing Calculations
+   ************* Beginning Plant Sizing Calculations
+   ************* Testing Individual Branch Integrity
+   ************* All Branches passed integrity testing
+   ************* Testing Individual Supply Air Path Integrity
+   ************* All Supply Air Paths passed integrity testing
+   ************* Testing Individual Return Air Path Integrity
+   ************* All Return Air Paths passed integrity testing
+   ************* No node connection errors were found.
+   ************* Beginning Simulation
+   ** Warning ** Output:Table:Monthly requested with SimulationControl Run Simulation for Weather File Run Periods set to No so Output:Table:Monthly will not be generated
+   ** Warning ** Output:Table:TimeBins requested with SimulationControl Run Simulation for Weather File Run Periods set to No so Output:Table:TimeBins will not be generated
+   ************* Simulation Error Summary *************
+   ************* There are 8 unused objects in input.
+   ************* Use Output:Diagnostics,DisplayUnusedObjects; to see them.
+   ************* EnergyPlus Warmup Error Summary. During Warmup: 0 Warning; 0 Severe Errors.
+   ************* EnergyPlus Sizing Error Summary. During Sizing: 20 Warning; 0 Severe Errors.
+   ************* EnergyPlus Completed Successfully-- 24 Warning; 0 Severe Errors; Elapsed Time=00hr 00min  8.04sec

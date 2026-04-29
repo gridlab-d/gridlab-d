@@ -24,13 +24,13 @@ Recloser objects inherit for switch and therefore share all parameters belonging
 
 **recloser** objects are derived from **[switch](26-switch.md)** objects, so any parameters of the **[switch](26-switch.md)** object are available as well.
 
-Input indicates properties you can set in models. Output marks properties produced or modified during simulation runtime.
+The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-| Property Name | Type | Unit | Input | Output | Description |
-| --- | --- | --- | --- | --- | --- |
-| retry_time | double | s | ✓ |  | The time to wait in seconds before trying to close after a fault condition is detected. This parameter is unused at this time and is put in place for future functionality. |
-| max_number_of_tries | double | N/A | ✓ |  | ⚠️ the number of times the recloser will try to close before permanently opening |
-| number_of_tries | double | N/A | ✓ | ✓ | number of tries a **recloser** has been actuated in the current fault condition. |
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| retry_time | double | s | I | The time to wait in seconds before trying to close after a fault condition is detected. This parameter is unused at this time and is put in place for future functionality. |
+| max_number_of_tries | double | N/A | I | ⚠️ the number of times the recloser will try to close before permanently opening |
+| number_of_tries | double | N/A | IO | number of tries a **recloser** has been actuated in the current fault condition. |
 
 ### Recloser State of Development
 
