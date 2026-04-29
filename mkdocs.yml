@@ -30,6 +30,7 @@ plugins:
         python:
           options:
             docstring_style: sphinx
+            show_source: false
   - mkdoxy:
       doxygen-bin-path:
       projects:
