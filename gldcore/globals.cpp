@@ -208,6 +208,7 @@ static struct s_varmap
 	{"checkpoint_seqnum", PT_int32, &global_checkpoint_seqnum, PA_PUBLIC, "checkpoint sequence number"},
 	{"checkpoint_interval", PT_int32, &global_checkpoint_interval, PA_PUBLIC, "checkpoint interval"},
 	{"checkpoint_keepall", PT_bool, &global_checkpoint_keepall, PA_PUBLIC, "checkpoint file keep enable flag"},
+	{"checkpoint_loaded", PT_bool, &global_checkpoint_loaded, PA_PUBLIC, "checkpoint loaded flag"},
 	{"check_version", PT_bool, &global_check_version, PA_PUBLIC, "check version enable flag"},
 	{"random_number_generator", PT_enumeration, &global_randomnumbergenerator, PA_PUBLIC, "random number generator version control flag", rng_keys},
 	{"mainloop_state", PT_enumeration, &global_mainloopstate, PA_PUBLIC, "main sync loop state flag", mls_keys},
@@ -633,7 +634,7 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 		int retval;
 		if (var == nullptr)
 		{
-			if (global_strictnames)
+			if (global_strictnames && !global_checkpoint_loaded)
 			{
 				output_error("strict naming prevents implicit creation of %s", name);
 				/* TROUBLESHOOT
