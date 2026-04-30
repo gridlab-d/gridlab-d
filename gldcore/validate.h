@@ -5,7 +5,10 @@
 #ifndef _VALIDATE_H
 #define _VALIDATE_H
 
+#include <string>
+
 #include "platform.h"
+
 
 typedef enum {
 	VO_NONE		=0x0000,	///< run no tests (just go through motions)

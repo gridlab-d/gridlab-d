@@ -27,7 +27,7 @@
 #include "validate.h"
 #include "exec.h"
 #include "lock.h"
-#include "threadpool.h"
+#include "cpp_threadpool.h"
 #include "object.h"
 
 static bool clean = false; // set to true to force purge of test directories

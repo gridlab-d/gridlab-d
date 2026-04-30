@@ -29,25 +29,34 @@
         }
       ]
     },
-    "triplex_line_configuration": {
+    "triplex_line_conductor": {
       "instances": [
         {
-          "name": "triplex_line_configuration_1",
-          "conductor_1": "object triplex_line_conductor ",
+          "name": "conductor_1",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        },
+        {
+          "name": "conductor_2",
+          "resistance": 0.97,
+          "geometric_mean_radius": 0.0111
+        },
+        {
+          "name": "conductor_N",
           "resistance": 0.97,
           "geometric_mean_radius": 0.0111
         }
       ]
     },
-    "triplex_line_conductor": {
+    "triplex_line_configuration": {
       "instances": [
         {
-          "resistance": 0.97,
-          "geometric_mean_radius": 0.0111
-        },
-        {
-          "resistance": 0.97,
-          "geometric_mean_radius": 0.0111
+          "name": "triplex_line_configuration_1",
+          "conductor_1": "conductor_1",
+          "conductor_2": "conductor_2",
+          "conductor_N": "conductor_N",
+          "insulation_thickness": 0.08,
+          "diameter": 0.368
         }
       ]
     },

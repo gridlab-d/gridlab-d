@@ -54,5 +54,6 @@ public:
 
 };
 
+int processor_count(void);
 
 #endif //_CPP_THREADPOOL_H

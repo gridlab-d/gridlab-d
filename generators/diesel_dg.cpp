@@ -369,6 +369,9 @@ diesel_dg::diesel_dg(MODULE *module)
 								PT_double, "real_power_generation[W]", PADDR(real_power_gen), PT_DESCRIPTION, "The total real power generation",
 								PT_double, "reactive_power_generation[VAr]", PADDR(imag_power_gen), PT_DESCRIPTION, "The total reactive power generation",
 
+								PT_timestamp, "last_time", PADDR(last_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_time",
+								PT_double, "pwr_electric_init", PADDR(pwr_electric_init), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pwr_electric_init",
+
 								//-- This hides from modehelp -- PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
@@ -4722,11 +4725,11 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 // Function to do current-injection updates and symmetry constraint checking
 STATUS diesel_dg::updateCurrInjection(int64 iteration_count, bool *converged_failure)
 {
-	complex aval, avalsq;
-	complex temp_p_setpoint;
-	complex temp_total_power_val[3];
-	complex temp_total_power_internal;
-	complex temp_pos_voltage, temp_pos_current;
+	gld::complex aval, avalsq;
+	gld::complex temp_p_setpoint;
+	gld::complex temp_total_power_val[3];
+	gld::complex temp_total_power_internal;
+	gld::complex temp_pos_voltage, temp_pos_current;
 	bool bus_is_a_swing, bus_is_swing_pq_entry;
 	STATUS temp_status_val;
 	gld_property *temp_property_pointer;
@@ -4740,7 +4743,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count, bool *converged_fai
 	if (diesel_first_step)
 	{
 		// Conversion variables - 1@120-deg
-		aval = complex(-0.5, (sqrt(3.0) / 2.0));
+		aval = gld::complex(-0.5, (sqrt(3.0) / 2.0));
 		avalsq = aval * aval; // squared value is used a couple places too
 
 		// Initialize the SWING variable
@@ -4856,7 +4859,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count, bool *converged_fai
 				if ((Exciter_type == SEXS) && (SEXS_mode == SEXS_CQ))
 				{
 					// Form up the "goal" variable
-					temp_p_setpoint = complex(gen_base_set_vals.Pref, gen_base_set_vals.Qref) * Rated_VA;
+					temp_p_setpoint = gld::complex(gen_base_set_vals.Pref, gen_base_set_vals.Qref) * Rated_VA;
 				}
 				else // Just constant P it
 				{

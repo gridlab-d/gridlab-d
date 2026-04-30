@@ -1,7 +1,6 @@
 //#include<Eigen/Dense>
 
-using gld::set;
-using gld::complex;
+using namespace gld;
 //using Eigen;
 
 stream_type(double);
@@ -21,7 +20,7 @@ stream_type(TIMESTAMP);
 //stream_type(MatrixXd);
 //stream_type(MatrixXcd);
 stream_type(float);
-stream_type(real);
+stream_type(real_type);
 stream_type(loadshape);
 stream_type(enduse);
 stream_type(randomvar_struct);

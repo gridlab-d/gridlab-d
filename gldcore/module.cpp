@@ -726,6 +726,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		} map[] = {
 			{&c->create, "create", false},
 			{&c->init, "init", true},
+			{&c->checkpoint_init, "checkpoint_init", true},
 			{&c->precommit, "precommit", true},
 			{&c->sync, "sync", true},
 			{&c->commit, "commit", true},

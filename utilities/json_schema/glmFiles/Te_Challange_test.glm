@@ -1,11 +1,6 @@
 // Copyright (c) 2021-2025 Battelle Memorial Institute
 // file: TE_Challenge.glm
 
-#ifexist config/local.glm
-#include "config/local.glm"
-#set CONFIGFILE=config/local.glm
-#endif // exist local.glm
-
 #set double_format=%+.12lg
 #set profiler=1
 #set randomseed=10
@@ -22,30 +17,14 @@ clock {
 module climate;
 module market;
 module connection; // FNCS and HELICS
-#ifdef ${OLDPOWER}
 module powerflow {
 	solver_method FBS;
-#ifdef ${LIMIT_100}
-	NR_iteration_limit 100;
-#endif
-#ifndef ${LIMIT_200}
-	NR_iteration_limit 200;
-#endif
-}
-#else
-#define LIMIT=200
-module powerflow {
-	solver_method NR;
-#if LIMIT>200
-	NR_iteration_limit 200;
-#else
-	NR_iteration_limit 1000;
-#endif
-}
-#end
+    NR_iteration_limit 100;
+};
+
 module residential {
 	implicit_enduses NONE;
-}
+};
 module tape;
 module generators;
 
@@ -57,26 +36,26 @@ module generators;
 // summer
 #define FIXED_PRICE=0.127
 // winter
-//#define FIXED_PRICE=0.088
+// #define FIXED_PRICE=0.088
 
 object metrics_collector_writer {
-     interval 300;
-     filename ${METRICS_FILE}; // TE_Challenge_metrics.json
-//     extension json;
-     extension h5;
+    interval 300;
+    filename ${METRICS_FILE}; // TE_Challenge_metrics.json
+//    extension json;
+    extension h5;
 };
 
 object climate {
-  name localWeather;
-//     tmyfile "../../data/weather/AZ-Tucson_International_Ap.tmy3";
-  interpolate QUADRATIC;
-	latitude 32.133;
-	longitude -111.95;
-  tz_meridian -105.0;
+    name localWeather;
+//    tmyfile "../../data/weather/AZ-Tucson_International_Ap.tmy3";
+    interpolate QUADRATIC;
+    latitude 32.133;
+    longitude -111.95;
+    tz_meridian -105.0;
 };
 
 class player {
-      double value;
+    double value;
 }
 
 object player {
@@ -95,42 +74,19 @@ object player {
     loop 1;
 }
 
-#define VAL=1;
-#ifdef ${OLDPOWER}
 object transformer_configuration {
 	name substation_config;
 	connect_type WYE_WYE;
 	install_type PADMOUNT;
 	power_rating 450;
-#if VAL*1>0
 	powerA_rating 150 kVA;
-#else
-	powerA_rating 125 kVA;
-#endif
 	powerB_rating 150;
 	powerC_rating 150;
 	primary_voltage 133000;
 	secondary_voltage 7200;
 	impedance +0.0015+0.00675j;
 }
-#else
-object transformer_configuration {
-	name substation_config;
-	connect_type WYE_WYE;
-	install_type PADMOUNT;
-	power_rating 250;
-#if VAL*1==0
-	powerA_rating 50 kVA;
-#else
-	powerA_rating 125 kVA;
-#endif
-	powerB_rating 50;
-	powerC_rating 50;
-	primary_voltage 33000;
-	secondary_voltage 7200;
-	impedance +0.0015+0.00675j;
-}
-#endif
+
 object transformer_configuration {
 	name default_transformer_A;
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
@@ -193,7 +149,6 @@ object substation {
   };
 }
 
-#ifdef USE_FNCS
 object fncs_msg {
      name gld_7;
      parent network_node;
@@ -202,14 +157,11 @@ object fncs_msg {
      aggregate_subscriptions true;
      aggregate_publications true;
 }
-#endif
 
-#ifdef USE_HELICS
 object helics_msg {
   name gld_7;
   configure TE_Challenge_gridlabd.json;
 }
-#endif
 
 object meter {
 	name F1_transformer_meter;
@@ -5435,7 +5387,6 @@ object meter {
   };
 }
 
-#ifexist  config/loadeplus.conf
 object load {
   name Eplus_load;
   parent Eplus_meter;
@@ -5445,4 +5396,3 @@ object load {
   constant_power_B 25 kVA;
   constant_power_C 25 kVA;
 }
-#endif

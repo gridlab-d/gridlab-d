@@ -48,8 +48,9 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 			PT_INHERIT, "residential_enduse",
 			PT_double,"motor_power[kW]",PADDR(shape.params.analog.power),
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"queue[unit]",PADDR(enduse_queue), PT_DESCRIPTION, "the total laundry accumulated",
-			PT_double,"demand[unit/day]",PADDR(enduse_demand), PT_DESCRIPTION, "the amount of laundry accumulating daily",			
+			PT_double,"queue[unit]",PADDR(enduse_queue), PT_DESCRIPTION, "the total laundry accumulated",				
+			PT_double,"demand[unit/day]",PADDR(enduse_demand), PT_DESCRIPTION, "the amount of laundry accumulating daily",
+			PT_double,"cycle_duration[s]",PADDR(cycle_duration), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle duration",
 			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
 			PT_double,"stall_voltage[V]", PADDR(stall_voltage),
 			PT_double,"start_voltage[V]", PADDR(start_voltage),
@@ -161,17 +162,40 @@ int clotheswasher::create()
 	return res;
 }
 
-int clotheswasher::init(OBJECT *parent)
+int clotheswasher::shared_init(OBJECT *parent)
 {
-	OBJECT *hdr = object_header(this);
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
 			char objname[256];
 			gl_verbose("clotheswasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	starttime = false;
+	new_running_state = false;
+	cycle_time = 0.0;
+	return 1;
+}
+
+int clotheswasher::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	return residential_enduse::checkpoint_init(parent);
+}
+
+int clotheswasher::init(OBJECT *parent)
+{
+	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 	
 	// default properties
 	if (shape.params.analog.power==0) shape.params.analog.power = gl_random_uniform(&hdr->rng_state,0.100,0.750);		// clotheswasher size [W]
@@ -779,6 +803,12 @@ EXPORT int init_clotheswasher(OBJECT *obj)
 {
 	clotheswasher *my = object_data<clotheswasher>(obj);
 	return my->init(obj->parent);
+}
+
+EXPORT int checkpoint_init_clotheswasher(OBJECT *obj)
+{
+	clotheswasher *my = object_data<clotheswasher>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT int isa_clotheswasher(OBJECT *obj, char *classname)

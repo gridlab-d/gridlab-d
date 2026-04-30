@@ -141,6 +141,18 @@ dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 			PT_double,"motor_on_off",PADDR(motor_on_off),
 			PT_double,"motor_coil_on_off",PADDR(motor_coil_on_off),
 			
+			PT_bool,"motor_only_25_repeat_one",PADDR(motor_only_25_repeat_one), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal flag for motor only 25 repeat one",
+			PT_double,"controls_power",PADDR(controls_power), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for controls power",
+			PT_double,"cycle_duration",PADDR(cycle_duration), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle duration",
+			PT_double,"count_motor_only",PADDR(count_motor_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only cycles",
+			PT_double,"count_motor_only1",PADDR(count_motor_only1), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only cycles 1",
+			PT_double,"count_motor_only_25",PADDR(count_motor_only_25), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only 25",
+			PT_double,"count_coil_only",PADDR(count_coil_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for coil only",
+			PT_double,"count_motor_only_68",PADDR(count_motor_only_68), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only 68",
+			PT_double,"count_control_only",PADDR(count_control_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles",
+			PT_double,"count_control_only1",PADDR(count_control_only1), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles 1",
+			PT_timestamp,"next_change_time",PADDR(next_change_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next change time",
+			PT_double,"heat_fraction",PADDR(heat_fraction), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for heat fraction",
 
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
 			nullptr)<1)
@@ -170,10 +182,10 @@ int dishwasher::create()
 	energy_used = 0;
 	
 	coil_power[0] = -1;
-	motor_on_off = motor_coil_on_off = both_coils_on_off = 0;
+	motor_on_off = motor_coil_on_off = 0;
 
 	last_t = 0;
-	
+
 
 	gl_warning("explicit %s model is experimental and has not been validated", object_header(this)->oclass->name);
 	/* TROUBLESHOOT
@@ -184,19 +196,43 @@ int dishwasher::create()
 	return res;
 }
 
-int dishwasher::init(OBJECT *parent)
+int dishwasher::shared_init(OBJECT *parent)
 {
-	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
-
-	OBJECT *hdr = object_header(this);
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
 			char objname[256];
 			gl_verbose("dishwasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	int rv = 0;
+	// These variables need intialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	new_running_state = false;
+	last_t = 0;
+	cycle_time = 0.0;
+	state_time = 0.0;
+	return 1;
+}
+
+int dishwasher::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	return residential_enduse::checkpoint_init(parent);
+}
+
+int dishwasher::init(OBJECT *parent)
+{
+	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
+
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+
+	OBJECT *hdr = object_header(this);
 	// default properties
 	if (motor_power==0) motor_power = gl_random_uniform(&hdr->rng_state,150,350);
 	if (heat_fraction==0) heat_fraction = 0.2;
@@ -218,7 +254,7 @@ int dishwasher::init(OBJECT *parent)
 	count_control_only =0;
 	count_control_only1 =0;
 	count_motor_only_68 =0;
-	
+
 	pulse_interval[0] = 8;
 	pulse_interval[1] = 18;
 	pulse_interval[2] = 21;
@@ -480,9 +516,9 @@ switch(state) {
 	case dishwasher_STOPPED:
 
 		if (enduse_queue>1)// && dryer_on == true)
-		
+
 			dishwasher_run_prob = double(gl_random_uniform(&hdr->rng_state,queue_min,queue_max));
-		
+
 		if (enduse_queue > 1 && (dishwasher_run_prob > enduse_queue))
 			{
 				state = dishwasher_CONTROL_ONLY;
@@ -496,7 +532,7 @@ switch(state) {
 				enduse_queue--;
 
 				new_running_state = true;
-				
+
 			}
 		else if (temp_voltage_value_mag<stall_voltage)
 			{
@@ -583,9 +619,9 @@ switch(state) {
 					cycle_time = cycle_t;	
 					control_check2 = false;
 					control_check6 = true;
-						
+
 				}
-				
+
 				if (cycle_time<=0 && control_check3 == true)
 				{
 					state = dishwasher_MOTOR_ONLY;
@@ -598,7 +634,7 @@ switch(state) {
 					control_check3 = false;
 					control_check7 = true;
 				}
-				
+
 				if (cycle_time<=0 && control_check4 == true)
 				{
 					state = dishwasher_MOTOR_ONLY;
@@ -621,13 +657,13 @@ switch(state) {
 					cycle_time = interval;
 					else
 					cycle_time = cycle_t;	
-									
+
 					control_check5 = false;
 					control_check8 = true;
 				}
 
-				
-				
+
+
 				if (cycle_time<=0 && control_check6 == true)
 				{
 					state = dishwasher_COIL_ONLY;
@@ -642,7 +678,7 @@ switch(state) {
 					cycle_time = cycle_t;	
 					control_check6 = false;
 					control_check3 = true;
-									
+
 				}
 
 
@@ -652,7 +688,7 @@ switch(state) {
 					state = dishwasher_MOTOR_COIL_ONLY;
 					double cycle_t = 1000 * (energy_needed - energy_used) / (motor_power + coil_power[3]) * 60 * 60;
 					double interval = pulse_interval[10];
-						
+
 						if (cycle_t > interval)
 						cycle_time = interval;
 						else
@@ -675,12 +711,12 @@ switch(state) {
 					cycle_time = interval;
 					else
 					cycle_time = cycle_t;	
-					
+
 					count_control_only += 1;
 
 					if (count_control_only == 4)
 					{
-					
+
 					control_check8 = false;
 					control_check9 = true;	
 					}
@@ -714,7 +750,7 @@ switch(state) {
 					state = dishwasher_MOTOR_COIL_ONLY;
 					double cycle_t = 1000 * (energy_needed - energy_used) / (motor_power + coil_power[3]) * 60 * 60;
 					double interval = pulse_interval[17];
-						
+
 						if (cycle_t > interval)
 						cycle_time = interval;
 						else
@@ -753,13 +789,13 @@ switch(state) {
 						cycle_time = cycle_t;	
 						control_check12 = false;	
 				}
-				
+
 
 
 						new_running_state = true;
 			}		
-		
-		
+
+
 		else if (temp_voltage_value_mag<stall_voltage)
 			{
 				state = dishwasher_STALLED;
@@ -822,14 +858,14 @@ case dishwasher_MOTOR_ONLY:
 		else if (cycle_time<=0)
 			{
 				state = dishwasher_CONTROL_ONLY;	
-					
+
 				if(cycle_time<=0 && (motor_only_check1 == false))
-				
+
 				{
 
 					double cycle_t = 1000 * (energy_needed - energy_used) / coil_power[0] * 60 * 60;
 					double interval = pulse_interval[5];
-					
+
 
 					if (cycle_t > interval)
 						cycle_time = interval;
@@ -839,11 +875,11 @@ case dishwasher_MOTOR_ONLY:
 					motor_only_check1 = true;	
 					motor_only_check2 = true;
 				}
-											
+
 
 				if(cycle_time<=0 && motor_only_check2 == true)
 				{
-					
+
 					double cycle_t = 1000 * (energy_needed - energy_used) / coil_power[0] * 60 * 60;
 
 					double interval = pulse_interval[3];
@@ -851,16 +887,16 @@ case dishwasher_MOTOR_ONLY:
 						cycle_time = interval;
 					else
 						cycle_time = cycle_t;
-					
+
 					motor_only_check2 = false;	
 
 					motor_only_check3 = true;
 				}
-				
+
 				if(cycle_time<=0 && motor_only_check3 == true && count_motor_only_68 < 3)
 
 				{
-					
+
 					double cycle_t = 1000 * (energy_needed - energy_used) / coil_power[0] * 60 * 60;
 					double interval = pulse_interval[5];
 
@@ -875,15 +911,15 @@ case dishwasher_MOTOR_ONLY:
 					{
 					motor_only_check3 = false;	
 					motor_only_check4 = true;	
-					
+
 					}
 				}
 
 
 				if(cycle_time<=0 && motor_only_check4 == true)
 				{
-					
-					
+
+
 					double cycle_t = 1000 * (energy_needed - energy_used) / coil_power[0] * 60 * 60;
 					double interval = pulse_interval[2];
 					if (cycle_t > interval)
@@ -896,7 +932,7 @@ case dishwasher_MOTOR_ONLY:
 
 				if(cycle_time<=0 && motor_only_check5 == true && count_motor_only_25 <6)
 				{
-					
+
 					double cycle_t = 1000 * (energy_needed - energy_used) / coil_power[0] * 60 * 60;
 					double interval = pulse_interval[1];
 					if (cycle_t > interval)
@@ -914,7 +950,7 @@ case dishwasher_MOTOR_ONLY:
 
 				if(cycle_time<=0 && motor_only_check6 == true)
 				{
-					
+
 					double cycle_t = 1000 * (energy_needed - energy_used) / coil_power[0] * 60 * 60;
 					double interval = pulse_interval[7];
 					if (cycle_t > interval)
@@ -923,12 +959,12 @@ case dishwasher_MOTOR_ONLY:
 						cycle_time = cycle_t;
 					motor_only_check6 = false;	
 					motor_only_check7 = true;	
-					
+
 				}
 
 				if(cycle_time<=0 && motor_only_check7 == true && count_motor_only <6)
 				{
-					
+
 					double cycle_t = 1000 * (energy_needed - energy_used) / coil_power[0] * 60 * 60;
 					double interval = pulse_interval[4];
 					if (cycle_t > interval)
@@ -942,12 +978,12 @@ case dishwasher_MOTOR_ONLY:
 					motor_only_check7 = false;	
 					motor_only_check8 = true;	
 					}
-					
+
 				}
 
 				if(cycle_time<=0 && motor_only_check8 == true)
 				{
-					
+
 					double cycle_t = 1000 * (energy_needed - energy_used) / coil_power[0] * 60 * 60;
 					double interval = pulse_interval[8];
 					if (cycle_t > interval)
@@ -957,12 +993,12 @@ case dishwasher_MOTOR_ONLY:
 
 					motor_only_check8 = false;	
 					motor_only_check9 = true;	
-					
+
 				}
 
 				if(cycle_time<=0 && motor_only_check9 == true)
 				{
-					
+
 					double cycle_t = 1000 * (energy_needed - energy_used) / coil_power[0] * 60 * 60;
 					double interval = pulse_interval[12];
 					if (cycle_t > interval)
@@ -986,9 +1022,9 @@ case dishwasher_MOTOR_ONLY:
 					state_time = 0;
 			}
 		}
-			
+
 	break;
-		
+
 case dishwasher_MOTOR_COIL_ONLY:
 
 	if (energy_used >= energy_needed || cycle_time <= 0)
@@ -999,7 +1035,7 @@ case dishwasher_MOTOR_COIL_ONLY:
 				cycle_time = 0;
 				energy_used = 0;
 
-				
+
 				control_check1 = false;
 				control_check2 = false;
 				control_check3 = false;
@@ -1044,7 +1080,7 @@ case dishwasher_MOTOR_COIL_ONLY:
 		{
 				state = dishwasher_MOTOR_ONLY;
 				double cycle_t = 1000 * (energy_needed - energy_used) / motor_power * 60 * 60;
-				
+
 
 				if (cycle_time<=0 && motor_coil_only_check1 == false)
 				{
@@ -1065,7 +1101,7 @@ case dishwasher_MOTOR_COIL_ONLY:
 					cycle_time = interval;
 					else
 					cycle_time = cycle_t;	
-					
+
 					motor_coil_only_check2 = false;					
 				}
 
@@ -1081,10 +1117,10 @@ case dishwasher_MOTOR_COIL_ONLY:
 	}
 	break;
 
-	
+
 
 case dishwasher_HEATEDDRY_ONLY:
-	
+
 	if (energy_used >= energy_needed || cycle_time <= 0 )
 		{  
 			if (energy_used >= energy_needed)
@@ -1093,7 +1129,7 @@ case dishwasher_HEATEDDRY_ONLY:
 			cycle_time = 0;
 
 				energy_used = 0;
-				
+
 				control_check1 = false;
 				control_check2 = false;
 				control_check3 = false;
@@ -1158,7 +1194,7 @@ case dishwasher_HEATEDDRY_ONLY:
 					state = dishwasher_CONTROL_ONLY;
 					double cycle_t = 1000 * (energy_needed - energy_used) / (coil_power[0]) * 60 * 60;
 					double interval = pulse_interval[18];
-					
+
 
 					if (cycle_t > interval)
 						cycle_time = interval;
@@ -1168,7 +1204,7 @@ case dishwasher_HEATEDDRY_ONLY:
 
 					new_running_state = true;
 			}	
-			
+
 
 
 	else if (temp_voltage_value_mag<stall_voltage)
@@ -1177,7 +1213,7 @@ case dishwasher_HEATEDDRY_ONLY:
 					state_time = 0;
 			}
 	}
-			
+
 	break;
 
 case dishwasher_COIL_ONLY:
@@ -1190,7 +1226,7 @@ case dishwasher_COIL_ONLY:
 				cycle_time = 0;
 				energy_used = 0;
 
-				
+
 				control_check1 = false;
 				control_check2 = false;
 				control_check3 = false;
@@ -1235,7 +1271,7 @@ case dishwasher_COIL_ONLY:
 		{
 				state = dishwasher_MOTOR_ONLY;
 				double cycle_t = 1000 * (energy_needed - energy_used) / motor_power * 60 * 60;
-				
+
 				if (cycle_time<=0 && coil_only_check1 == false)
 				{
 					double interval = pulse_interval[8];
@@ -1273,12 +1309,12 @@ case dishwasher_COIL_ONLY:
 					else
 					cycle_time = cycle_t;	
 					coil_only_check3 = false;	
-					
+
 				}
 				new_running_state = true;
 		}		
 
-	
+
 	else if (temp_voltage_value_mag<stall_voltage)
 		{
 			state = dishwasher_STALLED;
@@ -1319,11 +1355,11 @@ case dishwasher_TRIPPED:
 	// accumulating units in the queue no matter what happens
 	enduse_queue += daily_dishwasher_demand * dt/3600/24;
 	//actual_dishwasher_demand = actual_dishwasher_demand + enduse_queue;
-	
+
 	// now implement current state
 	switch(state) {
 	case dishwasher_STOPPED: 
-		
+
 		// nothing running
 		load.power = load.current = load.admittance = gld::complex(0,0,J);
 
@@ -1346,24 +1382,24 @@ case dishwasher_TRIPPED:
 		cycle_time -= dt;	 
 		load.power = load.current = gld::complex(0,0,J);
 		load.admittance = gld::complex((coil_power[1])/1000,0,J); //assume pure resistance
-	
+
 	dt = cycle_time;
 	break;
 
 
 	case dishwasher_HEATEDDRY_ONLY:
-	
+
 	cycle_time -= dt;
 	load.power = load.current = gld::complex(0,0,J);
 	load.admittance = gld::complex((coil_power[2])/1000,0,J); //assume pure resistance
-	
+
 	dt = cycle_time;
 	break;
 
 	case dishwasher_CONTROL_ONLY:
 
 		if(true==new_running_state){
-			
+
 			new_running_state = false;
 
 		}
@@ -1389,7 +1425,7 @@ case dishwasher_TRIPPED:
 	case dishwasher_TRIPPED:
 
 		load.power = load.current = load.admittance = gld::complex(0,0,J);
-		
+
 		dt = reset_delay; 
 
 		break;
@@ -1397,7 +1433,7 @@ case dishwasher_TRIPPED:
 
 	case dishwasher_MOTOR_ONLY:
 		motor_on_off = 1;
-		motor_coil_on_off = both_coils_on_off = 0;
+		motor_coil_on_off = 0;
 		cycle_time -= dt;
 
 		load.power.SetPowerFactor(motor_power/1000, load.power_factor);
@@ -1486,6 +1522,12 @@ EXPORT int init_dishwasher(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
+EXPORT int checkpoint_init_dishwasher(OBJECT *obj)
+{
+	dishwasher *my = object_data<dishwasher>(obj);
+	return my->checkpoint_init(obj->parent);
+}
+
 EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
@@ -1502,5 +1544,3 @@ EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
 //	obj->clock = t0;
 //	return t1;
 //}
-
-/**@}**/

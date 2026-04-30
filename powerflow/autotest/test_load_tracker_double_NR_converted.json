@@ -235,19 +235,31 @@
         }
       ]
     },
+    "double_assert": {
+      "instances": [
+        {
+          "parent": "RECLOSER_1_LOAD_TRACKER",
+          "target": "setpoint",
+          "value": " RECLOSER_1_LOAD_TRACKER.feedback",
+          "within": 1861,
+          "inline_comments": {
+            "within": "// 1%+ of full scale"
+          }
+        }
+      ]
+    },
     "load_tracker": {
       "instances": [
         {
           "name": "RECLOSER_1_LOAD_TRACKER",
-          "target": "setpoint",
+          "target": "NODE_2",
           "target_property": "measured_real_power",
           "setpoint": 145000,
           "deadband": 1.0,
           "damping": 0.0,
           "full_scale": 186000,
-          "value": " RECLOSER_1_LOAD_TRACKER.feedback",
-          "within": 1861,
           "inside_comments": [
+            "// Note: This is the sum of the base powers (219000 VA)",
             "//       from the 2 downstream loads then reduced",
             "//       to take account of the fact we are only",
             "//       measuring real power not apparent based on an average",
@@ -256,9 +268,7 @@
             "//       is the expected value users would enter"
           ],
           "inline_comments": {
-            "deadband": "// Ensure double_assert.within > 186000 * deadband (as a percent)",
-            "full_scale": "// Note: This is the sum of the base powers (219000 VA)",
-            "within": "// 1%+ of full scale"
+            "deadband": "// Ensure double_assert.within > 186000 * deadband (as a percent)"
           }
         }
       ]

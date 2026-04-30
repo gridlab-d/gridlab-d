@@ -106,15 +106,37 @@ int lights::create(void)
 	return res;
 }
 
-int lights::init(OBJECT *parent)
+int lights::shared_init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
 			char objname[256];
 			gl_verbose("lights::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
+	// These variables need initialized every time regardless of checkpoint load
+	// Non-published variables (not loaded from checkpoint) must be initialized here
+	// (lights class has no non-published variables at this time)
+	return 1;
+}
+
+int lights::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	return residential_enduse::checkpoint_init(parent);
+}
+
+int lights::init(OBJECT *parent)
+{
+	// Initialize non-published variables
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
@@ -288,6 +310,12 @@ EXPORT int isa_lights(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
+}
+
+EXPORT int checkpoint_init_lights(OBJECT *obj)
+{
+	lights *my = object_data<lights>(obj);
+	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t1)

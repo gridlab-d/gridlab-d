@@ -133,6 +133,27 @@ battery::battery(MODULE *module)
 								PT_double, "battery_load[W]", PADDR(bat_load), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the current power output of the battery.",
 								PT_double, "reserve_state_of_charge[pu]", PADDR(b_soc_reserve), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the reserve state of charge the battery can reach.",
 
+								PT_int64, "state_change_time_delta", PADDR(state_change_time_delta), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for state_change_time_delta",
+								PT_double, "margin", PADDR(margin), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for margin",
+								PT_double, "E_Next", PADDR(E_Next), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for E_Next",
+								PT_bool, "recalculate", PADDR(recalculate), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for recalculate",
+								PT_timestamp, "prev_time", PADDR(prev_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_time",
+								PT_int32, "first_time_step", PADDR(first_time_step), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first_time_step",
+								PT_int32, "prev_state", PADDR(prev_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: 1 is charging, 0 is nothing, -1 is discharging",
+								PT_double, "internal_battery_load", PADDR(internal_battery_load), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: the power out of the battery on the source side of the internal resistance",
+								PT_complex, "value_Circuit_V_A", PADDR(value_Circuit_V[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Circuit_V[0]",
+								PT_complex, "value_Circuit_V_B", PADDR(value_Circuit_V[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Circuit_V[1]",
+								PT_complex, "value_Circuit_V_C", PADDR(value_Circuit_V[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Circuit_V[2]",
+								PT_complex, "value_Line_I_A", PADDR(value_Line_I[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line_I[0]",
+								PT_complex, "value_Line_I_B", PADDR(value_Line_I[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line_I[1]",
+								PT_complex, "value_Line_I_C", PADDR(value_Line_I[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line_I[2]",
+								PT_complex, "value_Line12", PADDR(value_Line12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line12",
+								PT_double, "value_Tout", PADDR(value_Tout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Tout",
+								PT_bool, "parent_is_meter", PADDR(parent_is_meter), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_meter",
+								PT_bool, "parent_is_triplex", PADDR(parent_is_triplex), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_triplex",
+								PT_bool, "parent_is_inverter", PADDR(parent_is_inverter), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_inverter",
+								PT_bool, "climate_object_found", PADDR(climate_object_found), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for climate_object_found",
+
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 		defaults = this;
@@ -436,7 +457,7 @@ int battery::init(OBJECT *parent)
 				pinverter_VA_Out = map_double_value(parent, "P_Out");
 
 				// Pull the initial voltage value, to be consistent
-				value_Circuit_V[0] = complex(pCircuit_V[0]->get_double(), 0.0);
+				value_Circuit_V[0] = gld::complex(pCircuit_V[0]->get_double(), 0.0);
 			}
 			else // Not a proper parent
 			{
@@ -1895,7 +1916,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				if (parent_is_inverter)
 				{
-					value_Circuit_V[0] = complex(pCircuit_V[0]->get_double(), 0.0);
+					value_Circuit_V[0] = gld::complex(pCircuit_V[0]->get_double(), 0.0);
 				}
 				else
 				{
@@ -1907,7 +1928,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				if (parent_is_inverter)
 				{
-					value_Line_I[0] = complex(pLine_I[0]->get_double(), 0.0);
+					value_Line_I[0] = gld::complex(pLine_I[0]->get_double(), 0.0);
 				}
 				else
 				{
@@ -2440,7 +2461,7 @@ void battery::update_soc(unsigned int64 delta_time)
 			}
 		}
 	}
-	pre_soc = soc;
+
 	// Push the SOC up
 	pSoc->setp<double>(soc, test_rlock);
 }
@@ -2454,7 +2475,7 @@ double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigne
 	// Retrieve the inverter properties
 	if (parent_is_inverter)
 	{
-		inv_VA_out_value = complex(pinverter_VA_Out->get_double(), 0.0);
+		inv_VA_out_value = gld::complex(pinverter_VA_Out->get_double(), 0.0);
 		inv_eff_value = peff->get_double();
 	}
 

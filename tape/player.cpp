@@ -64,7 +64,7 @@ PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *prope
     PROPERTY *prop;
     PROPERTY *target;
     char1024 list;
-    complex oblig;
+    gld::complex oblig;
     double scale;
     char256 pstr, ustr;
     char *cpart = 0;

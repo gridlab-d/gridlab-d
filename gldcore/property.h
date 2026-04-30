@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <string>
 #include <errno.h>
 #include <time.h>
 #include <iostream>
@@ -1213,9 +1214,9 @@ typedef gld::complex triplex[3];
 /* ADD NEW CORE TYPES HERE */
 
 #ifdef REAL4
-typedef float real;
+typedef float real_type;
 #else
-typedef double real;
+typedef double real_type;
 #endif
 
 //#ifndef __cplusplus
@@ -1343,6 +1344,7 @@ typedef struct s_property_map {
     FUNCTIONADDR notify;
     METHODCALL method; /**< method call, addr must be 0 */
     bool notify_override;
+    std::string raw;
 } PROPERTY; /**< property definition item */
 
 typedef struct s_property_struct {
@@ -1369,8 +1371,8 @@ typedef enum {
 typedef int PROPERTYCOMPAREFUNCTION(void *, void *, void *);
 
 typedef struct s_property_specs { /**<	the property type conversion specifications.
-								It is critical that the order of entries in this list must match 
-								the order of entries in the enumeration #PROPERTYTYPE 
+								It is critical that the order of entries in this list must match
+								the order of entries in the enumeration #PROPERTYTYPE
 						  **/
     const char *name; /**< the property type name */
     const char *xsdname;

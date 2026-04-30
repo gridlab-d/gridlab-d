@@ -101,7 +101,7 @@ int test_exec(void)
 #include "exec.h"
 #define TESTCOUNT (100000000/global_threadcount)
 
-static volatile unsigned int *count = nullptr;
+static volatile unsigned int *counter = nullptr;
 static volatile unsigned int total = 0;
 static unsigned int key = 0;
 static volatile int done = 0;
@@ -116,7 +116,7 @@ static void *test_lock_proc(void *ptr)
 		//wlock(&key);
 		//replace the above with SharedMutexManager
 		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&key));
-		count[id]++;
+		counter[id]++;
 		total++;
 		//wunlock(&key);
 	}
@@ -135,8 +135,8 @@ int test_lock(void)
 	if(global_lock_enabled){
 		int n, sum=0;
 	
-		count = (unsigned int*)malloc(sizeof(unsigned int*)*global_threadcount);
-		if ( !count )
+		counter = (unsigned int*)malloc(sizeof(unsigned int*)*global_threadcount);
+		if ( !counter )
 		{
 			output_test("memory allocation failed");
 			return FAILED;
@@ -151,7 +151,7 @@ int test_lock(void)
 		for ( n=0 ; n<global_threadcount ; n++ )
 		{
 			//pthread_t pt;
-			//count[n] = 0;
+			//counter[n] = 0;
 			//if ( pthread_create(&pt,nullptr,test_lock_proc,(void*)&n)!=0 )
 			//{
 			//	output_test("thread creation failed");
@@ -159,7 +159,7 @@ int test_lock(void)
 			//}
 
 			try {
-				count[n] = 0;
+				counter[n] = 0;
 				std::thread t(test_lock_proc, &n); // Create thread with n as argument
 				t.detach(); // Detach thread if it should run independently (similar to original behavior)
 			}
@@ -186,7 +186,7 @@ int test_lock(void)
 			//replace the above with SharedMutexManager
 			std::shared_lock<std::shared_mutex> runlock(SharedMutexManager::get_mutex(&key));
 			for ( n=0 ; n<global_threadcount ; n++ )
-				s += (c[n]=count[n]);
+				s += (c[n]=counter[n]);
 			t = total;
 			//runlock();
 			runlock.unlock();
@@ -197,8 +197,8 @@ int test_lock(void)
 		output_message("");
 		for ( n=0 ; n<global_threadcount ; n++ )
 		{
-			output_test("thread %d count = %d", n, count[n]);
-			sum+=count[n];
+			output_test("thread %d count = %d", n, counter[n]);
+			sum+=counter[n];
 		}
 		output_test("total count = %d", total);
 		if ( sum!=total )

@@ -19,7 +19,7 @@
 EXPORT int isa_inverter(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS postupdate_inverter(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
 
 //Alternative PI version Dynamic control Inverter state variable structure
@@ -158,18 +158,11 @@ public:
 	double V_Set_B;
 	double V_Set_C;
 	double margin;
-	gld::complex I_out_prev;
 	gld::complex I_step_max;
-	double C_Storage_In;
 	double power_factor;
 	double P_Out_t0;
 	double Q_Out_t0;
 	double power_factor_t0;
-
-	gld::complex V_In_Set_A;
-	gld::complex V_In_Set_B;
-	gld::complex V_In_Set_C;
-	double output_frequency;
 	
 	double pCircuit_V_Avg;          // average value of 3 phase terminal voltage
 	
@@ -241,9 +234,6 @@ public:
 	gld::complex phaseB_I_Out;
 	gld::complex phaseC_I_Out;
 	gld::complex power_val[3];	//power
-	gld::complex p_clip_A;
-	gld::complex p_clip_B;
-	gld::complex p_clip_C;
 	gld::complex last_current[4];	//Previously applied power output (used to remove from parent so XML files look proper)
 	gld::complex last_power[4];		//Previously applied power output (as constant power) - used to remove from parent so XML looks right
 	bool islanded;			//ces/nas islanding special boolean.
@@ -474,7 +464,6 @@ private:
 
 	double ki_Vterminal;			///< The integrator gain for the VSI terminal voltage modulation
 	double kp_Vterminal;			///< The proportional gain for the VSI terminal voltage modulation
-	double V_set_droop;            // Voltage set point of droop control
 
 	void update_control_references(void);
 	STATUS initalize_IEEE_1547_checks(OBJECT *parent);

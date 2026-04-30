@@ -182,13 +182,31 @@
           "spacing": "ls520BN"
         },
         {
-          "name": "lc607CAN",
+          "name": "lc607CN",
           "conductor_C": "ulc6070",
           "conductor_N": "ulc6070N",
-          "spacing": "ls520CAN",
-          "}object": "line_configuration ",
+          "spacing": "ls520CN"
+        },
+        {
+          "name": "lc607ABN",
           "conductor_A": "ulc6070",
-          "conductor_B": "ulc6070"
+          "conductor_B": "ulc6070",
+          "conductor_N": "ulc6070N",
+          "spacing": "ls520ABN"
+        },
+        {
+          "name": "lc607BCN",
+          "conductor_B": "ulc6070",
+          "conductor_C": "ulc6070",
+          "conductor_N": "ulc6070N",
+          "spacing": "ls520BCN"
+        },
+        {
+          "name": "lc607CAN",
+          "conductor_A": "ulc6070",
+          "conductor_C": "ulc6070",
+          "conductor_N": "ulc6070N",
+          "spacing": "ls520CAN"
         },
         {
           "name": "lc607AB",

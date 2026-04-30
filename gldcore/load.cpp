@@ -179,6 +179,7 @@ typedef struct stat STAT;
 #include "gld_complex.h"
 #include "object.h"
 #include "load.h"
+#include "loader.h"
 #include "output.h"
 #include "gldrandom.h"
 #include "convert.h"
@@ -2753,8 +2754,6 @@ static int pathname(PARSER, char *path, int size)
 	{var} embeds the current value of the current object's variable <var>
 
  **/
-static OBJECT *current_object = nullptr; /* context object */
-static MODULE *current_module = nullptr; /* context module */
 static int expanded_value(char *text, char *result, int size, const char *delims)
 {
 	int n = 0;
@@ -6659,73 +6658,6 @@ static int suppress = 0;
 static int nesting = 0;
 static int macro_line[64];
 static bool process_macro(char *line, int size, char *filename, int linenum);
-static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
-{
-	char line[65536];
-	int n = 0;
-	int linenum = 0;
-	int startnest = nesting;
-	while (fgets(line, sizeof(line), fp) != nullptr)
-	{
-		int len;
-		char subst[65536];
-
-		/* comments must have preceding whitespace in macros */
-		char *c = line[0] != '#' ? strstr(line, COMMENT) : strstr(line, " " COMMENT);
-		linenum++;
-		if (c != nullptr) /* truncate at comment */
-			strcpy(c, "\n");
-		len = (int)strlen(line);
-		if (len >= size - 1)
-			return 0;
-
-#ifndef OLDSTYLE
-		/* check for oldstyle file under newstyle parse */
-		if (linenum == 1 && strncmp(line, "# ", 2) == 0)
-		{
-			output_error("%s looks like a version 1.x GLM files, please convert this file to new style before loading", filename);
-			return 0;
-		}
-#endif
-		/* expand variables */
-		if ((len = replace_variables(subst, line, sizeof(subst), suppress == 0)) >= 0)
-			strcpy(line, subst);
-		else
-		{
-			output_error_raw("%s(%d): unable to continue", filename, linenum);
-			return -1;
-		}
-
-		/* expand macros */
-		if (strncmp(line, MACRO, strlen(MACRO)) == 0)
-		{
-			/* macro disables reading */
-			if (process_macro(line, sizeof(line), filename, linenum) == false)
-				return 0;
-			len = (int)strlen(line);
-			strcat(buffer, line);
-			buffer += len;
-			size -= len;
-			n += len;
-		}
-
-		/* if reading is enabled */
-		else if (suppress == 0)
-		{
-			strcpy(buffer, subst);
-			buffer += len;
-			size -= len;
-			n += len;
-		}
-	}
-	if (nesting != startnest)
-	{
-		// output_message("%s(%d): missing %sendif for #if at %s(%d)", filename,linenum,MACRO,filename,macro_line[nesting-1]);
-		output_error_raw("%s(%d): Unbalanced %sif/%sendif at %s(%d) ~ started with nestlevel %i, ending %i", filename, linenum, MACRO, MACRO, filename, macro_line[nesting - 1], startnest, nesting);
-		return -1;
-	}
-	return n;
-}
 
 static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 {
@@ -7065,13 +6997,7 @@ int is_autodef(char *value)
 }
 
 /* started processes */
-#include "threadpool.h"
 #include <csignal>
-// struct s_threadlist {
-//	pthread_t *data;
-//	struct s_threadlist *next;
-// } *threadlist = nullptr;
-
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -7181,57 +7107,7 @@ public:
 void kill_processes(void)
 {
 	threadlist.kill_all();
-
-	/*while ( threadlist!=nullptr )
-	{
-		void *ptr;
-		struct s_threadlist *next = threadlist->next;
-		int sig = SIGTERM;
-		int rc = pthread_kill(*(threadlist->data),sig);
-		switch ( rc ) {
-		case 0:
-			output_debug("killing thread %p", threadlist->data);
-			break;
-		case ESRCH:
-			output_error("unable to kill thread %p (no such thread)", threadlist->data);
-			break;
-		case EINVAL:
-			output_error("unable to kill thread %p (signal %d invalid/ignored)", threadlist->data, sig);
-			break;
-		default:
-			output_error("unable to kill thread %p (unknown return code %d)", threadlist->data, rc);
-			break;
-		}
-		free(threadlist->data);
-		threadlist=next;
-	}*/
 }
-
-/** @return -1 on failure, thread_id on success **/
-// void* start_process(const char *cmd)
-//{
-//	static bool first = true;
-//	pthread_t *pThreadInfo = (pthread_t*)malloc(sizeof(pthread_t));
-//	struct s_threadlist *thread = (struct s_threadlist*)malloc(sizeof(struct s_threadlist));
-//     char *args = static_cast<char *>(malloc(strlen(cmd) + 1));
-//	strcpy(args,cmd);
-//	if ( thread==nullptr || pThreadInfo==nullptr || pthread_create(pThreadInfo,nullptr,(void*(*)(void*))system,args)!=0 )
-//	{
-//		output_error_raw("%s(%d): unable to create thread to start '%s'", filename, linenum, cmd);
-//		return nullptr;
-//	}
-//	else
-//		output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
-//	thread->data = pThreadInfo;
-//	thread->next = threadlist;
-//	threadlist = thread;
-//	if ( first )
-//	{
-//		atexit(kill_processes);
-//		first = false;
-//	}
-//	return threadlist;
-// }
 
 void *start_process(const char *cmd)
 {
@@ -7349,7 +7225,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		else
 		{
 			suppress |= (1 << (nesting - 1));
-		}
+        }
 		term = line + 5;
 		strip_right_white(term);
 		if (strlen(term) != 0)
@@ -7967,90 +7843,6 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 	return false;
 }
 
-STATUS loadall_glm(char *file) /**< a pointer to the first character in the file name string */
-{
-	OBJECT *obj, *first = object_get_first();
-	char *buffer = nullptr, *p = nullptr;
-	int fsize = 0;
-	STATUS status = FAILED;
-	STAT stat;
-	char *ext = strrchr(file, '.');
-	FILE *fp;
-	int move = 0;
-	errno = 0;
-
-	fp = fopen(file, "rt");
-	if (fp == nullptr)
-		goto Failed;
-	if (FSTAT(fileno(fp), &stat) == 0)
-	{
-		modtime = stat.st_mtime;
-		fsize = stat.st_size;
-		buffer = static_cast<char *>(malloc(BUFFERSIZE)); /* lots of space */
-	}
-	output_verbose("file '%s' is %d bytes long", file, fsize);
-	if (buffer == nullptr)
-	{
-		output_error("unable to allocate buffer for file '%s': %s", file, errno ? strerror(errno) : "(no details)");
-		errno = ENOMEM;
-		goto Done;
-	}
-	else
-		p = buffer;
-
-	buffer[0] = '\0';
-	if (buffer_read(fp, buffer, file, BUFFERSIZE) == 0)
-	{
-		fclose(fp);
-		goto Failed;
-	}
-	fclose(fp);
-
-	/* reset line counter for parser */
-	linenum = 1;
-	while (*p != '\0')
-	{
-		move = gridlabd_file(p);
-		if (move == 0)
-			break;
-		p += move;
-	}
-	status = (*p == '\0') ? SUCCESS : FAILED;
-	if (status == FAILED)
-	{
-		char *eol = strchr(p, '\n');
-		if (eol != nullptr)
-			*eol = '\0';
-		output_error_raw("%s(%d): load failed at or near '%.12s...'", file, linenum, *p == '\0' ? "end of line" : p);
-		if (p == 0)
-			output_error("%s doesn't appear to be a GLM file", file);
-		goto Failed;
-	}
-	else if ((status = static_cast<STATUS>(load_resolve_all())) == FAILED)
-		goto Failed;
-
-	/* establish ranks */
-	for (obj = first ? first : object_get_first(); obj != nullptr; obj = obj->next)
-		object_set_parent(obj, obj->parent);
-	output_verbose("%d object%s loaded", object_get_count(), object_get_count() > 1 ? "s" : "");
-	goto Done;
-Failed:
-	if (errno != 0)
-	{
-		output_error("unable to load '%s': %s", file, errno ? strerror(errno) : "(no details)");
-		/*	TROUBLESHOOT
-			In most cases, strerror(errno) will claim "No such file or directory".  This claim should be ignored in
-			favor of prior error messages.
-		*/
-	}
-Done:
-	free(buffer);
-	buffer = nullptr;
-	free_index();
-	linenum = 1; // parser starts at 1
-	return status;
-}
-
 /**/
 STATUS loadall_glm_roll(char *file) /**< a pointer to the first character in the file name string */
 {
@@ -8211,50 +8003,51 @@ STATUS loadall(char *file)
 		return FAILED; /* not what they expected--do not proceed */
 	}
 
-	/* first time only */
-	if (loaded_files == 0)
-	{
-		/* load the gridlabd.conf file */
-		if (find_file("gridlabd.conf", nullptr, R_OK, conf, sizeof(conf)) == nullptr)
-			output_warning("gridlabd.conf was not found");
-		/* TROUBLESHOOT
-			The <code>gridlabd.conf</code> was not found in the <b>GLPATH</b> environment path.
-			This file is always loaded before a GLM file is loaded.
-			Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
-		 */
-		else
-		{
-			sprintf(filename, "gridlabd.conf");
-			if (loadall_glm_roll(conf) == FAILED)
-			{
-				return FAILED;
-			}
-		}
+	// /* first time only */
+	// if (loaded_files == 0)
+	// {
+	// 	/* load the gridlabd.conf file */
+	// 	if (find_file("gridlabd.conf", nullptr, R_OK, conf, sizeof(conf)) == nullptr)
+	// 		output_warning("gridlabd.conf was not found");
+	// 	/* TROUBLESHOOT
+	// 		The <code>gridlabd.conf</code> was not found in the <b>GLPATH</b> environment path.
+	// 		This file is always loaded before a GLM file is loaded.
+	// 		Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
+	// 	 */
+	// 	else
+	// 	{
+	// 		sprintf(filename, "gridlabd.conf");
+	// 		if (loadall_glm_roll(conf) == FAILED)
+	// 		{
+	// 			return FAILED;
+	// 		}
+	// 	}
 
-		/* load the debugger.conf file */
-		if (global_debug_mode)
-		{
-			char dbg[1024];
+	// 	/* load the debugger.conf file */
+	// 	if (global_debug_mode)
+	// 	{
+	// 		char dbg[1024];
 
-			if (find_file("debugger.conf", nullptr, R_OK, dbg, sizeof(dbg)) == nullptr)
-				output_warning("debugger.conf was not found");
-			/* TROUBLESHOOT
-				The <code>debugger.conf</code> was not found in the <b>GLPATH</b> environment path.
-				This file is loaded when the debugger is enabled.
-				Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
-			 */
-			// else if (loadall_glm_roll(dbg) == FAILED)
-			// return FAILED;
-		}
-	}
+	// 		if (find_file("debugger.conf", nullptr, R_OK, dbg, sizeof(dbg)) == nullptr)
+	// 			output_warning("debugger.conf was not found");
+	// 		/* TROUBLESHOOT
+	// 			The <code>debugger.conf</code> was not found in the <b>GLPATH</b> environment path.
+	// 			This file is loaded when the debugger is enabled.
+	// 			Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
+	// 		 */
+	// 		// else if (loadall_glm_roll(dbg) == FAILED)
+	// 		// return FAILED;
+	// 	}
+	// }
 
 	/* if nothing requested only config files are loaded */
+	if (file == nullptr)
 	if (file == nullptr)
 		return SUCCESS;
 
 	/* handle default extension */
-	strcpy(filename, file);
-	if (ext == nullptr || ext < file + strlen(file) - 5)
+	strcpy(filename,file);
+	if (ext == nullptr)
 	{
 		ext = filename + strlen(filename);
 		strcat(filename, ".glm");
@@ -8278,6 +8071,10 @@ STATUS loadall(char *file)
 	else if (strcmp(ext, ".xml") == 0)
 		load_status = loadall_xml(filename);
 #endif
+	else if (strcmp(ext, ".json")==0) {
+		loader json_ldr = loader();
+		load_status = json_ldr.loadall_json_roll(filename);
+	}
 	else
 		output_error("%s: unable to load unknown file type", filename, ext);
 

@@ -16,6 +16,8 @@
 #include "cpp_threadpool.h"
 #include "globals.h"
 #include "index.h"
+#include "object.h"
+#include "cpp_threadpool.h"
 #include <nlohmann/json.hpp>
 
 // In a header file
@@ -43,7 +45,7 @@ class threadpool_thread_data {
 
 public:
   inline int get_count() { return count; }
-  threadpool_thread_data(int size, cpp_threadpool *threadpool);
+  threadpool_thread_data(int size);
   struct sync_data *get_thread_data(std::thread::id thread_id);
   struct sync_data *get_data(int index);
 };
@@ -96,9 +98,8 @@ int exec_add_scriptexport(const char *file);
 EXITCODE exec_run_initscripts(void);
 EXITCODE exec_run_syncscripts(void);
 EXITCODE exec_run_termscripts(void);
-void report_performance_after_run(time_t start_time, int64 passes,
-                                  int64 tsteps);
-nlohmann::json do_checkpoint(const char *output_directory = nullptr);
+void report_performance_after_run(time_t start_time, int64 passes, int64 tsteps);
+nlohmann::ordered_json do_checkpoint(const char* output_directory = nullptr);
 
 // #ifdef __cplusplus
 // }

@@ -153,6 +153,25 @@ windturb_dg::windturb_dg(MODULE *module)
 
 								PT_double, "internal_model_current_convergence[pu]", PADDR(internal_model_current_convergence), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Convergence value for internal current calculations",
 
+								PT_complex, "Vapu", PADDR(Vapu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Vapu",
+								PT_complex, "Vbpu", PADDR(Vbpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Vbpu",
+								PT_complex, "Vcpu", PADDR(Vcpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Vcpu",
+								PT_complex, "Iapu", PADDR(Iapu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Iapu",
+								PT_complex, "Ibpu", PADDR(Ibpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Ibpu",
+								PT_complex, "Icpu", PADDR(Icpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Icpu",
+								PT_complex, "value_Circuit_V_A", PADDR(value_Circuit_V[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for voltage values - element 0",
+								PT_complex, "value_Circuit_V_B", PADDR(value_Circuit_V[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for voltage values - element 1",
+								PT_complex, "value_Circuit_V_C", PADDR(value_Circuit_V[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for voltage values - element 2",
+								PT_complex, "value_Line_I_A", PADDR(value_Line_I[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for current values - element 0",
+								PT_complex, "value_Line_I_B", PADDR(value_Line_I[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for current values - element 1",
+								PT_complex, "value_Line_I_C", PADDR(value_Line_I[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for current values - element 2",
+								PT_complex, "value_Line12", PADDR(value_Line12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for line current 12 in triplex metering",
+								PT_complex, "prev_current_A", PADDR(prev_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current[0]",
+								PT_complex, "prev_current_B", PADDR(prev_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current[1]",
+								PT_complex, "prev_current_C", PADDR(prev_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current[2]",
+								PT_bool, "NR_first_run", PADDR(NR_first_run), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for NR_first_run",
+								PT_complex, "prev_current12", PADDR(prev_current12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current12",
+
 								PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently triplex mode is only supported for power curve implementation",
 								PT_KEYWORD, "A", (gld::set)PHASE_A,
 								PT_KEYWORD, "B", (gld::set)PHASE_B,
@@ -234,10 +253,10 @@ int windturb_dg::create(void)
 	climate_is_valid = false;
 
 	// Current injection tracking variables
-	prev_current[0] = prev_current[1] = prev_current[2] = complex(0.0, 0.0);
+	prev_current[0] = prev_current[1] = prev_current[2] = gld::complex(0.0, 0.0);
 	NR_first_run = false;
 
-	prev_current12 = complex(0.0, 0.0);
+	prev_current12 = gld::complex(0.0, 0.0);
 
 	// Set default convergence
 	internal_model_current_convergence = 0.005;
@@ -1524,9 +1543,9 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// Zero the tracker, otherwise this won't work right next round
-	prev_current[0] = prev_current[1] = prev_current[2] = complex(0.0, 0.0);
+	prev_current[0] = prev_current[1] = prev_current[2] = gld::complex(0.0, 0.0);
 
-	prev_current12 = complex(0.0, 0.0);
+	prev_current12 = gld::complex(0.0, 0.0);
 
 	// Push up the powerflow interface
 	if (parent_is_valid)
@@ -1538,9 +1557,9 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// Re-zero the tracker, or the next iteration will have issues
-	prev_current[0] = prev_current[1] = prev_current[2] = complex(0.0, 0.0);
+	prev_current[0] = prev_current[1] = prev_current[2] = gld::complex(0.0, 0.0);
 
-	prev_current12 = complex(0.0, 0.0);
+	prev_current12 = gld::complex(0.0, 0.0);
 
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
@@ -1899,22 +1918,22 @@ void windturb_dg::compute_current_injection_pc(void)
 		{ // user provided power curve .csv file
 			if (power_curve_pu)
 			{ // p.u. power curve provided, uses turbine capacity
-				power_A = complex((Power_calc * Rated_VA) / 3, QA);
-				power_B = complex((Power_calc * Rated_VA) / 3, QB);
-				power_C = complex((Power_calc * Rated_VA) / 3, QC);
+				power_A = gld::complex((Power_calc * Rated_VA) / 3, QA);
+				power_B = gld::complex((Power_calc * Rated_VA) / 3, QB);
+				power_C = gld::complex((Power_calc * Rated_VA) / 3, QC);
 			}
 			else
 			{ // power curve in watts provided, ignores capacity even if it is specified
-				power_A = complex((Power_calc) / 3, QA);
-				power_B = complex((Power_calc) / 3, QB);
-				power_C = complex((Power_calc) / 3, QC);
+				power_A = gld::complex((Power_calc) / 3, QA);
+				power_B = gld::complex((Power_calc) / 3, QB);
+				power_C = gld::complex((Power_calc) / 3, QC);
 			}
 		}
 		else
 		{ // case with Default power curve (p.u.), uses capacity
-			power_A = complex((Power_calc * Rated_VA) / 3, QA);
-			power_B = complex((Power_calc * Rated_VA) / 3, QB);
-			power_C = complex((Power_calc * Rated_VA) / 3, QC);
+			power_A = gld::complex((Power_calc * Rated_VA) / 3, QA);
+			power_B = gld::complex((Power_calc * Rated_VA) / 3, QB);
+			power_C = gld::complex((Power_calc * Rated_VA) / 3, QC);
 		}
 
 		Wind_Speed = WSadj;
@@ -1925,7 +1944,7 @@ void windturb_dg::compute_current_injection_pc(void)
 		}
 		else
 		{
-			current_A = complex(0.0, 0.0);
+			current_A = gld::complex(0.0, 0.0);
 		}
 		if (voltage_B.Mag() > 0.0)
 		{
@@ -1933,7 +1952,7 @@ void windturb_dg::compute_current_injection_pc(void)
 		}
 		else
 		{
-			current_B = complex(0.0, 0.0);
+			current_B = gld::complex(0.0, 0.0);
 		}
 		if (voltage_C.Mag() > 0.0)
 		{
@@ -1941,7 +1960,7 @@ void windturb_dg::compute_current_injection_pc(void)
 		}
 		else
 		{
-			current_C = complex(0.0, 0.0);
+			current_C = gld::complex(0.0, 0.0);
 		}
 
 		PowerA = -voltage_A.Mag() * current_A.Mag() * cos(voltage_A.Arg() - current_A.Arg());
@@ -1972,16 +1991,16 @@ void windturb_dg::compute_current_injection_pc(void)
 		{ // user provided power curve .csv file
 			if (power_curve_pu)
 			{ // p.u. power curve provided, uses turbine capacity
-				power_A = complex((Power_calc * Rated_VA), QA);
+				power_A = gld::complex((Power_calc * Rated_VA), QA);
 			}
 			else
 			{ // power curve in watts provided, ignores capacity even if it is specified
-				power_A = complex((Power_calc), QA);
+				power_A = gld::complex((Power_calc), QA);
 			}
 		}
 		else
 		{ // case with Default power curve (p.u.), uses capacity
-			power_A = complex((Power_calc * Rated_VA), QA);
+			power_A = gld::complex((Power_calc * Rated_VA), QA);
 		}
 
 		Wind_Speed = WSadj;
@@ -1992,7 +2011,7 @@ void windturb_dg::compute_current_injection_pc(void)
 		}
 		else
 		{
-			current_A = complex(0.0, 0.0);
+			current_A = gld::complex(0.0, 0.0);
 		}
 
 		TotalRealPow = -voltage_A.Mag() * current_A.Mag() * cos(voltage_A.Arg() - current_A.Arg());
@@ -2046,7 +2065,7 @@ void windturb_dg::compute_power_injection_pc(void)
 	// now publish Power_calc to inverter parent
 	if (parent_is_valid)
 	{
-		push_complex_power_values(complex((Power_calc * Rated_VA), Q));
+		push_complex_power_values(gld::complex((Power_calc * Rated_VA), Q));
 	}
 }
 
@@ -2116,7 +2135,7 @@ void windturb_dg::push_complex_powerflow_values(void)
 			temp_complex_val += value_Line12 - prev_current12;
 
 			// Push it back up
-			pLine12->setp<complex>(temp_complex_val, test_rlock);
+			pLine12->setp<gld::complex>(temp_complex_val, test_rlock);
 
 			// Store the update value
 			prev_current12 = value_Line12;
@@ -2144,9 +2163,9 @@ void windturb_dg::push_complex_powerflow_values(void)
 	}
 }
 
-void windturb_dg::push_complex_power_values(complex inv_P)
+void windturb_dg::push_complex_power_values(gld::complex inv_P)
 {
-	// complex temp_complex_val;
+	// gld::complex temp_complex_val;
 	unsigned int test_rlock = 0;
 	bool WT_conn_flag = true;
 	// int indexval;
@@ -2154,7 +2173,7 @@ void windturb_dg::push_complex_power_values(complex inv_P)
 	if (parent_is_inverter)
 	{
 		// Push the changes
-		inverter_power_property->setp<complex>(inv_P, test_rlock);
+		inverter_power_property->setp<gld::complex>(inv_P, test_rlock);
 		inverter_flag_property->setp<bool>(WT_conn_flag, test_rlock);
 	}
 }
