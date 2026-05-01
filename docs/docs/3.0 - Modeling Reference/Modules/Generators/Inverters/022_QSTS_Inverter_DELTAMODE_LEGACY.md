@@ -1,3 +1,5 @@
+# GridLAB-D™ QSTS Inverter Model - DELTAMODE (Legacy)
+
 <mark style="background-color: lightgreen;">Undocumented Parameters and Variables as they are only used in deltamode and not relevant for this model. Should we even include them here? Maybe at the end of the file or in a separate section?</mark>
 
 |Published Name|Unit|Type|Description|
