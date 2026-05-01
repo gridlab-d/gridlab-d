@@ -293,7 +293,7 @@ def plot_series(ep_series, gld_series):
         ax2.tick_params(axis="y", labelcolor="tab:orange")
 
     ax1.set_xlabel("Simulation Time")
-    plt.title("EnergyPlus vs GridLAB-D Power — July 1")
+    plt.title("EnergyPlus vs GridLAB-D Power")
     fig.legend(loc="upper left", bbox_to_anchor=(0.1, 0.9))
     plt.xticks(rotation=45)
     plt.tight_layout()
