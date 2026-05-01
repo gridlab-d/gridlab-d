@@ -58,7 +58,7 @@ def parse_temperature_data(air_dict):
                 parsed_data[house] = None
     return parsed_data
 
-def parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_obj):
+def parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_dt):
     """
     Convert HVAC off time strings to datetime objects.
     
@@ -69,7 +69,7 @@ def parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_obj):
         hvac_load_dict (dict): Dictionary with house names as keys and HVAC
                  load values (float or parseable numeric strings)
         starttime (datetime): Simulation start time used when value is "INIT"
-        sim_time_obj (datetime): Current simulation time used when HVAC load
+        sim_time_dt (datetime): Current simulation time used when HVAC load
                  is non-zero
     
     Returns:
@@ -92,7 +92,7 @@ def parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_obj):
         try:
             load_value = hvac_load_dict.get(house)
             if load_value is not None and float(load_value) != 0.0:
-                parsed_data[house] = sim_time_obj
+                parsed_data[house] = sim_time_dt
                 continue
 
             if str(timestamp_str).strip() == "INIT":
@@ -291,10 +291,10 @@ starttime = starttime.replace(tzinfo=timezone(timedelta(hours=-7)))
 stoptime = stoptime.replace(tzinfo=timezone(timedelta(hours=-7)))
 
 # Calculate new simulation duration, set stop time, and confirm changes
-stop_time_obj = starttime + timedelta(days=2)
-stop_time_str = datetime.isoformat(stop_time_obj)
-gld.set_stoptime(stop_time_str)
-new_stoptime = datetime.fromisoformat(gld.get_stoptime())
+stoptime = starttime + timedelta(days=2)
+stoptime_str = datetime.isoformat(stoptime)
+gld.set_stoptime(stoptime_str)
+stoptime = datetime.fromisoformat(gld.get_stoptime())
 
 # Initialize data collection lists
 timestamps = []
@@ -304,18 +304,18 @@ avg_cooling_setpoint_list = []
 # Run the model and collect data at each time step, adjusting step size when
 # appropriate
 status, sim_time = gld.get_time()
-sim_time_obj = datetime.fromisoformat(sim_time)
+sim_time_dt = datetime.fromisoformat(sim_time)
 inverter_rated_power_dict = gld.get_properties_by_class("inverter", "rated_power")
 inverter_rated_power_dict = parse_inverter_rated_power_data(inverter_rated_power_dict)
 cooling_setpoint_dict = gld.get_properties_by_class("house", "cooling_setpoint")
 original_cooling_setpoint_dict = parse_cooling_setpoint_data(cooling_setpoint_dict)
 
-while sim_time_obj < stop_time_obj:
-    print(f"Current simulation time: {sim_time_obj}")
+while sim_time_dt < stoptime:
+    print(f"Current simulation time: {sim_time_dt}")
     error_code, sim_time = gld.step()
     if error_code != 0:
         raise RuntimeError(f"Simulation step failed at {sim_time} with error code {error_code}.")
-    sim_time_obj = datetime.fromisoformat(sim_time)
+    sim_time_dt = datetime.fromisoformat(sim_time)
 
     # Check for errors
     messages = gld.get_messages()
@@ -357,7 +357,7 @@ while sim_time_obj < stop_time_obj:
             )
     
     # Store averaged data
-    timestamps.append(sim_time_obj)
+    timestamps.append(sim_time_dt)
     avg_solar_power_list.append(np.mean(house_solar_powers) if house_solar_powers else 0.0)
     avg_cooling_setpoint_list.append(np.mean(house_cooling_setpoints) if house_cooling_setpoints else 0.0)
 

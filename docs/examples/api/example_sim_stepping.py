@@ -31,37 +31,37 @@ if load_code != 0:
 # Setting up start and stop time
 
 # Read in current start and stop time
-starttime = datetime.fromisoformat(gld.get_starttime())
-stoptime = datetime.fromisoformat(gld.get_stoptime())
-print(f"Start time in model: {starttime}")
-print(f"Stop time in model: {stoptime}")
+starttime_dt = datetime.fromisoformat(gld.get_starttime())
+stoptime_dt = datetime.fromisoformat(gld.get_stoptime())
+print(f"Start time in model: {starttime_dt}")
+print(f"Stop time in model: {stoptime_dt}")
 
 # Calculate and set new start and stop times
-calc_stoptime = datetime.isoformat(starttime + timedelta(minutes=30))
-gld.set_stoptime(calc_stoptime)
+stoptime_str = datetime.isoformat(starttime_dt + timedelta(minutes=30))
+gld.set_stoptime(stoptime_str)
 
 # Confirm changes to start and stop times
-new_starttime = datetime.fromisoformat(gld.get_starttime())
-new_stoptime = datetime.fromisoformat(gld.get_stoptime())
-print(f"New start time: {new_starttime}")
-print(f"New stop time: {new_stoptime}")
+starttime_dt = datetime.fromisoformat(gld.get_starttime())
+stoptime_dt = datetime.fromisoformat(gld.get_stoptime())
+print(f"New start time: {starttime_dt}")
+print(f"New stop time: {stoptime_dt}")
 
 
 # Getting initlial simulation time
-time_status, first_time = gld.get_time()
+time_status, first_time_str = gld.get_time()
 if time_status != 0:
-    raise RuntimeError(f"Simulation step failed at {first_time} with error code {time_status}.")
-print(f"Initial simulation time: {first_time}")
+    raise RuntimeError(f"Simulation step failed at {first_time_str} with error code {time_status}.")
+print(f"Initial simulation time: {first_time_str}")
 
 # Calculate a time 20 minutes after the initial time and stepping directly
 # to it.
-first_time_obj = datetime.fromisoformat(first_time)
-step_to_time = first_time_obj + timedelta(minutes = 20)
-step_to_time_str = datetime.isoformat(step_to_time)
-time_code, return_time = gld.step_to(step_to_time_str)
+first_time_dt = datetime.fromisoformat(first_time_str)
+step_to_time_dt = first_time_dt + timedelta(minutes = 20)
+step_to_time_str = datetime.isoformat(step_to_time_dt)
+time_code, return_time_str = gld.step_to(step_to_time_str)
 if time_code != 0:
-    raise RuntimeError(f"Simulation step failed at {return_time} with error code {time_code}.")
-print(f"Time after `.step_to()` to 20 minutes later: {return_time}")
+    raise RuntimeError(f"Simulation step failed at {return_time_str} with error code {time_code}.")
+print(f"Time after `.step_to()` to 20 minutes later: {return_time_str}")
 
 # Setting time step to 5 minutes and stepping forward to simulation
 # stop time in 5 minute increments
@@ -70,11 +70,11 @@ num_steps = 2
 gld.set_time_step(step_size)
 
 for i in range(num_steps):
-    time_code, sim_time = gld.step()
+    time_code, sim_time_str = gld.step()
     if time_code != 0:
-        raise RuntimeError(f"Simulation step failed at {sim_time} with error code {time_code}.")
-    sim_time_obj = datetime.fromisoformat(sim_time)
-    print(f"Time after `.step()`: {sim_time}")
+        raise RuntimeError(f"Simulation step failed at {sim_time_str} with error code {time_code}.")
+    sim_time_dt = datetime.fromisoformat(sim_time_str)
+    print(f"Time after `.step()`: {sim_time_str}")
 
     # Check for errors
     messages = gld.get_messages()
@@ -88,9 +88,9 @@ for i in range(num_steps):
 
 # Test to see what happens when you try stepping beyond end of simulation
 print("**** Taking one more step beyond end of simulation time ****")
-time_code, sim_time = gld.step()
+time_code, sim_time_str = gld.step()
 if time_code != 0:
-    raise RuntimeError(f"Simulation step failed at {sim_time} with error code {time_code}.")
+    raise RuntimeError(f"Simulation step failed at {sim_time_str} with error code {time_code}.")
 messages = gld.get_messages()
 
 # Ending the simulation and exiting GridLAB-D
