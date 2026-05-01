@@ -20,3 +20,8 @@
     width: 100%;
     height: auto;
 }
+
+/* Forces the caption to the top of the table */
+caption {
+    caption-side: top !important;
+}
