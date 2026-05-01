@@ -103,9 +103,13 @@ nav:
         - Diesel dg: docs/3.0 - Modeling Reference/Modules/Generators/Diesel_dg.md
         - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Energy_storage.md
         - Inverters:
-          - Inverter: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter.md
-          - ibr blackboxmodels: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_ibr_blackboxmodels.md
-          - ibr grayboxmodels: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_ibr_grayboxmodels.md
+          - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/01_Introduction.md
+          - GridLAB-D™ QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/02_QSTS_Inverter.md
+          - GridLAB-D™ QSTS Inverter Model - DELTAMODE (Legacy): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/022_QSTS_Inverter_DELTAMODE_LEGACY.md
+          - Updated Comparison Report: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Comparison_Report_Inverter_WiKi_VS_source.md
+          - Inverter_WiKi_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_WiKi_table.md
+          - GridLAB-D Published Variables: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_publish_variable.md
+          - Inverter_source_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_source_table.md
           - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_inverter_dyn.md
           - Sec control: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sec_control.md
           - Sync Ctrl: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sync_ctrl.md
@@ -313,6 +317,9 @@ nav:
         - Spec:Dishwasher: docs/6.0 References/Unimplemented/End Use Loads/Spec_Dishwasher.md
         - Spec:Range: docs/6.0 References/Unimplemented/End Use Loads/Spec_Range.md
       - Interfacing with External Software: docs/6.0 References/Unimplemented/Interfacing_with_External_Software.md
+      - Inverters:
+        - ibr blackboxmodels: docs/6.0 References/Unimplemented/Inverters/Spec_ibr_blackboxmodels.md
+        - ibr grayboxmodels: docs/6.0 References/Unimplemented/Inverters/Spec_ibr_grayboxmodels.md
       - Link:
         - Link (directive): docs/6.0 References/Unimplemented/Link/Link_(directive).md
         - Matlab link: docs/6.0 References/Unimplemented/Link/Matlab_link.md

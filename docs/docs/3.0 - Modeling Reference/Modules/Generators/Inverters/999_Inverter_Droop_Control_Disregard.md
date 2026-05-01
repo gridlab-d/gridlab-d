@@ -1,5 +1,3 @@
-# Inverter
-
 !!! warning
 
     The droop inverter model is a very early steady-state model, which has been succeeded by the [inverter_dyn](../Inverters/Spec_inverter_dyn.md) model.
