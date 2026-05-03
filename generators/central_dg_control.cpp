@@ -91,7 +91,6 @@ int central_dg_control::create(void)
 /* Object initialization is called once after all object have been created */
 int central_dg_control::init(OBJECT *parent)
 {
-	FINDLIST *inverter_list;
 	FINDLIST *battery_list;
 	FINDLIST *solar_list;
 	int index = 0;
@@ -109,16 +108,6 @@ int central_dg_control::init(OBJECT *parent)
 		gl_error("No group id given for controlled DG objects.");
 		return 0;
 		
-	}
-	//Find all inverters with controller group id
-	inverter_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"inverter",AND,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
-	if(inverter_list == nullptr){
-		gl_error("No inverters with given group id found.");
-		/*  TROUBLESHOOT
-		While trying to put together a list of all inverter objects with the specified controller groupid, no such inverter objects were found.
-		*/
-		
-		return 0;
 	}
 	//Find all batteries whose parents are inverters with controller group id
 	battery_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"battery",AND,FT_PARENT,FT_CLASS,SAME,"inverter",AND,FT_PARENT,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
