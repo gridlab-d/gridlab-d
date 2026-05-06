@@ -18,7 +18,7 @@ import tempfile
 def OMFmain(milsoft, scada, case_flag, calibration_config,  model_name='Feeder', user_flag_to_calibrate=1):
 
 	if milsoft is None:
-		print ("Please input a model to convert!")
+		print("Please input a model to convert!")
 		# error
 		return None, None
 	else:
@@ -31,7 +31,7 @@ def OMFmain(milsoft, scada, case_flag, calibration_config,  model_name='Feeder',
 
 		outGLM = milsoft
 		directory = tempfile.mkdtemp()
-		print "Calibration testing in ", directory
+		print("Calibration testing in ", directory)
 		
 		# write base .glm to file (save as .txt so that it isn't run when batch file executed)
 		basefile = open(directory+'/'+model_name+'_base_glm.txt','w')
@@ -44,7 +44,7 @@ def OMFmain(milsoft, scada, case_flag, calibration_config,  model_name='Feeder',
 			final_calib_file, final_dict, last_key = calibrateFeeder.calibrateFeeder(outGLM, days, SCADA, case_flag, calibration_config, directory)
 		else:
 			# Populate the feeder. 
-			print ("Either the user selected not to calibrate this feeder, the SCADA was not input, or this feeder has already been calibrated.")
+			print("Either the user selected not to calibrate this feeder, the SCADA was not input, or this feeder has already been calibrated.")
 			final_dict, last_key = Milsoft_GridLAB_D_Feeder_Generation.GLD_Feeder(outGLM,case_flag,directory,calibration_config)
 		#AddTapeObjects
 		#filename = 'test_feeder'

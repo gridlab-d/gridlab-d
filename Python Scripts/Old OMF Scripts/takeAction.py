@@ -32,7 +32,7 @@ def loadLevel (a, a_count, avg_house, avg_comm, base_load_scalar, avg_diff):
 		a2 = "increase";
 		#change = -change
 		ch = -1
-	print (a0 + a1 + " average house VA and/or average commercial VA, and/or "+ a2 + " residential base load scalar.");
+	print(a0 + a1 + " average house VA and/or average commercial VA, and/or "+ a2 + " residential base load scalar.");
 	options[0][0] = round(base_load_scalar + change_base_load,2) # change base load scalar only
 	# options[1][1] = int(avg_house + (avg_house * change)) # change avg house only
 	# options[2][2] = int(avg_comm + (avg_comm * change)) # change avg comm only
@@ -84,7 +84,7 @@ def winterLoad (a, decrease_gas, add_heat_degree):
 		a1 = "decrease";
 		a2 = "more";
 		ch = 1
-	print (a0 + a1 + " gas heating penetration, and/or add " + a2 + " degrees to the heating set points.");
+	print(a0 + a1 + " gas heating penetration, and/or add " + a2 + " degrees to the heating set points.");
 	options[0][0] = round(decrease_gas + (ch * 0.05),2)   # change gas heat only
 	options[1][0] = round(decrease_gas + (ch * 0.10),2)   # change gas heat double
 	options[2][1] = add_heat_degree + (ch * 0.5) # change heat set only
@@ -120,7 +120,7 @@ def winterPeak (a, decrease_gas, sched_skew_std, add_heat_degree):
 		a0 = "To increase winter peak, we can "
 		a1 = "decrease"
 		ch = -1
-	print (a0 + a1 + " schedule skew standard deviation.")
+	print(a0 + a1 + " schedule skew standard deviation.")
 	# test two different changes 
 	val1 = sched_skew_std + ch * 900
 	val2 = sched_skew_std + ch * 1800
@@ -154,7 +154,7 @@ def summerPeak (a, window_wall_ratio):
 		a0 = "To increase summer peak, we can "
 		a1 = "increase"
 		ch = 1
-	print (a0 + a1 + " window wall ratio.");
+	print(a0 + a1 + " window wall ratio.");
 	options[0][0] = round(window_wall_ratio + ch * 0.05, 2)
 	options[1][0] = round(window_wall_ratio + ch * 0.10, 2)
 	for i in xrange(2):
@@ -182,7 +182,7 @@ def peakLevel (a, cool_offset, heat_offset, cop_high, cop_low, sched_skew_std):
 		a2 = "decrease"
 		a3 = "decrease"
 		ch = 1
-	print (a0 + a1 + " set point offsets, " + a2 + " COP values, " + a3 + " schedule skew standard deviation.")
+	print(a0 + a1 + " set point offsets, " + a2 + " COP values, " + a3 + " schedule skew standard deviation.")
 	
 	cool_offset_new = cool_offset + ch * 0.5
 	heat_offset_new = heat_offset + ch * 0.5
@@ -231,7 +231,7 @@ def winterPeaksummerOK (a, cop_high, cop_low, decrease_gas, add_heat_degree ):
 		a0 = "Since we can also raise summer peak, we can "
 		a1 = "decrease" # COP values
 		ch = 1
-	print (a0 + a1 + " COP values.")
+	print(a0 + a1 + " COP values.")
 	cop_high_new = round(cop_high - ch * 0.05,2)
 	cop_low_new = round(cop_low - ch * 0.05,2)
 	if not limits.COPvalsLIM(cop_high_new,cop_low_new):  # Will need modification if changing COP high and COP low independently.
@@ -258,7 +258,7 @@ def summerPeakwinterOK (a, cop_high, cop_low, window_wall_ratio ):
 		a1 = "decrease" # COP values
 		a2 = "increase" # window wall ratio
 		ch = 1
-	print (a0 + a1 + " COP values, " + a2 + " window wall ratio.")
+	print(a0 + a1 + " COP values, " + a2 + " window wall ratio.")
 	
 	cop_high_new = round(cop_high - ch * 0.05,2)
 	cop_high_dub = round(cop_high - ch * 0.10,2)
@@ -372,15 +372,15 @@ def takeAction(action,action_count,vals,diffs):
 		for n in xrange(len(options)):
 			calibrations.append([a, b, c, d, e, f, g, options[n][0], j, k, l, m])
 	else:
-		print ("Action ID doesn't match any defined!");
-	#print (options)
-	print ("Calibrations to test:")
+		print("Action ID doesn't match any defined!");
+	#print(options)
+	print("Calibrations to test:")
 	for x in calibrations:
-		print (str(x))
+		print(str(x))
 	return calibrations
 
 def main():
-	print ("Testing values:")
+	print("Testing values:")
 	takeAction(9,[57000,30000,.5,3.5,3.5,0.5,0.5,3600,.50,2700,.15,3.5],[-0.01,-0.009,-0.1245,-0.08]); # example numbers for testing
 		
 if __name__ ==  '__main__':

@@ -44,9 +44,9 @@ class Simulation:
                     self.status = jsonSimulation['status'].encode('ascii')
                 else:
                     raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
-            print "Simulation " + repr(self.id) + " has been loaded."
+            print("Simulation " + repr(self.id) + " has been loaded.")
         else:
-            print "Simulation " + repr(self.id) + " has not yet been stored in the database."
+            print("Simulation " + repr(self.id) + " has not yet been stored in the database.")
 
     def getResults(self):
         """    
@@ -71,9 +71,9 @@ class Simulation:
                 else:
                     raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
         else:
-            print "This simulation has no id."
+            print("This simulation has no id.")
         
-        print outputString
+        print(outputString)
         return emptyResults
         
 

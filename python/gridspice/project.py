@@ -63,9 +63,9 @@ class Project:
 				else:
 					raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
 		else:
-			print "This project has not yet been stored."
+			print("This project has not yet been stored.")
 		
-		print outputString
+		print(outputString)
 		return emptyModels
 		
 
@@ -90,11 +90,11 @@ class Project:
 					tempModules = jsonProj['modules'];
 					for key in tempModules:
 						self.modules[key.encode('ascii')] = tempModules[key].encode('ascii')
-					print "Project " + self.name + " has been loaded."
+					print("Project " + self.name + " has been loaded.")
 				else:
 					raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
 		else:
-			print self.name + " has not yet been stored in the database."
+			print(self.name + " has not yet been stored in the database.")
 	
 	def _store(self):
 		dictCopy = self.__dict__.copy()
@@ -108,13 +108,13 @@ class Project:
 				if (data != "null"):
 					result = int(data)
 					self.id = result
-					print self.name + " has been stored in the database."
+					print(self.name + " has been stored in the database.")
 				else:
-					print "Error saving. A different version of this project already exists. Has " + self.name + " been loaded?"
+					print("Error saving. A different version of this project already exists. Has " + self.name + " been loaded?")
 			else:
 				raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
 		else:
-			print "Error in the server."	
+			print("Error in the server.")
 			
 	def _update(self):
 		dictCopy = self.__dict__.copy()
@@ -128,13 +128,13 @@ class Project:
 				if (data != "null"):
 					result = int(data)
 					self.id = result
-					print self.name + " has been updated."
+					print(self.name + " has been updated.")
 				else:
-					print "Error updating."
+					print("Error updating.")
 			else:
 				raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
 		else:
-			print "Error in the server."
+			print("Error in the server.")
 			
 	def save(self):
 		"""
@@ -146,7 +146,7 @@ class Project:
 			else:
 				self._update()
 		else:
-			print "Please load " + self.name + " before updating."
+			print("Please load " + self.name + " before updating.")
 
 	def delete(self):
 		"""
@@ -160,15 +160,15 @@ class Project:
 				if (data != config.INVALID_API_KEY):
 					if (data != "null"):
 						self.id = None
-						print self.name + " has been deleted from the database."
+						print(self.name + " has been deleted from the database.")
 					else:
-						print "Error deleting."
+						print("Error deleting.")
 				else:
 					raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
 			else:
-				print "Error in the server."
+				print("Error in the server.")
 		else:
-			print self.name + "has not yet been stored in the database"
+			print(self.name + "has not yet been stored in the database")
 			
 	def copy(self, account):
 		"""
@@ -191,9 +191,9 @@ class Project:
 				else:
 					raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
 			else:
-				print "Error in the server."
+				print("Error in the server.")
 		else:
-			print "This project has not yet been stored."
+			print("This project has not yet been stored.")
 		return simulationResult
 
 	def getSimulations(self):
@@ -218,7 +218,7 @@ class Project:
 				else:
 					raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
 			else:
-				print "Error in the server."
+				print("Error in the server.")
 		
-		print outputString
+		print(outputString)
 		return simulationResults
