@@ -16,74 +16,131 @@ Checkpointing is expected to primarily be used through the C/C++ API (or Python 
 
 Checkpointing will not be supported in transient mode and will only take a "snapshot" on standard time-series timestamps.  Checkpoint "snapshots" will occur at the end of a quasi-steady-state time-series timestamp (before moving to the next timestep).
 
-TODO: detail what API calls
+## Overview
 
-## Class/Sequence Diagrams
+GridLAB-D implements a checkpointing system that saves simulation state to JSON format, enabling snapshot captures of the simulation at configurable intervals. This allows simulations to be paused and resumed, and provides recovery capabilities.
 
-TODO: Repalce this as necessary - placeholder/sample left for now
+This checkpointing system enables:
+- Long-running simulations to save state periodically
+- Distributed computing through state snapshots
+- Recovery mechanisms for simulation continuity
+- Pause/resume capabilities for simulations
 
-If apropriate, document the feature using class or sequence diagrams.
+### Key Design Features
+1. In-Memory or File-Based: Can generate JSON in-memory without writing to disk
+2. Automatic File Naming: Uses model name and removes extensions automatically
+3. Directory Validation: Verifies output directory exists before writing
+4. Ordered JSON: Preserves field ordering for consistency
+5. Timezone Support: Includes timezone information in timestamps
+6. Hidden State Variables: Critical internal states marked and preserved automatically
 
-```mermaid
-classDiagram
+### Core Architecture
 
-class SimulationEngine {
-  +currentTime
-  +objectRegistry
-  +solverState
-  +rngState
-  +run()
-  +step()
-  +saveCheckpoint()
-  +loadCheckpoint()
-}
+#### Checkpoint Types
+Defined in [`gldcore/globals.h`](gldcore/globals.h#L279-L282):
 
-class CheckpointManager {
-  +checkpointFile
-  +format
-  +write(state)
-  +read()
-  +validate()
-}
+- **CPT_NONE** (0): Checkpointing disabled
+- **CPT_WALL** (1): Checkpoint at wall-clock time intervals (default 3600 seconds/1 hour)
+- **CPT_SIM** (2): Checkpoint at simulation time intervals (default 86400 seconds/1 day) - **Currently set as default**
 
-class SimulationState {
-  +time
-  +objectStates
-  +solverState
-  +rngState
-  +serialize()
-  +deserialize()
-}
+#### Global Configuration Variables
+Located in [`gldcore/globals.h`](gldcore/globals.h#L279-L286):
 
-class SimObject {
-  <<abstract>>
-  +saveState()
-  +loadState()
-}
+- `global_checkpoint_type`: Determines checkpoint trigger mode
+- `global_checkpoint_file`: Base filename for checkpoint files
+- `global_checkpoint_seqnum`: Sequence number counter for multiple checkpoint files
+- `global_checkpoint_interval`: Time between checkpoints (seconds)
+- `global_checkpoint_keepall`: Flag to retain all checkpoint files (0 = delete old, non-zero = keep all)
+- `global_checkpoint_loaded`: Flag indicating whether a checkpoint was loaded
 
-class LoadObject
-class GeneratorObject
-class NetworkNode
+## Implementation
 
-SimulationEngine --> CheckpointManager
-SimulationEngine --> SimulationState
-SimulationState --> SimObject
-SimObject <|-- LoadObject
-SimObject <|-- GeneratorObject
-SimObject <|-- NetworkNode
+### Core Functions
+
+#### `do_checkpoint(const char *output_directory)`
+
+Located in [`gldcore/exec.cpp`](gldcore/exec.cpp#L410-L500)
+
+- Creates an ordered JSON structure containing full simulation state
+- **Parameters:**
+  - `output_directory`: Optional directory path for writing checkpoint files (if nullptr/empty, generates JSON in-memory)
+- **Returns:** `nlohmann::ordered_json` containing checkpoint data
+- **Features:**
+  - Generates timestamp with timezone information
+  - Extracts model name and strips file extensions automatically
+  - Checks directory existence before writing
+  - Creates filename format: `{modelname}_checkpoint.json`
+
+#### Main Loop Integration
+
+In [`gldcore/exec.cpp`](gldcore/exec.cpp#L2134)
+
+- `do_checkpoint()` is called within `exec_start()` during the main simulation loop
+- Operates based on configured checkpoint type and interval
+
+### C++ API
+
+Defined in [`gldcore/gldapi.h`](gldcore/gldapi.h#L33-L91)
+
+#### Checkpoint Modes
+
+```cpp
+enum GLDCheckPointMode {
+  GLD_CHECKPOINT_MODE_NONE = 0,
+  GLD_CHECKPOINT_MODE_SAVE = 1
+};
 ```
 
+#### Key Methods
+	GLDErrorCode save_checkpoint(const std::string &save_path, GLDCheckPointMode mode = GLD_CHECKPOINT_MODE_SAVE)
+	nlohmann::ordered_json get_checkpoint_json(const std::string& filepath = "")
 
+#### Implementation in gldapi.cpp:510-560:
 
-## Itemized Subfeatures
+	get_checkpoint_json() retrieves checkpoint state with optional directory specification
+	save_checkpoint() saves checkpoint to specified path and updates internal gld_model representation
 
-TODO:
+#### Checkpoint Variables
+Objects throughout the codebase mark internal state variables that should be included in checkpoints using the PT_ACCESS, PA_HIDDEN properties with descriptions prefixed by CHECKPOINT_VAR:
 
-## Source Code
+Examples:
+- [`generator/controller_dg.cpp`](generator/controller_dg.cpp#L43-L59) Controllers mark predictor/corrector values
+- [`generator/solar.cpp`](generator/solar.cpp#L131-L135) Solar models mark temperature and timing variables
+- [`generator/windturb_dg.cpp`](generator/windturb_dg.cpp#L156-L173) Wind turbines mark voltage, current, and state values
 
-Links to any relevant source code for the feature as it is developed.
+These hidden checkpoint variables ensure critical internal state is preserved without exposing implementation details in the public API.
 
-- []()
+### Configuration & Usage
+
+GLM File Configuration
+Example from [`models/checkpoint_sim_test.glm`](models/checkpoint_sim_test.glm#L6-L9):
+
+	#set checkpoint_type=SIM
+	#set checkpoint_interval=2419200  // 28 days in seconds
+
+C++ API Usage
+From [`test_gldapi/test_gldapi.cpp`](test_gldapi/test_gldapi.cpp#L29):
+
+	assert(sim.save_checkpoint("state.chk", GLD_CHECKPOINT_MODE_SAVE) == GLD_SUCCESS);
+
+### Python Bindings
+Located in checkpoint.py
+- Python bindings expose checkpoint mode constants: NONE and SAVE
+- CheckPointHarness class provides testing infrastructure
+
+### MySQL Recorder Integration
+The test_mysql_recorder.xml:69-73 demonstrates checkpoint configuration for database recording:
+- checkpoint_type: Recording checkpoint type
+- checkpoint_file: File path for checkpoint
+- checkpoint_seqnum: Sequence number
+- checkpoint_interval: Recording interval
+- checkpoint_keepall: Boolean flag
+
+### Data Format
+Checkpoints are stored as ordered JSON with:
+- Preamble section (__preamble): Contains comments array with generation timestamp and timezone
+- Clock information: Formatted as strings with timezone data
+- Object state: Full simulation object properties and values
 
 
 ## Workflow
