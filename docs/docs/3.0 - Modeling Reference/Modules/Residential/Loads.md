@@ -65,6 +65,7 @@ Available explicit enduse loads that are validated include:
     [EV chargers](./Evcharger_det.md)
     [Generalized ZIP loads](./ZIPload.md)
     [Lights](./Lights.md)
+    [Thermal energy storage devices](./Thermal_Energy_Storage_model_guide.md)
 
 *** Note: not sure if you want to point at TESP, so adjust this statement as needed ***
 To populate explicit enduse loads on a feeder or larger test system, it is highly recommended to use one of the TESP population scripts to automate that process.
@@ -81,7 +82,6 @@ Listing them here, but not sure if they'll go in this documentation or elsewhere
     microwave
     range
     refrigerator
-    thermal_storage
 
 
 *** Below is untouched - some clearly needs to go into a development section, if it is relevant ***
