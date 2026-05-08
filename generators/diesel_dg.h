@@ -450,7 +450,6 @@ public:
 	void check_power_output();
 	int create(void);
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
 	int shared_init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

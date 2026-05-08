@@ -702,13 +702,6 @@ int inverter::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int inverter::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
-}
-
 /* Object initialization is called once after all object have been created */
 int inverter::init(OBJECT *parent)
 {
@@ -9729,12 +9722,6 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(inverter);
-}
-
-EXPORT int checkpoint_init_inverter(OBJECT *obj)
-{
-	inverter *my = object_data<inverter>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

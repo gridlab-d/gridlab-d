@@ -695,13 +695,6 @@ int diesel_dg::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int diesel_dg::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
-}
-
 
 /* Object initialization is called once after all object have been created */
 int diesel_dg::init(OBJECT *parent)
@@ -5110,12 +5103,6 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(diesel_dg);
-}
-
-EXPORT int checkpoint_init_diesel_dg(OBJECT *obj)
-{
-	diesel_dg *my = object_data<diesel_dg>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

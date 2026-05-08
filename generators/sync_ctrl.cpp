@@ -116,13 +116,6 @@ int sync_ctrl::shared_init(OBJECT *parent)
     return 1;
 }
 
-int sync_ctrl::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
-}
-
 int sync_ctrl::init(OBJECT *parent)
 {
    	// Initialize non-published variables
@@ -455,12 +448,6 @@ EXPORT int init_sync_ctrl(OBJECT *obj)
         return my->init(obj->parent);
     }
     INIT_CATCHALL(sync_ctrl);
-}
-
-EXPORT int checkpoint_init_sync_ctrl(OBJECT *obj)
-{
-	sync_ctrl *my = object_data<sync_ctrl>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 /**

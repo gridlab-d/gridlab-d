@@ -86,6 +86,43 @@ void object_store_checkpoint_property(OBJECT *obj, const char *name, const char 
     props.emplace_back(name, value);
 }
 
+// ---------------------------------------------------------------------------
+// Per-object raw property value store
+// Maps object name -> (property name -> raw value) pairs to preserve
+// the original raw string values of properties as loaded from JSON.
+// This prevents class-level property metadata from being overwritten
+// when multiple instances of the same class load different values.
+// ---------------------------------------------------------------------------
+static std::unordered_map<std::string, std::unordered_map<std::string, std::string>>
+    raw_value_store;
+
+void object_set_raw_value_by_name(OBJECT *obj, const PROPERTYNAME name, const char *value)
+{
+    if (obj == nullptr || obj->name == nullptr || name == nullptr || value == nullptr) return;
+    raw_value_store[obj->name][name] = value;
+}
+
+int object_get_raw_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size)
+{
+    if (obj == nullptr || obj->name == nullptr || name == nullptr || value == nullptr) return 0;
+    
+    auto obj_iter = raw_value_store.find(obj->name);
+    if (obj_iter == raw_value_store.end()) return 0;
+    
+    auto prop_iter = obj_iter->second.find(name);
+    if (prop_iter == obj_iter->second.end()) return 0;
+    
+    const std::string &stored_value = prop_iter->second;
+    int copy_size = std::min((int)stored_value.length(), size - 1);
+    if (copy_size > 0)
+    {
+        strncpy(value, stored_value.c_str(), copy_size);
+        value[copy_size] = '\0';
+        return copy_size;
+    }
+    return 0;
+}
+
 /* object list */
 static OBJECTNUM next_object_id = 0;
 static OBJECTNUM deleted_object_count = 0;

@@ -120,13 +120,6 @@ int controller_dg::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int controller_dg::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
-}
-
 /* Object initialization is called once after all object have been created */
 int controller_dg::init(OBJECT *parent)
 {
@@ -835,12 +828,6 @@ EXPORT int init_controller_dg(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(controller_dg);
-}
-
-EXPORT int checkpoint_init_controller_dg(OBJECT *obj)
-{
-	controller_dg *my = object_data<controller_dg>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_controller_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

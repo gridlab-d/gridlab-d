@@ -944,7 +944,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             prop = class_find_property(oClass, propName.c_str());
         }
         if (prop != nullptr)
-            prop->raw = propValue;
+            object_set_raw_value_by_name(obj, propName.c_str(), propValue.data());
         this->currentObject = obj;
         this->currentModule = obj->oclass->module;
         this->parse.current_object = obj;

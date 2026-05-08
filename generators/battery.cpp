@@ -255,13 +255,6 @@ int battery::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int battery::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
-}
-
 /* Object initialization is called once after all object have been created */
 int battery::init(OBJECT *parent)
 {
@@ -2568,12 +2561,6 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(battery);
-}
-
-EXPORT int checkpoint_init_battery(OBJECT *obj)
-{
-	battery *my = object_data<battery>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

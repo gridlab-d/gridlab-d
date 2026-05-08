@@ -557,12 +557,12 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             while(iterator_object != nullptr)
             {
                 std::string class_name = iterator_object->oclass->name;
+                
                 objects_by_class[class_name].push_back(iterator_object);
                 iterator_object = object_get_next(iterator_object);
             }
 
             // ── Build objects section ──
-            int classnameCounter = 0;
             for (auto &class_pair : objects_by_class)
             {
                 nlohmann::json instances = nlohmann::json::array();
@@ -783,15 +783,12 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             default:
                             {
                                 char value_str[1024] = "";
-                                if(pmap->name != nullptr && strcmp(pmap->name, "shape") == 0)
+                                // Try to get per-object raw value first (for shape and other properties
+                                // that need to preserve original raw string from loading)
+                                char raw_value[1024] = "";
+                                if (object_get_raw_value_by_name(obj, pmap->name, raw_value, sizeof(raw_value)) > 0)
                                 {
-                                    // copy value from pmap->raw to value_str
-                                    if(!pmap->raw.empty())
-                                    {
-                                        strncpy(value_str, pmap->raw.c_str(), sizeof(value_str));
-                                        value_str[sizeof(value_str) - 1] = '\0';
-                                        instance[pmap->name] = std::string(value_str);
-                                    }
+                                    instance[pmap->name] = std::string(raw_value);
                                     break;
                                 }
                                 if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0
@@ -824,16 +821,16 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                 checkpoint["objects"][class_pair.first]["instances"] = instances;
             }
 
-            // ── User-defined classes (module == nullptr) ──
+            // ── Runtime-extended class properties ──
             {
                 nlohmann::ordered_json classes = nlohmann::ordered_json::object();
                 for (CLASS *cl = class_get_first_class(); cl != nullptr; cl = cl->next)
                 {
-                    if (cl->module != nullptr)
-                        continue; // skip module-registered classes
                     nlohmann::json props = nlohmann::json::array();
                     for (PROPERTY *p = cl->pmap; p != nullptr; p = p->next)
                     {
+                        if ((p->flags & PF_EXTENDED) == 0)
+                            continue; // only export properties added at runtime
                         const char *type_name = class_get_property_typename(p->ptype);
                         if (type_name == nullptr)
                             continue;
@@ -987,7 +984,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             std::ofstream json_file(full_path);
             if (json_file.is_open())
             {
-                std::string out = checkpoint.dump(2);
+                std::string out = checkpoint.dump(2, ' ', false, nlohmann::json::error_handler_t::replace);
                 json_file << out;
                 json_file.close();
                 output_verbose("JSON checkpoint written to '%s'", full_path);

@@ -142,7 +142,15 @@ int convert_to_double(const char *buffer, /**< a pointer to the string buffer */
 	{
 		if (prop->unit!=nullptr)	/* Unit allowed - see if it is a valid unit */
 		{
-			UNIT *from = unit_find(unit);
+			UNIT *from = nullptr;
+			if (strcmp(unit,"du") == 0)
+			{
+				from = prop->unit;
+			}
+			else
+			{
+				from = unit_find(unit);
+			}
 			if ( from != prop->unit && unit_convert_ex(from,prop->unit,(double*)data)==0)
 			{
 				output_error("convert_to_double(const char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
@@ -221,6 +229,31 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		cplex_output_type = v->Notation();
 	}
 
+	if (cplex_output_type == 'P' || cplex_output_type == 'p')
+	{
+		cplex_output_type = A;
+	}
+	else if (cplex_output_type == 'I')
+	{
+		cplex_output_type = I;
+	}
+	else if (cplex_output_type == 'J')
+	{
+		cplex_output_type = J;
+	}
+	else if (cplex_output_type == 'D')
+	{
+		cplex_output_type = A;
+	}
+	else if (cplex_output_type == 'R')
+	{
+		cplex_output_type = R;
+	}
+	else if (cplex_output_type != I && cplex_output_type != J && cplex_output_type != A && cplex_output_type != R)
+	{
+		cplex_output_type = J;
+	}
+
 	/* Now output appropriately */
 	if (cplex_output_type==A)
 	{
@@ -267,7 +300,43 @@ int convert_to_complex(const char *buffer, /**< a pointer to the string buffer *
 		v->SetRect(0.0, 0.0,v->Notation());
 		return 1;
 	}
-	n = sscanf(buffer,"%lg%lg%1[ijdr]%s",&a,&b,notation,unit);
+	// Normalize legacy/variant notation bytes so parsing is robust across
+	// checkpoints written with mixed complex-output conventions.
+	char norm[1024] = "";
+	size_t wi = 0;
+	for (size_t i = 0; buffer[i] != '\0' && wi + 1 < sizeof(norm); ++i)
+	{
+		unsigned char c = (unsigned char)buffer[i];
+		// UTF-8 degree sign (C2 B0) -> degree notation 'd'
+		if (c == 0xC2 && buffer[i + 1] != '\0' && (unsigned char)buffer[i + 1] == 0xB0)
+		{
+			norm[wi++] = 'd';
+			++i;
+			continue;
+		}
+		// UTF-8 replacement char (EF BF BD) -> degree notation 'd'
+		if (c == 0xEF && buffer[i + 1] != '\0' && buffer[i + 2] != '\0' && (unsigned char)buffer[i + 1] == 0xBF && (unsigned char)buffer[i + 2] == 0xBD)
+		{
+			norm[wi++] = 'd';
+			i += 2;
+			continue;
+		}
+		// Legacy polar-degree suffix 'P'/'p' -> 'd'
+		if (c == 'P' || c == 'p')
+		{
+			norm[wi++] = 'd';
+			continue;
+		}
+		// Accept upper-case notations
+		if (c == 'I') c = 'i';
+		else if (c == 'J') c = 'j';
+		else if (c == 'D') c = 'd';
+		else if (c == 'R') c = 'r';
+		norm[wi++] = (char)c;
+	}
+	norm[wi] = '\0';
+
+	n = sscanf(norm,"%lg%lg%1[ijdr]%s",&a,&b,notation,unit);
 	if (n==1) /* only real part */
 		v->SetRect(a,0,v->Notation());
 	else if (n < 3 || strchr("ijdr",notation[0])==nullptr) /* incomplete imaginary part or missing notation */
@@ -291,7 +360,15 @@ int convert_to_complex(const char *buffer, /**< a pointer to the string buffer *
 
 	if ( n>3 && prop->unit!=nullptr ) /* unit given and unit allowed */
 	{
-		UNIT *from = unit_find(unit);
+		UNIT *from = nullptr;
+		if (strcmp(unit,"du") == 0)
+		{
+			from = prop->unit;
+		}
+		else
+		{
+			from = unit_find(unit);
+		}
 		double scale=1.0;
 		if ( from != prop->unit && unit_convert_ex(from,prop->unit,&scale)==0)
 		{
@@ -738,7 +815,7 @@ int convert_from_char32(char *buffer, /**< pointer to the string buffer */
 	Converts a string to a \e char32 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
  **/
- // I’ve changed the signature so that `buffer` is a C-string
+ // Iï¿½ve changed the signature so that `buffer` is a C-string
  // and `data` is a char array of exactly 32 bytes.
 
 // signature unchanged
@@ -746,7 +823,7 @@ int convert_to_char32(const char* buffer,
 	void* data,
 	PROPERTY* prop)  
 {
-	// silence “unused” warning for prop
+	// silence ï¿½unusedï¿½ warning for prop
 	(void)prop;
 
 	// out is our 32-byte destination
@@ -903,7 +980,7 @@ int convert_to_char256(const char* buffer,
 	std::memcpy(out, token.data(), len);
 	out[len] = '\0';
 
-	// mimic sscanf’s return value: 1 if we actually stored something, else 0
+	// mimic sscanfï¿½s return value: 1 if we actually stored something, else 0
 	return (len > 0) ? 1 : 0;
 }
 

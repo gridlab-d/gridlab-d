@@ -149,13 +149,6 @@ int sec_control::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int sec_control::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
-}
-
 /* Object initialization is called once after all object have been created */
 int sec_control::init(OBJECT *parent)
 {
@@ -1190,12 +1183,6 @@ EXPORT int init_sec_control(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(sec_control);
-}
-
-EXPORT int checkpoint_init_sec_control(OBJECT *obj)
-{
-	sec_control *my = object_data<sec_control>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

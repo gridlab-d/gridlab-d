@@ -57,7 +57,6 @@ public:
 	rectifier(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
 	int shared_init(OBJECT *parent);
 
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);

@@ -183,7 +183,6 @@ public:
 	solar(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
 	int shared_init(OBJECT *parent);
 	void derate_panel(double Tamb, double Insol);
 	void calculate_IV(double Tamb, double Insol);

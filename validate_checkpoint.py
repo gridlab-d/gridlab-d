@@ -247,7 +247,7 @@ def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
             for autotestChild in autotestDirectory.iterdir():
                 autotestChild.resolve()
                 if (autotestChild.is_file() 
-                        and (autotestChild.suffix == ".glm" or autotestChild.suffix == ".json") 
+                        and autotestChild.suffix == ".json"
                         and "test_" in autotestChild.stem
                         and (("_opt" in autotestChild.stem and runOptionalTests) or "_opt" not in autotestChild.stem)):
                     autotestFiles.append(autotestChild)

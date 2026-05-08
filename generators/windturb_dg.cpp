@@ -281,13 +281,6 @@ int windturb_dg::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int windturb_dg::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
-}
-
 /* Checks for climate object and maps the climate variables to the windturb object variables.
 If no climate object is linked, then default pressure, temperature, and wind speed will be used. */
 int windturb_dg::init_climate()
@@ -2269,12 +2262,6 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(windturb_dg);
-}
-
-EXPORT int checkpoint_init_windturb_dg(OBJECT *obj)
-{
-	windturb_dg *my = object_data<windturb_dg>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)

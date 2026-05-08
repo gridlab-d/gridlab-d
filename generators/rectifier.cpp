@@ -90,6 +90,8 @@ int rectifier::create(void)
 
 int rectifier::shared_init(OBJECT *parent)
 {
+	OBJECT *obj = object_header(this);
+
 	if (parent != nullptr)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
@@ -99,17 +101,42 @@ int rectifier::shared_init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+
+	if (parent!=nullptr && gl_object_isa(parent,"inverter"))
+	{
+		if (pCircuit_V == nullptr)
+		{
+			pCircuit_V = new gld_property(parent,"V_In");
+		}
+
+		if (!pCircuit_V->is_valid() || !pCircuit_V->is_double())
+		{
+			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
+		}
+
+		if (pLine_I == nullptr)
+		{
+			pLine_I = new gld_property(parent,"I_In");
+		}
+
+		if (!pLine_I->is_valid() || !pLine_I->is_double())
+		{
+			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
+		}
+	}
+	else
+	{
+		GL_THROW("Rectifier:%d - %s -- Rectifiers must be parented to inverters",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		A rectifier either lacks a parent, or has a parent that is not an inverter.  Rectifiers only support inverter
+		objects as parents, at this time.  Please parent it to an inverter.
+		*/
+	}
+
 	// These variables need intialized every time regardless of checkpoint load
 	// Non-published variables (not loaded from checkpoint) must be initialized here
 
 	return 1;
-}
-
-int rectifier::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
 }
 
 /* Object initialization is called once after all object have been created */
@@ -125,40 +152,6 @@ int rectifier::init(OBJECT *parent)
 	int rv = shared_init(parent);
 	if (rv != 1) return rv;
 	
-	if (parent!=nullptr && gl_object_isa(parent,"inverter"))
-	{
-		//Map the V_In property
-		pCircuit_V = new gld_property(parent,"V_In");
-
-		//Make sure it worked
-		if (!pCircuit_V->is_valid() || !pCircuit_V->is_double())
-		{
-			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
-			/*  TROUBLESHOOT
-			While attempting to map the parent inverter property, the rectifier encoutnered an error.  Please try again.
-			If the error persists, please submit your model and information via the ticketing system.
-			*/
-		}
-
-		//Now get the current
-		pLine_I = new gld_property(parent,"I_In");
-
-		//Make sure it worked
-		if (!pLine_I->is_valid() || !pLine_I->is_double())
-		{
-			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
-			//Defined above
-		}
-	}
-	else
-	{
-		GL_THROW("Rectifier:%d - %s -- Rectifiers must be parented to inverters",obj->id,(obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		A rectifier either lacks a parent, or has a parent that is not an inverter.  Rectifiers only support inverter
-		objects as parents, at this time.  Please parent it to an inverter.
-		*/
-	}
-
 	/* TODO: set the context-dependent initial value of properties */
 	if (gen_mode_v==UNKNOWN)
 	{
@@ -298,12 +291,6 @@ EXPORT int init_rectifier(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(rectifier);
-}
-
-EXPORT int checkpoint_init_rectifier(OBJECT *obj)
-{
-	rectifier *my = object_data<rectifier>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_rectifier(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

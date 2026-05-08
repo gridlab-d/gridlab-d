@@ -318,13 +318,6 @@ int solar::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int solar::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
-}
-
 /** Checks for climate object and maps the climate variables to the house object variables.
 Currently Tout, RHout and solar flux data from TMY files are used.  If no climate object is linked,
 then Tout will be set to 59 degF, RHout is set to 75% and solar flux will be set to zero for all orientations.
@@ -1762,12 +1755,6 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(solar);
-}
-
-EXPORT int checkpoint_init_solar(OBJECT *obj)
-{
-	solar *my = object_data<solar>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

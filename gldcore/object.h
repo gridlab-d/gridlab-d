@@ -436,6 +436,8 @@ extern "C"
 	PROPERTY *object_get_property(OBJECT *obj, const PROPERTYNAME name, PROPERTYSTRUCT *part);
 	const PROPERTY *object_prop_in_class(OBJECT *obj, const PROPERTY *prop);
 	int object_set_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value);
+    void object_set_raw_value_by_name(OBJECT *obj, const PROPERTYNAME name, const char *value);
+    int object_get_raw_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size);
 	void object_store_checkpoint_property(OBJECT *obj, const char *name, const char *value);
 	STATUS object_restore_checkpoint_properties(OBJECT *obj);
 	int object_set_value_by_addr(OBJECT *obj, void *addr, char *value, PROPERTY *prop);

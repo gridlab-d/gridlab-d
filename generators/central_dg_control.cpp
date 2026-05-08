@@ -105,13 +105,6 @@ int central_dg_control::shared_init(OBJECT *parent)
 	return 1;
 }
 
-int central_dg_control::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	return rv;
-}
-
 /* Object initialization is called once after all object have been created */
 int central_dg_control::init(OBJECT *parent)
 {
@@ -647,12 +640,6 @@ EXPORT int init_central_dg_control(OBJECT *obj, OBJECT *parent)
 			return 0;
 	}
 	INIT_CATCHALL(central_dg_control);
-}
-
-EXPORT int checkpoint_init_central_dg_control(OBJECT *obj)
-{
-	central_dg_control *my = object_data<central_dg_control>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_central_dg_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
