@@ -39,6 +39,17 @@ metrics::metrics(MODULE *module)
 								PT_double, "metric_interval[s]", PADDR(metric_interval_dbl),
 								PT_double, "report_interval[s]", PADDR(report_interval_dbl),
 								PT_bool, "perform_secondary_interruptions_count", PADDR(secondary_interruptions_count), PT_ACCESS, PA_HIDDEN,
+								PT_timestamp, "next_metric_interval", PADDR(next_metric_interval), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Tracking variable used to determine when to do an interval dump of variables",
+								PT_timestamp, "next_report_interval", PADDR(next_report_interval), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Tracking variable used to determine when to do next \"line dump\" of variables",
+								PT_timestamp, "next_annual_interval", PADDR(next_annual_interval), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Tracking variable used to determine when next year is (assumes 8760 model)",
+								PT_int32, "metric_interval_event_count", PADDR(metric_interval_event_count), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Event count in the current \"metric\" interval",
+								PT_int32, "annual_interval_event_count", PADDR(annual_interval_event_count), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Event count in the current \"annual\" interval",
+								PT_bool, "metric_equal_annual", PADDR(metric_equal_annual), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Flag to see if annual and \"metric interval\" are the same length",
+								PT_timestamp, "curr_time", PADDR(curr_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Time tracking variable",
+								PT_int32, "num_indices", PADDR(num_indices), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Number of indices we are finding",
+								PT_int32, "CustomerCount", PADDR(CustomerCount), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Number of candidate objects (customers) found",
+								PT_int64, "CalcIndices", PADDR(CalcIndices), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: STRUCT_ARRAY[INDEXARRAY]:num_indices Storage/informational array for metrics of interest",
+								PT_int64, "Customers", PADDR(Customers), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: STRUCT_ARRAY[CUSTARRAY]:CustomerCount Array of candidate objects (customers)",
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 

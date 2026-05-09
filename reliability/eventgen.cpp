@@ -87,6 +87,20 @@ eventgen::eventgen(MODULE *module)
 								PT_int32, "switch_state", PADDR(switch_state), PT_DESCRIPTION, "Current state (1=closed, 0=open) for the controlled switch",
 								PT_char1024, "external_fault_event", PADDR(external_fault_event), PT_DESCRIPTION, "This variable is populated from external programs with a fault they would like to add/remove to the system.",
 								PT_bool, "use_external_faults", PADDR(use_external_faults), PT_DESCRIPTION, "Boolean to let the object know to check for faults messages from an external source.",
+								PT_int64, "UnreliableObjs", PADDR(UnreliableObjs), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: STRUCT_ARRAY[OBJEVENTDETAILS]:UnreliableObjCount Array of found objects in system and parameters of their failure",
+								PT_int64, "Unhandled_Events", PADDR(Unhandled_Events), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: STRUCT[RELEVANTSTRUCT] Unhandled event linked list",
+								PT_int32, "UnreliableObjCount", PADDR(UnreliableObjCount), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Size of UnreliableObjs",
+								PT_int32, "faults_in_prog", PADDR(faults_in_prog), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Number of faults currently induced by this event_gen object",
+								PT_double, "curr_fail_dist_params_1", PADDR(curr_fail_dist_params[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Current parameters of failure_dist - used to track changes",
+								PT_double, "curr_fail_dist_params_2", PADDR(curr_fail_dist_params[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Current parameters of failure_dist - used to track changes",
+								PT_double, "curr_rest_dist_params_1", PADDR(curr_rest_dist_params[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Current parameters of restore_dist - used to track changes",
+								PT_double, "curr_rest_dist_params_2", PADDR(curr_rest_dist_params[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Current parameters of restore_dist - used to track changes",
+								PT_enumeration, "curr_fail_dist", PADDR(curr_fail_dist), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Current failure distribution type - used to track changes",
+								PT_enumeration, "curr_rest_dist", PADDR(curr_rest_dist), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Current restoration distribution type - used to track changes",
+								PT_timestamp, "next_event_time", PADDR(next_event_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Time next event (outage or restoration) will occur",
+								PT_double, "next_event_time_dbl", PADDR(next_event_time_dbl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Time next event will occur - double representation",
+								PT_bool, "fault_implement_mode", PADDR(fault_implement_mode), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Flag to indicate if in random fault mode, or user directed fault mode",
+								PT_int32, "last_switch_state", PADDR(last_switch_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: To add unhandled events only when the switch_state changes from its previous value",
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 		if (gl_publish_function(oclass, "add_event", (FUNCTIONADDR)add_event) == nullptr)

@@ -107,6 +107,8 @@ set(SOURCE_LIST
         realtime.h
         sanitize.cpp
         sanitize.h
+        serialize.cpp
+        serialize.h
         save.cpp
         save.h
         server.cpp
