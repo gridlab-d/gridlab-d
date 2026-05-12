@@ -28,17 +28,46 @@ Remember that both an asterix and an underscore will italicize text, and both ma
 
 ## Figures, Tables, References, and Captions
 
-Images can be either local (in the images folder), or refering an external url. See the below examples:
+Images can be either local (in the images folder), or refering an external url. To insert an image in the documentation write
 
-![Here's an image](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg)
-##### Figure 1: GridLAB-D Logo
+```markdown
+  ![caption](local path or URL to the image file) { #anchor }
+```
 
-Note that figure labels are below the image and at a list-level of five. The same goes for tables, but table captions appear above the table.
+See the examples below generated with the following markdown code:
+
+```markdown
+  ![GridLAB-D™ Logo [external URL reference]](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg) { #fig:external-url-ex }
+```
+
+and
+
+```markdown
+  ![Distribution system switching capacitors [local path reference]](../../images/Dist_syst_switching_capacitors.png) { #fig:local-reference-ex }
+```
+
+### External Image URL Reference
+
+![GridLAB-D™ Logo [external URL reference]](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg){ #fig:external-url-ex }
 
 ### Local Image Reference
 
-![Dist syst switching capacitors.png](../../images/Dist_syst_switching_capacitors.png)
-##### Figure 2. Distribution system switching capacitors
+![Distribution system switching capacitors [local path reference]](../../images/Dist_syst_switching_capacitors.png){ #fig:local-reference-ex }
+
+Tables are introduced by preceeding them with the keyword ```Table:``` followed by the table caption and anchor for referencing.
+
+Table: Table example { #tbl:table-ex }
+
+|Parameter Name|Unit|Type|Description|
+|---|---|---|---|
+|```voltage```|V|float|Terminal voltage|
+
+!!! note 
+
+    - Figure labels are below the image.
+    - Table captions appear above the table.
+    - Table and figure numbering is incremented automatically.
+    - Referencing the figures and tables within the same document is done using the defined anchor, e.g. ```[](#fig:external-url-ex)``` for [](#fig:external-url-ex) or ```[](#tbl:table-ex)``` for [](#tbl:table-ex). (This is achieved by using ```mkdocs-caption``` plugin and the ```attr_list``` option for the ```markdown_extensions``` in ```mkdocs.yml``` file.)
 
 ### Local Page References
 

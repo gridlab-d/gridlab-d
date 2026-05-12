@@ -32,3 +32,4 @@ pyyaml_env_tag==1.1
 six==1.17.0
 watchdog==6.0.0
 markdown_include
+mkdocs-caption
