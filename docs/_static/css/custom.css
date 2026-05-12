@@ -20,3 +20,25 @@
     width: 100%;
     height: auto;
 }
+
+/* Forces the caption to the top of the table */
+/* Native HTML table captions (raw <caption> tags) */
+/*
+The .wy-table-responsive table caption selector needs !important for
+some options to override the ReadTheDocs theme's default caption styles.
+*/
+.wy-table-responsive table caption {
+  caption-side: top !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  font-style: normal !important;
+  color: black;
+  margin-bottom: 0.5em;  /* space between caption and table (caption is on top) */
+}
+
+figure figcaption {
+  font-weight: bold;
+  text-align: center;
+  color: black;
+  margin-top: 0.5em; /* space between image and caption (caption is below) */
+}
