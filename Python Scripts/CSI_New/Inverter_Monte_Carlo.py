@@ -84,7 +84,7 @@ for item in feeders:
              
             current_feeder = "C:\\Users\\mayh819\\CSI\\eclipse workspace\\CSI GLM scripts\\Source\\Python Scripts\\Statistical Runs - PV penetration\\%s" %(feeder_name)
              
-#            print feeder_name, 'Penetration Level:', PV_penetration[pen_lev], ', Case:', count
+#            print(feeder_name, 'Penetration Level:', PV_penetration[pen_lev], ', Case:', count)
            
             new_feeder_glm = '%s_%dpct_case_%d_' %(feeder_name, PV_penetration[pen_lev], count)+ feeder_glm
             new_commercial_glm = '%s_%dpct_case_%d_' %(feeder_name, PV_penetration[pen_lev], count)+ commercial_glm
@@ -158,9 +158,9 @@ for item in feeders:
            
             Inverter_Function_File.remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_GLM)
             
-    #         print line_solar_map
-    #         print transformer_meter_map
-    #         print transformer_solar_map
+    #         print(line_solar_map)
+    #         print(transformer_meter_map)
+    #         print(transformer_solar_map)
              
             line_solar_map = None
             transformer_meter_map = None
@@ -170,7 +170,7 @@ for item in feeders:
     shutil.copy2(src_vb, dst)    
     shutil.copy2(src_vc, dst)    
      
-    print 'DONE 1 - Case Files Generated!'
+    print('DONE 1 - Case Files Generated!')
 
     filename2 = dst + '\\new_run_all.bat' 
 

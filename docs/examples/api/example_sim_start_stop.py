@@ -34,33 +34,33 @@ if load_code != 0:
     raise RuntimeError(f"Failed to load model with error code {load_code}.")
 
 # Read in current start and stop time
-starttime = datetime.fromisoformat(gld.get_starttime())
-stoptime = datetime.fromisoformat(gld.get_stoptime())
-print(f"Start time in model: {starttime}")
-print(f"Stop time in model: {stoptime}")
+starttime_dt = datetime.fromisoformat(gld.get_starttime())
+stoptime_dt = datetime.fromisoformat(gld.get_stoptime())
+print(f"Start time in model: {starttime_dt}")
+print(f"Stop time in model: {stoptime_dt}")
 
 # Calculate new simulation duration
-old_sim_duration = stoptime - starttime
+old_sim_duration = stoptime_dt - starttime_dt
 new_sim_duration = old_sim_duration + timedelta(hours=1)
 sim_duration_half = new_sim_duration / 2
 
 # Calculate and set new start and stop times
-calc_starttime = datetime.isoformat(starttime - sim_duration_half)
-calc_stoptime = datetime.isoformat(stoptime + sim_duration_half)
-gld.set_starttime(calc_starttime)
-gld.set_stoptime(calc_stoptime)
+starttime_str = datetime.isoformat(starttime_dt - sim_duration_half)
+stoptime_str = datetime.isoformat(stoptime_dt + sim_duration_half)
+gld.set_starttime(starttime_str)
+gld.set_stoptime(stoptime_str)
 
 # Confirm changes to start and stop times
-new_starttime = datetime.fromisoformat(gld.get_starttime())
-new_stoptime = datetime.fromisoformat(gld.get_stoptime())
-print(f"New start time: {new_starttime}")
-print(f"New stop time: {new_stoptime}")
+starttime_dt = datetime.fromisoformat(gld.get_starttime())
+stoptime_dt = datetime.fromisoformat(gld.get_stoptime())
+print(f"New start time: {starttime_dt}")
+print(f"New stop time: {stoptime_dt}")
 
 # Run model with new simulation start and stop times set
 gld.run()
 
 # Alternatively call `run()` with start and stop time defined
-# gld.run(start_time=calc_starttime, stop_time=calc_stoptime)
+# gld.run(start_time=starttime_str, stop_time=stoptime_str)
 
 # Check for errors after running simulation
 messages = gld.get_messages()

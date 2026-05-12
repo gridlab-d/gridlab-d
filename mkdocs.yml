@@ -108,10 +108,6 @@ nav:
           - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/01_Introduction.md
           - GridLAB-D™ QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/02_QSTS_Inverter.md
           - GridLAB-D™ QSTS Inverter Model - DELTAMODE (Legacy): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/022_QSTS_Inverter_DELTAMODE_LEGACY.md
-          - GridLAB-D Inverter Model — Parameters and Functionality: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/090_GridLAB_D_Inverter_Model_Parameters_and_Functionality.md
-          - 091_four_quadrant_control_mode_extras: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/091_four_quadrant_control_mode_extras.md
-          - Notes and questions: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/099_Notes_and_questions.md
-          - 999_Inverter_Droop_Control_Disregard: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/999_Inverter_Droop_Control_Disregard.md
           - Updated Comparison Report: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Comparison_Report_Inverter_WiKi_VS_source.md
           - Inverter_WiKi_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_WiKi_table.md
           - GridLAB-D Published Variables: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_publish_variable.md
@@ -240,6 +236,7 @@ nav:
         - Integrated T+D Powerflow: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.3 - Integrated T+D Powerflow.md
         - Integration with the HELICS Co-Simulation Platform: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.4 - GridLAB-D HELICS Integration.md
         - Integration with a Postgres Database: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.5 - Integration with Postgres Databases.md
+        - Integration with a EnergyPlus Model: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.6 - Integration with EnergyPlus.md
   - 4.0 Developing Reference:
     - 4.0 - Feature Development:
       - Checkpointing: docs/4.0 Developing Reference/4.0 - Feature Development/Checkpointing.md

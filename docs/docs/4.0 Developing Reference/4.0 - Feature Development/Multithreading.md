@@ -24,64 +24,334 @@ On the development side, GridLAB-D core functions are expected to handle most of
 
 On the user side, the only interaction will be designating a core/threadcount for GridLAB-D to utilitize, which will just result in additional performance/faster simulation times.  Answers from GridLAB-D models should be identical between single-threaded and multithreaded runs, with the only difference being in execution time. 
 
-## Class/Sequence Diagrams
+## Executive Overview
 
-TODO: Needed?
+GridLab-D implements a sophisticated multi-threaded execution engine using C++11 `std::thread` and synchronization primitives. The system employs **two complementary threading models**:
 
-If apropriate, document the feature using class or sequence diagrams.
+1. **Central Threadpool** — A job-queue-based threadpool in `exec.cpp` for load-balancing object synchronization across CPU cores
+2. **Module-Specific Threading** — Direct `std::thread` implementations in specialized modules (loadshape, enduse, schedule) for parallel data processing
 
-```mermaid
-classDiagram
-      GLD <|-- GLDModel
-      GLDModel <|-- GLDObjHolder
-      GLDObjHolder <|-- GLDObj
-      GLD: gld - GridLAB-D
-      GLD: wd - Path
-      GLD: sim_running - bool
-      GLD: sim_time - DateTime
+### What Does the Threadpool Do?
 
-      GLD:get_model()
-      GLD:set_install_root(path|str) -> None
-      GLD:get_install_root() -> str
-      GLD:get_executable_path() -> str
+The threadpool distributes simulation object synchronization workload across multiple CPU cores, enabling faster convergence in power flow calculations and other intensive operations. Each worker thread processes a subset of objects during each simulation timestep, with synchronization barriers ensuring consistency.
 
-      class GLDModel{
-            model: _GLDObjHolder
-            extendable: bool
+### Quick Comparison: Threadpool vs. Module Threading
 
-            _load_model() -> None
-            }
-        class GLDObjHolder{
-            _model: dict[_GLDObj]
-            extendable: bool
+| Aspect | Central Threadpool | Module-Specific Threads |
+|--------|-------------------|------------------------|
+| **Scope** | Global job queue for object sync | Per-module parallel processing |
+| **Trigger** | Every sync operation in exec.cpp | Module-specific sync functions |
+| **Synchronization** | Atomic counters + condition variables | Condition variables with ready flag |
+| **Thread Count** | Configurable via `global_threadcount` | Matches threadcount setting |
+| **Data Partitioning** | By object parent for cache locality | By module-specific segments |
+| **Use Case** | General-purpose object sync | Specialized batch operations |
 
-            __init__()
-            __setitem__(key: str, value: Any) -> str
-            __getitem__(key: str) -> _GLDObj
-            __delitem__(key: str) -> str
-            __iter__()
-            __reversed__()
-            __contains__(key: str)
-            __repr__() -> str
-            }
-        class GLDObj{
-            _data = dict
+### System Architecture (High-Level)
 
-            __init__()
-            __setitem__(key: str, value: Any) -> str
-            __getitem__(key: str) -> Any
-            __iter__()
-            __reversed__()
-            __contains__(key: str)
-            __repr__() -> str
-            }
+```
+Main Thread (exec.cpp)
+    ├── Central Threadpool (N workers + 1 sync thread)
+    │   ├── Job Queue (lock-free submission)
+    │   ├── Worker Threads (process jobs in parallel)
+    │   └── Sync Thread (for synchronous execution mode)
+    │
+    ├── Loadshape Thread Group (M threads, direct std::thread)
+    │   └── Condition variable coordination
+    │
+    ├── Enduse Thread Group (M threads, direct std::thread)
+    │   └── Condition variable coordination
+    │
+    └── Schedule Thread Group (M threads, direct std::thread)
+        └── Condition variable coordination
 ```
 
+---
 
-## Itemized Subfeatures
+## Central Threadpool Infrastructure
 
-- Initial ideas/framework discussion on how to do multithreading - January 31, 2026
-- Implementation/demonstration - March 31, 2026
+### Threadpool Class Design
+
+The `cpp_threadpool` class is defined in [gldcore/cpp_threadpool.h](cpp_threadpool.h) and implemented in [gldcore/cpp_threadpool.cpp](cpp_threadpool.cpp).
+
+**Constructor:**
+```cpp
+cpp_threadpool(int num_threads)
+```
+- If `num_threads == 0`, uses `std::thread::hardware_concurrency()` for auto-detection
+- Creates `num_threads + 1` total threads (N workers + 1 synchronous execution thread)
+- Initializes atomic counters, mutexes, and condition variables
+
+### Public Interface
+
+```cpp
+class cpp_threadpool {
+public:
+    // Constructor
+    cpp_threadpool(int num_threads);
+    ~cpp_threadpool();
+    
+    // Job submission
+    void add_job(std::function<void()> job);
+    
+    // Synchronization
+    void await();  // Block until all queued jobs complete
+    
+    // Execution mode control
+    void set_sync_mode(bool mode);  // true=serial, false=parallel
+    
+    // Thread identification
+    std::map<std::thread::id, int> get_threadmap() const;
+};
+```
+
+**Key Methods:**
+
+- **`add_job(callable)`**: Enqueues a job (lambda or function pointer) to the thread-safe queue. Thread-safe via mutex `queue_lock`.
+- **`await()`**: Blocks the main thread until all enqueued jobs complete. Uses condition variable `wait_condition` and atomic counter `running_threads`.
+- **`set_sync_mode(bool)`**: Switches between parallel execution (false) and synchronous execution (true). When true, jobs execute in a single dedicated thread rather than the worker pool.
+- **`get_threadmap()`**: Returns `std::map<std::thread::id, int>` mapping each worker thread's ID to its index (0 to N-1).
+
+### Internal Architecture
+
+**Thread Pool Structure:**
+
+```
+┌─────────────────────────────────────────────┐
+│         cpp_threadpool (Main Thread)        │
+├─────────────────────────────────────────────┤
+│                                             │
+│  Thread-Safe Job Queue                      │
+│  ┌──────────────────────────────┐           │
+│  │ std::queue<std::function>    │           │
+│  └──────────────────────────────┘           │
+│         Protected by: queue_lock            │
+│                                             │
+│  Worker Thread Pool:                        │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
+│  │ Worker 0 │  │ Worker 1 │  │ Worker N │   │
+│  │ (Thread) │  │ (Thread) │  │ (Thread) │   │
+│  └──────────┘  └──────────┘  └──────────┘   │
+│                                             │
+│  Synchronization:                           │
+│  • queue_lock (std::mutex)                  │
+│  • wait_lock (std::mutex)                   │
+│  • sync_mode_lock (std::mutex)              │
+│  • condition (std::condition_variable)      │
+│  • wait_condition (std::condition_variable) │
+│  • running_threads (std::atomic_int)        │
+│  • exiting (std::atomic_bool)               │
+│                                             │
+└─────────────────────────────────────────────┘
+```
+
+**Synchronization Primitives:**
+
+| Primitive | Type | Purpose |
+|-----------|------|---------|
+| `queue_lock` | `std::mutex` | Protects job queue access |
+| `wait_lock` | `std::mutex` | Protects wait condition |
+| `sync_mode_lock` | `std::mutex` | Protects sync mode flag |
+| `condition` | `std::condition_variable` | Signals job availability to workers |
+| `wait_condition` | `std::condition_variable` | Signals completion to main thread |
+| `running_threads` | `std::atomic_int` | Lock-free count of active jobs |
+| `exiting` | `std::atomic_bool` | Lock-free shutdown signal |
+
+### Worker Thread Lifecycle using Job
+
+```
+    Worker Thread Created
+              │
+              ▼
+    ┌─────────────────────────────┐
+    │  Main Loop (Until exiting)  │
+    ├─────────────────────────────┤
+    │                             │
+    │  Wait on condition variable │
+    │  (no jobs available)        │
+    │         │                   │
+    │         ▼                   │
+    │  Job available? ──→ NO      │
+    │         │           │       │  
+    │         ▼           ▼       │ 
+    │        YES     Back to Wait │
+    │         │                   │
+    │         ▼                   │
+    │    Get next job             │
+    │    Release queue_lock       │
+    │         │                   │
+    │         ▼                   │
+    │    Execute job              │
+    │         │                   │
+    │         ▼                   │
+    │    running_threads--        │
+    │    Notify wait_condition    │
+    │         │                   │
+    │         ▼                   │
+    │    Back to Wait             │
+    └─────────────────────────────┘
+
+    ┌─────────────────────────────┐
+    │  Add Job to Threadpool      │
+    ├─────────────────────────────┤
+    │      Acquire queue_lock     │
+    │      running_threads++      │
+    │      Notify condition       │
+    └─────────────────────────────┘
+
+```
+
+---
+
+## Threadpool Usage in Execution Engine
+
+The threadpool is instantiated globally in [gldcore/exec.cpp](exec.cpp) and used throughout the simulation cycle.
+
+### Threadpool Initialization
+
+**Location:** [exec.cpp, Line 3551](exec.cpp#L3551)
+
+```cpp
+threadpool = new cpp_threadpool(global_threadcount);
+```
+
+This happens once at the start of the execution phase. The `global_threadcount` variable is set during initialization from command-line arguments or defaults to `processor_count()`.
+
+### Object Synchronization Pattern
+
+**Location:** [exec.cpp, Lines 2320-2340](exec.cpp#L2320-L2340)
+
+```cpp
+// Distribute object synchronization across threadpool
+for (int k = 0; k < n_threads; k++) {
+    threadpool->add_job([=] { 
+        obj_syncproc(&*thread[n+k]); 
+    });
+}
+threadpool->await();  // Wait for all sync operations to complete
+```
+
+**How It Works:**
+
+1. Main thread creates one job per worker thread
+2. Each job calls `obj_syncproc()` with a segment of objects (thread data structure)
+3. Worker threads execute jobs in parallel, synchronizing their assigned objects
+4. `await()` blocks main thread until all jobs complete
+5. Main thread continues to next simulation phase
+
+### Commit Operation Batching
+
+**Location:** [exec.cpp, Lines 1683-1710](exec.cpp#L1683-L1710)
+
+```cpp
+// Batch commit operations across threadpool
+for (int k = 0; k < n_threads; k++) {
+    threadpool->add_job([=, &obj, &result]() {
+        // Commit operations for assigned object segment
+        commit_segment(thread[k]);
+    });
+}
+threadpool->await();
+```
+
+Similar pattern: distribute work across threads, wait for completion.
+
+### Thread-to-Index Mapping
+
+**Thread Data Structure:** [exec.h](exec.h)
+
+```cpp
+class threadpool_thread_data {
+    std::map<std::thread::id, int> thread_map;  // Maps thread ID → thread index
+    
+public:
+    int get_thread_index() const {
+        return thread_map[std::this_thread::get_id()];
+    }
+};
+```
+
+**Synchronization Data:**
+
+```cpp
+struct sync_data {
+    TIMESTAMP next_event_time;
+    int hard_event_count;
+    int status;
+    // ... other fields
+};
+```
+
+Each worker thread has associated `sync_data` for tracking convergence and event timing.
+
+---
+
+## Configuration & Environment Variables
+
+### Global Configuration Variable
+
+**Definition:** [gldcore/globals.cpp, Line 154](globals.cpp#L154)
+
+```cpp
+{"threadcount", PT_int32, &global_threadcount, 
+ PA_PUBLIC, 
+ "number of threads to use while using multicore"}
+```
+
+**Global Variable:**
+```cpp
+int global_threadcount = 1;  // Default: single-threaded
+```
+
+### Command-Line Interface
+
+**Usage:**
+```bash
+gridlabd --threadcount N model.glm
+```
+
+**Behavior:**
+- `N = 0`: Auto-detect using `std::thread::hardware_concurrency()`
+- `N = 1`: Single-threaded (no threadpool utilized)
+- `N > 1`: Multi-threaded with N worker threads
+- `N < 0`: Invalid (error)
+
+### Initialization Flow
+
+**Location:** [gldcore/main.cpp, Lines 207-210](main.cpp#L207-L210)
+
+```cpp
+if (global_threadcount == 0) {
+    global_threadcount = processor_count();
+    // On systems with 16 cores: global_threadcount = 16
+}
+// Output: "using 16 helper thread(s)"
+```
+
+**Auto-Detection Logic:**
+
+On Linux/Unix:
+- Calls `std::thread::hardware_concurrency()`
+- Falls back to `sysconf(_SC_NPROCESSORS_ONLN)` if not available
+
+On Windows:
+- Uses GetSystemInfo() to query processor count
+
+### Single-Threaded vs. Multi-Threaded Threshold
+
+Throughout the codebase, modules check threadcount to enable/disable multi-threading:
+
+```cpp
+if (global_threadcount < 2) {
+    // Single-threaded path (no thread overhead)
+    process_all_objects_sequentially();
+} else {
+    // Multi-threaded path
+    create_worker_threads();
+    distribute_work();
+    wait_for_completion();
+}
+```
+
 
 ## Source Code
 

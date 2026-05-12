@@ -40,9 +40,6 @@
         - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/01_Introduction.md
         - GridLAB-D™ QSTS Inverter Model - DELTAMODE (Legacy): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/022_QSTS_Inverter_DELTAMODE_LEGACY.md
         - GridLAB-D™ QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/02_QSTS_Inverter.md
-        - GridLAB-D Inverter Model — Parameters and Functionality: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/090_GridLAB_D_Inverter_Model_Parameters_and_Functionality.md
-        - 091_four_quadrant_control_mode_extras: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/091_four_quadrant_control_mode_extras.md
-        - Notes and questions: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/099_Notes_and_questions.md
         - 999_Inverter_Droop_Control_Disregard: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/999_Inverter_Droop_Control_Disregard.md
         - Updated Comparison Report: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Comparison_Report_Inverter_WiKi_VS_source.md
         - Inverter_WiKi_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_WiKi_table.md

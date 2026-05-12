@@ -252,7 +252,7 @@ The following code defines a class test with a random variable x. The name of th
 
     Prior to Hassayampa (Version 3.0) The random number generated is seeded using the current system time with a resolution of 1 second. Consequently, if two runs are started within the same second they are very likely to generate the same sequence of unique ids.
 
-## Iteration LImit
+## Iteration Limit
 
 The `iteration_limit` global variable determines that maximum number of iterations of the main synchronization loop permitted before the clock must advanced. If the main loop reaches the iteration limit and the clock has not advanced, GridLAB-D will terminate the simulation with a convergence error.
 
@@ -274,7 +274,7 @@ The maximum synctime global variable is used to control how long GridLAB-D waits
 
 ## Minimum Timestep
 
-The minimum timestep is shortest simulation time change allowed during a simulation. By default the minimum timestep is 1 second and for more simulation this will not cause any performance issues.
+The minimum timestep is the shortest simulation time change allowed during a simulation. By default the minimum timestep is 1 second and for more simulation this will not cause any performance issues.
 
 However, for certain kinds of very large simulations the result of a short `minimum_timestep` can be very slow progress. In such cases, an increase in the `minimum_timestep` can improve performance.
 

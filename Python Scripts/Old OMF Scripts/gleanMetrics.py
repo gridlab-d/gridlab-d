@@ -49,7 +49,7 @@ def getValues(dir,glm_filenames,days):
 		cursor = dbh.cursor()
 
 	for i in glm_filenames:
-		print ("Attempting to gather measurements from "+i)
+		print("Attempting to gather measurements from "+i)
 		
 		# Check that each feeder version has records for three days, and that each ran .glm has a complete (or nearly complete) record set (288 entries). 
 		if use_mysql == 1:
@@ -57,16 +57,16 @@ def getValues(dir,glm_filenames,days):
 			cursor.execute(sql)
 			result = cursor.fetchone()
 			if result[0] is None or result[0] == 0:
-				print ("	Missing simulation output for "+i)
+				print("	Missing simulation output for "+i)
 				continue
 			elif result[0] < 288:
-				print ("	Missing simulation output for "+i+". "+str(result[0])+"/288 five-minute intervals made it into the database.")
+				print("	Missing simulation output for "+i+". "+str(result[0])+"/288 five-minute intervals made it into the database.")
 				continue
 		else:
 			c = 0
 			filename = dir+'\\csv_output\\'+re.sub('\.glm$','_network_node_recorder.csv',i)
 			if not os.path.isfile(filename):
-				print ("	Missing simulation output for "+i)
+				print("	Missing simulation output for "+i)
 				continue
 			else:
 				csv = open (filename, 'r')
@@ -78,7 +78,7 @@ def getValues(dir,glm_filenames,days):
 						c += 1
 				if c < 288:
 					csv.close()
-					print ("	Missing simulation output for "+i+". "+str(c)+"/288 five-minute intervals were recorded.")
+					print("	Missing simulation output for "+i+". "+str(c)+"/288 five-minute intervals were recorded.")
 					continue
 		
 		# Get annual .glm ID by stripping the date from the filename. 
@@ -90,7 +90,7 @@ def getValues(dir,glm_filenames,days):
 			if m is not None:
 				glm_ID = m.group()
 			else:
-				print ("	Can't recognize file name: "+str(i)+". Going to ignore it.")
+				print("	Can't recognize file name: "+str(i)+". Going to ignore it.")
 				continue
 		
 		if glm_ID not in measurements.keys():
@@ -102,7 +102,7 @@ def getValues(dir,glm_filenames,days):
 			if re.match(r'^.*'+days[j]+'.*$',i) is not None:
 				season = j
 		if season is None:
-			print ("File "+str(i)+" isn't matching any of "+str(days)+".")
+			print("File "+str(i)+" isn't matching any of "+str(days)+".")
 			measurements[glm_ID] = None
 		else:
 		
@@ -152,7 +152,7 @@ def getValues(dir,glm_filenames,days):
 				pt = int(pt_date.strftime('%H')) + (int(pt_date.strftime('%M')) / 60)
 				mt = int(mt_date.strftime('%H')) + (int(mt_date.strftime('%M')) / 60)
 			measurements[glm_ID][season] = [pv,pt,te,mv,mt]
-			#print (str(i) +": peak value: "+ str(pv)+ " peak time: "+ str(pt)+ " total energy: "+ str(te) + " minimum time: "+ str(mt) + " minimum value: " + str(mv)) 
+			#print(str(i) +": peak value: "+ str(pv)+ " peak time: "+ str(pt)+ " total energy: "+ str(te) + " minimum time: "+ str(mt) + " minimum value: " + str(mv))
 	
 	# Make sure we only continue evaluation with glms that have all three days completely recorded. 
 	topop=[]
@@ -166,12 +166,12 @@ def getValues(dir,glm_filenames,days):
 	if len(topop) != 0:
 		for i in topop:
 			if i in measurements.keys():
-				print ("Ignoring "+i+" due to missing simulation output.")
+				print("Ignoring "+i+" due to missing simulation output.")
 				measurements.pop(i)
 					
 	if use_mysql == 1:
 		dbh.close()
-	print (str(len(measurements))+" of "+ str(orig_len/3)+ " calibrated models successfully ran.")
+	print(str(len(measurements))+" of "+ str(orig_len/3)+ " calibrated models successfully ran.")
 	return measurements
 	
 
@@ -226,10 +226,10 @@ def main():
 	#getValues(['F2407_calib_1_0_2013-04-14.glm','F2407_calib_1_2_2013-04-14.glm','F2407_calib_1_0_2013-06-29.glm'],['2013-06-29', '2013-04-14'])
 	#mets = funcRawMetsDict(['2407','2408','2410','2412','2414','2415'],[[14748.45,17.92,3047702.62,6514.26,3.92],[11384.59,7.25,2672748.02,7541.98,22.50],[7512.37,20.67,1822870.98,4910.10,1.58]]);
 	# for i in (mets.keys()):
-		# print ("ID: " + str(i));
-		# print ("summer \t\t" + str(mets[i][0]));
-		# print ("winter \t\t" + str(mets[i][1]));
-		# print ("shoulder \t" + str(mets[i][2]));
+		# print("ID: " + str(i));
+		# print("summer \t\t" + str(mets[i][0]));
+		# print("winter \t\t" + str(mets[i][1]));
+		# print("shoulder \t" + str(mets[i][2]));
 
 if __name__ ==  '__main__':
 	main();

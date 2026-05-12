@@ -77,8 +77,8 @@ def main():
 	
 if __name__ ==  '__main__':
 	w = main();
-	print (__doc__)
-	print ("Weights for each of the fifteen metrics: ");
+	print(__doc__)
+	print("Weights for each of the fifteen metrics: ");
 	j = [];
 	l = [];
 	m = [];
@@ -88,6 +88,6 @@ if __name__ ==  '__main__':
 		l.append(round(i,4));
 	for i in w[2]:
 		m.append(round(i,4));
-	print ("summer \t\t" + str(j));
-	print ("winter \t\t" + str(l));
-	print ("shoulder \t" + str(m));
+	print("summer \t\t" + str(j));
+	print("winter \t\t" + str(l));
+	print("shoulder \t" + str(m));

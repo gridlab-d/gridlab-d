@@ -27,7 +27,7 @@ class Account:
 					self.id = int(accObject['id'])
 					self.email = accObject['email']
 					self.APIKey = APIKey
-					print "Welcome " + self.email + "!"
+					print("Welcome " + self.email + "!")
 				else:   
 					raise ValueError("'" + APIKey + "'"  + " is not a valid API key.")
 
@@ -53,7 +53,7 @@ class Account:
 					count = count + 1
 			else:
 				raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
-		print outputString
+		print(outputString)
 		return emptyProjects
 
 	def logout(self):

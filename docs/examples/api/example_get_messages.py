@@ -29,9 +29,9 @@ load_code = gld.load("houses.glm")
 if load_code != 0:
     raise RuntimeError(f"Failed to load model with error code {load_code}.")
 
-starttime = datetime.fromisoformat(gld.get_starttime())
-stoptime = datetime.fromisoformat(gld.get_stoptime())
-sim_duration = stoptime - starttime
+starttime_dt = datetime.fromisoformat(gld.get_starttime())
+stoptime_dt = datetime.fromisoformat(gld.get_stoptime())
+sim_duration = stoptime_dt - starttime_dt
 step_size = 900
 num_steps = int(sim_duration.total_seconds() / step_size)
 
@@ -40,8 +40,8 @@ messages = gld.get_messages()
 pprint(messages)
 gld.clear_messages()
 for step in range(num_steps):
-    error_code, return_time = gld.step()
-    print(f"Simulation time: {return_time}")
+    error_code, return_time_str = gld.step()
+    print(f"Simulation time: {return_time_str}")
     messages = gld.get_messages()
     filtered_messages = [
         message for message in messages
@@ -55,7 +55,7 @@ for step in range(num_steps):
 # Ending the simulation and exiting GridLAB-D
 # Taking one extra step beyond the stated simulation stop time
 # gld.clear_messages()
-# error_code, return_time = gld.step()
+# error_code, return_time_str = gld.step()
 # messages = gld.get_messages()
 # print('\n **************************** \n')
 # pprint(messages)

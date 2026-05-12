@@ -88,7 +88,7 @@ The GridLAB-D™ dynamic simulations represent electro-mechanic transients of un
 
 The following variables and parameters are used in the dynamic model equations below. 
 
-##### Table 1 - Equation Notation  
+##### Table 2 - Equation Notation  
 
 | Variable                          | Definition                           
 |-|-|
@@ -344,7 +344,7 @@ Under traditional, positive-sequence, balanced implementation, the positive-sequ
 
 With the ability to collapse the equations to balanced forms, and as a result ignore the $i_0$ term of the $dq0$ transformation, the equations for implementation become significantly reduced. Since everything is transferred to the $dq0$ plane, much of the formulation occurs in that notation. Table 2 shows the positive-sequence version compared to the unbalanced three-phase version above. Equations may be simplified for space using notation from 1. 
 
-##### Table 2 - Traditional vs. unbalanced implementation  
+##### Table 3 - Traditional vs. unbalanced implementation  
 
 Quantity | Traditional | Unbalanced   
 ---|---|---  

@@ -200,7 +200,7 @@ def PV_residential_allocation(feeder_name, sorted_triplex, penetration_kVA, trip
                 
         
     
-#     print "Residential |", "Required Install", max_install, "| Installed Capacity", installed_capacity                
+#     print("Residential |", "Required Install", max_install, "| Installed Capacity", installed_capacity)
     
     return solar_installation_data
 
@@ -232,7 +232,7 @@ def commercial_data(inputStr, feeder_name):
                 next(f)
                 a = next(f)
                 nominal_voltage = a[23:-2]
-#                print 'nominal_voltage', nominal_voltage
+#                print('nominal_voltage', nominal_voltage)
                 a = next(f)
                 meter_name = a[14:-2]
                 a = next(f)
@@ -277,8 +277,8 @@ def PV_commercial_allocation(feeder_name, com_sorted_meters, penetration_kVA):
     
     while installed_capacity < max_install - 0.2:
                 
-#         print "Installed", installed_capacity
-#         print "Max", max_install
+#         print("Installed", installed_capacity)
+#         print("Max", max_install)
         
         available_capacity = max_install - installed_capacity
         
@@ -287,8 +287,8 @@ def PV_commercial_allocation(feeder_name, com_sorted_meters, penetration_kVA):
             total_new_capacity = 0
             
             while Difference > 0.1:
-#                 print 'Difference', Difference 
-#                 print 'Output 1', com_solar_installation_data           
+#                 print('Difference', Difference)
+#                 print('Output 1', com_solar_installation_data)
                 for item in com_solar_installation_data:
                     new_capacity = (item[1]*Difference)/installed_capacity
                     item[1] = item[1] + new_capacity
@@ -297,7 +297,7 @@ def PV_commercial_allocation(feeder_name, com_sorted_meters, penetration_kVA):
                 installed_capacity += total_new_capacity
                 Difference = max_install - installed_capacity
             
-#             print 'Output 2', com_solar_installation_data
+#             print('Output 2', com_solar_installation_data)
                 
         elif available_capacity < min_install_size:
             random_BT = random.choice(com_sorted_meters.keys())
@@ -970,8 +970,8 @@ def modify_node_to_triplex_node(new_feeder_glm, current_feeder, dst, feeder_numb
                             v['power_rating'] = 3750
                             
                     else:
-#                        print "UNKNOWN VOLTAGE TYPE"
-#                        print v['name'], float(v['secondary_voltage']), v['connect_type']
+#                        print("UNKNOWN VOLTAGE TYPE")
+#                        print(v['name'], float(v['secondary_voltage']), v['connect_type'])
                         break
                     
                     phase_count = 0
@@ -1021,10 +1021,10 @@ def modify_node_to_triplex_node(new_feeder_glm, current_feeder, dst, feeder_numb
         if v['object'] == 'transformer_configuration':
             
             if v['name'] in residential_transformer_solar_map.keys():
-                print v['power_rating']
+#                print(v['power_rating'])
                 if float(v['power_rating']) < float(residential_transformer_solar_map[v['name']]):
                     if (float(v['secondary_voltage']) == 120 and v['connect_type'] == 'SINGLE_PHASE_CENTER_TAPPED') or float(v['secondary_voltage']) == 240:
-#                        print v['name'], v['secondary_voltage'], v['connect_type']
+#                        print(v['name'], v['secondary_voltage'], v['connect_type'])
                         
                         if float(residential_transformer_solar_map[v['name']])< 75:
                             v['power_rating'] = 75
@@ -1088,7 +1088,7 @@ def com_transformers_and_solar_map(current_feeder, commercial_solar_GLM):
                 if character == '_':
                     temp_index.append(number)
             
-#            print temp_index 
+#            print(temp_index)
             
             if 'config_' + value["name"][temp_index[2]+1:temp_index[5]] in transformer_solar_map.keys():
                 transformer_solar_map['config_' + value["name"][temp_index[2]+1:temp_index[5]]] += float(value["rated_power"])
@@ -1130,7 +1130,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '290'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.02135'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.000097'
-                            #print new_commercial_GLM_data[all_element_key]['name'],  value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'],  value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 75 and value[0] < 150:
                         elif value_temp >= 75 and value_temp < 150:
@@ -1138,7 +1138,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '580'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.03855'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.00003'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 150 and value[0] < 300:
                         elif value_temp >= 150 and value_temp < 300:
@@ -1146,7 +1146,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '1740'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.05'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.00001'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 300 and value[0] < 500:
                         elif value_temp >= 300 and value_temp < 500:
@@ -1154,7 +1154,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '2900'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.07'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.000006'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 500 and value[0] < 750:
                         elif value_temp >= 500 and value_temp < 750:
@@ -1162,7 +1162,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '4640'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.09'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.00000375'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 750 and value[0] < 1000:
                         elif value_temp >= 750 and value_temp < 1000:
@@ -1170,10 +1170,10 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '5220'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.1'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.00000333'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
                         else:
-                            print "value not found 1"
+                            print("value not found 1")
                             break
                             
                     if value[1] == '277':
@@ -1183,7 +1183,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '120'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.01308'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.000308'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 75 and value[0] < 150:
                         elif value_temp >= 75 and value_temp < 150:
@@ -1191,7 +1191,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '290'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.02135'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.000097'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 150 and value[0] < 300:
                         elif value_temp >= 150 and value_temp < 300:
@@ -1199,7 +1199,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '385'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.02697'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.000059'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 300 and value[0] < 500:
                         elif value_temp >= 300 and value_temp < 500:
@@ -1207,7 +1207,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '580'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.03855'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.00003'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 500 and value[0] < 750:
                         elif value_temp >= 500 and value_temp < 750:
@@ -1215,7 +1215,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '1740'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.0600'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.00001'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 750 and value[0] < 1000:
                         elif value_temp >= 750 and value_temp < 1000:
@@ -1223,7 +1223,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '2320'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.06500'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.0000075'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                         
 #                         elif value[0] >= 1000 and value[0] < 1500:
                         elif value_temp >= 1000 and value_temp < 1500:
@@ -1231,7 +1231,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '2900'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.07'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.000006'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 1500 and value[0] < 2500:
                         elif value_temp >= 1500 and value_temp < 2500:
@@ -1239,7 +1239,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '5800'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.13000'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.000003'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
 #                         elif value[0] >= 2500 and value[0] < 3750:
                         elif value_temp >= 2500 and value_temp < 3750:
@@ -1247,10 +1247,10 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '6380'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.13500'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.0000027'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
                         else:
-                            print "value not found 2"
+                            print("value not found 2")
                             break
                             
                     if value[1] == '240':
@@ -1259,24 +1259,24 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, new_commercial_G
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '200'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.02135'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.000097'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
                         elif value[0] >= 75 and value[0] < 300:
                             if float(new_commercial_GLM_data[all_element_key]['rating.summer.continuous']) < float(722):
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '722'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.045'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.0000295'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
                         elif value[0] >= 300 and value[0] < 500:
                             if float(new_commercial_GLM_data[all_element_key]['rating.summer.continuous']) < float(1200):
                                 new_commercial_GLM_data[all_element_key]['rating.summer.continuous'] = '1200'
                                 new_commercial_GLM_data[all_element_key]['geometric_mean_radius'] = '0.06'
                                 new_commercial_GLM_data[all_element_key]['resistance'] = '0.00001475'
-                            #print new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance']
+                            #print(new_commercial_GLM_data[all_element_key]['name'], value[1], "volts, ", value[0], "kW, ", "Rating = ", new_commercial_GLM_data[all_element_key]['resistance'])
                             
                         else:
-                            print "value not found 3"
+                            print("value not found 3")
                             break
                             
     new_commercial_str = feeder_parse_mod.sortedWrite(new_commercial_GLM_data)
@@ -1375,7 +1375,7 @@ def PV_residential_allocation_UNIFORM(feeder_name, sorted_triplex, penetration_k
                 installed_capacity += total_new_capacity
                 Difference = max_install - installed_capacity
                 
-#         print 'max_install', max_install, 'installed_capacity', installed_capacity
+#         print( 'max_install', max_install, 'installed_capacity', installed_capacity)
                 
     return solar_installation_data             
 

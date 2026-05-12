@@ -447,13 +447,13 @@ def _tests():
 	tokens = ['clock','{','clockey','valley','}','object','house','{','name','myhouse',';',
 		'object','ZIPload','{','inductance','bigind',';','power','newpower','}','size','234sqft','}']
 	obType = type(_parseTokenList(tokens))
-	print 'Parsed tokens into object of type:', obType
+	print('Parsed tokens into object of type:', obType)
 	assert obType is dict
 	# Recorder Attachment Test
 	tree = _testImportTree('public/Olin Barre Geo')
 	attachRecorders(tree, 'Regulator', 'object', 'regulator')
 	attachRecorders(tree, 'Voltage', 'object', 'node')
-	print 'All the objects after recorder attach: ', set([ob.get('object','') for ob in tree.values()])
+	print('All the objects after recorder attach: ', set([ob.get('object','') for ob in tree.values()]))
 	# Testing The De-Embedding
 	tree = _testImportTree('public/13 Node Embedded DO NOT SAVE')
 	fullyDeEmbed(tree)
@@ -462,20 +462,20 @@ def _tests():
 		for subOb in ob.values():
 			if type(subOb) == 'dict':
 				embeddedDicts += 1
-	print 'Number of objects still embedded:', embeddedDicts
+	print('Number of objects still embedded:', embeddedDicts)
 	assert embeddedDicts == 0, 'Some objects failed to disembed.'
 	# groupSwingKids test
 	tree = _testImportTree('public/13 Node Ref Feeder Flat')
 	groupSwingKids(tree)
 	for ob in tree.values():
 		if ob.get('object','') == 'collector':
-			print 'Swing collector:', ob
+			print('Swing collector:', ob)
 	# Time Adjustment Test
 	test = _testImportTree('public/Simple Market System')
 	adjustTime(tree, 100, 'hours', '2000-09-01')
 	for ob in tree.values():
 		if ob.get('object','') in ['recorder','collector']:
-			print 'Time-adjusted collector:', ob 
+			print('Time-adjusted collector:', ob)
 	# Graph Test
 	tree = _testImportTree('public/Olin Barre Geo')
 	nxG = treeToNxGraph(tree)
