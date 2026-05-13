@@ -1786,7 +1786,21 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 		//See if we're in "init mode" or some form of "skip"
 		if (deltaIsat == nullptr)	//Init mode
 		{
-			//Initialize the storage array and enable it
+			//Allocate the storage matrix - 12 always (just zero others)
+			saturation_calculated_vals = (gld::complex *)gl_malloc(12*sizeof(gld::complex));
+
+			//Make sure it worked
+			if (saturation_calculated_vals == nullptr)
+			{
+				GL_THROW("Transformer:%d %s failed to allocate memory for inrush saturation tracking",obj->id,obj->name ? obj->name : "Unnamed");
+				/*  TROUBLESHOOT
+				While attempting to allocate the tracking and calculation matrices for the inrush
+				saturation terms, an error was encountered.  Please try again.  If the error persists,
+				please submit your code and a bug report via the ticketing website.
+				*/
+			}
+
+			//Initialize it, for giggles
 			for (index_loop=0; index_loop<12; index_loop++)
 			{
 				saturation_calculated_vals[index_loop] = gld::complex(0.0,0.0);
