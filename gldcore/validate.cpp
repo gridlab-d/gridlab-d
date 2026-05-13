@@ -48,7 +48,6 @@
 
 #include "exec.h"
 #include "globals.h"
-#include "lock.h"
 #include "object.h"
 #include "output.h"
 #include "threadpool.h"
@@ -133,12 +132,6 @@ private:
     unsigned int n_failed;     // unexpected failures
     unsigned int n_exceptions; // unexpected exceptions
     unsigned int n_access;     // folder access failure
-private:
-    // void wlock(void) { ::wlock(&_lock); };
-    // void wunlock(void) { ::wunlock(&_lock); };
-    // std::shared_lock<std::shared_mutex> rlock(void) { return ::rlock(&_lock);
-    // }; void runlock(void) { ::runlock(); };
-public:
 public:
     unsigned int get_nfiles(void) { return n_files; };
     unsigned int get_nsuccess(void) { return n_success; };
@@ -225,7 +218,6 @@ public:
             output_message("%d tests succeeded", n_ok);
             output_message("%.0f%% success rate", 100.0 * n_ok / n_files);
         }
-        // runlock();
     };
     unsigned int get_nerrors(void)
     {
@@ -1548,14 +1540,12 @@ static void sortlist(void)
 /* popped item must be freed after no longer needed */
 static DIRLIST *popdir(void)
 {
-    // auto v = rlock(&dirlock);
     //  replace the above with SharedMutexManager
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&dirlock));
     DIRLIST *item = dirstack;
     if (dirstack)
         dirstack = dirstack->next;
-    // runlock();
     lock.unlock();
     output_debug("pulling %s from process stack", item->name);
     return item;

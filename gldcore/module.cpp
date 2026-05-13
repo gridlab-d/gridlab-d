@@ -79,7 +79,6 @@
 #include "gldrandom.h"
 #include "globals.h"
 #include "interpolate.h"
-#include "lock.h"
 #include "module.h"
 #include "output.h"
 #include "platform.h"
@@ -307,10 +306,6 @@ s_callbacks::s_callbacks() throw()
 	global.setvar = global_setvar;
 	global.getvar = global_getvar;
 	global.find = global_find;
-	// lock.read = rlock;
-	// lock.write = wlock;
-	// unlock.read = runlock;
-	// unlock.write = wunlock;
 	file.find_file = find_file;
 	objvar.bool_var = object_get_bool;
 	objvar.complex_var = object_get_complex;

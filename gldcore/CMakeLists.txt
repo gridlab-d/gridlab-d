@@ -98,8 +98,6 @@ set(SOURCE_LIST
         loadshape.h
         local.cpp
         local.h
-        lock.cpp
-        lock.h
         # main.cpp
         match.cpp
         match.h

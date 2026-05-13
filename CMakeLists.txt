@@ -357,7 +357,6 @@ set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/enduse.h
         ${CMAKE_SOURCE_DIR}/gldcore/exception.h
         ${CMAKE_SOURCE_DIR}/gldcore/loadshape.h
-        ${CMAKE_SOURCE_DIR}/gldcore/lock.h
         ${CMAKE_SOURCE_DIR}/gldcore/module.h
         ${CMAKE_SOURCE_DIR}/gldcore/object.h
         ${CMAKE_SOURCE_DIR}/gldcore/property.h

@@ -162,7 +162,6 @@ public:
   // window variables
   double glazing_shgc;      ///< glazing SHGC
   double window_wall_ratio; ///< window-wall ratio
-  double window_roof_ratio; ///< window-roof ratio (skylights)
   double total_window_area;
   double
       window_exterior_transmission_coefficient; ///< fraction of energy that

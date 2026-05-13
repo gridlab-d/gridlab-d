@@ -168,7 +168,6 @@ update time and those that are immediately related to it need be updated.  This
 #include "linkage.h"
 #include "loadshape.h"
 #include "local.h"
-#include "lock.h"
 #include "module.h"
 #include "object.h"
 #include "output.h"

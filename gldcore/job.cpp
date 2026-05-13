@@ -24,7 +24,6 @@
 
 #include "exec.h"
 #include "globals.h"
-#include "lock.h"
 #include "object.h"
 #include "output.h"
 #include "threadpool.h"
@@ -268,14 +267,12 @@ static void pushjob(char *dir) {
 }
 /* popped item must be freed after no longer needed */
 static JOBLIST *popjob(void) {
-  // auto v = rlock(&joblock);
   // replace the above with SharedMutexManager
   std::shared_lock<std::shared_mutex> lock(
       SharedMutexManager::get_mutex(&joblock));
   JOBLIST *item = jobstack;
   if (jobstack)
     jobstack = jobstack->next;
-  // runlock();
   lock.unlock();
   output_debug("pulling %s from job list", item->name);
   return item;

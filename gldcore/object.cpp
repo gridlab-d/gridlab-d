@@ -37,7 +37,6 @@
 #include "convert.h"
 #include "exec.h"
 #include "globals.h"
-#include "lock.h"
 #include "module.h"
 #include "object.h"
 #include "output.h"
@@ -322,22 +321,18 @@ char *object_get_unit(OBJECT *obj, const char *name)
      */
   }
 
-  // auto v = rlock(&unitlock);
   std::shared_lock<std::shared_mutex> v(
       SharedMutexManager::get_mutex(&unitlock));
   if (dimless == nullptr)
   {
-    // runlock(&unitlock);
     v.unlock();
-    // wlock(&unitlock);
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&unitlock));
     dimless = unit_find("1");
-    // wunlock(&unitlock);
+    lock.unlock();
   }
   else
     v.unlock();
-  // runlock(&unitlock);
 
   if (prop->unit != nullptr)
   {
@@ -3598,12 +3593,11 @@ void *object_remote_read(void *local,    /**< local memory for data (must be
     /* multithread */
     else
     {
-      // auto v = rlock(&obj->lock);
       // replace with SharedMutexManager
       std::unique_lock<std::shared_mutex> runlock(
           SharedMutexManager::get_mutex(&obj->lock));
       memcpy(local, addr, size);
-      // runlock();
+      runlock.unlock();
       return local;
     }
   }

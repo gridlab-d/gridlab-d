@@ -17,7 +17,6 @@
 
 #include "exception.h"
 #include "exec.h"
-#include "lock.h"
 #include "object.h"
 #include "output.h"
 #include "platform.h"

@@ -92,7 +92,6 @@ int test_exec(void) {
  * MEMORY LOCK TEST
  */
 #include "exec.h"
-#include "lock.h"
 #define TESTCOUNT (100000000 / global_threadcount)
 
 static volatile unsigned int *counter = nullptr;
@@ -136,20 +135,11 @@ int test_lock(void) {
 
     output_test("*** Begin memory locking test for %d threads",
                 global_threadcount);
-    // wlock(&key);
     // replace the above with SharedMutexManager
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&key));
 
     for (n = 0; n < global_threadcount; n++) {
-      // pthread_t pt;
-      // counter[n] = 0;
-      // if ( pthread_create(&pt,nullptr,test_lock_proc,(void*)&n)!=0 )
-      //{
-      //	output_test("thread creation failed");
-      //	return FAILED;
-      // }
-
       try {
         counter[n] = 0;
         std::thread t(test_lock_proc, &n); // Create thread with n as argument
@@ -160,7 +150,6 @@ int test_lock(void) {
         return STATUS::FAILED;
       }
     }
-    // wunlock(&key);
     lock.unlock();
     global_suppress_repeat_messages = 0;
     for (n = 0; n < global_threadcount; n++)
@@ -173,14 +162,12 @@ int test_lock(void) {
       int c[256], t, s = 0;
       exec_sleep(100000);
       output_raw("\r");
-      // auto v = rlock(&key);
       // replace the above with SharedMutexManager
       std::shared_lock<std::shared_mutex> runlock(
           SharedMutexManager::get_mutex(&key));
       for (n = 0; n < global_threadcount; n++)
         s += (c[n] = counter[n]);
       t = total;
-      // runlock();
       runlock.unlock();
       for (n = 0; n < global_threadcount; n++)
         output_raw("%10d ", c[n]);

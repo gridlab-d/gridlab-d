@@ -33,7 +33,6 @@
 #include "exception.h"
 #include "find.h"
 #include "globals.h"
-#include "lock.h"
 #include "output.h"
 #include "platform.h"
 #include "timestamp.h"

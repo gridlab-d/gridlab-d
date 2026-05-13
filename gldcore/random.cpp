@@ -101,7 +101,6 @@ static inline int gettimeofday(struct timeval *tv, struct timezone *tz)
 #include "gld_complex.h"
 #include "gldrandom.h"
 #include "globals.h"
-#include "lock.h"
 #include "output.h"
 #include "platform.h"
 

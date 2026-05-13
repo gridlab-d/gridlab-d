@@ -846,7 +846,6 @@ int house_e::create() {
   floor_area = 0;
   gross_wall_area = 0;
   window_wall_ratio = 0;
-//  window_roof_ratio = 0;
   interior_exterior_wall_ratio = 0;
   exterior_wall_fraction = 0;
   exterior_ceiling_fraction = 0;

@@ -42,7 +42,6 @@
 
 #include "exception.h"
 #include "globals.h"
-#include "lock.h"
 #include "module.h"
 #include "output.h"
 

@@ -12,7 +12,6 @@
 #include <mutex>
 
 #include "linkage.h"
-#include "lock.h"
 #include "property.h"
 #include "timestamp.h"
 

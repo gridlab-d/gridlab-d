@@ -17,7 +17,6 @@
 #define _MAIN_C 1
 #include "globals.h"
 
-#include "lock.h"
 #include "module.h"
 #include "output.h"
 #include "version.h"
@@ -1390,7 +1389,6 @@ void *global_remote_read(
       std::shared_lock<std::shared_mutex> lock(
           SharedMutexManager::get_mutex(&var->lock));
       memcpy(local, addr, size);
-      // runlock();
       return local;
     }
   }
