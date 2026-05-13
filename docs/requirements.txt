@@ -5,6 +5,7 @@ gridlabd==1.0.11
 markdown-include
 mkdocs
 mkdocs-autorefs
+mkdocs-caption
 mkdocs-get-deps
 mkdocs-mermaid2-plugin
 mkdocstrings

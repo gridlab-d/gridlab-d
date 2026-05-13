@@ -24,6 +24,7 @@ extra_css:
   - _static/css/custom.css
 plugins:
   - search
+  - caption
   - mermaid2
   - mkdocstrings:
       handlers:
@@ -59,6 +60,7 @@ markdown_extensions:
       base_path: docs/
   - admonition
   - pymdownx.details
+  - attr_list
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
