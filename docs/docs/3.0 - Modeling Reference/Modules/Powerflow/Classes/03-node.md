@@ -92,12 +92,11 @@ These properties expose the node's topological parent relationship and its runti
 | topological_parent | object | N/A | O | Topological parent of this node as determined during initialization. Reflects the object's `parent` field. |
 | behaving_as_swing | bool | N/A | O | Whether this bus is currently acting as a reference voltage source. Only meaningful for `SWING` or `SWING_PQ` bus types. |
 
-<!-- <details>
-<summary>Internal Properties</summary> -->
+
 
 ??? note "Internal Properties"
 
-	#### Developer Properties
+	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
 	| Property Name | Type | Unit | I/O | Description |

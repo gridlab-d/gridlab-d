@@ -73,43 +73,44 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | measured_frequency_12 | double | Hz | I | ⚠️ frequency measurement, across the phases |
 | measured_frequency | double | Hz | I | ⚠️ frequency measurement - average of present phases |
 
-#### Developer Properties
+??? note "Internal Properties"
 
-These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
+	#### Internal Properties
+	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
-| Property Name | Type | Unit | I/O | Description |
-| --- | --- | --- | --- | --- |
-| prerotated_current_1 | complex | A | — | ⚠️ deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable |
-| prerotated_current_2 | complex | A | — | ⚠️ deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable |
-| prerotated_current_12 | complex | A | — | ⚠️ deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable |
-| deltamode_generator_current_12 | complex | A | — | ⚠️ deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable |
-| deltamode_PGenTotal | complex | N/A | — | ⚠️ deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input |
-| deltamode_full_Y_matrix | complex_array | N/A | — | ⚠️ deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents |
-| deltamode_full_Y_all_matrix | complex_array | N/A | — | ⚠️ deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents |
-| NR_powerflow_parent | object | N/A | — | ⚠️ NR powerflow - actual powerflow parent - used by generators accessing child objects |
-| residential_nominal_current_1 | complex | A | — | ⚠️ posted current on phase 1 from a residential object, if attached |
-| residential_nominal_current_2 | complex | A | — | ⚠️ posted current on phase 2 from a residential object, if attached |
-| residential_nominal_current_12 | complex | A | — | ⚠️ posted current on phase 1 to 2 from a residential object, if attached |
-| residential_nominal_current_1_real | double | A | — | ⚠️ posted current on phase 1, real, from a residential object, if attached |
-| residential_nominal_current_1_imag | double | A | — | ⚠️ posted current on phase 1, imag, from a residential object, if attached |
-| residential_nominal_current_2_real | double | A | — | ⚠️ posted current on phase 2, real, from a residential object, if attached |
-| residential_nominal_current_2_imag | double | A | — | ⚠️ posted current on phase 2, imag, from a residential object, if attached |
-| residential_nominal_current_12_real | double | A | — | ⚠️ posted current on phase 1 to 2, real, from a residential object, if attached |
-| residential_nominal_current_12_imag | double | A | — | ⚠️ posted current on phase 1 to 2, imag, from a residential object, if attached |
-| current_1 | complex | A | — | Constant current load on phase `1` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| current_2 | complex | A | — | Constant current load on phase `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| current_N | complex | A | — | Constant current load on the neutral phase of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| current_12 | complex | A | — | Constant current load on across phases `1` and `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| power_1 | complex | VA | — | Constant power load on phase `1` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| power_2 | complex | VA | — | Constant power load on phase `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| power_12 | complex | VA | — | Constant power load across phases `1` and `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| shunt_1 | complex | S | — | Constant admittance load on phase `1` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| shunt_2 | complex | S | — | Constant admittance load on phase `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| shunt_12 | complex | S | — | Constant admittance load across phases `1` and `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
-| Norton_dynamic | bool | N/A | — | ⚠️ Flag to indicate a Norton-equivalent connection -- used for generators and deltamode |
-| Norton_dynamic_child | bool | N/A | — | ⚠️ Flag to indicate a Norton-equivalent connection is made by a childed node object -- used for generators and deltamode |
-| generator_dynamic | bool | N/A | — | ⚠️ Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode |
-| reset_disabled_island_state | bool | N/A | — | ⚠️ Deltamode/multi-island flag -- used to reset disabled status (and reform an island) |
+	| Property Name | Type | Unit | I/O | Description |
+	| --- | --- | --- | --- | --- |
+	| prerotated_current_1 | complex | A | — | deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable |
+	| prerotated_current_2 | complex | A | — | deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable |
+	| prerotated_current_12 | complex | A | — | deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable |
+	| deltamode_generator_current_12 | complex | A | — | deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable |
+	| deltamode_PGenTotal | complex | N/A | — | deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input |
+	| deltamode_full_Y_matrix | complex_array | N/A | — | deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents |
+	| deltamode_full_Y_all_matrix | complex_array | N/A | — | deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents |
+	| NR_powerflow_parent | object | N/A | — | NR powerflow - actual powerflow parent - used by generators accessing child objects |
+	| residential_nominal_current_1 | complex | A | — | posted current on phase 1 from a residential object, if attached |
+	| residential_nominal_current_2 | complex | A | — | posted current on phase 2 from a residential object, if attached |
+	| residential_nominal_current_12 | complex | A | — | posted current on phase 1 to 2 from a residential object, if attached |
+	| residential_nominal_current_1_real | double | A | — | posted current on phase 1, real, from a residential object, if attached |
+	| residential_nominal_current_1_imag | double | A | — | posted current on phase 1, imag, from a residential object, if attached |
+	| residential_nominal_current_2_real | double | A | — | posted current on phase 2, real, from a residential object, if attached |
+	| residential_nominal_current_2_imag | double | A | — | posted current on phase 2, imag, from a residential object, if attached |
+	| residential_nominal_current_12_real | double | A | — | posted current on phase 1 to 2, real, from a residential object, if attached |
+	| residential_nominal_current_12_imag | double | A | — | posted current on phase 1 to 2, imag, from a residential object, if attached |
+	| current_1 | complex | A | — | Constant current load on phase `1` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| current_2 | complex | A | — | Constant current load on phase `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| current_N | complex | A | — | Constant current load on the neutral phase of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| current_12 | complex | A | — | Constant current load on across phases `1` and `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| power_1 | complex | VA | — | Constant power load on phase `1` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| power_2 | complex | VA | — | Constant power load on phase `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| power_12 | complex | VA | — | Constant power load across phases `1` and `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| shunt_1 | complex | S | — | Constant admittance load on phase `1` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| shunt_2 | complex | S | — | Constant admittance load on phase `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| shunt_12 | complex | S | — | Constant admittance load across phases `1` and `2` of the split-phase or triplex system. This value is typically handled through the **triplex_load** object, so modification is not recommended here. |
+	| Norton_dynamic | bool | N/A | — | Flag to indicate a Norton-equivalent connection -- used for generators and deltamode |
+	| Norton_dynamic_child | bool | N/A | — | Flag to indicate a Norton-equivalent connection is made by a childed node object -- used for generators and deltamode |
+	| generator_dynamic | bool | N/A | — | Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode |
+	| reset_disabled_island_state | bool | N/A | — | Deltamode/multi-island flag -- used to reset disabled status (and reform an island) |
 
 ### Triplex Node State of Development
 

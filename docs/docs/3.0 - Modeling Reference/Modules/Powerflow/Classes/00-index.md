@@ -129,6 +129,5 @@ The other common property is nominal voltage, which is passed into the objects u
 
 - [Motor](37-motor.md)
 - [Emissions](42-emissions.md)
-- [Visualization Tools](43-visualization_tools.md)
 - [Performance Motor](46-performance_motor.md)
 - [VFD](49-vfd.md)

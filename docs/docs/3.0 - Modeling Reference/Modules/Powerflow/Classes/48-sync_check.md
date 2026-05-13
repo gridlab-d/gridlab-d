@@ -24,30 +24,31 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | voltage_angle_tolerance | double | deg | O | ⚠️ tolerance in degrees for the difference in voltage angles - used in SEP_DIFF mode |
 | delta_trigger_mult | double | N/A | O | ⚠️ multiplier against voltage and frequency tolerances to trigger/maintain deltamode |
 
-#### Developer Properties
+??? note "Internal Properties"
 
-These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
+	#### Internal Properties
+	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
-| Property Name | Type | Unit | I/O | Description |
-| --- | --- | --- | --- | --- |
-| freq_diff_noabs_hz | double | N/A | O | ⚠️ Measurement property: frequency difference in Hz without abs() |
-| volt_A_mag_diff_noabs_pu | double | N/A | O | ⚠️ Measurement property: Difference of phase A voltage magnitude in pu without abs() |
-| volt_B_mag_diff_noabs_pu | double | N/A | O | ⚠️ Measurement property: Difference of phase B voltage magnitude in pu without abs() |
-| volt_C_mag_diff_noabs_pu | double | N/A | O | ⚠️ Measurement property: Difference of phase C voltage magnitude in pu without abs() |
-| freq_diff_hz | double | N/A | O | ⚠️ Measurement property: frequency difference in Hz |
-| volt_A_diff | double | N/A | O | ⚠️ Measurement property: Magnitude of phase A voltage phasor difference in volt |
-| volt_B_diff | double | N/A | O | ⚠️ Measurement property: Magnitude of phase B voltage phasor difference in volt |
-| volt_C_diff | double | N/A | O | ⚠️ Measurement property: Magnitude of phase C voltage phasor difference in volt |
-| volt_A_diff_pu | double | N/A | O | ⚠️ Measurement property: Magnitude of phase A voltage phasor difference in pu |
-| volt_B_diff_pu | double | N/A | O | ⚠️ Measurement property: Magnitude of phase B voltage phasor difference in pu |
-| volt_C_diff_pu | double | N/A | O | ⚠️ Measurement property: Magnitude of phase C voltage phasor difference in pu |
-| volt_A_mag_diff | double | N/A | O | ⚠️ Measurement property: Difference of phase A voltage magnitude in volt |
-| volt_B_mag_diff | double | N/A | O | ⚠️ Measurement property: Difference of phase B voltage magnitude in volt |
-| volt_C_mag_diff | double | N/A | O | ⚠️ Measurement property: Difference of phase C voltage magnitude in volt |
-| volt_A_mag_diff_pu | double | N/A | O | ⚠️ Measurement property: Difference of phase A voltage magnitude in pu |
-| volt_B_mag_diff_pu | double | N/A | O | ⚠️ Measurement property: Difference of phase B voltage magnitude in pu |
-| volt_C_mag_diff_pu | double | N/A | O | ⚠️ Measurement property: Difference of phase C voltage magnitude in pu |
-| volt_A_ang_deg_diff | double | N/A | O | ⚠️ Measurement property: Difference of phase A voltage angle in degree |
-| volt_B_ang_deg_diff | double | N/A | O | ⚠️ Measurement property: Difference of phase B voltage angle in degree |
-| volt_C_ang_deg_diff | double | N/A | O | ⚠️ Measurement property: Difference of phase C voltage angle in degree |
-| nominal_volt_v | double | N/A | O | ⚠️ Measurement Property: Nominal voltage of from/to node of the parent switch |
+	| Property Name | Type | Unit | I/O | Description |
+	| --- | --- | --- | --- | --- |
+	| freq_diff_noabs_hz | double | N/A | O | Measurement property: frequency difference in Hz without abs() |
+	| volt_A_mag_diff_noabs_pu | double | N/A | O | Measurement property: Difference of phase A voltage magnitude in pu without abs() |
+	| volt_B_mag_diff_noabs_pu | double | N/A | O | Measurement property: Difference of phase B voltage magnitude in pu without abs() |
+	| volt_C_mag_diff_noabs_pu | double | N/A | O | Measurement property: Difference of phase C voltage magnitude in pu without abs() |
+	| freq_diff_hz | double | N/A | O | Measurement property: frequency difference in Hz |
+	| volt_A_diff | double | N/A | O | Measurement property: Magnitude of phase A voltage phasor difference in volt |
+	| volt_B_diff | double | N/A | O | Measurement property: Magnitude of phase B voltage phasor difference in volt |
+	| volt_C_diff | double | N/A | O | Measurement property: Magnitude of phase C voltage phasor difference in volt |
+	| volt_A_diff_pu | double | N/A | O | Measurement property: Magnitude of phase A voltage phasor difference in pu |
+	| volt_B_diff_pu | double | N/A | O | Measurement property: Magnitude of phase B voltage phasor difference in pu |
+	| volt_C_diff_pu | double | N/A | O | Measurement property: Magnitude of phase C voltage phasor difference in pu |
+	| volt_A_mag_diff | double | N/A | O | Measurement property: Difference of phase A voltage magnitude in volt |
+	| volt_B_mag_diff | double | N/A | O | Measurement property: Difference of phase B voltage magnitude in volt |
+	| volt_C_mag_diff | double | N/A | O | Measurement property: Difference of phase C voltage magnitude in volt |
+	| volt_A_mag_diff_pu | double | N/A | O | Measurement property: Difference of phase A voltage magnitude in pu |
+	| volt_B_mag_diff_pu | double | N/A | O | Measurement property: Difference of phase B voltage magnitude in pu |
+	| volt_C_mag_diff_pu | double | N/A | O | Measurement property: Difference of phase C voltage magnitude in pu |
+	| volt_A_ang_deg_diff | double | N/A | O | Measurement property: Difference of phase A voltage angle in degree |
+	| volt_B_ang_deg_diff | double | N/A | O | Measurement property: Difference of phase B voltage angle in degree |
+	| volt_C_ang_deg_diff | double | N/A | O | Measurement property: Difference of phase C voltage angle in degree |
+	| nominal_volt_v | double | N/A | O | Measurement Property: Nominal voltage of from/to node of the parent switch |

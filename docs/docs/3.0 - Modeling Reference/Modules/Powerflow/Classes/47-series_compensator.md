@@ -59,14 +59,15 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | phase_2_state | enumeration | N/A | IO | ⚠️ Defines if phase 2 is in bypass or not Valid values: `NORMAL`, `BYPASS`. |
 | series_compensator_resistance | double | Ohm | I | ⚠️ Baseline resistance for the series compensator device - needed for NR |
 
-#### Developer Properties
+??? note "Internal Properties"
 
-These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
+	#### Internal Properties
+	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
-| Property Name | Type | Unit | I/O | Description |
-| --- | --- | --- | --- | --- |
-| turns_ratio_A | double | N/A | O | ⚠️ Debug variable - Turns ratio for phase A series compensator equivalent |
-| turns_ratio_B | double | N/A | O | ⚠️ Debug variable - Turns ratio for phase B series compensator equivalent |
-| turns_ratio_C | double | N/A | O | ⚠️ Debug variable - Turns ratio for phase C series compensator equivalent |
-| turns_ratio_1 | double | N/A | O | ⚠️ Debug variable - Turns ratio for phase 1 (triplex) series compensator equivalent |
-| turns_ratio_2 | double | N/A | O | ⚠️ Debug variable - Turns ratio for phase 2 (triplex) series compensator equivalent |
+	| Property Name | Type | Unit | I/O | Description |
+	| --- | --- | --- | --- | --- |
+	| turns_ratio_A | double | N/A | O | Debug variable - Turns ratio for phase A series compensator equivalent |
+	| turns_ratio_B | double | N/A | O | Debug variable - Turns ratio for phase B series compensator equivalent |
+	| turns_ratio_C | double | N/A | O | Debug variable - Turns ratio for phase C series compensator equivalent |
+	| turns_ratio_1 | double | N/A | O | Debug variable - Turns ratio for phase 1 (triplex) series compensator equivalent |
+	| turns_ratio_2 | double | N/A | O | Debug variable - Turns ratio for phase 2 (triplex) series compensator equivalent |
