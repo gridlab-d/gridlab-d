@@ -471,8 +471,6 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1) {
   }
 
   enduse_synctime += (clock_t)exec_clock() - ts;
-  ;
-
   return t2;
 }
 

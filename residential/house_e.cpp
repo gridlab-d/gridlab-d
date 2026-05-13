@@ -215,561 +215,465 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod) {
 
     // publish the class properties
     if (gl_publish_variable(
-            house_e::oclass, PT_INHERIT, "residential_enduse", PT_object,
-            "weather", PADDR(weather), PT_DESCRIPTION,
-            "reference to the climate object", PT_double, "floor_area[sf]",
-            PADDR(floor_area), PT_DESCRIPTION, "home conditioned floor area",
-            PT_double, "gross_wall_area[sf]", PADDR(gross_wall_area),
-            PT_DESCRIPTION, "gross outdoor wall area", PT_double,
-            "ceiling_height[ft]", PADDR(ceiling_height), PT_DESCRIPTION,
-            "average ceiling height", PT_double, "aspect_ratio",
-            PADDR(aspect_ratio), PT_DESCRIPTION,
-            "aspect ratio of the home's footprint", PT_double,
-            "envelope_UA[Btu/degF*h]", PADDR(envelope_UA), PT_DESCRIPTION,
-            "overall UA of the home's envelope", PT_double, "window_wall_ratio",
-            PADDR(window_wall_ratio), PT_DESCRIPTION,
-            "ratio of window area to wall area", PT_double, "number_of_doors",
-            PADDR(number_of_doors), PT_DESCRIPTION,
-            "ratio of door area to wall area", PT_double,
-            "exterior_wall_fraction", PADDR(exterior_wall_fraction),
-            PT_DESCRIPTION, "ratio of exterior wall area to total wall area",
-            PT_double, "interior_exterior_wall_ratio",
-            PADDR(interior_exterior_wall_ratio), PT_DESCRIPTION,
-            "ratio of interior to exterior walls", PT_double,
-            "exterior_ceiling_fraction", PADDR(exterior_ceiling_fraction),
-            PT_DESCRIPTION, "ratio of external ceiling sf to floor area",
-            PT_double, "exterior_floor_fraction",
-            PADDR(exterior_floor_fraction), PT_DESCRIPTION,
-            "ratio of floor area used in UA calculation", PT_double,
-            "window_shading", PADDR(glazing_shgc), PT_DESCRIPTION,
-            "transmission coefficient through window due to glazing", PT_double,
-            "window_exterior_transmission_coefficient",
-            PADDR(window_exterior_transmission_coefficient), PT_DESCRIPTION,
-            "coefficient for the amount of energy that passes through window",
-            PT_double, "solar_heatgain_factor", PADDR(solar_heatgain_factor),
-            PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION,
-            "product of the window area, window transmitivity, and the window "
-            "exterior transmission coefficient",
-            PT_double, "airchange_per_hour[unit/h]", PADDR(airchange_per_hour),
-            PT_DESCRIPTION, "number of air-changes per hour", PT_double,
-            "airchange_UA[Btu/degF*h]", PADDR(airchange_UA), PT_DESCRIPTION,
-            "additional UA due to air infiltration", PT_double,
-            "UA[Btu/degF*h]", PADDR(UA), PT_DESCRIPTION, "the total UA",
-            PT_double, "internal_gain[Btu/h]", PADDR(total.heatgain),
-            PT_DESCRIPTION, "internal heat gains", PT_double,
-            "solar_gain[Btu/h]", PADDR(solar_load), PT_DESCRIPTION,
-            "solar heat gains", PT_double, "incident_solar_radiation[Btu/h*sf]",
-            PADDR(incident_solar_radiation), PT_DESCRIPTION,
-            "average incident solar radiation hitting the house", PT_double,
-            "heat_cool_gain[Btu/h]", PADDR(load.heatgain), PT_DESCRIPTION,
-            "system heat gains(losses)",
-
-            PT_set, "include_solar_quadrant", PADDR(include_solar_quadrant),
-            PT_DESCRIPTION,
-            "bit set for determining which solar incidence quadrants should be "
-            "included in the solar heatgain",
-            PT_KEYWORD, "NONE", (gld::set)NO_SOLAR, PT_KEYWORD, "H",
-            (gld::set)HORIZONTAL, PT_KEYWORD, "N", (gld::set)NORTH, PT_KEYWORD,
-            "E", (gld::set)EAST, PT_KEYWORD, "S", (gld::set)SOUTH, PT_KEYWORD,
-            "W", (gld::set)WEST, PT_double,
-            "horizontal_diffuse_solar_radiation[Btu/h*sf]",
-            PADDR(horizontal_diffuse_solar_radiation), PT_DESCRIPTION,
-            "incident solar radiation hitting the top of the house", PT_double,
-            "north_incident_solar_radiation[Btu/h*sf]",
-            PADDR(north_incident_solar_radiation), PT_DESCRIPTION,
-            "incident solar radiation hitting the north side of the house",
-            PT_double, "northwest_incident_solar_radiation[Btu/h*sf]",
-            PADDR(north_west_incident_solar_radiation), PT_DESCRIPTION,
-            "incident solar radiation hitting the northwest side of the house",
-            PT_double, "west_incident_solar_radiation[Btu/h*sf]",
-            PADDR(west_incident_solar_radiation), PT_DESCRIPTION,
-            "incident solar radiation hitting the west side of the house",
-            PT_double, "southwest_incident_solar_radiation[Btu/h*sf]",
-            PADDR(south_west_incident_solar_radiation), PT_DESCRIPTION,
-            "incident solar radiation hitting the southwest side of the house",
-            PT_double, "south_incident_solar_radiation[Btu/h*sf]",
-            PADDR(south_incident_solar_radiation), PT_DESCRIPTION,
-            "incident solar radiation hitting the south side of the house",
-            PT_double, "southeast_incident_solar_radiation[Btu/h*sf]",
-            PADDR(south_east_incident_solar_radiation), PT_DESCRIPTION,
-            "incident solar radiation hitting the southeast side of the house",
-            PT_double, "east_incident_solar_radiation[Btu/h*sf]",
-            PADDR(east_incident_solar_radiation), PT_DESCRIPTION,
-            "incident solar radiation hitting the east side of the house",
-            PT_double, "northeast_incident_solar_radiation[Btu/h*sf]",
-            PADDR(north_east_incident_solar_radiation), PT_DESCRIPTION,
-            "incident solar radiation hitting the northeast side of the house",
-            PT_enumeration, "heating_cop_curve", PADDR(heating_cop_curve),
-            PT_DESCRIPTION,
-            "Defines the function type to use for the adjusted heating COP as "
-            "a function of outside air temperature.",
-            PT_KEYWORD, "DEFAULT", (enumeration)HC_DEFAULT, PT_KEYWORD, "FLAT",
-            (enumeration)HC_FLAT, PT_KEYWORD, "LINEAR", (enumeration)HC_LINEAR,
-            PT_KEYWORD, "CURVED", (enumeration)HC_CURVED, PT_enumeration,
-            "heating_cap_curve", PADDR(heating_cap_curve), PT_DESCRIPTION,
-            "Defines the function type to use for the adjusted heating "
-            "capacity as a function of outside air temperature.",
-            PT_KEYWORD, "DEFAULT", (enumeration)HP_DEFAULT, PT_KEYWORD, "FLAT",
-            (enumeration)HP_FLAT, PT_KEYWORD, "LINEAR", (enumeration)HP_LINEAR,
-            PT_KEYWORD, "CURVED", (enumeration)HP_CURVED, PT_enumeration,
-            "cooling_cop_curve", PADDR(cooling_cop_curve), PT_DESCRIPTION,
-            "Defines the function type to use for the adjusted cooling COP as "
-            "a function of outside air temperature.",
-            PT_KEYWORD, "DEFAULT", (enumeration)CC_DEFAULT, PT_KEYWORD, "FLAT",
-            (enumeration)CC_FLAT, PT_KEYWORD, "LINEAR", (enumeration)CC_LINEAR,
-            PT_KEYWORD, "CURVED", (enumeration)CC_CURVED, PT_enumeration,
-            "cooling_cap_curve", PADDR(cooling_cap_curve), PT_DESCRIPTION,
-            "Defines the function type to use for the adjusted cooling "
-            "capacity as a function of outside air temperature.",
-            PT_KEYWORD, "DEFAULT", (enumeration)CP_DEFAULT, PT_KEYWORD, "FLAT",
-            (enumeration)CP_FLAT, PT_KEYWORD, "LINEAR", (enumeration)CP_LINEAR,
-            PT_KEYWORD, "CURVED", (enumeration)CP_CURVED, PT_bool,
-            "use_latent_heat", PADDR(use_latent_heat), PT_DESCRIPTION,
-            "Boolean for using the heat latency of the air to the humidity "
-            "when cooling.",
-            PT_bool, "include_fan_heatgain", PADDR(include_fan_heatgain),
-            PT_DESCRIPTION,
-            "Boolean to choose whether to include the heat generated by the "
-            "fan in the ETP model.",
-
-            PT_double, "thermostat_deadband[degF]", PADDR(thermostat_deadband),
-            PT_DESCRIPTION, "deadband of thermostat control", PT_double,
-            "dlc_offset[degF]", PADDR(dlc_offset), PT_DESCRIPTION,
-            "used as a cap to offset the thermostat deadband for direct load "
-            "control applications",
-            PT_int16, "thermostat_cycle_time", PADDR(thermostat_cycle_time),
-            PT_DESCRIPTION,
-            "minimum time in seconds between thermostat updates", PT_int16,
-            "thermostat_off_cycle_time", PADDR(thermostat_off_cycle_time),
-            PT_DESCRIPTION,
-            "the minimum amount of time the thermostat cycle must stay in the "
-            "off state",
-            PT_int16, "thermostat_on_cycle_time",
-            PADDR(thermostat_on_cycle_time), PT_DESCRIPTION,
-            "the minimum amount of time the thermostat cycle must stay in the "
-            "on state",
-            PT_timestamp, "thermostat_last_cycle_time",
-            PADDR(thermostat_last_cycle_time), PT_ACCESS, PA_REFERENCE,
-            PT_DESCRIPTION, "last time the thermostat changed state", PT_double,
-            "heating_setpoint[degF]", PADDR(heating_setpoint), PT_DESCRIPTION,
-            "thermostat heating setpoint", PT_double, "cooling_setpoint[degF]",
-            PADDR(cooling_setpoint), PT_DESCRIPTION,
-            "thermostat cooling setpoint", PT_double,
-            "design_heating_setpoint[degF]", PADDR(design_heating_setpoint),
-            PT_DESCRIPTION, "system design heating setpoint", PT_double,
-            "design_cooling_setpoint[degF]", PADDR(design_cooling_setpoint),
-            PT_DESCRIPTION, "system design cooling setpoint", PT_double,
-            "over_sizing_factor", PADDR(over_sizing_factor), PT_DESCRIPTION,
-            "over sizes the heating and cooling system from standard "
-            "specifications (0.2 ='s 120% sizing)",
-
-            PT_bool, "simulate_window_openings", PADDR(window_openings),
-            PT_DESCRIPTION,
-            "activates a representation of an occupant opening a window and "
-            "de-activating the HVAC system",
-            PT_double, "is_window_open", PADDR(window_open), PT_DESCRIPTION,
-            "defines the state of the window opening, 1=open, 2=closed",
-            PT_double, "window_low_temperature_cutoff[degF]",
-            PADDR(window_low_temp), PT_DESCRIPTION,
-            "lowest temperature at which the window opening might occur",
-            PT_double, "window_high_temperature_cutoff[degF]",
-            PADDR(window_high_temp), PT_DESCRIPTION,
-            "highest temperature at which the window opening might occur",
-            PT_double, "window_quadratic_coefficient", PADDR(window_a),
-            PT_DESCRIPTION,
-            "quadratic coefficient for describing function between low and "
-            "high temperature cutoffs",
-            PT_double, "window_linear_coefficient", PADDR(window_b),
-            PT_DESCRIPTION,
-            "linear coefficient for describing function between low and high "
-            "temperature cutoffs",
-            PT_double, "window_constant_coefficient", PADDR(window_c),
-            PT_DESCRIPTION,
-            "constant coefficient for describing function between low and high "
-            "temperature cutoffs",
-            PT_double, "window_temperature_delta", PADDR(window_temp_delta),
-            PT_DESCRIPTION,
-            "change in outdoor temperature required to update the window "
-            "opening model",
-
-            PT_double, "design_heating_capacity[Btu/h]",
-            PADDR(design_heating_capacity), PT_DESCRIPTION,
-            "system heating capacity", PT_double,
-            "design_cooling_capacity[Btu/h]", PADDR(design_cooling_capacity),
-            PT_DESCRIPTION, "system cooling capacity", PT_double,
-            "cooling_design_temperature[degF]",
-            PADDR(cooling_design_temperature), PT_DESCRIPTION,
-            "system cooling design temperature", PT_double,
-            "heating_design_temperature[degF]",
-            PADDR(heating_design_temperature), PT_DESCRIPTION,
-            "system heating design temperature", PT_double,
-            "design_peak_solar[Btu/h*sf]", PADDR(design_peak_solar),
-            PT_DESCRIPTION, "system design solar load", PT_double,
-            "design_internal_gains[Btu/h]", PADDR(design_internal_gains),
-            PT_DESCRIPTION, "system design internal gains", PT_double,
-            "air_heat_fraction[pu]", PADDR(air_heat_fraction), PT_DESCRIPTION,
-            "fraction of heat gain/loss that goes to air (as opposed to mass)",
-            PT_double, "mass_solar_gain_fraction[pu]",
-            PADDR(mass_solar_gain_fraction), PT_DESCRIPTION,
-            "fraction of the heat gain/loss from the solar gains that goes to "
-            "the mass",
-            PT_double, "mass_internal_gain_fraction[pu]",
-            PADDR(mass_internal_gain_fraction), PT_DESCRIPTION,
-            "fraction of heat gain/loss from the internal gains that goes to "
-            "the mass",
-
-            PT_double, "auxiliary_heat_capacity[Btu/h]",
-            PADDR(aux_heat_capacity), PT_DESCRIPTION,
-            "installed auxiliary heating capacity", PT_double,
-            "aux_heat_deadband[degF]", PADDR(aux_heat_deadband), PT_DESCRIPTION,
-            "temperature offset from standard heat activation to auxiliary "
-            "heat activation",
-            PT_double, "aux_heat_temperature_lockout[degF]",
-            PADDR(aux_heat_temp_lockout), PT_DESCRIPTION,
-            "temperature at which auxiliary heat will not engage above",
-            PT_double, "aux_heat_time_delay[s]", PADDR(aux_heat_time_delay),
-            PT_DESCRIPTION,
-            "time required for heater to run until auxiliary heating engages",
-
-            PT_double, "cooling_supply_air_temp[degF]",
-            PADDR(cooling_supply_air_temp), PT_DESCRIPTION,
-            "temperature of air blown out of the cooling system", PT_double,
-            "heating_supply_air_temp[degF]", PADDR(heating_supply_air_temp),
-            PT_DESCRIPTION,
-            "temperature of air blown out of the heating system", PT_double,
-            "duct_pressure_drop[inH2O]", PADDR(duct_pressure_drop),
-            PT_DESCRIPTION,
-            "end-to-end pressure drop for the ventilation ducts, in inches of "
-            "water",
-            PT_double, "fan_design_power[W]", PADDR(fan_design_power),
-            PT_DESCRIPTION,
-            "designed maximum power draw of the ventilation fan", PT_double,
-            "fan_low_power_fraction[pu]", PADDR(fan_low_power_fraction),
-            PT_DESCRIPTION,
-            "fraction of ventilation fan power draw during low-power mode "
-            "(two-speed only)",
-            PT_double, "fan_power[kW]", PADDR(fan_power), PT_ACCESS,
-            PA_REFERENCE, PT_DESCRIPTION, "current ventilation fan power draw",
-            PT_double, "fan_design_airflow[cfm]", PADDR(fan_design_airflow),
-            PT_DESCRIPTION, "designed airflow for the ventilation system",
-            PT_double, "fan_impedance_fraction[pu]",
-            PADDR(fan_impedance_fraction), PT_DESCRIPTION,
-            "Impedance component of fan ZIP load", PT_double,
-            "fan_power_fraction[pu]", PADDR(fan_power_fraction), PT_DESCRIPTION,
-            "Power component of fan ZIP load", PT_double,
-            "fan_current_fraction[pu]", PADDR(fan_current_fraction),
-            PT_DESCRIPTION, "Current component of fan ZIP load", PT_double,
-            "fan_power_factor[pu]", PADDR(fan_power_factor), PT_DESCRIPTION,
-            "Power factor of the fan load",
-
-            PT_double, "heating_demand[kW]", PADDR(heating_demand), PT_ACCESS,
-            PA_REFERENCE, PT_DESCRIPTION,
-            "the current power draw to run the heating system", PT_double,
-            "cooling_demand[kW]", PADDR(cooling_demand), PT_ACCESS,
-            PA_REFERENCE, PT_DESCRIPTION,
-            "the current power draw to run the cooling system", PT_double,
-            "heating_COP[pu]", PADDR(heating_COP), PT_DESCRIPTION,
-            "system heating performance coefficient", PT_double,
-            "cooling_COP[pu]", PADDR(cooling_COP), PT_DESCRIPTION,
-            "system cooling performance coefficient",
-            // PT_double,"COP_coeff",PADDR(COP_coeff),PT_DESCRIPTION,"effective
-            // system performance coefficient",
-            PT_double, "air_temperature[degF]", PADDR(Tair), PT_DESCRIPTION,
-            "indoor air temperature", PT_double, "outdoor_temperature[degF]",
-            PADDR(outside_temperature), PT_DESCRIPTION,
-            "outdoor air temperature", PT_double, "outdoor_rh[%]",
-            PADDR(outdoor_rh), PT_DESCRIPTION, "outdoor relative humidity",
-            PT_double, "mass_heat_capacity[Btu/degF]",
-            PADDR(house_content_thermal_mass), PT_DESCRIPTION,
-            "interior mass heat capacity", PT_double,
-            "mass_heat_coeff[Btu/degF*h]",
-            PADDR(house_content_heat_transfer_coeff), PT_DESCRIPTION,
-            "interior mass heat exchange coefficient", PT_double,
-            "mass_temperature[degF]", PADDR(Tmaterials), PT_DESCRIPTION,
-            "interior mass temperature", PT_double, "air_volume[cf]",
-            PADDR(volume), PT_DESCRIPTION, "air volume", PT_double,
-            "air_mass[lb]", PADDR(air_mass), PT_DESCRIPTION, "air mass",
-            PT_double, "air_heat_capacity[Btu/degF]", PADDR(air_thermal_mass),
-            PT_DESCRIPTION, "air thermal mass", PT_double,
-            "latent_load_fraction[pu]", PADDR(latent_load_fraction),
-            PT_DESCRIPTION,
-            "fractional increase in cooling load due to latent heat", PT_double,
-            "total_thermal_mass_per_floor_area[Btu/degF*sf]",
-            PADDR(total_thermal_mass_per_floor_area), PT_double,
-            "interior_surface_heat_transfer_coeff[Btu/h*degF*sf]",
-            PADDR(interior_surface_heat_transfer_coeff), PT_double,
-            "number_of_stories", PADDR(number_of_stories), PT_DESCRIPTION,
-            "number of stories within the structure",
-
-            PT_double, "is_AUX_on", PADDR(is_AUX_on), PT_DESCRIPTION,
-            "logic statement to determine population statistics - is the AUX "
-            "on? 0 no, 1 yes",
-            PT_double, "is_HEAT_on", PADDR(is_HEAT_on), PT_DESCRIPTION,
-            "logic statement to determine population statistics - is the HEAT "
-            "on? 0 no, 1 yes",
-            PT_double, "is_COOL_on", PADDR(is_COOL_on), PT_DESCRIPTION,
-            "logic statement to determine population statistics - is the COOL "
-            "on? 0 no, 1 yes",
-
-            PT_bool, "thermal_storage_present", PADDR(thermal_storage_present),
-            PT_DESCRIPTION,
-            "logic statement for determining if energy storage is present",
-            PT_bool, "thermal_storage_in_use", PADDR(thermal_storage_inuse),
-            PT_DESCRIPTION,
-            "logic statement for determining if energy storage is being "
-            "utilized",
-
-            PT_enumeration, "thermostat_mode", PADDR(thermostat_mode),
-            PT_DESCRIPTION,
-            "tells the thermostat whether it is even allowed to heat or cool "
-            "the house.",
-            PT_KEYWORD, "OFF", (enumeration)TM_OFF, PT_KEYWORD, "AUTO",
-            (enumeration)TM_AUTO, PT_KEYWORD, "HEAT", (enumeration)TM_HEAT,
-            PT_KEYWORD, "COOL", (enumeration)TM_COOL,
-
-            PT_set, "system_type", PADDR(system_type), PT_DESCRIPTION,
-            "heating/cooling system type/options", PT_KEYWORD, "NONE",
-            (gld::set)ST_NONE, PT_KEYWORD, "GAS", (gld::set)ST_GAS, PT_KEYWORD,
-            "AIRCONDITIONING", (gld::set)ST_AC, PT_KEYWORD, "FORCEDAIR",
-            (gld::set)ST_AIR, PT_KEYWORD, "TWOSTAGE", (gld::set)ST_VAR,
-            PT_KEYWORD, "RESISTIVE", (gld::set)ST_RST, PT_set,
-            "auxiliary_strategy", PADDR(auxiliary_strategy), PT_DESCRIPTION,
-            "auxiliary heating activation strategies", PT_KEYWORD, "NONE",
-            (gld::set)AX_NONE, PT_KEYWORD, "DEADBAND", (gld::set)AX_DEADBAND,
-            PT_KEYWORD, "TIMER", (gld::set)AX_TIMER, PT_KEYWORD, "LOCKOUT",
-            (gld::set)AX_LOCKOUT, PT_enumeration, "system_mode",
-            PADDR(system_mode), PT_DESCRIPTION,
-            "heating/cooling system operation state", PT_KEYWORD, "UNKNOWN",
-            (enumeration)SM_UNKNOWN, PT_KEYWORD, "HEAT", (enumeration)SM_HEAT,
-            PT_KEYWORD, "OFF", (enumeration)SM_OFF, PT_KEYWORD, "COOL",
-            (enumeration)SM_COOL, PT_KEYWORD, "AUX", (enumeration)SM_AUX,
-            PT_enumeration, "last_system_mode", PADDR(last_system_mode),
-            PT_DESCRIPTION, "heating/cooling system operation state",
-            PT_KEYWORD, "UNKNOWN", (enumeration)SM_UNKNOWN, PT_KEYWORD, "HEAT",
-            (enumeration)SM_HEAT, PT_KEYWORD, "OFF", (enumeration)SM_OFF,
-            PT_KEYWORD, "COOL", (enumeration)SM_COOL, PT_KEYWORD, "AUX",
-            (enumeration)SM_AUX, PT_enumeration, "heating_system_type",
-            PADDR(heating_system_type), PT_KEYWORD, "NONE",
-            (enumeration)HT_NONE, PT_KEYWORD, "GAS", (enumeration)HT_GAS,
-            PT_KEYWORD, "HEAT_PUMP", (enumeration)HT_HEAT_PUMP, PT_KEYWORD,
-            "RESISTANCE", (enumeration)HT_RESISTANCE, PT_enumeration,
-            "cooling_system_type", PADDR(cooling_system_type), PT_KEYWORD,
-            "NONE", (enumeration)CT_NONE, PT_KEYWORD, "ELECTRIC",
-            (enumeration)CT_ELECTRIC, PT_KEYWORD, "HEAT_PUMP",
-            (enumeration)CT_ELECTRIC, PT_enumeration, "auxiliary_system_type",
-            PADDR(auxiliary_system_type), PT_KEYWORD, "NONE",
-            (enumeration)AT_NONE, PT_KEYWORD, "ELECTRIC",
-            (enumeration)AT_ELECTRIC, PT_enumeration, "fan_type",
-            PADDR(fan_type), PT_KEYWORD, "NONE", (enumeration)FT_NONE,
-            PT_KEYWORD, "ONE_SPEED", (enumeration)FT_ONE_SPEED, PT_KEYWORD,
-            "TWO_SPEED", (enumeration)FT_TWO_SPEED, PT_enumeration,
-            "thermal_integrity_level", PADDR(thermal_integrity_level),
-            PT_DESCRIPTION, "default envelope UA settings", PT_KEYWORD,
-            "VERY_LITTLE", (enumeration)TI_VERY_LITTLE, PT_KEYWORD, "LITTLE",
-            (enumeration)TI_LITTLE, PT_KEYWORD, "BELOW_NORMAL",
-            (enumeration)TI_BELOW_NORMAL, PT_KEYWORD, "NORMAL",
-            (enumeration)TI_NORMAL, PT_KEYWORD, "ABOVE_NORMAL",
-            (enumeration)TI_ABOVE_NORMAL, PT_KEYWORD, "GOOD",
-            (enumeration)TI_GOOD, PT_KEYWORD, "VERY_GOOD",
-            (enumeration)TI_VERY_GOOD, PT_KEYWORD, "UNKNOWN",
-            (enumeration)TI_UNKNOWN, PT_enumeration, "glass_type",
-            PADDR(glass_type), PT_DESCRIPTION, "glass used in the windows",
-            PT_KEYWORD, "OTHER", (enumeration)GM_OTHER, PT_KEYWORD, "GLASS",
-            (enumeration)GM_GLASS, PT_KEYWORD, "LOW_E_GLASS",
-            (enumeration)GM_LOW_E_GLASS, PT_enumeration, "window_frame",
-            PADDR(window_frame), PT_DESCRIPTION, "type of window frame",
-            PT_KEYWORD, "NONE", (enumeration)WF_NONE, PT_KEYWORD, "ALUMINUM",
-            (enumeration)WF_ALUMINUM, PT_KEYWORD, "ALUMINIUM",
-            (enumeration)WF_ALUMINUM, // non-American spelling
-            PT_KEYWORD, "THERMAL_BREAK", (enumeration)WF_THERMAL_BREAK,
-            PT_KEYWORD, "WOOD", (enumeration)WF_WOOD, PT_KEYWORD, "INSULATED",
-            (enumeration)WF_INSULATED, PT_enumeration, "glazing_treatment",
-            PADDR(glazing_treatment), PT_DESCRIPTION,
-            "the treatment to increase the reflectivity of the exterior "
-            "windows",
-            PT_KEYWORD, "OTHER", (enumeration)GT_OTHER, PT_KEYWORD, "CLEAR",
-            (enumeration)GT_CLEAR, PT_KEYWORD, "ABS", (enumeration)GT_ABS,
-            PT_KEYWORD, "REFL", (enumeration)GT_REFL, PT_KEYWORD, "LOW_S",
-            (enumeration)GT_LOW_S, PT_KEYWORD, "HIGH_S", (enumeration)GT_HIGH_S,
-            PT_enumeration, "glazing_layers", PADDR(glazing_layers),
-            PT_DESCRIPTION, "number of layers of glass in each window",
-            PT_KEYWORD, "ONE", (enumeration)GL_ONE, PT_KEYWORD, "TWO",
-            (enumeration)GL_TWO, PT_KEYWORD, "THREE", (enumeration)GL_THREE,
-            PT_KEYWORD, "OTHER", (enumeration)GL_OTHER, PT_enumeration,
-            "motor_model", PADDR(motor_model), PT_DESCRIPTION,
-            "indicates the level of detail used in modelling the hvac motor "
-            "parameters",
-            PT_KEYWORD, "NONE", (enumeration)MM_NONE, PT_KEYWORD, "BASIC",
-            (enumeration)MM_BASIC, PT_KEYWORD, "FULL", (enumeration)MM_FULL,
-            PT_enumeration, "motor_efficiency", PADDR(motor_efficiency),
-            PT_DESCRIPTION,
-            "when using motor model, describes the efficiency of the motor",
-            PT_KEYWORD, "VERY_POOR", (enumeration)ME_VERY_POOR, PT_KEYWORD,
-            "POOR", (enumeration)ME_POOR, PT_KEYWORD, "AVERAGE",
-            (enumeration)ME_AVERAGE, PT_KEYWORD, "GOOD", (enumeration)ME_GOOD,
-            PT_KEYWORD, "VERY_GOOD", (enumeration)ME_VERY_GOOD, PT_int64,
-            "last_mode_timer", PADDR(last_mode_timer), PT_double,
-            "hvac_motor_efficiency[unit]", PADDR(hvac_motor_efficiency),
-            PT_DESCRIPTION,
-            "when using motor model, percent efficiency of hvac motor",
-            PT_double, "hvac_motor_loss_power_factor[unit]",
-            PADDR(hvac_motor_loss_power_factor), PT_DESCRIPTION,
-            "when using motor model, power factor of motor losses", PT_double,
-            "Rroof[degF*sf*h/Btu]", PADDR(Rroof), PT_DESCRIPTION,
-            "roof R-value", PT_double, "Rwall[degF*sf*h/Btu]", PADDR(Rwall),
-            PT_DESCRIPTION, "wall R-value", PT_double, "Rfloor[degF*sf*h/Btu]",
-            PADDR(Rfloor), PT_DESCRIPTION, "floor R-value", PT_double,
-            "Rwindows[degF*sf*h/Btu]", PADDR(Rwindows), PT_DESCRIPTION,
-            "window R-value", PT_double, "Rdoors[degF*sf*h/Btu]", PADDR(Rdoors),
-            PT_DESCRIPTION, "door R-value", PT_double, "hvac_breaker_rating[A]",
-            PADDR(hvac_breaker_rating), PT_DESCRIPTION,
-            "determines the amount of current the HVAC circuit breaker can "
-            "handle",
-            PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor),
-            PT_DESCRIPTION, "power factor of hvac",
-
-            // External motor flag
-            PT_bool, "external_motor_attached", PADDR(external_motor_attached),
-            PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION,
-            "Flag to indicate an external powerflow:motor is being used",
-
-            PT_double, "hvac_load[kW]", PADDR(hvac_load), PT_DESCRIPTION,
-            "heating/cooling system load", PT_double, "last_heating_load[kW]",
-            PADDR(last_heating_load), PT_DESCRIPTION,
-            "stores the previous heating/cooling system load", PT_double,
-            "last_cooling_load[kW]", PADDR(last_cooling_load), PT_DESCRIPTION,
-            "stores the previous heating/cooling system load", PT_complex,
-            "hvac_power[kVA]", PADDR(hvac_power), PT_DESCRIPTION,
-            "describes hvac load complex power consumption", PT_double,
-            "total_load[kVA]", PADDR(total_load), PT_enduse, "panel",
-            PADDR(total), PT_DESCRIPTION, "total panel enduse load",
-
-            PT_complex, "energy", PADDR(total.energy), PT_UNITS, "kVAh",
-            PT_DESCRIPTION, "Cumulative complex panel energy (kWh + j kVArh)",
-
-            PT_complex, "power", PADDR(total.total), PT_UNITS, "kVA",
-            PT_DESCRIPTION, "Aggregate complex panel power",
-
-            PT_double, "design_internal_gain_density[W/sf]",
-            PADDR(design_internal_gain_density), PT_DESCRIPTION,
-            "average density of heat generating devices in the house", PT_bool,
-            "compressor_on", PADDR(compressor_on), PT_int64, "compressor_count",
-            PADDR(compressor_count), PT_timestamp, "hvac_last_on",
-            PADDR(hvac_last_on), PT_timestamp, "hvac_last_off",
-            PADDR(hvac_last_off), PT_double, "hvac_period_length[s]",
-            PADDR(hvac_period_length), PT_double, "hvac_duty_cycle",
-            PADDR(hvac_duty_cycle),
-
-            // these are hidden so we can spy on ETP
-            PT_double, "a", PADDR(a), PT_ACCESS, PA_HIDDEN, PT_double, "b",
-            PADDR(b), PT_ACCESS, PA_HIDDEN, PT_double, "c", PADDR(c), PT_ACCESS,
-            PA_HIDDEN, PT_double, "d", PADDR(d), PT_ACCESS, PA_HIDDEN,
-            PT_double, "c1", PADDR(c1), PT_ACCESS, PA_HIDDEN, PT_double, "c2",
-            PADDR(c2), PT_ACCESS, PA_HIDDEN, PT_double, "A3", PADDR(A3),
-            PT_ACCESS, PA_HIDDEN, PT_double, "A4", PADDR(A4), PT_ACCESS,
-            PA_HIDDEN, PT_double, "k1", PADDR(k1), PT_ACCESS, PA_HIDDEN,
-            PT_double, "k2", PADDR(k2), PT_ACCESS, PA_HIDDEN, PT_double, "r1",
-            PADDR(r1), PT_ACCESS, PA_HIDDEN, PT_double, "r2", PADDR(r2),
-            PT_ACCESS, PA_HIDDEN, PT_double, "Teq", PADDR(Teq), PT_ACCESS,
-            PA_HIDDEN, PT_double, "Tevent", PADDR(Tevent), PT_ACCESS, PA_HIDDEN,
-            PT_double, "Qi", PADDR(Qi), PT_ACCESS, PA_HIDDEN, PT_double, "Qa",
-            PADDR(Qa), PT_ACCESS, PA_HIDDEN, PT_double, "Qm", PADDR(Qm),
-            PT_ACCESS, PA_HIDDEN, PT_double, "Qh", PADDR(load.heatgain),
-            PT_ACCESS, PA_HIDDEN, PT_double, "Qlatent", PADDR(Qlatent),
-            PT_ACCESS, PA_HIDDEN, PT_double, "dTair", PADDR(dTair), PT_ACCESS,
-            PA_HIDDEN, PT_double, "adj_cooling_cap", PADDR(adj_cooling_cap),
-            PT_ACCESS, PA_HIDDEN, PT_double, "adj_heating_cap",
-            PADDR(adj_heating_cap), PT_ACCESS, PA_HIDDEN, PT_double,
-            "adj_cooling_cop", PADDR(adj_cooling_cop), PT_ACCESS, PA_HIDDEN,
-            PT_double, "adj_heating_cop", PADDR(adj_heating_cop), PT_ACCESS,
-            PA_HIDDEN,
-
-            // Power system voltage values -- mostly published hidden so
-            // gld_property can link them for other enduse loads
-            PT_complex, "voltage_12", PADDR(value_Circuit_V[0]), PT_ACCESS,
-            PA_HIDDEN, PT_complex, "voltage_1N", PADDR(value_Circuit_V[1]),
-            PT_ACCESS, PA_HIDDEN, PT_complex, "voltage_2N",
-            PADDR(value_Circuit_V[2]), PT_ACCESS, PA_HIDDEN,
-            // set these attributes from an external power flow solver, e.g.,
-            // OpenDSS, such that v12 = v1n - v2n
-            PT_enumeration, "external_pf_mode", PADDR(external_pf_mode),
-            PT_DESCRIPTION,
-            "set up for using ONE or TWO external_v1N and v2N from another "
-            "powerflow solver. v12 = v1N - v2N. If ONEV, v2N = -v1N",
-            PT_KEYWORD, "NONE", (enumeration)XPFV_NONE, PT_KEYWORD, "ONEV",
-            (enumeration)XPFV_ONEV, PT_KEYWORD, "TWOV", (enumeration)XPFV_TWOV,
-            PT_complex, "external_v1N", PADDR(external_v1N), PT_DESCRIPTION,
-            "circuit 1N voltage from external power flow", PT_complex,
-            "external_v2N", PADDR(external_v2N), PT_DESCRIPTION,
-            "circuit 2N voltage from external power flow",
-
-            // Same idea for frequency
-            PT_double, "grid_frequency", PADDR(value_Frequency), PT_ACCESS,
-            PA_HIDDEN,
-
-            PT_enumeration, "thermostat_control", PADDR(thermostat_control),
-            PT_DESCRIPTION, "determine level of internal thermostatic control",
-            PT_KEYWORD, "FULL",
-            (enumeration)TC_FULL, // setpoint/deadband controls HVAC
-            PT_KEYWORD, "BAND",
-            (enumeration)TC_BAND, // T<mode>{On,Off} control HVAC
-                                  // (setpoints/deadband are ignored)
-            PT_KEYWORD, "NONE",
-            (enumeration)
-                TC_NONE, // system_mode controls HVAC (setpoints/deadband and
-                         // T<mode>{On,Off} are ignored)
-            PT_bool, "dump_house_initialization_parameters",
-            PADDR(dump_house_parameters), PT_DESCRIPTION,
-            "bool to dump the house initialization parameters to <house object "
-            "name>_parameters_dump.txt",
-            nullptr) < 1)
-      GL_THROW("unable to publish properties in %s", __FILE__);
-
-    gl_publish_function(oclass, "attach_enduse",
-                        (FUNCTIONADDR)attach_enduse_house_e);
-    gl_global_create(
-        "residential::implicit_enduses", PT_set, &implicit_enduses_active,
-        PT_KEYWORD, "LIGHTS", (gld::set)IEU_LIGHTS, PT_KEYWORD, "PLUGS",
-        (gld::set)IEU_PLUGS, PT_KEYWORD, "OCCUPANCY", (gld::set)IEU_OCCUPANCY,
-        PT_KEYWORD, "DISHWASHER", (gld::set)IEU_DISHWASHER, PT_KEYWORD,
-        "MICROWAVE", (gld::set)IEU_MICROWAVE, PT_KEYWORD, "FREEZER",
-        (gld::set)IEU_FREEZER, PT_KEYWORD, "REFRIGERATOR",
-        (gld::set)IEU_REFRIGERATOR, PT_KEYWORD, "RANGE", (gld::set)IEU_RANGE,
-        PT_KEYWORD, "EVCHARGER", (gld::set)IEU_EVCHARGER, PT_KEYWORD,
-        "WATERHEATER", (gld::set)IEU_WATERHEATER, PT_KEYWORD, "CLOTHESWASHER",
-        (gld::set)IEU_CLOTHESWASHER, PT_KEYWORD, "DRYER", (gld::set)IEU_DRYER,
-        PT_KEYWORD, "NONE", (gld::set)0, PT_DESCRIPTION,
-        "list of implicit enduses that are active in houses", nullptr);
-    gl_global_create("residential::implicit_enduse_source", PT_enumeration,
-                     &implicit_enduse_source, PT_KEYWORD, "ELCAP1990",
-                     (enumeration)IES_ELCAP1990, PT_KEYWORD, "ELCAP2010",
-                     (enumeration)IES_ELCAP2010, PT_KEYWORD, "RBSA2014",
-                     (enumeration)IES_RBSA2014, nullptr);
-    gl_global_create(
-        "residential::house_low_temperature_warning[degF]", PT_double,
-        &warn_low_temp, PT_DESCRIPTION,
-        "the low house indoor temperature at which a warning will be generated",
-        nullptr);
+            house_e::oclass,
+            PT_INHERIT, "residential_enduse", PT_object, "weather", PADDR(weather),  
+              PT_DESCRIPTION, "reference to the climate object",   
+            PT_double, "floor_area[sf]", PADDR(floor_area),  
+              PT_DESCRIPTION, "home conditioned floor area",  
+            PT_double, "gross_wall_area[sf]", PADDR(gross_wall_area),  
+              PT_DESCRIPTION, "gross outdoor wall area",  
+            PT_double, "ceiling_height[ft]", PADDR(ceiling_height),  
+              PT_DESCRIPTION, "average ceiling height",  
+            PT_double, "aspect_ratio", PADDR(aspect_ratio),  
+              PT_DESCRIPTION, "aspect ratio of the home's footprint",  
+            PT_double, "envelope_UA[Btu/degF*h]", PADDR(envelope_UA),  
+              PT_DESCRIPTION, "overall UA of the home's envelope",  
+            PT_double, "window_wall_ratio", PADDR(window_wall_ratio),  
+              PT_DESCRIPTION, "ratio of window area to wall area",  
+            PT_double, "number_of_doors", PADDR(number_of_doors),  
+              PT_DESCRIPTION, "ratio of door area to wall area",  
+            PT_double, "exterior_wall_fraction", PADDR(exterior_wall_fraction),  
+              PT_DESCRIPTION, "ratio of exterior wall area to total wall area",  
+            PT_double, "interior_exterior_wall_ratio", PADDR(interior_exterior_wall_ratio),  
+              PT_DESCRIPTION, "ratio of interior to exterior walls",  
+            PT_double, "exterior_ceiling_fraction", PADDR(exterior_ceiling_fraction),  
+              PT_DESCRIPTION, "ratio of external ceiling sf to floor area",  
+            PT_double, "exterior_floor_fraction", PADDR(exterior_floor_fraction),  
+              PT_DESCRIPTION, "ratio of floor area used in UA calculation",  
+            PT_double, "window_shading", PADDR(glazing_shgc),  
+              PT_DESCRIPTION, "transmission coefficient through window due to glazing",  
+            PT_double, "window_exterior_transmission_coefficient", PADDR(window_exterior_transmission_coefficient),  
+              PT_DESCRIPTION, "coefficient for the amount of energy that passes through window",  
+            PT_double, "solar_heatgain_factor", PADDR(solar_heatgain_factor), PT_ACCESS, PA_REFERENCE,  
+              PT_DESCRIPTION, "product of the window area, window transmitivity, and the window " "exterior transmission coefficient",  
+            PT_double, "airchange_per_hour[unit/h]", PADDR(airchange_per_hour),  
+              PT_DESCRIPTION, "number of air-changes per hour",  
+            PT_double, "airchange_UA[Btu/degF*h]", PADDR(airchange_UA),  
+              PT_DESCRIPTION, "additional UA due to air infiltration",  
+            PT_double, "UA[Btu/degF*h]", PADDR(UA),  
+              PT_DESCRIPTION, "the total UA",  
+            PT_double, "internal_gain[Btu/h]", PADDR(total.heatgain),  
+              PT_DESCRIPTION, "internal heat gains",  
+            PT_double, "solar_gain[Btu/h]", PADDR(solar_load),  
+              PT_DESCRIPTION, "solar heat gains",  
+            PT_double, "incident_solar_radiation[Btu/h*sf]", PADDR(incident_solar_radiation),  
+              PT_DESCRIPTION, "average incident solar radiation hitting the house",  
+            PT_double, "heat_cool_gain[Btu/h]", PADDR(load.heatgain),  
+              PT_DESCRIPTION, "system heat gains(losses)",   
+            PT_set, "include_solar_quadrant", PADDR(include_solar_quadrant),  
+              PT_DESCRIPTION, "bit set for determining which solar incidence quadrants should be " "included in the solar heatgain",  
+                PT_KEYWORD, "NONE", (gld::set)NO_SOLAR,  
+                PT_KEYWORD, "H", (gld::set)HORIZONTAL,  
+                PT_KEYWORD, "N", (gld::set)NORTH,  
+                PT_KEYWORD, "E", (gld::set)EAST,  
+                PT_KEYWORD, "S", (gld::set)SOUTH,  
+                PT_KEYWORD, "W", (gld::set)WEST,  
+            PT_double, "horizontal_diffuse_solar_radiation[Btu/h*sf]", PADDR(horizontal_diffuse_solar_radiation),  
+              PT_DESCRIPTION, "incident solar radiation hitting the top of the house",  
+            PT_double, "north_incident_solar_radiation[Btu/h*sf]", PADDR(north_incident_solar_radiation),  
+              PT_DESCRIPTION, "incident solar radiation hitting the north side of the house",  
+            PT_double, "northwest_incident_solar_radiation[Btu/h*sf]", PADDR(north_west_incident_solar_radiation),  
+              PT_DESCRIPTION, "incident solar radiation hitting the northwest side of the house",  
+            PT_double, "west_incident_solar_radiation[Btu/h*sf]", PADDR(west_incident_solar_radiation),  
+              PT_DESCRIPTION, "incident solar radiation hitting the west side of the house",  
+            PT_double, "southwest_incident_solar_radiation[Btu/h*sf]", PADDR(south_west_incident_solar_radiation),  
+              PT_DESCRIPTION, "incident solar radiation hitting the southwest side of the house",  
+            PT_double, "south_incident_solar_radiation[Btu/h*sf]", PADDR(south_incident_solar_radiation),  
+              PT_DESCRIPTION, "incident solar radiation hitting the south side of the house",  
+            PT_double, "southeast_incident_solar_radiation[Btu/h*sf]", PADDR(south_east_incident_solar_radiation),  
+              PT_DESCRIPTION, "incident solar radiation hitting the southeast side of the house",  
+            PT_double, "east_incident_solar_radiation[Btu/h*sf]", PADDR(east_incident_solar_radiation),  
+              PT_DESCRIPTION, "incident solar radiation hitting the east side of the house",  
+            PT_double, "northeast_incident_solar_radiation[Btu/h*sf]", PADDR(north_east_incident_solar_radiation),  
+              PT_DESCRIPTION, "incident solar radiation hitting the northeast side of the house",  
+            PT_enumeration, "heating_cop_curve", PADDR(heating_cop_curve),  
+              PT_DESCRIPTION, "Defines the function type to use for the adjusted heating COP as " "a function of outside air temperature.",  
+                PT_KEYWORD, "DEFAULT", (enumeration)HC_DEFAULT,  
+                PT_KEYWORD, "FLAT", (enumeration)HC_FLAT,  
+                PT_KEYWORD, "LINEAR", (enumeration)HC_LINEAR,  
+                PT_KEYWORD, "CURVED", (enumeration)HC_CURVED,  
+            PT_enumeration, "heating_cap_curve", PADDR(heating_cap_curve),  
+              PT_DESCRIPTION, "Defines the function type to use for the adjusted heating " "capacity as a function of outside air temperature.",  
+                PT_KEYWORD, "DEFAULT", (enumeration)HP_DEFAULT,  
+                PT_KEYWORD, "FLAT", (enumeration)HP_FLAT,  
+                PT_KEYWORD, "LINEAR", (enumeration)HP_LINEAR,  
+                PT_KEYWORD, "CURVED", (enumeration)HP_CURVED,  
+            PT_enumeration, "cooling_cop_curve", PADDR(cooling_cop_curve),  
+              PT_DESCRIPTION, "Defines the function type to use for the adjusted cooling COP as " "a function of outside air temperature.",  
+                PT_KEYWORD, "DEFAULT", (enumeration)CC_DEFAULT,  
+                PT_KEYWORD, "FLAT", (enumeration)CC_FLAT,  
+                PT_KEYWORD, "LINEAR", (enumeration)CC_LINEAR,  
+                PT_KEYWORD, "CURVED", (enumeration)CC_CURVED,  
+            PT_enumeration, "cooling_cap_curve", PADDR(cooling_cap_curve),  
+              PT_DESCRIPTION, "Defines the function type to use for the adjusted cooling " "capacity as a function of outside air temperature.",  
+                PT_KEYWORD, "DEFAULT", (enumeration)CP_DEFAULT,  
+                PT_KEYWORD, "FLAT", (enumeration)CP_FLAT,  
+                PT_KEYWORD, "LINEAR", (enumeration)CP_LINEAR,  
+                PT_KEYWORD, "CURVED", (enumeration)CP_CURVED, 
+            PT_bool, "use_latent_heat", PADDR(use_latent_heat),  
+              PT_DESCRIPTION, "Boolean for using the heat latency of the air to the humidity " "when cooling.", 
+            PT_bool, "include_fan_heatgain", PADDR(include_fan_heatgain),  
+              PT_DESCRIPTION, "Boolean to choose whether to include the heat generated by the " "fan in the ETP model.",   
+            PT_double, "thermostat_deadband[degF]", PADDR(thermostat_deadband),  
+              PT_DESCRIPTION, "deadband of thermostat control",  
+            PT_double, "dlc_offset[degF]", PADDR(dlc_offset),  
+              PT_DESCRIPTION, "used as a cap to offset the thermostat deadband for direct load " "control applications", 
+            PT_int16, "thermostat_cycle_time", PADDR(thermostat_cycle_time),  
+              PT_DESCRIPTION, "minimum time in seconds between thermostat updates", 
+            PT_int16, "thermostat_off_cycle_time", PADDR(thermostat_off_cycle_time),  
+              PT_DESCRIPTION, "the minimum amount of time the thermostat cycle must stay in the " "off state", 
+            PT_int16, "thermostat_on_cycle_time", PADDR(thermostat_on_cycle_time),  
+              PT_DESCRIPTION, "the minimum amount of time the thermostat cycle must stay in the " "on state", 
+            PT_timestamp, "thermostat_last_cycle_time", PADDR(thermostat_last_cycle_time), PT_ACCESS, PA_REFERENCE,  
+              PT_DESCRIPTION, "last time the thermostat changed state",  
+            PT_double, "heating_setpoint[degF]", PADDR(heating_setpoint),  
+              PT_DESCRIPTION, "thermostat heating setpoint",  
+            PT_double, "cooling_setpoint[degF]", PADDR(cooling_setpoint),  
+              PT_DESCRIPTION, "thermostat cooling setpoint",  
+            PT_double, "design_heating_setpoint[degF]", PADDR(design_heating_setpoint),  
+              PT_DESCRIPTION, "system design heating setpoint",  
+            PT_double, "design_cooling_setpoint[degF]", PADDR(design_cooling_setpoint),  
+              PT_DESCRIPTION, "system design cooling setpoint",  
+            PT_double, "over_sizing_factor", PADDR(over_sizing_factor),  
+              PT_DESCRIPTION, "over sizes the heating and cooling system from standard " "specifications (0.2 ='s 120% sizing)",  
+            PT_bool, "simulate_window_openings", PADDR(window_openings),  
+              PT_DESCRIPTION, "activates a representation of an occupant opening a window and " "de-activating the HVAC system",  
+            PT_double, "is_window_open", PADDR(window_open),  
+              PT_DESCRIPTION, "defines the state of the window opening, 1=open, 2=closed",  
+            PT_double, "window_low_temperature_cutoff[degF]", PADDR(window_low_temp),  
+              PT_DESCRIPTION, "lowest temperature at which the window opening might occur",  
+            PT_double, "window_high_temperature_cutoff[degF]", PADDR(window_high_temp),  
+              PT_DESCRIPTION, "highest temperature at which the window opening might occur",  
+            PT_double, "window_quadratic_coefficient", PADDR(window_a),  
+              PT_DESCRIPTION, "quadratic coefficient for describing function between low and " "high temperature cutoffs",  
+            PT_double, "window_linear_coefficient", PADDR(window_b),  
+              PT_DESCRIPTION, "linear coefficient for describing function between low and high " "temperature cutoffs",  
+            PT_double, "window_constant_coefficient", PADDR(window_c),  
+              PT_DESCRIPTION, "constant coefficient for describing function between low and high " "temperature cutoffs",  
+            PT_double, "window_temperature_delta", PADDR(window_temp_delta),  
+              PT_DESCRIPTION, "change in outdoor temperature required to update the window " "opening model",   
+            PT_double, "design_heating_capacity[Btu/h]", PADDR(design_heating_capacity),  
+              PT_DESCRIPTION, "system heating capacity",  
+            PT_double, "design_cooling_capacity[Btu/h]", PADDR(design_cooling_capacity),  
+              PT_DESCRIPTION, "system cooling capacity",  
+            PT_double, "cooling_design_temperature[degF]", PADDR(cooling_design_temperature),  
+              PT_DESCRIPTION, "system cooling design temperature",  
+            PT_double, "heating_design_temperature[degF]", PADDR(heating_design_temperature),  
+              PT_DESCRIPTION, "system heating design temperature",  
+            PT_double, "design_peak_solar[Btu/h*sf]", PADDR(design_peak_solar),  
+              PT_DESCRIPTION, "system design solar load",  
+            PT_double, "design_internal_gains[Btu/h]", PADDR(design_internal_gains),  
+              PT_DESCRIPTION, "system design internal gains",  
+            PT_double, "air_heat_fraction[pu]", PADDR(air_heat_fraction),  
+              PT_DESCRIPTION, "fraction of heat gain/loss that goes to air (as opposed to mass)",  
+            PT_double, "mass_solar_gain_fraction[pu]", PADDR(mass_solar_gain_fraction),  
+              PT_DESCRIPTION, "fraction of the heat gain/loss from the solar gains that goes to " "the mass",  
+            PT_double, "mass_internal_gain_fraction[pu]", PADDR(mass_internal_gain_fraction),  
+              PT_DESCRIPTION, "fraction of heat gain/loss from the internal gains that goes to " "the mass",   
+            PT_double, "auxiliary_heat_capacity[Btu/h]", PADDR(aux_heat_capacity),  
+              PT_DESCRIPTION, "installed auxiliary heating capacity",  
+            PT_double, "aux_heat_deadband[degF]", PADDR(aux_heat_deadband),  
+              PT_DESCRIPTION, "temperature offset from standard heat activation to auxiliary " "heat activation",  
+            PT_double, "aux_heat_temperature_lockout[degF]", PADDR(aux_heat_temp_lockout),  
+              PT_DESCRIPTION, "temperature at which auxiliary heat will not engage above",  
+            PT_double, "aux_heat_time_delay[s]", PADDR(aux_heat_time_delay),  
+              PT_DESCRIPTION, "time required for heater to run until auxiliary heating engages",   
+            PT_double, "cooling_supply_air_temp[degF]", PADDR(cooling_supply_air_temp),   
+              PT_DESCRIPTION, "temperature of air blown out of the cooling system",   
+            PT_double, "heating_supply_air_temp[degF]", PADDR(heating_supply_air_temp),  
+              PT_DESCRIPTION, "temperature of air blown out of the heating system",   
+            PT_double, "duct_pressure_drop[inH2O]", PADDR(duct_pressure_drop),  
+              PT_DESCRIPTION, "end-to-end pressure drop for the ventilation ducts, in inches of water",  
+            PT_double, "fan_design_power[W]", PADDR(fan_design_power),  
+              PT_DESCRIPTION, "designed maximum power draw of the ventilation fan",   
+            PT_double, "fan_low_power_fraction[pu]", PADDR(fan_low_power_fraction),  
+              PT_DESCRIPTION, "fraction of ventilation fan power draw during low-power mode (two-speed only)",  
+            PT_double, "fan_power[kW]", PADDR(fan_power), PT_ACCESS, PA_REFERENCE,   
+              PT_DESCRIPTION, "current ventilation fan power draw",  
+            PT_double, "fan_design_airflow[cfm]", PADDR(fan_design_airflow),  
+              PT_DESCRIPTION, "designed airflow for the ventilation system",  
+            PT_double, "fan_impedance_fraction[pu]", PADDR(fan_impedance_fraction),   
+              PT_DESCRIPTION, "Impedance component of fan ZIP load",   
+            PT_double, "fan_power_fraction[pu]", PADDR(fan_power_fraction),   
+              PT_DESCRIPTION, "Power component of fan ZIP load",   
+            PT_double, "fan_current_fraction[pu]", PADDR(fan_current_fraction),  
+              PT_DESCRIPTION, "Current component of fan ZIP load",   
+            PT_double, "fan_power_factor[pu]", PADDR(fan_power_factor),   
+              PT_DESCRIPTION, "Power factor of the fan load",  
+            PT_double, "heating_demand[kW]", PADDR(heating_demand), PT_ACCESS, PA_REFERENCE,   
+              PT_DESCRIPTION, "the current power draw to run the heating system",   
+            PT_double, "cooling_demand[kW]", PADDR(cooling_demand), PT_ACCESS, PA_REFERENCE,   
+              PT_DESCRIPTION, "the current power draw to run the cooling system",   
+            PT_double, "heating_COP[pu]", PADDR(heating_COP),  
+              PT_DESCRIPTION, "system heating performance coefficient",  
+            PT_double, "cooling_COP[pu]", PADDR(cooling_COP),  
+              PT_DESCRIPTION, "system cooling performance coefficient",   
+            // PT_double,"COP_coeff", PADDR(COP_coeff), 
+            //   PT_DESCRIPTION,"effective // system performance coefficient",  
+            PT_double, "air_temperature[degF]", PADDR(Tair),   
+              PT_DESCRIPTION, "indoor air temperature",   
+            PT_double, "outdoor_temperature[degF]", PADDR(outside_temperature),   
+              PT_DESCRIPTION, "outdoor air temperature",   
+            PT_double, "outdoor_rh[%]", PADDR(outdoor_rh),   
+              PT_DESCRIPTION, "outdoor relative humidity",  
+            PT_double, "mass_heat_capacity[Btu/degF]", PADDR(house_content_thermal_mass),   
+              PT_DESCRIPTION, "interior mass heat capacity",   
+            PT_double, "mass_heat_coeff[Btu/degF*h]", PADDR(house_content_heat_transfer_coeff),   
+              PT_DESCRIPTION, "interior mass heat exchange coefficient",   
+            PT_double, "mass_temperature[degF]", PADDR(Tmaterials),   
+              PT_DESCRIPTION, "interior mass temperature",   
+            PT_double, "air_volume[cf]", PADDR(volume),  
+              PT_DESCRIPTION, "air volume",  
+            PT_double, "air_mass[lb]", PADDR(air_mass),  
+              PT_DESCRIPTION, "air mass",  
+            PT_double, "air_heat_capacity[Btu/degF]", PADDR(air_thermal_mass),  
+              PT_DESCRIPTION, "air thermal mass",  
+            PT_double, "latent_load_fraction[pu]", PADDR(latent_load_fraction),  
+              PT_DESCRIPTION, "fractional increase in cooling load due to latent heat",  
+            PT_double, "total_thermal_mass_per_floor_area[Btu/degF*sf]", PADDR(total_thermal_mass_per_floor_area),  
+            PT_double, "interior_surface_heat_transfer_coeff[Btu/h*degF*sf]", PADDR(interior_surface_heat_transfer_coeff),  
+            PT_double, "number_of_stories", PADDR(number_of_stories),  
+              PT_DESCRIPTION, "number of stories within the structure",   
+            PT_double, "is_AUX_on", PADDR(is_AUX_on),  
+              PT_DESCRIPTION, "logic statement to determine population statistics - is the AUX " "on? 0 no, 1 yes",  
+            PT_double, "is_HEAT_on", PADDR(is_HEAT_on),  
+              PT_DESCRIPTION, "logic statement to determine population statistics - is the HEAT " "on? 0 no, 1 yes",  
+            PT_double, "is_COOL_on", PADDR(is_COOL_on),  
+              PT_DESCRIPTION, "logic statement to determine population statistics - is the COOL " "on? 0 no, 1 yes",  
+            PT_bool, "thermal_storage_present", PADDR(thermal_storage_present),  
+              PT_DESCRIPTION, "logic statement for determining if energy storage is present", 
+            PT_bool, "thermal_storage_in_use", PADDR(thermal_storage_inuse),  
+              PT_DESCRIPTION, "logic statement for determining if energy storage is being " "utilized",   
+            PT_enumeration, "thermostat_mode", PADDR(thermostat_mode),  
+              PT_DESCRIPTION, "tells the thermostat whether it is even allowed to heat or cool " "the house.",  
+                PT_KEYWORD, "OFF", (enumeration)TM_OFF,  
+                PT_KEYWORD, "AUTO", (enumeration)TM_AUTO,  
+                PT_KEYWORD, "HEAT", (enumeration)TM_HEAT,  
+                PT_KEYWORD, "COOL", (enumeration)TM_COOL,   
+            PT_set, "system_type", PADDR(system_type),  
+              PT_DESCRIPTION, "heating/cooling system type/options",  
+                PT_KEYWORD, "NONE", (gld::set)ST_NONE,  
+                PT_KEYWORD, "GAS", (gld::set)ST_GAS,  
+                PT_KEYWORD, "AIRCONDITIONING", (gld::set)ST_AC,  
+                PT_KEYWORD, "FORCEDAIR", (gld::set)ST_AIR,  
+                PT_KEYWORD, "TWOSTAGE", (gld::set)ST_VAR,  
+                PT_KEYWORD, "RESISTIVE", (gld::set)ST_RST,  
+            PT_set, "auxiliary_strategy", PADDR(auxiliary_strategy),  
+              PT_DESCRIPTION, "auxiliary heating activation strategies",  
+                PT_KEYWORD, "NONE", (gld::set)AX_NONE,  
+                PT_KEYWORD, "DEADBAND", (gld::set)AX_DEADBAND,  
+                PT_KEYWORD, "TIMER", (gld::set)AX_TIMER,  
+                PT_KEYWORD, "LOCKOUT", (gld::set)AX_LOCKOUT,  
+            PT_enumeration, "system_mode", PADDR(system_mode),  
+              PT_DESCRIPTION, "heating/cooling system operation state",  
+                PT_KEYWORD, "UNKNOWN", (enumeration)SM_UNKNOWN,  
+                PT_KEYWORD, "HEAT", (enumeration)SM_HEAT,  
+                PT_KEYWORD, "OFF", (enumeration)SM_OFF,  
+                PT_KEYWORD, "COOL", (enumeration)SM_COOL,  
+                PT_KEYWORD, "AUX", (enumeration)SM_AUX,  
+            PT_enumeration, "last_system_mode", PADDR(last_system_mode),  
+              PT_DESCRIPTION, "heating/cooling system operation state",  
+                PT_KEYWORD, "UNKNOWN", (enumeration)SM_UNKNOWN,  
+                PT_KEYWORD, "HEAT", (enumeration)SM_HEAT,  
+                PT_KEYWORD, "OFF", (enumeration)SM_OFF,  
+                PT_KEYWORD, "COOL", (enumeration)SM_COOL,  
+                PT_KEYWORD, "AUX", (enumeration)SM_AUX,  
+            PT_enumeration, "heating_system_type", PADDR(heating_system_type),  
+                PT_KEYWORD, "NONE", (enumeration)HT_NONE,  
+                PT_KEYWORD, "GAS", (enumeration)HT_GAS,  
+                PT_KEYWORD, "HEAT_PUMP", (enumeration)HT_HEAT_PUMP,  
+                PT_KEYWORD, "RESISTANCE", (enumeration)HT_RESISTANCE,  
+            PT_enumeration, "cooling_system_type", PADDR(cooling_system_type),  
+                PT_KEYWORD, "NONE", (enumeration)CT_NONE,  
+                PT_KEYWORD, "ELECTRIC", (enumeration)CT_ELECTRIC,  
+                PT_KEYWORD, "HEAT_PUMP", (enumeration)CT_ELECTRIC,  
+            PT_enumeration, "auxiliary_system_type", PADDR(auxiliary_system_type),  
+                PT_KEYWORD, "NONE", (enumeration)AT_NONE,  
+                PT_KEYWORD, "ELECTRIC", (enumeration)AT_ELECTRIC,  
+            PT_enumeration, "fan_type", PADDR(fan_type),  
+                PT_KEYWORD, "NONE", (enumeration)FT_NONE,  
+                PT_KEYWORD, "ONE_SPEED", (enumeration)FT_ONE_SPEED,  
+                PT_KEYWORD, "TWO_SPEED", (enumeration)FT_TWO_SPEED,  
+            PT_enumeration, "thermal_integrity_level", PADDR(thermal_integrity_level),  
+              PT_DESCRIPTION, "default envelope UA settings",  
+                PT_KEYWORD, "VERY_LITTLE", (enumeration)TI_VERY_LITTLE,  
+                PT_KEYWORD, "LITTLE", (enumeration)TI_LITTLE,  
+                PT_KEYWORD, "BELOW_NORMAL", (enumeration)TI_BELOW_NORMAL,  
+                PT_KEYWORD, "NORMAL", (enumeration)TI_NORMAL,  
+                PT_KEYWORD, "ABOVE_NORMAL", (enumeration)TI_ABOVE_NORMAL,  
+                PT_KEYWORD, "GOOD", (enumeration)TI_GOOD,  
+                PT_KEYWORD, "VERY_GOOD", (enumeration)TI_VERY_GOOD,  
+                PT_KEYWORD, "UNKNOWN", (enumeration)TI_UNKNOWN,  
+            PT_enumeration, "glass_type", PADDR(glass_type),  
+              PT_DESCRIPTION, "glass used in the windows",  
+                PT_KEYWORD, "OTHER", (enumeration)GM_OTHER,  
+                PT_KEYWORD, "GLASS", (enumeration)GM_GLASS,  
+                PT_KEYWORD, "LOW_E_GLASS", (enumeration)GM_LOW_E_GLASS,  
+            PT_enumeration, "window_frame", PADDR(window_frame),  
+              PT_DESCRIPTION, "type of window frame",  
+                PT_KEYWORD, "NONE", (enumeration)WF_NONE,  
+                PT_KEYWORD, "ALUMINUM", (enumeration)WF_ALUMINUM,  
+                PT_KEYWORD, "ALUMINIUM", (enumeration)WF_ALUMINUM, // non-American spelling  
+                PT_KEYWORD, "THERMAL_BREAK", (enumeration)WF_THERMAL_BREAK,  
+                PT_KEYWORD, "WOOD", (enumeration)WF_WOOD,  
+                PT_KEYWORD, "INSULATED", (enumeration)WF_INSULATED,  
+            PT_enumeration, "glazing_treatment", PADDR(glazing_treatment),  
+              PT_DESCRIPTION, "the treatment to increase the reflectivity of the exterior " "windows",  
+                PT_KEYWORD, "OTHER", (enumeration)GT_OTHER,  
+                PT_KEYWORD, "CLEAR", (enumeration)GT_CLEAR,  
+                PT_KEYWORD, "ABS", (enumeration)GT_ABS,  
+                PT_KEYWORD, "REFL", (enumeration)GT_REFL,  
+                PT_KEYWORD, "LOW_S", (enumeration)GT_LOW_S,  
+                PT_KEYWORD, "HIGH_S", (enumeration)GT_HIGH_S,  
+            PT_enumeration, "glazing_layers", PADDR(glazing_layers),  
+              PT_DESCRIPTION, "number of layers of glass in each window",  
+                PT_KEYWORD, "ONE", (enumeration)GL_ONE,  
+                PT_KEYWORD, "TWO", (enumeration)GL_TWO,  
+                PT_KEYWORD, "THREE", (enumeration)GL_THREE,  
+                PT_KEYWORD, "OTHER", (enumeration)GL_OTHER,  
+            PT_enumeration, "motor_model", PADDR(motor_model),  
+              PT_DESCRIPTION, "indicates the level of detail used in modelling the hvac motor " "parameters",  
+                PT_KEYWORD, "NONE", (enumeration)MM_NONE,  
+                PT_KEYWORD, "BASIC", (enumeration)MM_BASIC,  
+                PT_KEYWORD, "FULL", (enumeration)MM_FULL,  
+            PT_enumeration, "motor_efficiency", PADDR(motor_efficiency),  
+              PT_DESCRIPTION, "when using motor model, describes the efficiency of the motor",  
+                PT_KEYWORD, "VERY_POOR", (enumeration)ME_VERY_POOR,  
+                PT_KEYWORD, "POOR", (enumeration)ME_POOR,  
+                PT_KEYWORD, "AVERAGE", (enumeration)ME_AVERAGE,  
+                PT_KEYWORD, "GOOD", (enumeration)ME_GOOD,  
+                PT_KEYWORD, "VERY_GOOD", (enumeration)ME_VERY_GOOD, 
+            PT_int64, "last_mode_timer", PADDR(last_mode_timer),  
+            PT_double, "hvac_motor_efficiency[unit]", PADDR(hvac_motor_efficiency),  
+              PT_DESCRIPTION, "when using motor model, percent efficiency of hvac motor",  
+            PT_double, "hvac_motor_loss_power_factor[unit]", PADDR(hvac_motor_loss_power_factor),  
+              PT_DESCRIPTION, "when using motor model, power factor of motor losses",  
+            PT_double, "Rroof[degF*sf*h/Btu]", PADDR(Rroof),  
+              PT_DESCRIPTION, "roof R-value",  
+            PT_double, "Rwall[degF*sf*h/Btu]", PADDR(Rwall),  
+              PT_DESCRIPTION, "wall R-value",  
+            PT_double, "Rfloor[degF*sf*h/Btu]", PADDR(Rfloor),  
+              PT_DESCRIPTION, "floor R-value",  
+            PT_double, "Rwindows[degF*sf*h/Btu]", PADDR(Rwindows),  
+              PT_DESCRIPTION, "window R-value",  
+            PT_double, "Rdoors[degF*sf*h/Btu]", PADDR(Rdoors),  
+              PT_DESCRIPTION, "door R-value",  
+            PT_double, "hvac_breaker_rating[A]", PADDR(hvac_breaker_rating),  
+              PT_DESCRIPTION, "determines the amount of current the HVAC circuit breaker can " "handle",  
+            PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor),  
+              PT_DESCRIPTION, "power factor of hvac",  // External motor flag 
+            PT_bool, "external_motor_attached", PADDR(external_motor_attached), PT_ACCESS, PA_HIDDEN,  
+              PT_DESCRIPTION, "Flag to indicate an external powerflow:motor is being used",   
+            PT_double, "hvac_load[kW]", PADDR(hvac_load),  
+              PT_DESCRIPTION, "heating/cooling system load",  
+            PT_double, "last_heating_load[kW]", PADDR(last_heating_load),  
+              PT_DESCRIPTION, "stores the previous heating/cooling system load",  
+            PT_double, "last_cooling_load[kW]", PADDR(last_cooling_load),  
+              PT_DESCRIPTION, "stores the previous heating/cooling system load", 
+            PT_complex, "hvac_power[kVA]", PADDR(hvac_power),  
+              PT_DESCRIPTION, "describes hvac load complex power consumption",  
+            PT_double, "total_load[kVA]", PADDR(total_load),  
+            PT_enduse, "panel", PADDR(total),  
+              PT_DESCRIPTION, "total panel enduse load",  
+            PT_complex, "energy", PADDR(total.energy), PT_UNITS, "kVAh",  
+              PT_DESCRIPTION, "Cumulative complex panel energy (kWh + j kVArh)",  
+            PT_complex, "power", PADDR(total.total), PT_UNITS, "kVA",  
+              PT_DESCRIPTION, "Aggregate complex panel power",   
+            PT_double, "design_internal_gain_density[W/sf]", PADDR(design_internal_gain_density),  
+              PT_DESCRIPTION, "average density of heat generating devices in the house", 
+            PT_bool, "compressor_on", PADDR(compressor_on), 
+            PT_int64, "compressor_count", PADDR(compressor_count), 
+            PT_timestamp, "hvac_last_on", PADDR(hvac_last_on), 
+            PT_timestamp, "hvac_last_off", PADDR(hvac_last_off),  
+            PT_double, "hvac_period_length[s]", PADDR(hvac_period_length),  
+            PT_double, "hvac_duty_cycle", PADDR(hvac_duty_cycle),  // these are hidden so we can spy on ETP  
+            PT_double, "a", PADDR(a), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "b", PADDR(b), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "c", PADDR(c), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "d", PADDR(d), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "c1", PADDR(c1), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "c2", PADDR(c2), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "A3", PADDR(A3), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "A4", PADDR(A4), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "k1", PADDR(k1), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "k2", PADDR(k2), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "r1", PADDR(r1), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "r2", PADDR(r2), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "Teq", PADDR(Teq), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "Tevent", PADDR(Tevent), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "Qi", PADDR(Qi), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "Qa", PADDR(Qa), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "Qm", PADDR(Qm), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "Qh", PADDR(load.heatgain), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "Qlatent", PADDR(Qlatent), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "dTair", PADDR(dTair), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "adj_cooling_cap", PADDR(adj_cooling_cap), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "adj_heating_cap", PADDR(adj_heating_cap), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "adj_cooling_cop", PADDR(adj_cooling_cop), PT_ACCESS, PA_HIDDEN,  
+            PT_double, "adj_heating_cop", PADDR(adj_heating_cop), PT_ACCESS, PA_HIDDEN,  // Power system voltage values -- mostly published hidden so // gld_property can link them for other enduse loads 
+            PT_complex, "voltage_12", PADDR(value_Circuit_V[0]), PT_ACCESS, PA_HIDDEN, 
+            PT_complex, "voltage_1N", PADDR(value_Circuit_V[1]), PT_ACCESS, PA_HIDDEN, 
+            PT_complex, "voltage_2N", PADDR(value_Circuit_V[2]), PT_ACCESS, PA_HIDDEN, // set these attributes from an external power flow solver, e.g., // OpenDSS, such that v12 = v1n - v2n  
+            PT_enumeration, "external_pf_mode", PADDR(external_pf_mode),  
+              PT_DESCRIPTION, "set up for using ONE or TWO external_v1N and v2N from another " "powerflow solver. v12 = v1N - v2N. If ONEV, v2N = -v1N",  
+                PT_KEYWORD, "NONE", (enumeration)XPFV_NONE,  
+                PT_KEYWORD, "ONEV", (enumeration)XPFV_ONEV,  
+                PT_KEYWORD, "TWOV", (enumeration)XPFV_TWOV, 
+            PT_complex, "external_v1N", PADDR(external_v1N),  
+              PT_DESCRIPTION, "circuit 1N voltage from external power flow", 
+            PT_complex, "external_v2N", PADDR(external_v2N),  
+              PT_DESCRIPTION, "circuit 2N voltage from external power flow",  // Same idea for frequency  
+            PT_double, "grid_frequency", PADDR(value_Frequency), PT_ACCESS, PA_HIDDEN,   
+            PT_enumeration, "thermostat_control", PADDR(thermostat_control),  
+              PT_DESCRIPTION, "determine level of internal thermostatic control",  
+                PT_KEYWORD, "FULL", (enumeration)TC_FULL, // setpoint/deadband controls HVAC  
+                PT_KEYWORD, "BAND", (enumeration)TC_BAND, // T<mode>{On,Off} control HVAC // (setpoints/deadband are ignored)  
+                PT_KEYWORD, "NONE", (enumeration) TC_NONE, // system_mode controls HVAC (setpoints/deadband and  // T<mode>{On,Off} are ignored) 
+            PT_bool, "dump_house_initialization_parameters", PADDR(dump_house_parameters),  
+              PT_DESCRIPTION, "bool to dump the house initialization parameters to <house object " "name>_parameters_dump.txt", nullptr) < 1) GL_THROW("unable to publish properties in %s", __FILE__);  gl_publish_function(oclass, "attach_enduse", (FUNCTIONADDR)attach_enduse_house_e); gl_global_create( "residential::implicit_enduses",  
+            PT_set, &implicit_enduses_active,  
+                PT_KEYWORD, "LIGHTS", (gld::set)IEU_LIGHTS,  
+                PT_KEYWORD, "PLUGS", (gld::set)IEU_PLUGS,  
+                PT_KEYWORD, "OCCUPANCY", (gld::set)IEU_OCCUPANCY,  
+                PT_KEYWORD, "DISHWASHER", (gld::set)IEU_DISHWASHER,  
+                PT_KEYWORD, "MICROWAVE", (gld::set)IEU_MICROWAVE,  
+                PT_KEYWORD, "FREEZER", (gld::set)IEU_FREEZER,  
+                PT_KEYWORD, "REFRIGERATOR", (gld::set)IEU_REFRIGERATOR,  
+                PT_KEYWORD, "RANGE", (gld::set)IEU_RANGE,  
+                PT_KEYWORD, "EVCHARGER", (gld::set)IEU_EVCHARGER,  
+                PT_KEYWORD, "WATERHEATER", (gld::set)IEU_WATERHEATER,  
+                PT_KEYWORD, "CLOTHESWASHER", (gld::set)IEU_CLOTHESWASHER,  
+                PT_KEYWORD, "DRYER", (gld::set)IEU_DRYER,  
+                PT_KEYWORD, "NONE", (gld::set)0,  
+              PT_DESCRIPTION, "list of implicit enduses that are active in houses", nullptr
+            );
+    gl_global_create("residential::implicit_enduse_source", 
+      PT_enumeration, &implicit_enduse_source, 
+        PT_KEYWORD, "ELCAP1990", (enumeration)IES_ELCAP1990, 
+        PT_KEYWORD, "ELCAP2010", (enumeration)IES_ELCAP2010, 
+        PT_KEYWORD, "RBSA2014", (enumeration)IES_RBSA2014, nullptr
+      );
+    gl_global_create("residential::house_low_temperature_warning[degF]", 
+      PT_double, &warn_low_temp, PT_DESCRIPTION, 
+        "the low house indoor temperature at which a warning will be generated", nullptr
+      );
     gl_global_create("residential::house_high_temperature_warning[degF]",
-                     PT_double, &warn_high_temp, PT_DESCRIPTION,
-                     "the high house indoor temperature at which a warning "
-                     "will be generated",
-                     nullptr);
-    gl_global_create("residential::thermostat_control_warning", PT_double,
-                     &warn_control, PT_DESCRIPTION,
-                     "boolean to indicate whether a warning is generated when "
-                     "indoor temperature is out of control limits",
-                     nullptr);
-    gl_global_create("residential::system_dwell_time[s]", PT_double,
-                     &system_dwell_time, PT_DESCRIPTION,
-                     "the heating/cooling system dwell time interval for "
-                     "changing system state",
-                     nullptr);
+      PT_double, &warn_high_temp, PT_DESCRIPTION, 
+        "the high house indoor temperature at which a warning will be generated", nullptr
+      );
+    gl_global_create("residential::thermostat_control_warning", 
+      PT_double, &warn_control, PT_DESCRIPTION, 
+        "boolean to indicate whether a warning is generated when indoor temperature is out of control limits", nullptr
+      );
+    gl_global_create("residential::system_dwell_time[s]", 
+      PT_double, &system_dwell_time, PT_DESCRIPTION,
+        "the heating/cooling system dwell time interval for changing system state", nullptr
+      );
   }
-  gl_global_create(
-      "residential::aux_cutin_temperature[degF]", PT_double,
-      &aux_cutin_temperature, PT_DESCRIPTION,
-      "the outdoor air temperature below which AUX heating is used", nullptr);
+  gl_global_create("residential::aux_cutin_temperature[degF]", 
+    PT_double, &aux_cutin_temperature, PT_DESCRIPTION,
+      "the outdoor air temperature below which AUX heating is used", nullptr
+    );
 
   if (gl_publish_function(house_e::oclass, "interupdate_res_object",
                           (FUNCTIONADDR)interupdate_house_e) == nullptr)
@@ -942,7 +846,7 @@ int house_e::create() {
   floor_area = 0;
   gross_wall_area = 0;
   window_wall_ratio = 0;
-  window_roof_ratio = 0;
+//  window_roof_ratio = 0;
   interior_exterior_wall_ratio = 0;
   exterior_wall_fraction = 0;
   exterior_ceiling_fraction = 0;
@@ -2086,8 +1990,6 @@ int house_e::init(OBJECT *parent) {
                       sqrt(floor_area / aspect_ratio / number_of_stories);
   if (window_wall_ratio == 0)
     window_wall_ratio = 0.15;
-  if (window_roof_ratio == 0)
-    window_roof_ratio = 0.0; // explicitly zero'ed
   if (number_of_doors == 0)
     number_of_doors = 4.0;
   else
@@ -4761,7 +4663,7 @@ EXPORT int create_house(OBJECT **obj, OBJECT *parent) {
     } else
       return 0;
   }
-  CREATE_CATCHALL(house);
+  CREATE_CATCHALL(house_e);
 }
 
 EXPORT int init_house(OBJECT *obj) {
@@ -4774,7 +4676,7 @@ EXPORT int init_house(OBJECT *obj) {
       return my->init(obj->parent);
     }
   }
-  INIT_CATCHALL(house);
+  INIT_CATCHALL(house_e);
 }
 
 EXPORT int isa_house(OBJECT *obj, char *classname) {
@@ -4784,38 +4686,6 @@ EXPORT int isa_house(OBJECT *obj, char *classname) {
     return 0;
   }
 }
-
-// EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-// {
-
-// 	try
-// 	{
-// 		house_e *my = object_data<house_e>(obj);
-// 		TIMESTAMP t1 = TS_NEVER;
-// 		if (obj->clock <= ROUNDOFF)
-// 			obj->clock = t0; // set the object clock if it has not
-// been set yet 		switch (pass)
-// 		{
-// 		case PC_PRETOPDOWN:
-// 			t1 = my->presync(obj->clock, t0);
-// 			break;
-
-// 		case PC_BOTTOMUP:
-// 			t1 = my->sync(obj->clock, t0);
-// 			obj->clock = t0;
-// 			break;
-// 		case PC_POSTTOPDOWN:
-// 			t1 = my->postsync(obj->clock, t0);
-// 			obj->clock = t0;
-// 			break;
-// 		default:
-// 			gl_error("house_e::sync- invalid pass configuration");
-// 			t1 = TS_INVALID; // serious error in exec.c
-// 		}
-// 		return t1;
-// 	}
-// 	SYNC_CATCHALL(house);
-// }
 
 static TIMESTAMP sync_house_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   try {
@@ -4827,7 +4697,6 @@ static TIMESTAMP sync_house_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
     case PC_PRETOPDOWN:
       t1 = my->presync(obj->clock, t0);
       break;
-
     case PC_BOTTOMUP:
       t1 = my->sync(obj->clock, t0);
       obj->clock = t0;
@@ -4842,7 +4711,7 @@ static TIMESTAMP sync_house_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
     }
     return t1;
   }
-  SYNC_CATCHALL(house);
+  SYNC_CATCHALL(house_e);
 }
 
 #ifndef __APPLE__
@@ -4851,30 +4720,17 @@ extern "C" MODULE_API TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0,
   return sync_house_impl(obj, t0, pass);
 }
 #else
-extern "C" MODULE_API TIMESTAMP sync_house(void *object, ...) {
+extern "C" MODULE_API TIMESTAMP sync_house(OBJECT *obj, ...) {
   va_list args;
-  va_start(args, object);
+  va_start(args, obj);
   TIMESTAMP t0 = va_arg(args, TIMESTAMP);
   PASSCONFIG pass = va_arg(args, PASSCONFIG);
   va_end(args);
-
-  OBJECT *obj = (OBJECT *)object;
-
-  if (!callback) {
-    gl_error("callback is null in init_house");
-    return 0; // Fail module load
-  }
-
-  if (!callback->time.local_datetime) {
-    gl_error("CRITICAL: local_datetime callback is null in pass %d", pass);
-    return FAILED;
-  }
-
   return sync_house_impl(obj, t0, pass);
 }
 #endif
 
-EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0) {
+EXPORT TIMESTAMP plc_house_impl(OBJECT *obj, TIMESTAMP t0) {
   // this will be disabled if a PLC object is attached to the waterheater
   if (obj->clock <= ROUNDOFF)
     obj->clock = t0; // set the clock if it has not been set yet
@@ -4882,6 +4738,21 @@ EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0) {
   house_e *my = object_data<house_e>(obj);
   return my->sync_thermostat(obj->clock, t0);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0) {
+  return plc_house_impl(obj, t0);
+}
+#else
+extern "C" MODULE_API TIMESTAMP plc_house(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  va_end(args);
+  return plc_house_impl(obj, t0);
+}
+#endif
+
 
 // Deltamode exposed functions
 EXPORT SIMULATIONMODE interupdate_house_e(OBJECT *obj,

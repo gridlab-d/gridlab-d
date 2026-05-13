@@ -1991,8 +1991,6 @@ static TIMESTAMP _object_sync(OBJECT *obj,     /**< the object to synchronize */
     }
     else
       plc_time = oclass->plc(obj, ts);
-
-    // if (autolock) wunlock(&obj->lock);
   }
 
   /* call sync */
@@ -2002,7 +2000,6 @@ static TIMESTAMP _object_sync(OBJECT *obj,     /**< the object to synchronize */
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&obj->lock));
     sync_time = (*obj->oclass->sync)(obj, ts, pass);
-    // if (autolock) wunlock(&obj->lock);
   }
   else
   {
@@ -3603,11 +3600,10 @@ void *object_remote_read(void *local,    /**< local memory for data (must be
     {
       // auto v = rlock(&obj->lock);
       // replace with SharedMutexManager
-      std::shared_lock<std::shared_mutex> runlock(
+      std::unique_lock<std::shared_mutex> runlock(
           SharedMutexManager::get_mutex(&obj->lock));
       memcpy(local, addr, size);
       // runlock();
-      runlock.unlock();
       return local;
     }
   }

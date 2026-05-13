@@ -231,8 +231,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt) {
   if (dt == nullptr || ts < TS_ZERO ||
       ts > TS_MAX) /* no buffer or timestamp out of range */
   {
-    output_error("local_datetime(ts=%lli,...): invalid local_datetime request",
-                 ts);
+    output_error("local_datetime(ts=%lli,...): invalid local_datetime request", ts);
     return 0;
   }
 #ifdef USE_TS_CACHE
@@ -257,8 +256,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt) {
             This is the result of an internal core or module coding error which
        resulted in an invalid UTC clock time being converted to local time.
     */
-    output_error("local_datetime(ts=%lli,...): invalid local_datetime request",
-                 ts);
+    output_error("local_datetime(ts=%lli,...): invalid local_datetime request", ts);
     return 0;
   }
 
@@ -374,9 +372,7 @@ int local_datetime_delta(double tsdbl, DATETIME *dt) {
   if (dt == nullptr || ts < TS_ZERO ||
       ts > TS_MAX) /* no buffer or timestamp out of range */
   {
-    output_error(
-        "local_datetime_delta(ts=%lli,...): invalid local_datetime request",
-        ts);
+    output_error("local_datetime_delta(ts=%lli,...): invalid local_datetime request", ts);
     return 0;
   }
 #ifdef USE_TS_CACHE
@@ -401,9 +397,7 @@ int local_datetime_delta(double tsdbl, DATETIME *dt) {
             This is the result of an internal core or module coding error which
        resulted in an invalid UTC clock time being converted to local time.
     */
-    output_error(
-        "local_datetime_delta(ts=%lli,...): invalid local_datetime request",
-        ts);
+    output_error("local_datetime_delta(ts=%lli,...): invalid local_datetime request", ts);
     return 0;
   }
 

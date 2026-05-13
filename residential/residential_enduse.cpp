@@ -179,14 +179,45 @@ EXPORT int isa_residential_enduse(OBJECT *obj, char *classname) {
   }
 }
 
-EXPORT TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t1) {
-  residential_enduse *my = object_data<residential_enduse>(obj);
+static TIMESTAMP sync_residential_enduse_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   try {
-    TIMESTAMP t2 = my->sync(obj->clock, t1);
-    obj->clock = t1;
+    residential_enduse *my = object_data<residential_enduse>(obj);
+    TIMESTAMP t2 = TS_NEVER;
+    switch (pass) {
+    case PC_PRETOPDOWN:
+      break;
+
+    case PC_BOTTOMUP:
+      t2 = my->sync(obj->clock, t1);
+      obj->clock = t1;
+      break;
+
+    case PC_POSTTOPDOWN:
+      break;
+
+    default:
+      gl_error("residential_enduse::sync- invalid pass configuration");
+      t2 = TS_INVALID; // serious error in exec.c
+    }
     return t2;
   }
   SYNC_CATCHALL(residential_enduse);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t0,
+                                             PASSCONFIG pass) {
+  return sync_residential_enduse_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_residential_enduse(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_residential_enduse_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

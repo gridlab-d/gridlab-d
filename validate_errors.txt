@@ -1,0 +1,56 @@
+Validation Error Details
+========================
+
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_converted.json
+— ERROR    [01-01-2001 00:00:00 PST] : unable to locate tape_file.dylib
+ERROR    [01-01-2001 00:00:00 PST] : 01-01-2001 00:00:00 PST: object recorder:4 stopped its clock (exec)!
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests.glm
+— ERROR    [INIT] : unable to load '/Users/d3j331/arun/gridlab-d/./build/share/gridlabd.conf': No such file or directory
+FATAL    [INIT] : shutdown after command line rejected
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_converted.json
+— ERROR    [INIT] : test_deltamode_diesel_dg_pctests_converted.json: unable to read stream
+ERROR    [INIT] : loader::loadall_json_roll() parsing file, test_deltamode_diesel_dg_pctests_converted.json: unable to load JSON file!
+FATAL    [INIT] : shutdown after command line rejected
+ERROR : File not Opened, Error while opening the file!
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_multidescend_deferred_converted.json
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_swing_test.glm
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_multidescend.glm
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_meter_values_converted.json
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_multidescend_deferred_FPI.glm
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_multidescend_converted.json
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_multidescend_deferred.glm
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_multidescend_deferred_FPI_converted.json
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_multidescend_FPI.glm
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_multidescend_FPI_converted.json
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_swing_test_converted.json
+— (no ERROR line found in output)
+
+Z /Users/d3j331/arun/gridlab-d/generators/autotest/test_deltamode_diesel_dg_pctests_meter_values.glm
+— FATAL    [INIT] : redirection of all failed
+ERROR    [INIT] : unable to load 'all.glm': Too many open files
+FATAL    [INIT] : shutdown after command line rejected
+ERROR    [INIT] : last error message was repeated 1 times

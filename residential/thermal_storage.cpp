@@ -601,28 +601,47 @@ EXPORT int isa_thermal_storage(OBJECT *obj, char *classname) {
   }
 }
 
-EXPORT TIMESTAMP sync_thermal_storage(OBJECT *obj, TIMESTAMP t1) {
-  thermal_storage *my = object_data<thermal_storage>(obj);
+static TIMESTAMP sync_thermal_storage_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   try {
-    TIMESTAMP t2 = my->sync(obj->clock, t1);
-    obj->clock = t1;
+    thermal_storage *my = object_data<thermal_storage>(obj);
+    TIMESTAMP t2 = TS_NEVER;
+    switch (pass) {
+    case PC_PRETOPDOWN:
+      break;
+
+    case PC_BOTTOMUP:
+      t2 = my->sync(obj->clock, t1);
+      obj->clock = t1;
+      break;
+
+    case PC_POSTTOPDOWN:
+      break;
+
+    default:
+      gl_error("thermal_storage::sync- invalid pass configuration");
+      t2 = TS_INVALID; // serious error in exec.c
+    }
     return t2;
-  } catch (char *msg) {
-    DATETIME dt;
-    char ts[64];
-    gl_localtime(t1, &dt);
-    gl_strtime(&dt, ts, sizeof(ts));
-    gl_error(
-        "%s::%s.init(OBJECT **obj={name='%s', id=%d},TIMESTAMP t1='%s'): %s",
-        obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, ts,
-        msg);
-    /* TROUBLESHOOT
-            The synchronization operation of the specified object failed.
-            The message given provide additional details and can be looked up
-       under the Exceptions section.
-     */
-    return 0;
   }
+  SYNC_CATCHALL(thermal_storage);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_thermal_storage(OBJECT *obj, TIMESTAMP t0,
+                                             PASSCONFIG pass) {
+  return sync_thermal_storage_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_thermal_storage(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_thermal_storage_impl(obj, t0, pass);
+}
+#endif
+
+
 
 /**@}**/
