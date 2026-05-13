@@ -232,6 +232,14 @@ def is_deltamode_test(test_file: Path) -> tuple[bool, str]:
 
     return False, ""
 
+def is_error_test(test_file: Path) -> tuple[bool, str]:
+    """Detect whether a test is an error test (_err_) and should be skipped."""
+    
+    if "_err" in test_file.stem:
+        return True, "ERROR test"
+    else:
+        return False, ""
+
 def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
     """
     Search through a module directory for a directory called autotest.
@@ -268,6 +276,14 @@ def runCheckpointTest(testFile: Path, keepCheckpoints: bool = False, verbose: bo
     result = TestResult(testFile)
 
     should_skip, skip_reason = is_deltamode_test(testFile)
+    if should_skip:
+        result.skipped = True
+        result.skip_reason = skip_reason
+        print(f"[{testFile.name}] SKIPPED: {skip_reason}", flush=True)
+        return result
+    
+    #Do the same for _err files
+    should_skip, skip_reason = is_error_test(testFile)
     if should_skip:
         result.skipped = True
         result.skip_reason = skip_reason
@@ -403,7 +419,7 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
     gldInfo = getGLDVersionInfo()
     
     # Categorize results
-    skipped_tests = []      # DELTAMODE-enabled tests not run
+    skipped_tests = []      # DELTAMODE-enabled or ERRor tests not run
     perfect_tests = []      # 0 differences
     acceptable_tests = []   # > 0 differences but completed
     failed_tests = []       # Didn't complete checkpoint process
@@ -431,7 +447,7 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
         
         # Perfect tests (0 differences)
         if skipped_tests:
-            f.write(f"- Skipped (DELTAMODE) - {len(skipped_tests)} tests:\n")
+            f.write(f"- Skipped (DELTAMODE/ERR) - {len(skipped_tests)} tests:\n")
             for result in skipped_tests:
                 f.write(f"\t{result}\n")
             f.write("\n")
@@ -462,7 +478,7 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
         total_tests_run = total_tests_discovered - len(skipped_tests)
         f.write(f"\tTotal Tests Discovered: {total_tests_discovered}\n")
         f.write(f"\tTotal Tests Run: {total_tests_run}\n")
-        f.write(f"\tSkipped (DELTAMODE): {len(skipped_tests)}\n")
+        f.write(f"\tSkipped (DELTAMODE/ERR): {len(skipped_tests)}\n")
         f.write(f"\tPerfect (0 diff): {len(perfect_tests)}\n")
         f.write(f"\tAcceptable (>0 diff): {len(acceptable_tests)}\n")
         f.write(f"\tFailed (incomplete): {len(failed_tests)}\n")
@@ -505,7 +521,7 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
     total_tests_run = total_tests_discovered - len(skipped_tests)
     print(f"  Total Tests Discovered: {total_tests_discovered}")
     print(f"  Total Tests Run: {total_tests_run}")
-    print(f"  - Skipped (DELTAMODE): {len(skipped_tests)}")
+    print(f"  - Skipped (DELTAMODE/ERR): {len(skipped_tests)}")
     print(f"  ✓ Perfect (0 differences): {len(perfect_tests)}")
     print(f"  ≈ Acceptable (with differences): {len(acceptable_tests)}")
     print(f"  ✗ Failed (incomplete): {len(failed_tests)}")
