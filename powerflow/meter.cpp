@@ -255,6 +255,7 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_timestamp, "last_delta_timestamp", PADDR(last_delta_timestamp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous step in timestamp",
 			PT_timestamp, "last_stat_timestamp", PADDR(last_stat_timestamp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous statistic timestamp",
 			PT_timestamp, "start_timestamp", PADDR(start_timestamp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: starting timestamp",
+			PT_timestamp, "interval_dt", PADDR(interval_dt), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: current averaging interval",
 
 			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 

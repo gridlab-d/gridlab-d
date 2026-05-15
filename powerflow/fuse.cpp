@@ -220,9 +220,25 @@ int fuse::init(OBJECT *parent)
 		}
 	}
 
-	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (is_closed() && has_phase(PHASE_A) ? 1.0 : 0.0);
-	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (is_closed() && has_phase(PHASE_B) ? 1.0 : 0.0);
-	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = (is_closed() && has_phase(PHASE_C) ? 1.0 : 0.0);
+	//Adjustment for checkpointing
+	if (status==LS_CLOSED)
+	{
+		if (has_phase(PHASE_A) && (phase_A_state == GOOD))
+		{
+			a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = gld::complex(1.0,0.0);
+		}
+
+		if (has_phase(PHASE_B) && (phase_B_state == GOOD))
+		{
+			a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = gld::complex(1.0,0.0);
+		}
+
+		if (has_phase(PHASE_C) && (phase_C_state == GOOD))
+		{
+			a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = gld::complex(1.0,0.0);
+		}
+	}
+	//Default else - all were zeroed above, so good by default
 
 	if (solver_method==SM_FBS)
 	{
