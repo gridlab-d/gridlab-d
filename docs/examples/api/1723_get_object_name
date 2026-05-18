@@ -28,5 +28,7 @@ load_code = gld.load("houses.glm")
 if load_code != 0:
     raise RuntimeError(f"Failed to load model with error code {load_code}.")
 house_names = gld.get_properties_by_class(class_name="house", property_name="name"),
+if len(house_names[0]) == 0:
+    raise RuntimeError("No house names found in the model.")
 print(f"House names in the model: {house_names}")
 gld.exit_gld()
