@@ -6,7 +6,7 @@ Residential loads can be modeled as two different types: an implicit enduse load
 
 The **implicit_enduse** load is a simple loadshape and ends up being an identical load for each house residence. The load defined by **implicit_enduses** is meant to cover common devices within a house that may not be influenced by system conditions, or be part of more detailed interactions like demand response.  Implicit enduses add some time-varying capability to the load, but lack any interactive behavior and lack any load diversity settings (all loads are identical for each house, syncrhonized in time).
 
-Implicit enduses are effectively time-series power consumption curves that are derived from the ELCAP 1990 data set [1] (** Not sure how you want to do references: Pratt et. al., 1990 - https://www.osti.gov/biblio/6797986).  They are controlled via the residential module directive _implicit_enduses_; e.g.:
+Implicit enduses are effectively time-series power consumption curves that are derived from the ELCAP 1990 data set.  They are controlled via the residential module directive **implicit_enduses**; e.g.:
 
     module residential{
       implicit_enduses LIGHTS|MICROWAVE|WATERHEATER;
@@ -14,19 +14,19 @@ Implicit enduses are effectively time-series power consumption curves that are d
 
 Possible implicit enduse load entires are (separate by vertical pipes ("|")):
     
-    LIGHTS
-    PLUGS
-    CLOTHESWASHER
-    WATERHEATER
-    REFRIGERATOR
-    DRYER
-    FREEZER
-    DISHWASHER
-    RANGE
-    MICROWAVE
-    NONE
+* LIGHTS
+* PLUGS
+* CLOTHESWASHER
+* WATERHEATER
+* REFRIGERATOR
+* DRYER
+* FREEZER
+* DISHWASHER
+* RANGE
+* MICROWAVE
+* NONE
 
-If no implicit enduses are desired (you are uxing explicit enduse devices, or defining the house load through other means), set the residential property to `NONE`; e.g.:
+If no implicit enduses are desired (you are using explicit enduse devices, or defining the house load through other means), set the residential property to `NONE`; e.g.:
 
     module residential {
       implicit_enduses NONE;
@@ -37,7 +37,7 @@ If no implicit enduses are desired (you are uxing explicit enduse devices, or de
 
 Explicit enduses are distinct objects within a house that have their own internal state-based models.  They will typically adjust their conditions based on inputs from the house itself (environmental properties like temperature), usage patterns provided (water usage, occupancy, time of day), and local electrical paramters (voltage).  Explicit enduse load models are often used to capture how different system conditions or user behaviors can impact the studied system, such as modifying a setpoint temperature, having the device respond to demand response or transactive signals, or even how lower voltage conditions on a feeder may impact operations.
 
-Unlike the **implicit_enduse** load, explicit enduse loads are individual objects that have to be instantiated inside the GridLAB-D model within the `house` object of interest.  As a simple example, this house has an explicit enduse load of a [waterheater](./Waterheater.md) defined:
+Unlike the **implicit_enduse** load, explicit enduse loads are individual objects that have to be instantiated inside the GridLAB-D model within the **house** object of interest.  As a simple example, this house has an explicit enduse load of a [waterheater](./Waterheater.md) defined:
 
     object house {
       name house1;
@@ -59,29 +59,19 @@ This example includes the `water_demand` that is controlled via a [schedule](../
 
 Available explicit enduse loads that are validated include:
 
-    [water heaters](./Waterheater.md)
-    [Occupant heat contributions](./Occupantload.md)
-    [General plug loads](./Plugload.md)
-    [EV chargers](./Evcharger_det.md)
-    [Generalized ZIP loads](./ZIPload.md)
-    [Lights](./Lights.md)
-    [Thermal energy storage devices](./Thermal_Energy_Storage_model_guide.md)
+* [water heaters](./Waterheater.md)
+* [occupant load](./Occupantload.md)
+* [plug loads](./Plugload.md)
+* [EV chargers](./Evcharger_det.md)
+* [ZIP loads](./ZIPload.md)
+* [lights](./Lights.md)
+* [thermal storage](./Thermal_Energy_Storage_model_guide.md)
 
-*** Note: not sure if you want to point at TESP, so adjust this statement as needed ***
-To populate explicit enduse loads on a feeder or larger test system, it is highly recommended to use one of the TESP population scripts to automate that process.
+To populate explicit enduse loads on a feeder or larger test system, it is highly recommended to use one of the TESP population scripts to automate that process. Refer to the [Feeder Generator API](../../../2.0%20-%20New%20Users/Tutorial/2.5.8%20-%20Built-In%20Distribution%20Models.md#Feeder-Generator-API) for more details. 
 
 ### Experimental/low TRL explicit enduse models
 
-Listing them here, but not sure if they'll go in this documentation or elsewhere.  Also not clear if we're purging them from the 6.0 branch too.
-
-    clotheswasher
-    dishwasher
-    dryer
-    evcharger
-    freezer
-    microwave
-    range
-    refrigerator
+Other end use load classes were previously developed for appliances like microwaves, ranges, and refigerators, however these models have not been validated and are considered experimental. Those models can be found in the [unimplemented](../../../6.0%20References/Unimplemented/End%20Use%20Loads/1.0%20-%20Residential_End_Use.md) folder.
 
 
 *** Below is untouched - some clearly needs to go into a development section, if it is relevant ***
@@ -523,3 +513,7 @@ Using the ZIPload's and `schedule_skew` results in a much smoother load shape, e
 
 *A Python script that parses the .glm file and adds GFA devices for load shedding can be found here:*
   [GridLAB-D™ Tools in Python](https://github.com/gridlab-d/tools/tree/master/python_scripts) and [GridLAB-D™ Parser Script](https://github.com/wsu-smartcity/tool-scripts/tree/master/gridlabd%20parser)
+
+## References
+
+Pratt, R G, Williamson, M A, Richman, E E, et al., "Commercial equipment loads: End-Use Load and Consumer Assessment Program (ELCAP)," (1990), https://doi.org/10.2172/6797986.

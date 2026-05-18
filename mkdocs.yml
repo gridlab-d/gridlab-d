@@ -24,6 +24,7 @@ extra_css:
   - _static/css/custom.css
 plugins:
   - search
+  - caption
   - mermaid2
   - mkdocstrings:
       handlers:
@@ -59,6 +60,7 @@ markdown_extensions:
       base_path: docs/
   - admonition
   - pymdownx.details
+  - attr_list
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
@@ -190,6 +192,9 @@ nav:
         - Equivalent Thermal Parameter Model: docs/3.0 - Modeling Reference/Modules/Residential/ETP_closed_form_solution.md
         - Evcharger det: docs/3.0 - Modeling Reference/Modules/Residential/Evcharger_det.md
         - End Use Loads: docs/3.0 - Modeling Reference/Modules/Residential/Loads.md
+        - Lights: docs/3.0 - Modeling Reference/Modules/Residential/Lights.md
+        - Occupantload: docs/3.0 - Modeling Reference/Modules/Residential/Occupantload.md
+        - Plugload: docs/3.0 - Modeling Reference/Modules/Residential/Plugload.md
         - Thermal Energy Storage Model: docs/3.0 - Modeling Reference/Modules/Residential/Thermal_Energy_Storage_model_guide.md
         - Waterheater: docs/3.0 - Modeling Reference/Modules/Residential/Waterheater.md
         - ZIPload: docs/3.0 - Modeling Reference/Modules/Residential/ZIPload.md
@@ -310,7 +315,6 @@ nav:
       - End Use Loads:
         - Residential End Uses: docs/6.0 References/Unimplemented/End Use Loads/1.0 - Residential_End_Use.md
         - Hybrid Electric Vehicle Chargers: docs/6.0 References/Unimplemented/End Use Loads/Hybrid_Electric_Vehicle_Chargers.md
-        - Lights: docs/6.0 References/Unimplemented/End Use Loads/Lights.md
         - Microwave: docs/6.0 References/Unimplemented/End Use Loads/Microwave.md
         - Range: docs/6.0 References/Unimplemented/End Use Loads/Range.md
         - Refrigerator: docs/6.0 References/Unimplemented/End Use Loads/Refrigerator.md

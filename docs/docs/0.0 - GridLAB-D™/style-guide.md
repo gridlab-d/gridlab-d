@@ -10,9 +10,9 @@ Is trademarked. Refer to it always as GridLAB-D™. Do not abbreviate to GLD.
 
 Mention of variables or code-snippbits within documentation text should contain back-ticks to signify that the item is a variable or bit of code. For example:
 
-*Because GridLAB-D™ has a flat parameter list, it is not unusual for some device model parameters to only be used by the model if other parameters are set to certain values. For example, in the **house_e** model used to model single-zone structures, there are parameters for the `heating_setpoint` and `cooling_setpoint`. As you might be able to guess, when the HVAC system is in heating mode, changing the value of the cooling setpoint has no impact on the devices simulated behavior.*
+*Because GridLAB-D™ has a flat parameter list, it is not unusual for some device model parameters to only be used by the model if other parameters are set to certain values. For example, in the **house_e** model used to model single-zone structures, there are parameters for the `heating_setpoint` and `cooling_setpoint`. As you might be able to guess, when the HVAC system is in heating mode, changing the value of the `cooling_setpoint` has no impact on the devices simulated behavior.*
 
-Note that **house_e** is the name of the model, but not a variable. To avoid confusion, it is placed in bold. This also makes it stand out visually and should aid in comprehension. The parameters described in the model, `heating_setpoint` and `cooling_setpoint` are both in back-ticks on first mention, but afterwards are referred to more colloquially as the heating and cooling setpoint; in these later instances, because the parameters are not referenced directly using their variable names, they do not get back-ticks.
+Note that **house_e** is the name of the model, but not a variable. To avoid confusion, it is placed in bold. This also makes it stand out visually and should aid in comprehension. The parameters described in the model, `heating_setpoint` and `cooling_setpoint` are both in back-ticks. It is also acceptable to refer to the heating and cooling setpoint as you would in prose text; in that case, because the parameters are not referenced directly using their variable names, they do not get back-ticks.
 
 ### File names
 
@@ -28,19 +28,46 @@ Remember that both an asterix and an underscore will italicize text, and both ma
 
 ## Figures, Tables, References, and Captions
 
-Images can be either local (in the images folder), or refering an external url. See the below examples:
+Images can be either local (in the images folder), or refering an external url. To insert an image in the documentation write
 
-### URL Image Reference
+```markdown
+  ![caption](local path or URL to the image file) { #anchor }
+```
 
-![Here's an image](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg)
-##### Figure 1: GridLAB-D Logo
+See the examples below generated with the following markdown code:
 
-Note that figure labels are below the image and at a **list-level of five**. The same goes for tables, but table captions appear above the table.
+```markdown
+  ![GridLAB-D™ Logo [external URL reference]](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg) { #fig:external-url-ex }
+```
+
+and
+
+```markdown
+  ![Distribution system switching capacitors [local path reference]](../../images/Dist_syst_switching_capacitors.png) { #fig:local-reference-ex }
+```
+
+### External Image URL Reference
+
+![GridLAB-D™ Logo [external URL reference]](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg){ #fig:external-url-ex }
 
 ### Local Image Reference
 
-![Dist syst switching capacitors.png](../../images/Dist_syst_switching_capacitors.png)
-##### Figure 2. Distribution system switching capacitors
+![Distribution system switching capacitors [local path reference]](../../images/Dist_syst_switching_capacitors.png){ #fig:local-reference-ex }
+
+Tables are introduced by preceeding them with the keyword ```Table:``` followed by the table caption and anchor for referencing.
+
+Table: Table example { #tbl:table-ex }
+
+|Parameter Name|Unit|Type|Description|
+|---|---|---|---|
+|```voltage```|V|float|Terminal voltage|
+
+!!! note 
+
+    - Figure labels are below the image.
+    - Table captions appear above the table.
+    - Table and figure numbering is incremented automatically.
+    - Referencing the figures and tables within the same document is done using the defined anchor, e.g. ```[](#fig:external-url-ex)``` for [](#fig:external-url-ex) or ```[](#tbl:table-ex)``` for [](#tbl:table-ex). (This is achieved by using ```mkdocs-caption``` plugin and the ```attr_list``` option for the ```markdown_extensions``` in ```mkdocs.yml``` file.)
 
 ### Local Page References
 
@@ -70,10 +97,6 @@ Get to the point quickly. Short sentences are just fine. Break complicated, mult
 
     That was an admonition! We have the ability to call attention to important elements in our text using some common flairs: attention, caution, danger, error, hint, important, warning, and more. To use, place three exclamation marks before the flair and then double-indent the text that follows as if it were a code snippbit. 
     Read more [here](https://sphinx-rtd-theme.readthedocs.io/en/stable/demo/demo.html#admonitions).
-
-??? note "Collabsible Note Available"
-
-    Imagine this is a long block of text or a table of hidden parameters that the typical user wouldn't need to see, but someone doing a deep dive might want to reference. To not overwhelm the reader, we include that information but have it collapsed by default. This is a collapsible notebox, and ??? can be added in front of any of the admonition categories to be collapsed. Please do not auto-collapse warnings or caution messages, keep those big and hard to ignore.
 
 ### Revise "weak" writing
 
