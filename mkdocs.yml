@@ -242,11 +242,11 @@ nav:
         - Integration with a Postgres Database: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.5 - Integration with Postgres Databases.md
         - EnergyPlus Integration: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.6 - Integration with EnergyPlus.md
   - 4.0 Developing Reference:
+    - Introduction to Feature Development in GridLAB-D: docs/4.0 Developing Reference/4.1 - Introduction.md
     - 4.1 - Building from Source:
       - Building GridLAB-D™ from Source: docs/4.0 Developing Reference/4.1 - Building from Source/4.2.1 - Building_from_Source.md
       - Setting-Up the VS Code IDE: docs/4.0 Developing Reference/4.1 - Building from Source/4.2.2 - Setting-Up_VS_Code.md
       - Setting-Up WSL for Windows: docs/4.0 Developing Reference/4.1 - Building from Source/4.2.3 - Setting-Up_WSL_for_Windows.md
-    - Introduction to Feature Development in GridLAB-D: docs/4.0 Developing Reference/4.1 - Introduction.md
     - 4.2 - Software Architecture and Design:
       - Introduction: docs/4.0 Developing Reference/4.2 - Software Architecture and Design/4.2.0 - Introduction.md
       - gldcore: docs/4.0 Developing Reference/4.2 - Software Architecture and Design/4.2.1 - gldcore.md
