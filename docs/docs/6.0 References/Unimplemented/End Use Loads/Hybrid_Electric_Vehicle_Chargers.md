@@ -20,16 +20,14 @@ The **evcharger** simulation is based on demand state profile of the vehicle. Wh
   * **SHORTTRIP** random trip up to 50 miles (battery will not be fully discharged)
   * **LONGTRIP** random trip over 50 miles (battery will be discharged up to 25%) but only possible for **HYBRID** vehicles
   
-![EV/PHEV trip state diagram](../../../../images/300px-Slide1.PNG)
+![EV/PHEV trip state diagram](../../../../images/300px-Slide1.PNG){ #fig:ev-phev-trip-state-diagram }
 
 
-##### Figure 1 - EV/PHEV trip state diagram
 
 When away, the probability of a return is used to determine when the vehicle returns, as shown in Figure 2. 
 
-![Daily EV/PHEV arrival/departure probabilities](../../../../images/300px-Slide2.PNG)
+![Daily EV/PHEV arrival/departure probabilities](../../../../images/300px-Slide2.PNG){ #fig:daily-ev-phev-arrival-departure-probabilities }
 
-##### Figure 2 - Daily EV/PHEV arrival/departure probabilities
 
 The charger power can have one of three levels: 
 
@@ -89,6 +87,8 @@ You may introduce as many _DAYTYPE_ blocks as are supported simultaneously (2 ma
     
 
 ## Properties
+
+Table: Hybrid Electric Vehicle Charger Parameters { #tbl:table-hybr }
 
 Property name | Type | Unit | Description   
 ---|---|---|---  

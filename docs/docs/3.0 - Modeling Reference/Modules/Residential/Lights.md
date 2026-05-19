@@ -59,6 +59,8 @@ Unlike implicit lighting end uses, explicit `lights` objects can be placed per h
 
 ## Properties
 
+Table: Lights Properties { #tbl:table-lights }
+
 Property Name | Type | Unit | Description
 ---|---|---|---
 **type** | enumeration | - | Lighting type. One of `INCANDESCENT`, `FLUORESCENT`, `CFL`, `SSL`, `HID`.
@@ -80,6 +82,8 @@ The following inherited `residential_enduse` properties are commonly used with `
 
 ### Default power factor by type
 
+Table: Power Factor { #tbl:table-pfactor }
+
 Type | Default power factor
 ---|---
 `INCANDESCENT` | 1.00
@@ -91,6 +95,8 @@ Type | Default power factor
 ### Default ZIP fractions by type
 
 Fractions are shown in `(Z, I, P)` order.
+
+Table: ZIP Fractions { #tbl:table-zip }
 
 Type | Default fractions
 ---|---

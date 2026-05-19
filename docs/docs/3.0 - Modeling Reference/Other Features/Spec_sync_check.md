@@ -6,7 +6,7 @@ The synchronization check capability in GridLAB-D™ will be implemented to perf
 
 The mapping between the properties and variables is listed in Table 1. The sync_check object will inherit all standard Object_(directive) values as well. The variable definitions are presented in Table 2 of the next section "Variable definitions". Note that the properties listed here represent two different modes for calculating the from/to voltage conditions - `MAG_DIFF` and `SEP_DIFF`. Notes are included as to which property is used for which mode. 
 
-##### Table 1 - Mapping between Properties and Variables  
+Table: Mapping between Properties and Variables { #tbl:mapping-between-properties-and-variables }
 
 Property  | Mapped Variable  | Data Type  | Descriptions   
 ---|---|---|---  
@@ -58,7 +58,7 @@ Using the difference of the voltage magnitudes and angles separately:
 
 Variables of the sync_check functionality are defined as follows: 
 
-##### Table 2 - Variable Definitions  
+Table: Variable Definitions { #tbl:variable-definitions }
 
 Variable  | Data Type  | Unit  | Definition   
 ---|---|---|---  

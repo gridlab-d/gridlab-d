@@ -88,7 +88,7 @@ The **network** module implements the Gauss-Seidel solution method for balanced 
 
 The module global variables are shown in Table 1. 
 
-##### Table 1. Network module properties 
+Table: Network module properties { #tbl:network-module-properties }
  _Property_ | _Type_ | _Default_ | _Unit_ | _Description_   
 ---|---|---|---|---  
 acceleration_factor  | double | 1.4 | pu | The voltage update gain factor (usually between 1.4 and 1.7)   

@@ -75,7 +75,7 @@ The command-line argument module processes arguments as they are encountered.
 The following command-line options are supported 
 
 
-##### Table 1: Basic Command Line Options
+Table: Basic Command Line Options { #tbl:basic-command-line-options }
 
 Option | Description
 -- | --
@@ -92,7 +92,7 @@ Option | Description
 
 The following command-line processes can be called 
 
-##### Table 2: Global and Module Control Options
+Table: Global and Module Control Options { #tbl:global-and-module-control-options }
 
 Option | Description
 -- | --
@@ -119,7 +119,7 @@ Option | Description
         A list of the module's global variables is displayed.
 
 
-##### Table 3: Informational Options
+Table: Informational Options { #tbl:informational-options }
 
 Option | Description
 -- | --
@@ -127,7 +127,7 @@ Option | Description
 `--license` | Displays the software license.
 `--copyright` | Displays the copyright.
 
-##### Table 4: Test Processes Options
+Table: Test Processes Options { #tbl:test-processes-options }
 
 Option | Description
 -- | --
@@ -144,7 +144,7 @@ Option | Description
 `--unitstest` | Performs a test of the units in unitfile.txt
 `--validate` | Perform model validation check 
 
-##### Table 5: File and I/O Formatting Options
+Table: File and I/O Formatting Options { #tbl:file-and-i-o-formatting-options }
 
 Option | Description
 -- | --
@@ -156,7 +156,7 @@ Option | Description
 `--kml=file` | Output the KML (Google Earth) file of model (only supported by some modules).
 
 
-##### Table 6: Help Options
+Table: Help Options { #tbl:help-options }
 
 Option | Description
 -- | --
@@ -165,7 +165,7 @@ Option | Description
 `--info keyword ` | Open a browser and searches these documentation for the keyword given. Spaces may be entered as underscores in keywords .
 `--modhelp module[:class]` | Output the GLM definition of class from module. All the classes from the specified module will be listed in alphabetical order if no class is given.
 
-##### Table 7: Process Control Options
+Table: Process Control Options { #tbl:process-control-options }
 
 Option | Description
 -- | --
@@ -176,7 +176,7 @@ Option | Description
 `--pkill n ` | Kills job n in the process map 
 `--pstatus ` | Displays the processor status 
 
-##### Table 8: System Options
+Table: System Options { #tbl:system-options }
 
 Option | Description
 -- | --
@@ -191,7 +191,7 @@ Option | Description
 `--environment app \| -e app` | Starts the app as the processing environment (default is **batch**). Recognized environments are **matlab**, **html**, **gui**, and **X11**. All but **batch** are experimental or under development.
 
 
-##### Table 9: Job Control Options
+Table: Job Control Options { #tbl:job-control-options }
 
 Option | Description
 -- | --
@@ -274,7 +274,7 @@ The work done for the gui capability enables generation of HTML code by using th
 
 All the features presented above are in early stages of development and under constinuous improvement. Example of concept tests are presented in ` core/test/gui_example...`. The examples are not fully functional at this point because we are trying to understand the limitations of each on various platforms. 
 
-##### Table 10: Server Mode Command Options
+Table: Server Mode Command Options { #tbl:server-mode-command-options }
 
 Option | Description
 -- | --
@@ -293,7 +293,7 @@ When operating in server mode, GridLAB-D accepts main loop state control message
 The following control actions are recognized:
 
 
-##### Table 11: Control Actions
+Table: Control Actions { #tbl:control-actions }
 
 Action | Description
 -- | --

@@ -24,6 +24,8 @@ Total variables found: 193
 
 ## Complete Variable Table
 
+Table: Complete Variable Table { #tbl:table-complete }
+
 |Published Name|Unit|Type|Description|Access|
 |---|---|---|---|---|
 |**inverter_type**||enumeration|LEGACY MODEL: Sets efficiencies and other parameters; if using four_quadrant_control_mode, set this to FOUR_QUADRANT [TWO_PULSE, SIX_PULSE, TWELVE_PULSE, PWM, FOUR_QUADRANT]|PUBLIC|

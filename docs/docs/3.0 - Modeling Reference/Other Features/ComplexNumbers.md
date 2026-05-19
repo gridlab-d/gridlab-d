@@ -86,6 +86,8 @@ Control the output representation of complex numbers. The complex_output_format 
 
 Valid options for the argument are: 
 
+Table: Complex Number Argument Options { #tbl:table-complex }
+
 Value | Description | Math Representation | Output Text   
 ---|---|---|---  
 `DEFAULT` | Output is dictated by the complex variable itself (and relevant flag) - pre-4.3 behavior | Varies | Varies   

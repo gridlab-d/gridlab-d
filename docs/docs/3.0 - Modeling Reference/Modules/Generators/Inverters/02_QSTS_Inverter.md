@@ -72,6 +72,8 @@ These parameters define the fundamental physical limits of the inverter and its 
 
 When ```use_multipoint_efficiency``` is set to true and a solar object is the child resource, the inverter replaces the flat ```inverter_efficiency``` scalar with a California Energy Commission (CEC) model efficiency curve. This model is parameterized by:
 
+Table: Multipoint Efficiency Model Parameters { #tbl:MEM }
+
 |Parameter|Description|
 |---------|-----------|
 |```maximum_dc_power```|DC power at which the inverter reaches rated output|
@@ -116,6 +118,8 @@ These are the primary output quantities applied at the network connection node a
 ## Summary of Key Parameters
 
 Table: Key Parameters and Variables of the GridLAB-D™ Inverter Object { #tbl:inverter-parameters }
+
+Table: Key Parameters { #tbl:params }
 
 |Parameter Name|Unit|Type|Description|
 |---|---|---|---|

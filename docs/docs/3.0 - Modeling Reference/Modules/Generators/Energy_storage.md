@@ -139,7 +139,7 @@ Property name |	Type |	Unit |	Description
 **phases**	| set	| none	| (A, B, C, N, S)
 
 
-##### Table 2. Properties only used for internal battery module
+Table: Properties only used for internal battery module { #tbl:properties-only-used-for-internal-battery-module }
 
 Property Name	| Type	| Unit | 	Description
 -- | -- | -- | --

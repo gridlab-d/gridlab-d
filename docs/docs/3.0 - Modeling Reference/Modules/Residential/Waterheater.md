@@ -43,7 +43,7 @@ Any properties that are not set explicitly will carry these default values.
 
 ### Waterheater Properties
 
-#### Core Tank Properties
+Table: Core Tank Properties { #tbl:table-tank } 
 
 Property Name | Type | Unit | Description | Default or Valid Range
 ---|---|---|---|---
@@ -59,6 +59,8 @@ Property Name | Type | Unit | Description | Default or Valid Range
 
 #### Operating Mode and Model Selection
 
+Table: Operating Mode and Model Selection { #tbl:table-oppmode }
+
 Property Name | Type | Unit | Description
 ---|---|---|---
 **heat_mode** | enumeration | — | Energy source for heating. One of `ELECTRIC`, `GASHEAT`, or `HEAT_PUMP`.
@@ -67,6 +69,8 @@ Property Name | Type | Unit | Description
 **re_override** | enumeration | — | Demand response override. `OV_NORMAL` (thermostat-controlled), `OV_ON` (forced on), or `OV_OFF` (forced off).
 
 #### Status and Output Properties
+
+Table: Status and Output Properties { #tbl:table-status }
 
 Property Name | Type | Unit | Description
 ---|---|---|---
@@ -82,12 +86,16 @@ Property Name | Type | Unit | Description
 
 #### Gas Waterheater Properties
 
+Table: Gas Waterheater Properties { #tbl:table-gaswh }
+
 Property Name | Type | Unit | Description
 ---|---|---|---
 **gas_fan_power** | double | kW | Power draw of the combustion air/vent fan while the burner is running. Defaults to 1% of `heating_element_capacity`.
 **gas_standby_power** | double | kW | Standby power draw (e.g., electronic igniter logic) when the burner is off. Defaults to 0 W.
 
 #### Heat Pump Waterheater Properties
+
+Table: Heat Pump Waterheater Properties { #tbl:table-hp }
 
 Property Name | Type | Unit | Description
 ---|---|---|---
@@ -98,6 +106,8 @@ Property Name | Type | Unit | Description
 #### FORTRAN Model Properties
 
 These properties are only relevant when `waterheater_model FORTRAN`. Valid tank sizes are 40 and 80 gallons only.
+
+Table: FORTRAN Model Properties { #tbl:table-FORTRAN }
 
 Property Name | Type | Unit | Description
 ---|---|---|---
@@ -110,6 +120,8 @@ Property Name | Type | Unit | Description
 #### MULTILAYER Model Properties
 
 These properties are only relevant when `waterheater_model MULTILAYER`.
+
+Table: MULTILAYER Water Heater Model Parameters { #tbl:table-multilayer }
 
 Property Name | Type | Unit | Description | Default
 ---|---|---|---|---
@@ -215,9 +227,8 @@ This **STABLE** state is illustrated in Figure 1. For an example water heater, t
 
 These two critical flow rates depend on many factors, including the tank size and shape, tank $UA$, heating element capacity, and the hot and cold layer temperatures. They are identified in the GridLAB-D™ water heater model by calculating the rate of change of the hot/cold boundary position $h$ with respect to time $(dh/dt)$. Note in the lower graphic of Figure 1 that the time to transition is positive when $dh/dt$, calculated at the **FULL** starting point $h0$, is negative (meaning the tank is depleting). Also note that the time to transition is negative (meaning the tank is really recovering and will remain **FULL**) when $dh/dt$, calculated at the target **EMPTY** state, is positive. The area between the two critical flow rates is identified by differing signs between $dh/dt$ calculated at **FULL** and $dh/dt$ calculated at **EMPTY**.
 
-![Illustration of using dh/dt to identify the **STABLE** state](../../../../images/300px-Residential_Module_Guide_Figure_1.png)
+![Illustration of using dh/dt to identify the **STABLE** state](../../../../images/300px-Residential_Module_Guide_Figure_1.png){ #fig:illustration-of-using-dh-dt-to-identify-the-stable-state }
 
-##### Figure 1. Illustration of using dh/dt to identify the **STABLE** state
 
 ### Modeling Approach
 
@@ -227,9 +238,8 @@ $$C_w = V(gal) \frac{1(ft^3)}{7.48(gal)} \frac{62.4(lb_m)}{1(ft^3)} \frac{1(Btu)
 
 The thermal conductance of the tank shell (or "jacket") $UA$ is calculated from the known R-values of the sides and top of the tank divided into their corresponding areas.
 
-![Water heater model schematic representation](../../../../images/300px-Residential_Module_Guide_Figure_2.png)
+![Water heater model schematic representation](../../../../images/300px-Residential_Module_Guide_Figure_2.png){ #fig:water-heater-model-schematic-representation }
 
-##### Figure 2. Water heater model schematic representation
 
 #### One-Node Model
 
@@ -311,6 +321,8 @@ The FORTRAN model uses a high-fidelity physics-based simulation originally writt
 
 For the 80-gallon tank, `operating_mode` selects the sub-type:
 
+Table: Operating Mode Sub-type { #tbl:table-operating }
+
 | Operating Mode | Description |
 |---|---|
 | 3 | Electric resistance only (dual 3900 W elements) |
@@ -319,6 +331,8 @@ For the 80-gallon tank, `operating_mode` selects the sub-type:
 The Fortran model requires `fortran_sim_time` to be set to a positive value (in seconds) representing the simulation interval per GridLAB-D™ synchronization step. Physical parameters such as tank geometry, element positions, sensor positions, heat loss rate, and COP are determined automatically from lookup tables based on `tank_volume` and `operating_mode`.
 
 Key FORTRAN model parameters set automatically by `init()`:
+
+Table: Auto-set FORTRAN Properties  { #tbl:table-autoFORTRAN }
 
 | Parameter | 40 gal | 80 gal (mode 3) | 80 gal (HP) |
 |---|---|---|---|
@@ -361,6 +375,8 @@ The MULTILAYER model discretizes the tank vertically into 10 internal layers (12
 ### Demand Response Override
 
 The `re_override` property provides direct external control over the heating element, bypassing the internal thermostat:
+
+Table: Demand Response (re_override) { #tbl:table-DR }
 
 | Value | Effect |
 |---|---|

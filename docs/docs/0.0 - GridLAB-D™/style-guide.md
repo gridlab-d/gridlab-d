@@ -169,7 +169,7 @@ Note that you can double click a word or variable to highlight the entire text, 
 
 [Link](http://a.com)
 
-![Image](https://avatars.githubusercontent.com/u/21207639?s=200&v=4)
+![Image](https://avatars.githubusercontent.com/u/21207639?s=200&v=4){ #fig:GLD-Icon }
 
 ### Bulleted Lists
 
@@ -330,10 +330,10 @@ To build latest commit to be hosted publicly. Push your latest commit before bui
 
   * Navigate to our [docs](https://app.readthedocs.org/projects/gridlab-d/): `https://app.readthedocs.org/projects/gridlab-d/`
 
-![readthedocs](../../images/readthedocs.png)
+![readthedocs](../../images/readthedocs.png){ #fig:ReadTheDocs }
 
   * Click `docs`, then `Builds` and then click `Rebuild`:
 
-![build](../../images/build_docs.png)
+![build](../../images/build_docs.png){ #fig:BLD }
 
   * Once complete, click `View docs`

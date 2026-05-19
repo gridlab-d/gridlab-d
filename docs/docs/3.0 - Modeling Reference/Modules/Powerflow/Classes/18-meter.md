@@ -143,7 +143,7 @@ Tiered pricing modes (`TIERED`, `TIERED_RTP`, `TIERED_TOU`) use up to three ener
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | bill_mode | enumeration | N/A | I | Billing structure. Valid values: <br/> 0 - `NONE` - Billing disabled (default). <br/> 1 - `UNIFORM` - Flat rate from `price`. <br/> 2 - `TIERED` - Price increases at energy thresholds. <br/> 3 - `HOURLY` - Real-time market pricing via `power_market`. <br/> 4 - `TIERED_RTP` - Real-time market pricing plus tiered base charges via `price_base`. <br/> 5 - `TIERED_TOU` - Time-of-use with tier selection based on cumulative energy. |
-| bill_day | int32 | N/A | I | Day of month the bill is finalized (1â€“28). |
+| bill_day | int32 | N/A | I | Day of month the bill is finalized (1-28). |
 | monthly_fee | double | $ | I | Flat monthly service fee included as the base of each bill. This is a recurrent monthly service charge that is added into the bill on the first day of the billing cycle (no pro-rating). |
 | price | double | $/kWh | I | Current energy price. Updated from `power_market` in `HOURLY` and `TIERED_RTP` modes. |
 | price_base | double | $/kWh | I | Base energy price used in `TIERED_RTP` mode for energy below the first tier. |

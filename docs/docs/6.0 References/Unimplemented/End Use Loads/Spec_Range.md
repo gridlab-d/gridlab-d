@@ -33,7 +33,7 @@ The cooktop has burners on the top and is usually installed into a countertop. T
 
 ## Oven Equations
 
-##### Table 1: Equation Notation  
+Table: Equation Notation { #tbl:equation-notation }
 
 Variable | Definition   
 ---|---  
@@ -107,7 +107,7 @@ c_2&=\frac{-(ovenUA+\dot{m}\cdot c_{food})}{C_w}\\ C_w &= \frac{v_{oven}}{GALPCF
 
 The user may input values for the following variables related to the oven model. 
 
-##### Table 2: Oven inputs  
+Table: Oven inputs { #tbl:oven-inputs }
 
 Variable | Type | Units | Default | Definition   
 ---|---|---|---|---  
@@ -126,7 +126,7 @@ load_current_fraction | double | n/a | 0 | Constant current component fraction
 load_power_fraction | double | n/a | 0 | Constant power component fraction   
 queue_oven | double | n/a | 0.85 | Oven is placed in its 'queue' and awaiting to be turned on   
 demand_oven | double | n/a | RANGE * 20 | The probability that a given oven is turned on depends on demand_oven, and the value of the normalized oven load shape at any given time. The higher these quantities are, the higher the probability of the given appliance turning on (GE CRADA report)   
-##### Table 3: Cooktop inputs  
+Table: Cooktop inputs { #tbl:cooktop-inputs }
 
 Variable | Type | Units | Default | Definition   
 ---|---|---|---|---  
@@ -145,7 +145,7 @@ queue_max | double | n/a | 2 | Maximum 'queue' value considered
   
 ### Published Outputs
 
-##### Table 4: Range Outputs  
+Table: Range Outputs { #tbl:range-outputs }
 
 Variable | Type | Units | Definition   
 ---|---|---|---  
@@ -162,7 +162,7 @@ time_oven_setting | double | s | Total ON time for electric oven
 
 To facilitate data operations between the individual objects and the dynamic solver capability, a common data structure will be used to pass information back and forth. This data structure should contain information and pointers to the following elements. 
 
-##### Table 5: Range interface elements  
+Table: Range interface elements { #tbl:range-interface-elements }
 
 Variable | Definition   
 ---|---  

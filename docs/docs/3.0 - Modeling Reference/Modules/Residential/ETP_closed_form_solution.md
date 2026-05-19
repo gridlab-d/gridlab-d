@@ -69,9 +69,8 @@ The house model assumes that only envelope characteristics, solar gain through w
 
 The electric circuit analog of an ETP model used to simulate heating and cooling loads in a typical residence is shown in Figure 3. The heat transfer properties are represented by equivalent electrical components with associated parameters for modeling the thermostatically controlled heating, ventilation, and air-conditioning (HVAC) system. 
 
-![ETP Representation of the Typical Residences](../../../../images/300px-Residential_Module_Guide_Figure_3.png)
+![ETP Representation of the Typical Residences](../../../../images/300px-Residential_Module_Guide_Figure_3.png){ #fig:etp-representation-of-the-typical-residences }
 
-##### Figure 1 – ETP Representation of the Typical Residences
 
 where, 
 
@@ -113,9 +112,8 @@ The approach described in the previous section only accounts for sensible loads.
 
 The methodology described below is the same as used in the GridLAB-D™ code base (see [Caveats](#caveats)), although, over time additions have been made to allow for greater flexibility. Additionally modifications have been made to speed up the solution process as implemented in code. The solution methodology, as described here and implemented in GridLAB-D™ was validated against the referenced spreadsheet. 
 
-[![Equivalent Thermal Parameters Circuit Modeled by House-e.](../../../../images/300px-Residential_module_users_guide_figure_1.png)]
+![Equivalent Thermal Parameters Circuit Modeled by House-e.](../../../../images/300px-Residential_module_users_guide_figure_1.png){ #fig:equivalent-thermal-parameters-circuit-modeled-by-house-e }
 
-##### Figure 2. Equivalent Thermal Parameters Circuit Modeled by House-e.
 
 For the thermal circuit in Figure 1, a heat balance (conservation of energy) can be written for the air temperature node ($T_A$) as: 
 
@@ -601,7 +599,8 @@ $$p\ = 2 (1 + R)\sqrt{\frac{A}{nR}} $$
 
 $$A_{wt} = n\ h\ p $$
 
-Then   
+Table: Heat Loss Coefficient Equations { #tbl:HL }
+
 Equation | Explanation  
 ---  | -- |
 | $A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}}$ | The gross exterior wall area ($A_{wt}$)   

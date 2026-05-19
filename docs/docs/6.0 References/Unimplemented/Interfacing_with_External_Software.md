@@ -151,7 +151,7 @@ The `on_init` and `on_term` play supporting roles with the former deleting any p
 
 When running the model, like before, MATLAB is called by GridLAB-D™, the simulation runs, and two output files are produced: the raw data CSV and an image of the graph MATLAB produced of that raw data.
 
-![Battery State](../../../images/800px-Battery_State.png)
+![Battery State](../../../images/800px-Battery_State.png){ #fig:BatteryState }
 
 As the graph shows, the simple controller functions as expected, keeping the battery with certain state-of-charge range. Though this is a very simple controller, it is easy to imagine a much more complex controller being implemented in MATLAB, using perhaps a wider variety of input data and running more complex calculations to determine the battery's output. Without having to learn the broader architecture of GridLAB-D™ source code, in this way MATLAB can be used to implement custom functionality.
 

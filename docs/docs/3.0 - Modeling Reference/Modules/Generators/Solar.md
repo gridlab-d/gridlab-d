@@ -14,6 +14,8 @@ A minimal model could be created via:
 
 ## Properties
 
+Table: Solar Properties { #tbl:table-sol }
+
 Property name | Type | Unit | Description | Default
 ---|---|---|---|---
 **pvc_Pmax_calc_simp_mode** | bool | n/a | If true, PV-curve max power is approximated as `pvc_U_m_V * pvc_I_m_A`. | TRUE
@@ -133,6 +135,9 @@ The solar panel, when properly interfaced with an inverter_dyn object in grid-fo
 
 The formulas which describe the behavioral model are given as below: 
 
+
+Table: Behavioral Model { #tbl:table-model }
+
 $\displaystyle{}I=I_{sc}\left[1-C_1\left(\exp{\frac{U-dU}{C_2U_{oc}}}-1\right)\right]+dI$ | (1)   
 ---|---  
 $\displaystyle{}C_1=\left(1+\frac{I_m}{I_{sc}}-\right)\exp{\frac{-U_m}{C_2U_{oc}}}$ | (2)   
@@ -142,9 +147,9 @@ $\displaystyle{}dI=I_{sc}\left[a_1\frac{S}{S_{ref}}\left(t-t_{ref}\right)+\left(
   
 Where $S_{ref}$ and $t_{ref}$ are light intensity and temperature in standard environment ($S_{ref}=1000\frac{w}{m^2}$, $t_{ref}=25^{\circ}C$), $S$ and $t$ are real light intensity and temperature, $a_1$ and $b_1$ are parameters that used to revise the output characteristics of PV panel in different environment. $a_1$ and $b_1$ are set zero in this instance. 
 
-A real PV panel has been modeled according to the formulas above, the output parameters of which are given in Table 1: 
+A real PV panel has been modeled according to the formulas above, the output parameters of which are given in Table [](#tbl:output-parameters-of): 
 
-##### Table 1 - Output Parameters of 
+Table: Output Parameters of Behavioral Model { #tbl:output-parameters-of }
 
 PV Panel  Variable | Units | Value   
 ---|---|---  
@@ -157,7 +162,6 @@ In GridLAB-D™ simulation, the PV panel is modeled as a controllable current so
 
 The P-V curve of this PV panel is given in Figure 1, the maximum power is about 1400kW and the voltage at maximum power point is 850V. ($t=25^{\circ}C, S=600\frac{w}{m^2}$). 
 
-![P-V Curve of PV Panel](../../../../images/300px-PV_fig1.png)
+![P-V Curve of PV Panel](../../../../images/300px-PV_fig1.png){ #fig:p-v-curve-of-pv-panel }
 
-##### Figure 1 - P-V Curve of PV Panel
 
