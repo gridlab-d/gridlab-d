@@ -58,7 +58,7 @@
 	Ostrander		Version 5.0 originated at PNNL 2022
 	Palo Verde      Version 5.1 originated at PNNL 2023
 	Perkins         Version 5.2 originated at PNNL 2023
-	Redhawk
+	Redhawk			Version 5.3 originated at PNNL 2024
 	Sacajawea
 	Tesla
 	Troutdale

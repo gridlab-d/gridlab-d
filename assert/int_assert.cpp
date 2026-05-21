@@ -139,6 +139,9 @@ TIMESTAMP int_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	if ( status == ASSERT_TRUE )
 	{
         int64 theDiff = x-value;
+        if(theDiff > 0xFFFFFFFF || theDiff < -0xFFFFFFFF){
+            gl_warning("int_assert may be incorrect, difference range outside 32-bit abs() range");
+        }
 		int64 m = fabs((double) theDiff);
 		if ( m>range )
 		{

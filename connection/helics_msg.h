@@ -35,8 +35,21 @@ using std::vector;
 
 class helics_msg;
 
-EXPORT void publish_helics_string(OBJECT *helicsMsgObj, string helicsPublicationName, string helicsData);
-EXPORT void send_helics_message(OBJECT *helicsMsgObj, string helicsEndpointName, string helicsData);
+///< Function relays
+/*typedef struct s_functionsrelay {
+	char localclass[64]; ///< local class info
+	char localcall[64]; ///< local function call address (NULL for outgoing)
+	char remoteclass[64]; ///< remote class name
+	char remotename[64]; ///< remote function name
+	helics_msg *route; ///< routing of relay
+	TRANSLATOR *xlate; ///< output translation call
+	struct s_functionsrelay *next;
+	DATAEXCHANGEDIRECTION drtn;
+	COMMUNICATIONTYPE ctype; ///<identifies which helics communication function to call. Only used for communicating with helics.
+} FUNCTIONSRELAY;*/
+//extern "C" FUNCTIONADDR add_helics_function(helics_msg *route, const char *fclass,const char *flocal, const char *rclass, const char *rname, TRANSLATOR *xlate, DATAEXCHANGEDIRECTION direction, COMMUNICATIONTYPE ctype );
+//extern "C" FUNCTIONSRELAY *find_helics_function(const char *rclass, const char *rname);
+//extern "C" size_t helics_from_hex(void *buf, size_t len, const char *hex, size_t hexlen);
 
 class json_publication {
 public:
@@ -178,7 +191,9 @@ private:
 #endif
 	vector<string> *inFunctionTopics;
 	varmap *vmap[14];
-
+#if HAVE_HELICS
+	helicscpp::CombinationFederate *gld_helics_federate;
+#endif
 	TIMESTAMP last_approved_helics_time;
 	TIMESTAMP initial_sim_time;
 	TIMESTAMP publish_time;
@@ -211,9 +226,7 @@ public:
 	SIMULATIONMODE deltaClockUpdate(double t1, unsigned long timestep, SIMULATIONMODE sysmode);
 	enumeration message_type;
 	int32 publish_period;
-#if HAVE_HELICS
-	helicscpp::CombinationFederate *gld_helics_federate;
-#endif
+
 	// TODO add other event handlers here
 public:
 	// special variables for GridLAB-D classes

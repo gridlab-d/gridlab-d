@@ -46,10 +46,6 @@ if (GLD_USE_EIGEN)
             Eigen3::Eigen
             )
 else ()
-    target_include_directories(${GLD_MODULE_NAME} PRIVATE
-            #            "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
-            "${CMAKE_SOURCE_DIR}/third_party/superLU_MT"
-            )
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${SUPERLU_LIB})
 endif ()
 

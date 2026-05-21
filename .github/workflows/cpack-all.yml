@@ -10,7 +10,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  helics-ref: 'v3.4.0'
+  helics-ref: 'v3.6.0'
 
 jobs:
   linux-build:
@@ -28,7 +28,7 @@ jobs:
 
       - name: Build HELICS Cache
         id: cache-helics
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         env:
           cache-name: cache-helics
         with:
@@ -38,7 +38,7 @@ jobs:
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Checkout HELICS
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'GMLC-TDC/HELICS'
           ref: ${{ env.helics-ref }}
@@ -51,21 +51,21 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON
+          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Build GridLAB-D
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
-          -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
           -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
 
@@ -74,7 +74,7 @@ jobs:
         run: cpack CPackConfig.cmake
 
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v4
         with:
           name: Linux Package
           path: |
@@ -138,7 +138,7 @@ jobs:
       #     cmake --install ./build
 
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           path: gridlab-build
@@ -148,8 +148,9 @@ jobs:
         run: |
           threads=`nproc`
           workspace="$(cygpath -u '${{github.workspace}}')"
-          cmake -G "Unix Makefiles" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.temp/GridLAB-D" \
-          -DGLD_USE_HELICS=ON -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DGLD_CI_BUILD=ON
+          cmake -G "Unix Makefiles" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX="$workspace/.temp/GridLAB-D" -DGLD_USE_HELICS=ON -DCMAKE_C_COMPILER=gcc \
+          -DCMAKE_CXX_COMPILER=g++ -DGLD_CI_BUILD=ON
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -157,7 +158,7 @@ jobs:
         run: cpack CPackConfig.cmake
 
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v4
         with:
           name: Windows Package
           path: |
@@ -181,7 +182,7 @@ jobs:
 
       - name: Build HELICS Cache
         id: cache-helics
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         env:
           cache-name: cache-helics
         with:
@@ -191,7 +192,7 @@ jobs:
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Checkout HELICS
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: 'GMLC-TDC/HELICS'
           ref: ${{ env.helics-ref }}
@@ -204,22 +205,23 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
+          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON \
+          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DHELICS_DISABLE_WEBSERVER=ON
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Build GridLAB-D
         run: |
           threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
-          -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} \
-          -DGLD_CI_BUILD=ON
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
+          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -227,7 +229,7 @@ jobs:
         run: cpack CPackConfig.cmake
 
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v4
         with:
           name: Mac ${{matrix.arch}} Package
           path: |
@@ -245,9 +247,9 @@ jobs:
           sudo apt update
           sudo apt install -y jq
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: ${{github.workspace}}/artifacts
 
