@@ -782,6 +782,20 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             }
                             default:
                             {
+                                if (pmap->ptype == PT_complex &&
+                                    strcmp(obj->oclass->name, "complex_assert") == 0 &&
+                                    strcmp(pmap->name, "value") == 0)
+                                {
+                                    gld::complex *cptr = object_get_complex_quick(obj, pmap);
+                                    if (cptr != nullptr)
+                                    {
+                                        char cbuf[128] = "";
+                                        snprintf(cbuf, sizeof(cbuf), "%+.15g%+.15gj",
+                                                 cptr->Re(), cptr->Im());
+                                        instance[pmap->name] = std::string(cbuf);
+                                        break;
+                                    }
+                                }
                                 char value_str[1024] = "";
                                 // Try to get per-object raw value first (for shape and other properties
                                 // that need to preserve original raw string from loading)
