@@ -1205,6 +1205,12 @@ STATUS object_restore_checkpoint_properties(OBJECT *obj)
     if (obj == nullptr || obj->name == nullptr) return SUCCESS;
     auto it = checkpoint_prop_store.find(obj->name);
     if (it == checkpoint_prop_store.end()) return SUCCESS;
+
+    struct checkpoint_replay_scope
+    {
+        checkpoint_replay_scope() { global_checkpoint_replay_active = 1; }
+        ~checkpoint_replay_scope() { global_checkpoint_replay_active = 0; }
+    } replay_scope;
     for (auto& [name, value] : it->second)
     {
         PROPERTY *prop = class_find_property(obj->oclass, name.c_str());

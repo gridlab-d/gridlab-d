@@ -209,6 +209,7 @@ static struct s_varmap
 	{"checkpoint_interval", PT_int32, &global_checkpoint_interval, PA_PUBLIC, "checkpoint interval"},
 	{"checkpoint_keepall", PT_bool, &global_checkpoint_keepall, PA_PUBLIC, "checkpoint file keep enable flag"},
 	{"checkpoint_loaded", PT_bool, &global_checkpoint_loaded, PA_PUBLIC, "checkpoint loaded flag"},
+	{"checkpoint_replay_active", PT_bool, &global_checkpoint_replay_active, PA_REFERENCE, "checkpoint property replay active flag"},
 	{"check_version", PT_bool, &global_check_version, PA_PUBLIC, "check version enable flag"},
 	{"random_number_generator", PT_enumeration, &global_randomnumbergenerator, PA_PUBLIC, "random number generator version control flag", rng_keys},
 	{"mainloop_state", PT_enumeration, &global_mainloopstate, PA_PUBLIC, "main sync loop state flag", mls_keys},

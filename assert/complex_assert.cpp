@@ -51,6 +51,7 @@ complex_assert::complex_assert(MODULE *module)
                                 PT_KEYWORD, "MAGNITUDE", (enumeration)MAGNITUDE,
                                 PT_KEYWORD, "ANGLE", (enumeration)ANGLE, // specify in radians
                                 PT_complex, "value", get_value_offset(), PT_DESCRIPTION, "Value to assert",
+                                PT_complex, "once_value", get_once_value_offset(), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for ONCE state value",
                                 PT_double, "within", get_within_offset(), PT_DESCRIPTION, "Tolerance for a successful assert",
                                 PT_char1024, "target", get_target_offset(), PT_DESCRIPTION, "Property to perform the assert upon",
                                 nullptr) < 1)
@@ -263,9 +264,16 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
     }
 }
 
+static bool checkpoint_replay_active_now()
+{
+    char replay_active[16] = {0};
+    char *value = gl_global_getvar("checkpoint_replay_active", replay_active, sizeof(replay_active));
+    return value != nullptr && atoi(value) != 0;
+}
+
 int complex_assert::postnotify(PROPERTY *prop, char *value)
 {
-    if (once == ONCE_DONE && strcmp(prop->name, "value") == 0)
+    if (!checkpoint_replay_active_now() && once == ONCE_DONE && strcmp(prop->name, "value") == 0)
     {
         once = ONCE_TRUE;
     }
