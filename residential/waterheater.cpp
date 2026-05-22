@@ -19,6 +19,7 @@
  @{
  **/
 #include "waterheater.h"
+#include <unordered_set>
 
 #define TSTAT_PRECISION 0.01
 #define HEIGHT_PRECISION 0.01
@@ -74,6 +75,79 @@ void RUN_WH_FC (
 CLASS* waterheater::oclass = nullptr;
 CLASS* waterheater::pclass = nullptr;
 
+static bool checkpoint_loaded_runtime()
+{
+	char checkpoint_loaded[32] = "0";
+	gl_global_getvar("checkpoint_loaded", checkpoint_loaded, sizeof(checkpoint_loaded));
+	return (checkpoint_loaded[0] == '1' || checkpoint_loaded[0] == 'T' || checkpoint_loaded[0] == 't');
+}
+
+// Track checkpoint first-load behavior per object to avoid changing normal runs.
+static std::unordered_set<OBJECTNUM> checkpoint_restore_window_closed;
+static std::unordered_set<OBJECTNUM> checkpoint_time_step_initialized;
+static std::unordered_set<OBJECTNUM> checkpoint_multilayer_reinitialized;
+
+static bool checkpoint_restore_window_open(const OBJECT *obj)
+{
+	return checkpoint_loaded_runtime() && obj != nullptr &&
+		(checkpoint_restore_window_closed.find(obj->id) == checkpoint_restore_window_closed.end());
+}
+
+bool waterheater::checkpoint_restore_window_active(OBJECT *obj) const
+{
+	return checkpoint_restore_window_open(obj);
+}
+
+bool waterheater::mark_checkpoint_multilayer_reinitialize(OBJECT *obj, bool first_advancing_restore_step)
+{
+	if (!first_advancing_restore_step || obj == nullptr)
+		return false;
+	if (checkpoint_multilayer_reinitialized.find(obj->id) != checkpoint_multilayer_reinitialized.end())
+		return false;
+	checkpoint_multilayer_reinitialized.insert(obj->id);
+	return true;
+}
+
+void waterheater::checkpoint_seed_multilayer_vectors(double Tamb)
+{
+	if (T_layers.size() < (size_t)number_of_states)
+		T_layers.resize(number_of_states);
+	for (int i = 0; i < number_of_states; ++i)
+	{
+		double layer_temp = Tw;
+		if (i == 0)
+			layer_temp = Tinlet;
+		else if (i == number_of_states - 1)
+			layer_temp = Tamb;
+		else if (i == 1)
+			layer_temp = Tw_1;
+		else if (i == 10)
+			layer_temp = Tw_2;
+
+		T_layers[i].clear();
+		T_layers[i].push_back(layer_temp);
+	}
+
+	control_lower.clear();
+	control_upper.clear();
+	control_lower.push_back((control_switch_1 == ON) ? 1.0 : 0.0);
+	control_upper.push_back((control_switch_2 == ON) ? 1.0 : 0.0);
+}
+
+void waterheater::checkpoint_clamp_multilayer_index(int &idx) const
+{
+	if (idx < 0)
+		idx = 0;
+	if (!control_upper.empty() && idx >= (int)control_upper.size())
+		idx = (int)control_upper.size() - 1;
+	if (!control_lower.empty() && idx >= (int)control_lower.size())
+		idx = (int)control_lower.size() - 1;
+	if (T_layers.size() > 1 && !T_layers[1].empty() && idx >= (int)T_layers[1].size())
+		idx = (int)T_layers[1].size() - 1;
+	if (T_layers.size() > 10 && !T_layers[10].empty() && idx >= (int)T_layers[10].size())
+		idx = (int)T_layers[10].size() - 1;
+}
+
 /**  Register the class and publish water heater object properties
  **/
 waterheater::waterheater(MODULE *module) : residential_enduse(module){
@@ -124,6 +198,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_bool,"turn_fan_on",PADDR(turn_fan_on), PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for turn fan on",
 			PT_bool,"heat_needed",PADDR(heat_needed), PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for heat needed",
 			PT_double,"water_demand_old",PADDR(water_demand_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for previous water demand",
+			PT_double,"time_step",PADDR(time_step), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for HPWH idle-time state",
 			PT_double,"init_tank_temp", PADDR(init_tank_temp[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for initial tank temperature",
 			PT_double,"is_waterheater_on",PADDR(is_waterheater_on),PT_DESCRIPTION, "simple logic output to determine state of waterheater (1-on, 0-off)",
 			PT_double,"gas_fan_power[kW]",PADDR(gas_fan_power),PT_DESCRIPTION, "load of a running gas waterheater",
@@ -157,6 +232,16 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"upper_tank_deadband[degF]", PADDR(deadband_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the upper heating element thermostat in the tank",
 			PT_double,"lower_tank_temperature[degF]", PADDR(Tw_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature at the lower heating element thermostat in the tank",
 			PT_double,"upper_tank_temperature[degF]", PADDR(Tw_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature for the upper heating element thermostat in the tank",
+			PT_int32,"last_transition_time",PADDR(last_transition_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: MULTILAYER internal variable for last transition time",
+			PT_timestamp,"last_time_calculate_state_change_called",PADDR(last_time_calculate_state_change_called), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: MULTILAYER internal variable for transition phase timestamp",
+			PT_double,"last_water_demand",PADDR(last_water_demand), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: MULTILAYER internal variable for previous water demand",
+			PT_double,"last_inlet_temperature",PADDR(last_inlet_temperature), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: MULTILAYER internal variable for previous inlet temperature",
+			PT_double,"last_upper_tank_setpoint",PADDR(last_upper_thermostat_setpoint), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: MULTILAYER internal variable for previous upper thermostat setpoint",
+			PT_double,"last_lower_tank_setpoint",PADDR(last_lower_thermostat_setpoint), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: MULTILAYER internal variable for previous lower thermostat setpoint",
+			PT_enumeration,"last_override_value",PADDR(last_override_value), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: MULTILAYER internal variable for previous override value",
+				PT_KEYWORD,"OV_ON",(enumeration)OV_ON,
+				PT_KEYWORD,"OV_NORMAL",(enumeration)OV_NORMAL,
+				PT_KEYWORD,"OV_OFF",(enumeration)OV_OFF,
 			PT_double,"discrete_step_size[s]", PADDR(discrete_step_size), PT_DESCRIPTION, "MULTILAYER MODEL: The step size in seconds to use in the discrete tank temperature dynamics loop.",
 			PT_double,"circular_flow_rate[gpm]", PADDR(Vdot_circ), PT_DESCRIPTION, "MULTILAYER MODEL: Heuristic flow activated once the heating elements turn on.",
 			PT_double,"T_mixing_valve[degF]", PADDR(T_mixing_valve), PT_DESCRIPTION, "MULTILAYER MODEL: Reference temperature to which mixing valve operate.",
@@ -785,8 +870,23 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 	if(current_model == MULTILAYER) {
+		bool in_checkpoint_restore_window = checkpoint_restore_window_active(my);
+		bool first_advancing_restore_step = in_checkpoint_restore_window && (t1 > t0);
+		// Rebuild multilayer history vectors once on first advancing restore step.
+		bool force_checkpoint_reinitialize = mark_checkpoint_multilayer_reinitialize(my, first_advancing_restore_step);
+
+		// On checkpoint restore, multilayer vectors can be empty before first advancing step.
+		// Seed them from restored published state so upper/lower tank temperatures remain continuous.
+		if (in_checkpoint_restore_window &&
+			(control_upper.empty() || control_lower.empty() || T_layers.size() <= 10 ||
+			 T_layers[1].empty() || T_layers[10].empty()))
+		{
+			checkpoint_seed_multilayer_vectors(Tamb);
+		}
+
 		int dt = (int)(t1-last_time_calculate_state_change_called);
 		int idx = (dt - (dt % (int)discrete_step_size))/(int)discrete_step_size;
+		checkpoint_clamp_multilayer_index(idx);
 		int idx2 = (idx>0?idx-1:idx);
 		conditions_changed = false;
 		if(water_demand != last_water_demand || Tinlet != last_inlet_temperature || tank_setpoint_1 != last_lower_thermostat_setpoint || tank_setpoint_2 != last_upper_thermostat_setpoint || re_override != last_override_value || control_upper[idx] != control_upper[idx2] || control_lower[idx] != control_lower[idx2]) {
@@ -800,10 +900,23 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 		if(t0 == start_time && t0 == t1) {
 			T_layers[0].push_back(Tinlet);
 			for(int i=1; i<number_of_states - 1; i++) {
-				T_layers[i].push_back(Tw);
+				double layer_temp = Tw;
+				if (in_checkpoint_restore_window)
+				{
+					if (i == 1)
+						layer_temp = Tw_1;
+					else if (i == 10)
+						layer_temp = Tw_2;
+				}
+				T_layers[i].push_back(layer_temp);
 			}
 			T_layers[number_of_states - 1].push_back(Tamb);
-		} else if(t0 < t1 && conditions_changed == true){
+			if (in_checkpoint_restore_window)
+			{
+				control_lower[0] = (control_switch_1 == ON) ? 1.0 : 0.0;
+				control_upper[0] = (control_switch_2 == ON) ? 1.0 : 0.0;
+			}
+		} else if(t0 < t1 && (conditions_changed == true || force_checkpoint_reinitialize)){
 			reinitialize_internals(idx);
 			idx = 0;
 		}
@@ -930,7 +1043,8 @@ void waterheater::sync_energytake()
 	if ((Toff >= Tw) && (Tw >= Ton)  && (heating_element_capacity == 0)) 				// when energy take is between setpoints, HPWH is in idle mode.
 	{
 
-		energytake = log(70 / (get_Tambient(location) * 0.39) ) * time_step; // Constants are based on trial and error to get the most appropraite behavior similar to the physical unit.
+		double idle_increment = log(70 / (get_Tambient(location) * 0.39) ) * time_step; // Constants are based on trial and error to get the most appropraite behavior similar to the physical unit.
+		energytake = idle_increment;
 		Tw = (tank_setpoint - (energytake/(tank_volume * 2.44)))+ 1.00034;
 		heat_needed = false;
 		current_model = ONENODE;
@@ -996,6 +1110,10 @@ void waterheater::sync_energytake()
 TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	double internal_gain = 0.0;
+	OBJECT *my = object_header(this);
+	bool in_checkpoint_restore_window = checkpoint_restore_window_active(my);
+	bool same_timestamp_restore_step = in_checkpoint_restore_window && (t1 == t0);
+	bool first_advancing_restore_step = in_checkpoint_restore_window && (t1 > t0);
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	double Tamb = get_Tambient(location);
 	int multilayer_transition_time = 0;
@@ -1041,10 +1159,14 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		set_time_to_transition();
 	}
 	if(current_model == MULTILAYER) {
-
-		if(dt == last_transition_time || conditions_changed){
+		// Preserve restored transition phase on same-timestamp checkpoint load.
+		if (same_timestamp_restore_step) {
+			multilayer_transition_time = last_transition_time;
+		} else if (dt == last_transition_time || conditions_changed ||
+			control_upper.size() <= 1 || T_layers.size() <= 10 || T_layers[10].size() <= 1) {
 			multilayer_transition_time = multilayer_time_to_transition();
-			last_time_calculate_state_change_called = t1;
+			if (!first_advancing_restore_step)
+				last_time_calculate_state_change_called = t1;
 		} else {
 			multilayer_transition_time = last_transition_time - dt;
 		}
@@ -1164,6 +1286,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			fwh_sim_time = t1+ (TIMESTAMP)simulation_time;
 		}
 	}
+
 	if(current_model != FORTRAN){
 		// determine the power used
 		if (heat_needed == true){
@@ -1214,6 +1337,8 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		} else {
 			TIMESTAMP t_to_trans = (TIMESTAMP)(t1+multilayer_transition_time);
 			last_transition_time = multilayer_transition_time;
+			if (same_timestamp_restore_step)
+				return t2;
 			if(t_to_trans < t2) {
 				return -t_to_trans;
 			} else {
@@ -1230,16 +1355,41 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	OBJECT *my = object_header(this);
+	bool in_checkpoint_restore_window = checkpoint_restore_window_active(my);
+	bool same_timestamp_restore_step = in_checkpoint_restore_window && (t1 == t0);
+	bool first_advancing_restore_step = in_checkpoint_restore_window && (t1 > t0);
+
 	if (heat_mode == HEAT_PUMP)
 	{
 		if((water_demand- water_demand_old)>0)
 			turn_fan_on = true;
 
-		sync_energytake();
+		if (first_advancing_restore_step &&
+			checkpoint_time_step_initialized.find(my->id) == checkpoint_time_step_initialized.end())
+		{
+			double factor = log(70 / (get_Tambient(location) * 0.39));
+			if (factor > 1e-9 && energytake > 0.0 && fabs(time_step) < 1e-12)
+			{
+				// Reconstruct internal HPWH idle-time state from restored energytake.
+				// This preserves continuity across checkpoint restart without affecting normal runs.
+				time_step = energytake / factor;
+			}
+			checkpoint_time_step_initialized.insert(my->id);
+		}
+
+		// Only suppress same-timestamp updates during checkpoint restore first-load window.
+		if (!same_timestamp_restore_step)
+			sync_energytake();
 
 		if (turn_fan_on)
 			turn_fan_on = false;
-	}	
+	}
+
+	// Close the checkpoint first-load window for all models once simulation time advances.
+	if (first_advancing_restore_step)
+		checkpoint_restore_window_closed.insert(my->id);
+
 	return TS_NEVER;
 }
 

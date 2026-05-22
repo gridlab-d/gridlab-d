@@ -357,6 +357,12 @@ private:
 	int last_transition_time;
 
 	bool conditions_changed;
+
+	// Checkpoint-restore helpers to keep sync stages readable.
+	bool checkpoint_restore_window_active(OBJECT *obj) const;
+	bool mark_checkpoint_multilayer_reinitialize(OBJECT *obj, bool first_advancing_restore_step);
+	void checkpoint_seed_multilayer_vectors(double Tamb);
+	void checkpoint_clamp_multilayer_index(int &idx) const;
 public:
 	double tank_setpoint_1;
 	double tank_setpoint_2;

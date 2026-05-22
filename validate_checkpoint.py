@@ -355,7 +355,7 @@ def runCheckpointTest(testFile: Path, keepCheckpoints: bool = False, verbose: bo
         
         # Step 4: Compare results
         print(f"[{testFile.name}] Step 4/4: Compare results...", end=" ", flush=True)
-        step4_command = [testGldApiBinary, testFileName, "--compare", "--tolerance", "6"]
+        step4_command = [testGldApiBinary, testFileName, "--compare", "--tolerance", ".00006"]
         step4_result = run_process(step4_command, testDir, run_env, 300, True)
         
         # Parse comparison output to count differences
