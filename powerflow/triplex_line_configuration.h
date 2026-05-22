@@ -6,21 +6,20 @@
 
 #include "line.h"
 
-class triplex_line_configuration : public line_configuration {
+class triplex_line_configuration : public line_configuration
+{
 public:
-  double ins_thickness;
-  double diameter;
-  LINERATINGS winter, summer;
-
+	double ins_thickness;
+	double diameter;
+	
 public:
-  static CLASS *oclass;
-  static CLASS *pclass;
-
-  triplex_line_configuration(MODULE *mod);
-  inline triplex_line_configuration(CLASS *cl = oclass)
-      : line_configuration(cl) {};
-  int isa(char *classname);
-  int create(void);
+	static CLASS *oclass;
+	static CLASS *pclass;
+	
+	triplex_line_configuration(MODULE *mod);
+	inline triplex_line_configuration(CLASS *cl=oclass):line_configuration(cl){};
+	int isa(char *classname);
+	int create(void);	
 };
 
 #endif // _TRIPLEXLINECONFIGURATION_H

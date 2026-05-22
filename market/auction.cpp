@@ -1841,8 +1841,6 @@ void auction::record_bid(char *from, double quantity, double real_price,
 
 int auction::submit(char *from, double quantity, double real_price, KEY key,
                     BIDDERSTATE state, bool rebid, int64 mkt_id) {
-  // gld_wlock lock(my());
-  // replace the above with SharedMutexManager
   std::unique_lock<std::shared_mutex> lock(
       SharedMutexManager::get_mutex(my())); // exclusive lock for writing
   return submit_nolock(from, quantity, real_price, key, state, rebid, mkt_id);

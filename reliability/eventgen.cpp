@@ -983,7 +983,6 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1) {
             GL_THROW("Unable to induce event on %s", (*i)->fault_object->name);
           }
           // Lock the object of interest
-          // wlock((*i)->fault_object);
           auto &v = SharedMutexManager::get_mutex((*i)->fault_object);
           std::unique_lock<std::shared_mutex> lock(v);
 
@@ -993,7 +992,6 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1) {
               &(*i)->implemented_fault, &mean_repair_time);
           mean_repair_time = TS_NEVER;
           // Unlock it
-          // wunlock((*i)->fault_object);
           lock.unlock();
           (*i)->event_enabled = true;
         } else if ((*i)->disable_event && (*i)->event_enabled) {
@@ -1008,9 +1006,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1) {
             // Defined above
           }
 
-          // Lock the object of interst
-          // wlock((*i)->fault_object);
-          // replace wlock with SharedMutexManager
+          // Lock the object of interest
           auto &v = SharedMutexManager::get_mutex((*i)->fault_object);
           std::unique_lock<std::shared_mutex> lock(v);
 
@@ -1018,7 +1014,6 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1) {
               (*i)->fault_object, &(*i)->implemented_fault, impl_fault);
 
           // Unlock it
-          // wunlock((*i)->fault_object);
           lock.unlock();
           (*i)->event_enabled = false;
           if (returnval == 0) // Restoration is no go :(
@@ -1072,8 +1067,6 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1) {
 
     if (temp_bool == true) {
       // Lock metrics event
-      // wlock(metrics_obj_hdr);
-      // replace wlock with SharedMutexManager
       auto &v = SharedMutexManager::get_mutex(metrics_obj_hdr);
       std::unique_lock<std::shared_mutex> lock(v);
 
@@ -1083,7 +1076,6 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1) {
                                                &after_count_sec);
 
       // Unlock the object
-      // wunlock(metrics_obj_hdr);
       lock.unlock();
 
       if (temp_status == FAILED) {
@@ -1172,8 +1164,6 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1) {
     } else // No secondaries
     {
       // Lock metrics event
-      // wlock(metrics_obj_hdr);
-      // replace wlock with SharedMutexManager
       auto &v = SharedMutexManager::get_mutex(metrics_obj_hdr);
       std::unique_lock<std::shared_mutex> lock(v);
 
@@ -1182,7 +1172,6 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1) {
           *metrics_get_interrupted_count))(metrics_obj_hdr, &after_count);
 
       // Unlock it
-      // wunlock(metrics_obj_hdr);
       lock.unlock();
 
       if (temp_status == FAILED) {
@@ -1701,8 +1690,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
 
           if (temp_bool == true) {
             // Lock metrics event
-            // wlock(metrics_obj_hdr);
-            // replace wlock with SharedMutexManager
             auto &v = SharedMutexManager::get_mutex(metrics_obj_hdr);
             std::unique_lock<std::shared_mutex> lock(v);
 
@@ -1713,7 +1700,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
                 &curr_time_interrupted_sec);
 
             // Unlock it
-            // wunlock(metrics_obj_hdr);
             lock.unlock();
 
             if (temp_status == FAILED) {
@@ -1725,8 +1711,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
           } else // No secondaries
           {
             // Lock metrics event
-            // wlock(metrics_obj_hdr);
-            // replace wlock with SharedMutexManager
             auto &v = SharedMutexManager::get_mutex(metrics_obj_hdr);
             std::unique_lock<std::shared_mutex> lock(v);
 
@@ -1736,7 +1720,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
                     metrics_obj_hdr, &curr_time_interrupted);
 
             // Unlock it
-            // wunlock(metrics_obj_hdr);
             lock.unlock();
 
             if (temp_status == FAILED) {
@@ -1767,8 +1750,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
         }
 
         // Lock the object of interest
-        // wlock(UnreliableObjs[index].obj_of_int);
-        // replace wlock with SharedMutexManager
         auto &v =
             SharedMutexManager::get_mutex(UnreliableObjs[index].obj_of_int);
         std::unique_lock<std::shared_mutex> lock(v);
@@ -1788,7 +1769,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
         }
 
         // Unlock the object of interest
-        // wunlock(UnreliableObjs[index].obj_of_int);
         lock.unlock();
 
         if (returnval == 0) // Failed :(
@@ -1936,7 +1916,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
       }
 
       // Lock the object
-      // wlock(UnreliableObjs[index].obj_of_int);
       auto &v = SharedMutexManager::get_mutex(UnreliableObjs[index].obj_of_int);
       std::unique_lock<std::shared_mutex> lock(v);
 
@@ -1950,8 +1929,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
             &UnreliableObjs[index].implemented_fault, impl_fault);
       }
 
-      // Unock the object
-      // wunlock(UnreliableObjs[index].obj_of_int);
+      // Unlock the object
       lock.unlock();
 
       if (returnval == 0) // Restoration is no go :(
@@ -1970,8 +1948,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
         secondary_interruption_cnt->getp<bool>(temp_bool, test_rlock);
 
         // Lock metrics event
-        // wlock(metrics_obj_hdr);
-        // replace wlock with SharedMutexManager
         auto &v = SharedMutexManager::get_mutex(metrics_obj_hdr);
         std::unique_lock<std::shared_mutex> lock(v);
 
@@ -1999,7 +1975,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
         }
 
         // All done, unlock it
-        // wunlock(metrics_obj_hdr);
         lock.unlock();
 
         if (temp_status == FAILED) {
@@ -2150,8 +2125,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
 
           if (temp_bool == true) {
             // Lock the metrics object
-            // wlock(metrics_obj_hdr);
-            // replace wlock with SharedMutexManager
             auto &v = SharedMutexManager::get_mutex(metrics_obj_hdr);
             std::unique_lock<std::shared_mutex> lock(v);
 
@@ -2162,7 +2135,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
                 &curr_time_interrupted_sec);
 
             // Unlock the metrics object
-            // wunlock(metrics_obj_hdr);
             lock.unlock();
 
             if (temp_status == FAILED) {
@@ -2174,8 +2146,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
           } else // No secondaries
           {
             // Lock the metrics object
-            // wlock(metrics_obj_hdr);
-            // replace wlock with SharedMutexManager
             auto &v = SharedMutexManager::get_mutex(metrics_obj_hdr);
             std::unique_lock<std::shared_mutex> lock(v);
 
@@ -2185,7 +2155,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
                     metrics_obj_hdr, &curr_time_interrupted);
 
             // Unlock the metrics object
-            // wunlock(metrics_obj_hdr);
             lock.unlock();
 
             if (temp_status == FAILED) {
@@ -2210,10 +2179,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
         }
 
         // Lock the object of interest
-        // wlock(temp_struct->objdetails.obj_of_int);
-        // replace wlock with SharedMutexManager
-        auto &v =
-            SharedMutexManager::get_mutex(temp_struct->objdetails.obj_of_int);
+        auto &v = SharedMutexManager::get_mutex(temp_struct->objdetails.obj_of_int);
         std::unique_lock<std::shared_mutex> lock(v);
 
         if (metrics_obj_hdr != nullptr) {
@@ -2231,7 +2197,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
         }
 
         // Unlock it
-        // wunlock(temp_struct->objdetails.obj_of_int);
         lock.unlock();
 
         if (returnval == 0) // Failed :(
@@ -2312,10 +2277,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
         }
 
         // Lock the object of interst
-        // wlock(temp_struct->objdetails.obj_of_int);
-        // replace wlock with SharedMutexManager
-        auto &v =
-            SharedMutexManager::get_mutex(temp_struct->objdetails.obj_of_int);
+        auto &v = SharedMutexManager::get_mutex(temp_struct->objdetails.obj_of_int);
         std::unique_lock<std::shared_mutex> lock(v);
 
         if (metrics_obj_hdr != nullptr) {
@@ -2329,7 +2291,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
         }
 
         // Unlock it
-        // wunlock(temp_struct->objdetails.obj_of_int);
         lock.unlock();
 
         if (returnval == 0) // Restoration is no go :(
@@ -2344,8 +2305,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
           secondary_interruption_cnt->getp<bool>(temp_bool, test_rlock);
 
           // Lock metrics event
-          // wlock(metrics_obj_hdr);
-          // replace wlock with SharedMutexManager
           auto &v = SharedMutexManager::get_mutex(metrics_obj_hdr);
           std::unique_lock<std::shared_mutex> lock(v);
 
@@ -2373,7 +2332,6 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type) {
           }
 
           // All done, unlock it
-          // wunlock(metrics_obj_hdr);
           lock.unlock();
 
           if (temp_status == FAILED) {

@@ -104,19 +104,13 @@ static void *test_lock_proc(void *ptr) {
   int m;
   output_test("thread %d created ok", (unsigned int)id);
   for (m = 0; m < TESTCOUNT; m++) {
-    // wlock(&key);
-    // replace the above with SharedMutexManager
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&key));
-    counter[id]++;
-    total++;
-    // wunlock(&key);
+    counter[id] = counter[id] + 1;
+    total = total + 1;
   }
-  // wlock(&key);
-  // replace the above with SharedMutexManager
   std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&key));
-  done++;
-  /*wunlock(&key);*/
+  done = done + 1;
   lock.unlock();
   output_test("thread %d done ok", (unsigned int)id);
   return (void *)0;
@@ -133,12 +127,10 @@ int test_lock(void) {
       return FAILED;
     }
 
-    output_test("*** Begin memory locking test for %d threads",
-                global_threadcount);
-    // replace the above with SharedMutexManager
+    output_test("*** Begin memory locking test for %d threads", global_threadcount);
+
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&key));
-
     for (n = 0; n < global_threadcount; n++) {
       try {
         counter[n] = 0;
@@ -151,6 +143,7 @@ int test_lock(void) {
       }
     }
     lock.unlock();
+
     global_suppress_repeat_messages = 0;
     for (n = 0; n < global_threadcount; n++)
       output_raw("THREAD %2d  ", n);
@@ -162,7 +155,6 @@ int test_lock(void) {
       int c[256], t, s = 0;
       exec_sleep(100000);
       output_raw("\r");
-      // replace the above with SharedMutexManager
       std::shared_lock<std::shared_mutex> runlock(
           SharedMutexManager::get_mutex(&key));
       for (n = 0; n < global_threadcount; n++)

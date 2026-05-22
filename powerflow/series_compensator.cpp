@@ -903,12 +903,10 @@ void series_compensator::sercom_postPre_fxn(void) {
       }
 
       // Flag an update
-      // LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying
-      // this
+      //Lock SWING since we'll be modifying this
       std::unique_lock<std::shared_mutex> nr_lock(
           SharedMutexManager::get_mutex(NR_swing_bus));
       NR_admit_change = true;
-      // UNLOCK_OBJECT(NR_swing_bus);	//Unlock
       nr_lock.unlock();
 
       // Update our previous turns ratio - for tracking
@@ -1616,8 +1614,7 @@ EXPORT int init_series_compensator(OBJECT *obj) {
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-static TIMESTAMP sync_series_compensator_impl(OBJECT *obj, TIMESTAMP t0,
-                                              PASSCONFIG pass) {
+static TIMESTAMP sync_series_compensator_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   try {
     series_compensator *pObj = object_data<series_compensator>(obj);
     TIMESTAMP t1 = TS_NEVER;
@@ -1638,11 +1635,11 @@ static TIMESTAMP sync_series_compensator_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-EXPORT int sync_series_compensator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_series_compensator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_series_compensator_impl(obj, t0, pass);
 }
 #else
-EXPORT TIMESTAMP sync_series_compensator(OBJECT *obj, ...) {
+extern "C" MODULE_API TIMESTAMP sync_series_compensator(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
   TIMESTAMP t0 = va_arg(args, TIMESTAMP);

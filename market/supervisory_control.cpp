@@ -151,8 +151,6 @@ TIMESTAMP supervisory_control::postsync(TIMESTAMP t0, TIMESTAMP t1) {
 
 int supervisory_control::submit(OBJECT *from, double power,
                                 double voltage_deviation, int key, int state) {
-  // gld_wlock lock(my());
-  // replace the above with SharedMutexManager
   std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(my()));
   return submit_nolock(from, power, voltage_deviation, key, state);
 }

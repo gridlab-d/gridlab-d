@@ -1652,8 +1652,6 @@ double capacitor::cap_postPost_fxn(double result, double time_value) {
       } else {
         return_status = 1;
       }
-
-      // READUNLOCK_OBJECT(RLink);
     }
 
     // Make sure it worked

@@ -219,8 +219,8 @@ EXPORT TIMESTAMP sync_link(OBJECT *obj, TIMESTAMP t0) {
   return t1;
 }
 
-EXPORT int init_link(OBJECT *obj) {
-
+EXPORT int init_link(OBJECT *obj)
+{
   return OBJECTDATA(obj, link)->init(OBJECTDATA(obj->parent, node));
 }
 

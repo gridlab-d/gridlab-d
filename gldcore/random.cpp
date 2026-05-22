@@ -310,12 +310,6 @@ double randunit(unsigned int *state)
   unsigned int ur;
   static unsigned int random_lock = 0;
 
-  /*if ( state==nullptr || state==ur_state )
-  {
-          state=ur_state;
-          wlock(&random_lock);
-  }*/
-
   bool needs_lock = (state == nullptr || state == ur_state);
   std::unique_lock<std::shared_mutex> lock;
 
@@ -341,10 +335,6 @@ TryAgain:
     }
     goto TryAgain;
   }
-
-  // if ( state==ur_state )
-  // wunlock(&random_lock);
-
   return u;
 }
 double randunit_pos(unsigned int *state)

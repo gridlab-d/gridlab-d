@@ -1,12 +1,12 @@
 /** $Id: series_reactor.cpp,v 1.6 2009/10/23 07:40:00 d3x593 Exp $
-        Copyright (C) 2009 Battelle Memorial Institute
-        @file series_reactor.cpp
-        @addtogroup powerflow series_reactor
-        @ingroup powerflow
+	Copyright (C) 2009 Battelle Memorial Institute
+	@file series_reactor.cpp
+	@addtogroup powerflow series_reactor
+	@ingroup powerflow
 
-        Implements a a series reactor object with specifiable
-        impedances.  This is a static reactor, so values will only
-        be computed once.
+	Implements a a series reactor object with specifiable
+	impedances.  This is a static reactor, so values will only
+	be computed once.
 
  @{
  **/
@@ -16,147 +16,139 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "node.h"
 #include "series_reactor.h"
+#include "node.h"
 
 //////////////////////////////////////////////////////////////////////////
 // series_reactor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS *series_reactor::oclass = nullptr;
-CLASS *series_reactor::pclass = nullptr;
+CLASS* series_reactor::oclass = nullptr;
+CLASS* series_reactor::pclass = nullptr;
 
-series_reactor::series_reactor(MODULE *mod) : link_object(mod) {
-  if (oclass == nullptr) {
-    pclass = link_object::oclass;
+series_reactor::series_reactor(MODULE *mod) : link_object(mod)
+{
+	if(oclass == nullptr)
+	{
+		pclass = link_object::oclass;
 
-    oclass = gl_register_class(mod, "series_reactor", sizeof(series_reactor),
-                               PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN |
-                                   PC_UNSAFE_OVERRIDE_OMIT | PC_AUTOLOCK);
-    if (oclass == nullptr)
-      throw "unable to register class series_reactor";
-    else
-      oclass->trl = TRL_PROVEN;
+		oclass = gl_register_class(mod,"series_reactor",sizeof(series_reactor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		if (oclass==nullptr)
+			throw "unable to register class series_reactor";
+		else
+			oclass->trl = TRL_PROVEN;
 
-    if (gl_publish_variable(
-            oclass, PT_INHERIT, "link", PT_complex, "phase_A_impedance[Ohm]",
-            PADDR(phase_A_impedance), PT_DESCRIPTION,
-            "Series impedance of reactor on phase A", PT_double,
-            "phase_A_resistance[Ohm]", PADDR(phase_A_impedance.Re()),
-            PT_DESCRIPTION, "Resistive portion of phase A's impedance",
-            PT_double, "phase_A_reactance[Ohm]", PADDR(phase_A_impedance.Im()),
-            PT_DESCRIPTION, "Reactive portion of phase A's impedance",
-            PT_complex, "phase_B_impedance[Ohm]", PADDR(phase_B_impedance),
-            PT_DESCRIPTION, "Series impedance of reactor on phase B", PT_double,
-            "phase_B_resistance[Ohm]", PADDR(phase_B_impedance.Re()),
-            PT_DESCRIPTION, "Resistive portion of phase B's impedance",
-            PT_double, "phase_B_reactance[Ohm]", PADDR(phase_B_impedance.Im()),
-            PT_DESCRIPTION, "Reactive portion of phase B's impedance",
-            PT_complex, "phase_C_impedance[Ohm]", PADDR(phase_C_impedance),
-            PT_DESCRIPTION, "Series impedance of reactor on phase C", PT_double,
-            "phase_C_resistance[Ohm]", PADDR(phase_C_impedance.Re()),
-            PT_DESCRIPTION, "Resistive portion of phase C's impedance",
-            PT_double, "phase_C_reactance[Ohm]", PADDR(phase_C_impedance.Im()),
-            PT_DESCRIPTION, "Reactive portion of phase C's impedance",
-            PT_double, "rated_current_limit[A]", PADDR(rated_current_limit),
-            PT_DESCRIPTION, "Rated current limit for the reactor", nullptr) < 1)
-      GL_THROW("unable to publish properties in %s", __FILE__);
+        if(gl_publish_variable(oclass,
+			PT_INHERIT, "link",
+			PT_complex, "phase_A_impedance[Ohm]",PADDR(phase_A_impedance),PT_DESCRIPTION,"Series impedance of reactor on phase A",
+			PT_double, "phase_A_resistance[Ohm]",PADDR(phase_A_impedance.Re()),PT_DESCRIPTION,"Resistive portion of phase A's impedance",
+			PT_double, "phase_A_reactance[Ohm]",PADDR(phase_A_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase A's impedance",
+			PT_complex, "phase_B_impedance[Ohm]",PADDR(phase_B_impedance),PT_DESCRIPTION,"Series impedance of reactor on phase B",
+			PT_double, "phase_B_resistance[Ohm]",PADDR(phase_B_impedance.Re()),PT_DESCRIPTION,"Resistive portion of phase B's impedance",
+			PT_double, "phase_B_reactance[Ohm]",PADDR(phase_B_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase B's impedance",
+			PT_complex, "phase_C_impedance[Ohm]",PADDR(phase_C_impedance),PT_DESCRIPTION,"Series impedance of reactor on phase C",
+			PT_double, "phase_C_resistance[Ohm]",PADDR(phase_C_impedance.Re()),PT_DESCRIPTION,"Resistive portion of phase C's impedance",
+			PT_double, "phase_C_reactance[Ohm]",PADDR(phase_C_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase C's impedance",
+            nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-    // Publish deltamode functions
-    if (gl_publish_function(oclass, "interupdate_pwr_object",
-                            (FUNCTIONADDR)interupdate_link) == nullptr)
-      GL_THROW("Unable to publish series reactor deltamode function");
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
+			GL_THROW("Unable to publish series reactor deltamode function");
 
-    // Publish restoration-related function (current update)
-    if (gl_publish_function(oclass, "update_power_pwr_object",
-                            (FUNCTIONADDR)updatepowercalc_link) == nullptr)
-      GL_THROW("Unable to publish series reactor external power calculation "
-               "function");
-    if (gl_publish_function(oclass, "check_limits_pwr_object",
-                            (FUNCTIONADDR)calculate_overlimit_link) == nullptr)
-      GL_THROW("Unable to publish series reactor external power limit "
-               "calculation function");
-    if (gl_publish_function(oclass, "perform_current_calculation_pwr_link",
-                            (FUNCTIONADDR)currentcalculation_link) == nullptr)
-      GL_THROW("Unable to publish series reactor external current calculation "
-               "function");
-  }
+		//Publish restoration-related function (current update)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
+			GL_THROW("Unable to publish series reactor external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
+			GL_THROW("Unable to publish series reactor external power limit calculation function");
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
+			GL_THROW("Unable to publish series reactor external current calculation function");
+    }
 }
 
-int series_reactor::isa(char *classname) {
-  return strcmp(classname, "series_reactor") == 0 ||
-         link_object::isa(classname);
+int series_reactor::isa(char *classname)
+{
+	return strcmp(classname,"series_reactor")==0 || link_object::isa(classname);
 }
 
-int series_reactor::create() {
-  int result = link_object::create();
-  phase_A_impedance = phase_B_impedance = phase_C_impedance = 0.0;
+int series_reactor::create()
+{
+	int result = link_object::create();
+	phase_A_impedance = phase_B_impedance = phase_C_impedance = 0.0;
 
-  return result;
+	return result;
 }
 
-int series_reactor::init(OBJECT *parent) {
-  OBJECT *obj_this = object_header(this);
+int series_reactor::init(OBJECT *parent)
+{
+    OBJECT *obj = object_header(this);
 
 #ifdef __APPLE__
-  parent =
-      obj_this
-          ->parent; // AppleClang seems to have an issue with the parent pointer
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
 #endif
-  int result = link_object::init(parent);
 
-  // Check for deferred
-  if (result == 2)
-    return 2; // Return the deferment - no sense doing everything else!
+	int result = link_object::init(parent);
 
-  a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (has_phase(PHASE_A)) ? 1.0 : 0.0;
-  a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (has_phase(PHASE_B)) ? 1.0 : 0.0;
-  a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = (has_phase(PHASE_C)) ? 1.0 : 0.0;
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
 
-  if (solver_method == SM_FBS) {
-    c_mat[0][0] = 0.0;
-    c_mat[1][1] = 0.0;
-    c_mat[2][2] = 0.0;
+	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (has_phase(PHASE_A)) ? 1.0 : 0.0;
+	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (has_phase(PHASE_B)) ? 1.0 : 0.0;
+	a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = (has_phase(PHASE_C)) ? 1.0 : 0.0;
 
-    // Pass in impedance values
-    b_mat[0][0] = B_mat[0][0] = phase_A_impedance;
-    b_mat[1][1] = B_mat[1][1] = phase_B_impedance;
-    b_mat[2][2] = B_mat[2][2] = phase_C_impedance;
-  } else {
-    // Flag it as special (we'll forgo inversion processes on this)
-    SpecialLnk = SWITCH;
+	if (solver_method==SM_FBS)
+	{
+		c_mat[0][0] = 0.0;
+		c_mat[1][1] = 0.0;
+		c_mat[2][2] = 0.0;
 
-    // Initialize off-diagonals just in case
-    From_Y[0][1] = From_Y[0][2] = From_Y[1][0] = 0.0;
-    From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = 0.0;
+		//Pass in impedance values
+		b_mat[0][0] = B_mat[0][0] = phase_A_impedance;
+		b_mat[1][1] = B_mat[1][1] = phase_B_impedance;
+		b_mat[2][2] = B_mat[2][2] = phase_C_impedance;
+	}
+	else
+	{
+		//Flag it as special (we'll forgo inversion processes on this)
+		SpecialLnk = SWITCH;
 
-    // See if it has a particular phase, if so populate it.  If not
-    // and has zero impedance, put a "default" value in its place
-    if (has_phase(PHASE_A)) {
-      if (phase_A_impedance == 0.0)
-        From_Y[0][0] = gld::complex(1e4, 1e4);
-      else
-        From_Y[0][0] = gld::complex(1.0, 0.0) / phase_A_impedance;
-    } else
-      From_Y[0][0] = 0.0; // Should already be 0, but let's be paranoid
+		//Initialize off-diagonals just in case
+		From_Y[0][1] = From_Y[0][2] = From_Y[1][0] = 0.0;
+		From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = 0.0;
 
-    if (has_phase(PHASE_B)) {
-      if (phase_B_impedance == 0.0)
-        From_Y[1][1] = gld::complex(1e4, 1e4);
-      else
-        From_Y[1][1] = gld::complex(1.0, 0.0) / phase_B_impedance;
-    } else
-      From_Y[1][1] = 0.0; // Should already be 0, but let's be paranoid
+		//See if it has a particular phase, if so populate it.  If not
+		//and has zero impedance, put a "default" value in its place
+		if (has_phase(PHASE_A))
+		{
+			if (phase_A_impedance==0.0)
+				From_Y[0][0] = gld::complex(1e4,1e4);
+			else
+				From_Y[0][0] = gld::complex(1.0,0.0)/phase_A_impedance;
+		}
+		else
+			From_Y[0][0] = 0.0;		//Should already be 0, but let's be paranoid
 
-    if (has_phase(PHASE_C)) {
-      if (phase_C_impedance == 0.0)
-        From_Y[2][2] = gld::complex(1e4, 1e4);
-      else
-        From_Y[2][2] = gld::complex(1.0, 0.0) / phase_C_impedance;
-    } else
-      From_Y[2][2] = 0.0; // Should already be 0, but let's be paranoid
-  }
+		if (has_phase(PHASE_B))
+		{
+			if (phase_B_impedance==0.0)
+				From_Y[1][1] = gld::complex(1e4,1e4);
+			else
+				From_Y[1][1] = gld::complex(1.0,0.0)/phase_B_impedance;
+		}
+		else
+			From_Y[1][1] = 0.0;		//Should already be 0, but let's be paranoid
 
-  return result;
+		if (has_phase(PHASE_C))
+		{
+			if (phase_C_impedance==0.0)
+				From_Y[2][2] = gld::complex(1e4,1e4);
+			else
+				From_Y[2][2] = gld::complex(1.0,0.0)/phase_C_impedance;
+		}
+		else
+			From_Y[2][2] = 0.0;		//Should already be 0, but let's be paranoid
+	}
+
+	return result;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -164,95 +156,101 @@ int series_reactor::init(OBJECT *parent) {
 //////////////////////////////////////////////////////////////////////////
 
 /**
- * REQUIRED: allocate and initialize an object.
- *
- * @param obj a pointer to a pointer of the last object in the list
- * @param parent a pointer to the parent of this object
- * @return 1 for a successfully created object, 0 for error
- */
-EXPORT TIMESTAMP commit_series_reactor(OBJECT *obj, TIMESTAMP t1,
-                                       TIMESTAMP t2) {
-  if (solver_method == SM_FBS) {
-    series_reactor *plink = object_data<series_reactor>(obj);
-    plink->calculate_power();
-  }
-  return TS_NEVER;
+* REQUIRED: allocate and initialize an object.
+*
+* @param obj a pointer to a pointer of the last object in the list
+* @param parent a pointer to the parent of this object
+* @return 1 for a successfully created object, 0 for error
+*/
+EXPORT TIMESTAMP commit_series_reactor(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
+{
+	if (solver_method==SM_FBS)
+	{
+		series_reactor *plink = object_data<series_reactor>(obj);
+		plink->calculate_power();
+	}
+	return TS_NEVER;
 }
-EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent) {
-  try {
-    *obj = gl_create_object(series_reactor::oclass);
-    if (*obj != nullptr) {
-      series_reactor *my = object_data<series_reactor>(*obj);
-      // gl_set_parent(*obj,parent);
-      return my->create();
-    } else
-      return 0;
-  }
-  CREATE_CATCHALL(series_reactor);
-}
-
-/**
- * Object initialization is called once after all object have been created
- *
- * @param obj a pointer to this object
- * @return 1 on success, 0 on error
- */
-EXPORT int init_series_reactor(OBJECT *obj) {
-  try {
-    series_reactor *my = object_data<series_reactor>(obj);
-    return my->init(obj->parent);
-  }
-  INIT_CATCHALL(series_reactor);
+EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent)
+{
+	try
+	{
+		*obj = gl_create_object(series_reactor::oclass);
+		if (*obj!=nullptr)
+		{
+			series_reactor *my = object_data<series_reactor>(*obj);
+			// gl_set_parent(*obj,parent);
+			return my->create();
+		}
+		else
+			return 0;
+	}
+	CREATE_CATCHALL(series_reactor);
 }
 
 /**
- * Sync is called when the clock needs to advance on the bottom-up pass
- * (PC_BOTTOMUP)
- *
- * @param obj the object we are sync'ing
- * @param t0 this objects current timestamp
- * @param pass the current pass for this sync call
- * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
- */
-static TIMESTAMP sync_series_reactor_impl(OBJECT *obj, TIMESTAMP t0,
-                                          PASSCONFIG pass) {
-  try {
-    series_reactor *pObj = object_data<series_reactor>(obj);
-    TIMESTAMP t1 = TS_NEVER;
-    switch (pass) {
-    case PC_PRETOPDOWN:
-      return pObj->presync(t0);
-    case PC_BOTTOMUP:
-      return pObj->sync(t0);
-    case PC_POSTTOPDOWN:
-      t1 = pObj->postsync(t0);
-      obj->clock = t0;
-      return t1;
-    default:
-      throw "invalid pass request";
-    }
-  }
-  SYNC_CATCHALL(series_reactor);
+* Object initialization is called once after all object have been created
+*
+* @param obj a pointer to this object
+* @return 1 on success, 0 on error
+*/
+EXPORT int init_series_reactor(OBJECT *obj)
+{
+	try {
+		series_reactor *my = object_data<series_reactor>(obj);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(series_reactor);
+}
+
+/**
+* Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
+*
+* @param obj the object we are sync'ing
+* @param t0 this objects current timestamp
+* @param pass the current pass for this sync call
+* @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
+*/
+static TIMESTAMP sync_series_reactor_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	try {
+		series_reactor *pObj = object_data<series_reactor>(obj);
+		TIMESTAMP t1 = TS_NEVER;
+		switch (pass) {
+		case PC_PRETOPDOWN:
+			return pObj->presync(t0);
+		case PC_BOTTOMUP:
+			return pObj->sync(t0);
+		case PC_POSTTOPDOWN:
+			t1 = pObj->postsync(t0);
+			obj->clock = t0;
+			return t1;
+		default:
+			throw "invalid pass request";
+		}
+	} 
+	SYNC_CATCHALL(series_reactor);
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_series_reactor(OBJECT *obj, TIMESTAMP t0,
-                                                    PASSCONFIG pass) {
-  return sync_series_reactor_impl(obj, t0, pass);
+extern "C" MODULE_API TIMESTAMP sync_series_reactor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+    return sync_series_reactor_impl(obj, t0, pass);
 }
 #else
-extern "C" MODULE_API TIMESTAMP sync_series_reactor(OBJECT *obj, ...) {
-  va_list args;
-  va_start(args, obj);
-  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
-  PASSCONFIG pass = va_arg(args, PASSCONFIG);
-  va_end(args);
-  return sync_series_reactor_impl(obj, t0, pass);
+extern "C" MODULE_API TIMESTAMP sync_series_reactor(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_series_reactor_impl(obj, t0, pass);
 }
 #endif
 
-EXPORT int isa_series_reactor(OBJECT *obj, char *classname) {
-  return object_data<series_reactor>(obj)->isa(classname);
+EXPORT int isa_series_reactor(OBJECT *obj, char *classname)
+{
+	return object_data<series_reactor>(obj)->isa(classname);
 }
 
 /**@}**/

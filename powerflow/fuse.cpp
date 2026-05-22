@@ -888,7 +888,6 @@ void fuse::fuse_change_status_function(void) {
 
     NR_admit_change = true; // Flag an admittance change
     nr_lock.unlock();
-    // UNLOCK_OBJECT(NR_swing_bus);	//Finished
     // Update prev_status
     prev_status = status;
 
@@ -1013,12 +1012,10 @@ void fuse::fuse_sync_function(void) {
 
     // Check status before running sync (since it will clear it)
     if ((status != prev_status) || (pres_status != prev_full_status)) {
-      // LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying
-      // this
+      //Lock SWING since we'll be modifying this
       std::unique_lock<std::shared_mutex> nr_lock(
           SharedMutexManager::get_mutex(NR_swing_bus));
       NR_admit_change = true; // Flag an admittance change
-                              // UNLOCK_OBJECT(NR_swing_bus);	//Finished
     }
 
     prev_full_status = pres_status; // Update the status flags

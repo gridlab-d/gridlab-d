@@ -1,70 +1,89 @@
 #include "gldapi.h"
-#include "timestamp.h"
-#include <algorithm>
 #include <iostream>
-#include <nlohmann/json.hpp>
-#include <string>
+#include <iomanip>
 #include <vector>
+#include <string>
+#include <algorithm>
+#include <map>
+#include <nlohmann/json.hpp>
+#include "timestamp.h"
 
-int main(int argc, char *argv[]) {
-  // const char* fileName = "test_balanced_stepup_D-D_phAB";
-  const char *fileName = "test_HVAC_balance";
-  // Instantiate GridLabD via exectuable path
-  GridLabD gld;
+// Helper function to get filename without path and without extension
+std::string get_base_filename(const std::string& filepath) {
+    // Get filename without path
+    size_t pos = filepath.find_last_of("/\\");
+    std::string filename = (pos == std::string::npos) ? filepath : filepath.substr(pos + 1);
 
-  // Test load_glm
-  std::vector<const char *> args = {"gridlabd", fileName, "--verbose"};
-  int test_argc = static_cast<int>(args.size());
-  char *test_argv[] = {const_cast<char *>(args[0]), const_cast<char *>(args[1]),
-                       const_cast<char *>(args[2])};
-  gld.load_glm(test_argc, test_argv);
+    // Remove extension
+    size_t dot = filename.find_last_of('.');
+    if (dot != std::string::npos) {
+        filename = filename.substr(0, dot);
+    }
+    return filename;
+}
 
-  TIMESTAMP start_time = convert_to_timestamp("2000-04-01 0:00:00");
-  TIMESTAMP stop_time = convert_to_timestamp("2000-06-01 0:00:00");
+int main(int argc, char* argv[]) {
+    std::string fileName = argv[1];
+    GridLabD gld;
+    
+    // Parse flags
+    bool checkpoint_mode = false;
+    bool restore_mode = false;
+    int num_steps = 2;
 
-  // Test run examples
-  // gld.run();
-  // gld.run(start_time, stop_time);
-
-  // Stepping through the simulation examples, check sim_time for each step if
-  // needed. gld.set_time_step(900); // 15 minutes in seconds Need to support
-  // actually setting the timestep value, not just the minimum. Recorders do
-  // this. Tell it what the synchronization time is.
-  double sim_time;
-
-  // Get the house object properties using get_object_properties()
-  auto house_props = gld.get_object_properties("This_old_house");
-
-  for (int i = 0; i < 10; i++) {
-    printf("\n=== Step %d ===\n", i + 1);
-
-    // Get current value before setting
-    house_props = gld.get_object_properties("This_old_house");
-    auto it = house_props.find("number_of_doors");
-    if (it != house_props.end()) {
-      printf("Current number_of_doors before set: %s\n", it->second.c_str());
+    for (int i = 2; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "--checkpoint") {
+            checkpoint_mode = true;
+        } else if (arg == "--restore") {
+            restore_mode = true;
+        } else if (arg == "--steps" && i + 1 < argc) {
+            num_steps = std::stoi(argv[++i]);
+        }
     }
 
-    // Note: Setting properties requires direct API calls - this test
-    // demonstrates reading For setting values, would need to use the core
-    // object_set_value_by_name() directly
+    // Load GLM file
+    if(restore_mode) {
+        fileName = get_base_filename(fileName) + "_checkpoint.json";
+    }
+    std::vector<const char*> args = {fileName.c_str(), "--verbose"};
+    int test_argc = static_cast<int>(args.size());
+    char* test_argv[] = { nullptr, const_cast<char*>(args[0]), const_cast<char*>(args[1])};
+    try{
+        gld.load_glm(test_argc, test_argv);
+    } catch (const std::exception& e) {
+        std::cerr << "Error loading GLM: " << e.what() << std::endl;
+        return 1;
+    }
 
-    gld.step(sim_time);
 
-    nlohmann::json checkpoint =
-        gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
-  }
+    if (checkpoint_mode) {
+        // Run N steps and save checkpoint
+        double sim_time;
+        for (int i = 0; i < num_steps; i++) {
+            gld.step(sim_time);
+        }
+        printf("Completed %d steps. Simulation time: %.2f\n", num_steps, sim_time);
 
-  // Get all info for GLD
-  nlohmann::json checkpoint =
-      gld.get_checkpoint_json("/mnt/c/dev/gridlab-d_fork/_test_results/");
-  // OR access it directly
-  // gld.get_checkpoint_json();
-  // nlohmann::json checkpoint = gld.gld_model; // use nlohmann::json (JsonCpp
-  // removed)
+        // Get checkpoint and save it
+        nlohmann::json checkpoint = gld.get_checkpoint_json();
+        printf("Checkpoint saved.\n");
+    }
+    else if (restore_mode) {
+        printf("Checkpoint loaded.\n");
+        std::cout << gld.gld_model.dump(4) << std::endl; // Pretty print with 4-space indent
+        gld.run();
+        nlohmann::json checkpoint = gld.get_checkpoint_json();
+        printf("Checkpoint saved.\n");
+    }
+    else {
+        // Default: just run to completion
+        gld.run();
+        nlohmann::json checkpoint = gld.get_checkpoint_json();
+    }
 
-  // Test exit_gld
-  gld.exit_gld(fileName);
+    // Exit
+    gld.exit_gld(fileName.c_str());
 
-  return 0;
+    return 0;
 }

@@ -460,7 +460,7 @@ EXPORT int create_sync_ctrl(OBJECT **obj, OBJECT *parent) {
 
 EXPORT int init_sync_ctrl(OBJECT *obj) {
   try {
-    sync_ctrl *my = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
+    sync_ctrl *my = object_data<sync_ctrl>(obj);
     return my->init(obj->parent);
   }
   INIT_CATCHALL(sync_ctrl);
@@ -475,9 +475,8 @@ EXPORT int init_sync_ctrl(OBJECT *obj) {
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-static TIMESTAMP sync_sync_ctrl_impl(OBJECT *obj, TIMESTAMP t0,
-                                     PASSCONFIG pass) {
-  sync_ctrl *pObj = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
+static TIMESTAMP sync_sync_ctrl_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  sync_ctrl *pObj = object_data<sync_ctrl>(obj);
   TIMESTAMP t1 = TS_INVALID;
 
   try {
@@ -503,7 +502,7 @@ static TIMESTAMP sync_sync_ctrl_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_sync_ctrl_impl(obj, t0, pass);
 }
 #else
@@ -591,8 +590,6 @@ void sync_ctrl::set_prop(gld_property *prop_ptr, T prop_value) {
 /* Get */
 template <class T>
 void sync_ctrl::get_prop(gld_property *prop_ptr, T prop_value) {
-  // gld_wlock *rlock = nullptr;
-  // replace the above with SharedMutexManager
   std::unique_lock<std::shared_mutex> lock(
       SharedMutexManager::get_mutex(&rlock));
   prop_ptr->getp<T>(prop_value, rlock);

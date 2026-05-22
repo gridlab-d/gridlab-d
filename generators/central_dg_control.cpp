@@ -317,7 +317,7 @@ int central_dg_control::init(OBJECT *parent) {
       if (!pPower_Meas[0]->is_valid() || !pPower_Meas[0]->is_complex()) {
         GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter "
                  "power property!",
-                 thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+                 obj->id, (obj->name ? obj->name : "Unnamed"));
         /*  TROUBLESHOOT
         While attempting to map the measured_power_X property of the meter
         specified in feaderhead_meter, an error occurred.  Try again. If the
@@ -332,7 +332,7 @@ int central_dg_control::init(OBJECT *parent) {
       if (!pPower_Meas[1]->is_valid() || !pPower_Meas[1]->is_complex()) {
         GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter "
                  "power property!",
-                 thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+                 obj->id, (obj->name ? obj->name : "Unnamed"));
         // Defined above
       }
 
@@ -343,13 +343,13 @@ int central_dg_control::init(OBJECT *parent) {
       if (!pPower_Meas[2]->is_valid() || !pPower_Meas[2]->is_complex()) {
         GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter "
                  "power property!",
-                 thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+                 obj->id, (obj->name ? obj->name : "Unnamed"));
         // Defined above
       }
     } else // Nope - fail
     {
       GL_THROW("central_dg_control:%d - %s - feederhead_meter is empty!",
-               thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+               obj->id, (obj->name ? obj->name : "Unnamed"));
       /*  TROUBLESHOOT
       The central_dg_control requires a feederhead_meter object to be specified.
       Ensure this field is populated with a meter.
@@ -357,7 +357,7 @@ int central_dg_control::init(OBJECT *parent) {
     }
   } else {
     GL_THROW("central_dg_control:%d - %s - feederhead_meter is empty!",
-             thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+             obj->id, (obj->name ? obj->name : "Unnamed"));
     // Defined above
   }
 
@@ -646,11 +646,10 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1) {
   return TS_NEVER;
 }
 
-/* Postsync is called when the clock needs to advance on the second top-down
- * pass */
-TIMESTAMP central_dg_control::postsync(TIMESTAMP t0, TIMESTAMP t1) {
+/* Postsync is called when the clock needs to advance on the second top-down pass */
+TIMESTAMP central_dg_control::postsync(TIMESTAMP t0, TIMESTAMP t1)
+{
   TIMESTAMP t2 = TS_NEVER; // By default, we're done forever!
-
   return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
@@ -662,9 +661,7 @@ EXPORT int create_central_dg_control(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(central_dg_control::oclass);
     if (*obj != nullptr) {
-      central_dg_control *my =
-          /*OBJECTDATA(*obj, central_dg_control)*/ object_data<
-              central_dg_control>(*obj);
+      central_dg_control *my = object_data<central_dg_control>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -676,21 +673,17 @@ EXPORT int create_central_dg_control(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_central_dg_control(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj, central_dg_control)*/ object_data<
-                 central_dg_control>(obj)
-          ->init(parent);
+      return object_data<central_dg_control>(obj)->init(parent);
     else
       return 0;
   }
   INIT_CATCHALL(central_dg_control);
 }
 
-static TIMESTAMP sync_central_dg_control_impl(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass) {
+static TIMESTAMP sync_central_dg_control_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
   TIMESTAMP t2 = TS_NEVER;
-  central_dg_control *my =
-      /*OBJECTDATA(obj, central_dg_control)*/ object_data<central_dg_control>(
-          obj);
+  central_dg_control *my = object_data<central_dg_control>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -714,18 +707,17 @@ static TIMESTAMP sync_central_dg_control_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_central_dg_control(OBJECT *obj,
-                                                        TIMESTAMP t1,
-                                                        PASSCONFIG pass) {
-  return sync_central_dg_control_impl(obj, t1, pass);
+extern "C" MODULE_API TIMESTAMP sync_central_dg_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+    return sync_central_dg_control_impl(obj, t1, pass);
 }
 #else
 extern "C" MODULE_API TIMESTAMP sync_central_dg_control(OBJECT *obj, ...) {
-  va_list args;
-  va_start(args, obj);
-  TIMESTAMP t1 = va_arg(args, TIMESTAMP);
-  PASSCONFIG pass = va_arg(args, PASSCONFIG);
-  va_end(args);
-  return sync_central_dg_control_impl(obj, t1, pass);
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_central_dg_control_impl(obj, t1, pass);
 }
 #endif

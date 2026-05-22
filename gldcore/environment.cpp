@@ -35,7 +35,7 @@ STATUS environment_start(
               The simulation stopped because an unexpected condition was
          encountered. This can be caused by a wide variety of things, but most
          often it is because one of the objects in the model could not be
-         synchronized propertly and its clock stopped.  This message usually
+         synchronized properly and its clock stopped.  This message usually
          follows a more specific message that indicates what caused the
          simulation to stop.
               */

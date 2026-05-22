@@ -1490,12 +1490,11 @@ void switch_object::switch_sync_function(void)
         {
             if ((status != prev_status) || (pres_status != prev_full_status))
             {
-                // LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying
-                // this
+                //Lock SWING since we'll be modifying/ this
                 std::unique_lock<std::shared_mutex> nr_lock(
                     SharedMutexManager::get_mutex(NR_swing_bus));
                 NR_admit_change = true; // Flag an admittance change
-                // UNLOCK_OBJECT(NR_swing_bus);	//Finished
+                //Finished
                 nr_lock.unlock();
             }
         }
@@ -1638,12 +1637,11 @@ void switch_object::switch_sync_function(void)
             prev_status = status;
 
             // Flag an update
-            // LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying
-            // this
+            //Lock SWING since we'll be modifying this
             std::unique_lock<std::shared_mutex> nr_lock(
                 SharedMutexManager::get_mutex(NR_swing_bus));
             NR_admit_change = true; // Flag an admittance change
-            // UNLOCK_OBJECT(NR_swing_bus);	//Finished
+            //Finished
             nr_lock.unlock();
         }
         // defaulted else - do nothing, something must have handled it externally
@@ -1913,7 +1911,6 @@ void switch_object::set_switch(bool desired_status)
             NR_admit_change = true; // Flag an admittance change
 
             // Unlock swing
-            // UNLOCK_OBJECT(NR_swing_bus);
             nr_lock.unlock();
 
             // Update prev_status

@@ -65,7 +65,7 @@
                     "target": "energy",
                     "in": "'2001-07-23 1:00:34'",
                     "once": "ONCE_TRUE",
-                    "value": "38.823+0i",
+                    "value": "21.822+0i",
                     "within": 0.10911,
                     "inline_comments": {
                         "within": "//asserting house_e within 0.5 percent of Rob's ETP result"

@@ -65,7 +65,7 @@
                     "target": "energy",
                     "in": "'2001-07-25 1:00:19'",
                     "once": "ONCE_TRUE",
-                    "value": "27.543+0i",
+                    "value": "10.541+0i",
                     "within": 0.052705,
                     "inside_comments": [
                         "//value 9.143+0i;"

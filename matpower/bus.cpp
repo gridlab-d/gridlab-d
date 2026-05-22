@@ -27,7 +27,6 @@
 #include "gen.h"
 // #include "gen_cost.h"
 #include "matpower.h"
-// #include "lock.h"
 
 #include <iostream>
 #include <map>

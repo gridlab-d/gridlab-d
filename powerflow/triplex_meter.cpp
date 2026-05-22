@@ -602,10 +602,8 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1) {
   } else
     dt = 0;
 
-  // READLOCK_OBJECT(obj);
   measured_current[0] = current_inj[0];
   measured_current[1] = current_inj[1];
-  // READUNLOCK_OBJECT(obj);
   measured_current[2] = -(measured_current[1] + measured_current[0]);
 
   //		if (dt > 0 && last_t != dt)
@@ -1297,8 +1295,7 @@ EXPORT int init_triplex_meter(OBJECT *obj) {
   INIT_CATCHALL(triplex_meter);
 }
 
-static TIMESTAMP sync_triplex_meter_impl(OBJECT *obj, TIMESTAMP t0,
-                                         PASSCONFIG pass) {
+static TIMESTAMP sync_triplex_meter_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   try {
     triplex_meter *pObj = object_data<triplex_meter>(obj);
     TIMESTAMP t1;
@@ -1320,8 +1317,7 @@ static TIMESTAMP sync_triplex_meter_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_triplex_meter(OBJECT *obj, TIMESTAMP t0,
-                                                   PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_triplex_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return (int)sync_triplex_meter_impl(obj, t0, pass);
 }
 #else

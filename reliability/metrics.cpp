@@ -684,7 +684,6 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1) {
       next_metric_interval = t0 + metric_interval;
 
       // Lock the remote object
-      // wlock(module_metrics_obj);
       auto &v = SharedMutexManager::get_mutex(module_metrics_obj);
       std::unique_lock<std::shared_mutex> lock(v);
 
@@ -693,7 +692,6 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1) {
           hdr, module_metrics_obj);
 
       // Unlock it
-      // wunlock(module_metrics_obj);
       lock.unlock();
 
       if (returnval != 1) // See if it failed
@@ -737,7 +735,6 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1) {
       next_annual_interval = t0 + 31536000; // t0 + 365 days of seconds
 
       // Lock the remote metrics object
-      // wlock(module_metrics_obj);
       auto &v = SharedMutexManager::get_mutex(module_metrics_obj);
       std::unique_lock<std::shared_mutex> lock(v);
 
@@ -746,7 +743,6 @@ TIMESTAMP metrics::postsync(TIMESTAMP t0, TIMESTAMP t1) {
           hdr, module_metrics_obj);
 
       // Unlock it
-      // wunlock(module_metrics_obj);
       lock.unlock();
 
       if (returnval != 1) // See if it failed
@@ -812,7 +808,6 @@ void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj,
   outage_length = event_end_time - event_start_time;
 
   // Lock the remote object
-  // wlock(module_metrics_obj);
   auto &v = SharedMutexManager::get_mutex(module_metrics_obj);
   std::unique_lock<std::shared_mutex> lock(v);
 
@@ -822,7 +817,6 @@ void metrics::event_ended(OBJECT *event_obj, OBJECT *fault_obj,
                          CustomerCount, outage_length, metric_interval);
 
   // Unlock it
-  // wunlock(module_metrics_obj);
   lock.unlock();
 
   // Make sure it worked
@@ -897,7 +891,6 @@ void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj,
   outage_length = event_end_time - event_start_time;
 
   // Lock the remote object
-  // wlock(module_metrics_obj);
   auto &v = SharedMutexManager::get_mutex(module_metrics_obj);
   std::unique_lock<std::shared_mutex> lock(v);
 
@@ -909,7 +902,6 @@ void metrics::event_ended_sec(OBJECT *event_obj, OBJECT *fault_obj,
                              outage_length, metric_interval);
 
   // Unlock it
-  // wunlock(module_metrics_obj);
   lock.unlock();
 
   // Make sure it worked

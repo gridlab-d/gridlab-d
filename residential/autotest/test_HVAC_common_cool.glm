@@ -73,8 +73,8 @@ object triplex_meter{
 			in '2001-07-25 1:00:19';
 			once ONCE_TRUE;
 			//value 9.143+0i;
-			//value 10.541+0i;
-			value 27.543+0i;
+			value 10.541+0i;
+			//value 27.543+0i;
 			within 0.052705;//asserting house_e within 0.5 percent of Rob's ETP result
 		};
 		object ZIPload {

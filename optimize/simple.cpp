@@ -442,7 +442,7 @@ static TIMESTAMP sync_simple_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
 }
 
 #ifndef __APPLE__
-EXPORT TIMESTAMP sync_simple(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_simple(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_simple_impl(obj, t1, pass);
 }
 #else

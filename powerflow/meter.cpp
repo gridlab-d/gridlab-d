@@ -1948,29 +1948,6 @@ EXPORT int init_meter(OBJECT *obj) {
   INIT_CATCHALL(meter);
 }
 
-// EXPORT TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-// {
-// 	try
-// 	{
-// 		meter *pObj = object_data<meter>(obj);
-// 		TIMESTAMP t1;
-// 		switch (pass)
-// 		{
-// 		case PC_PRETOPDOWN:
-// 			return pObj->presync(t0);
-// 		case PC_BOTTOMUP:
-// 			return pObj->sync(t0);
-// 		case PC_POSTTOPDOWN:
-// 			t1 = pObj->postsync(obj->clock, t0);
-// 			obj->clock = t0;
-// 			return t1;
-// 		default:
-// 			throw "invalid pass request";
-// 		}
-// 		throw "invalid pass request";
-// 	}
-// 	SYNC_CATCHALL(meter);
-// }
 
 static TIMESTAMP sync_meter_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   try {
@@ -1994,8 +1971,7 @@ static TIMESTAMP sync_meter_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0,
-                                           PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_meter(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_meter_impl(obj, t0, pass);
 }
 #else

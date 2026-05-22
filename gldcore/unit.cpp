@@ -515,12 +515,9 @@ void unit_init(void) {
   char tpath[1024];
 
   /* try only once */
-  // wlock(&trylock);
-  // replace the above with SharedMutexManager
   std::unique_lock<std::shared_mutex> lock(
       SharedMutexManager::get_mutex(&trylock));
   if (tried) {
-    // wunlock(&trylock);
     return;
   } else
     tried = 1;
@@ -552,7 +549,6 @@ void unit_init(void) {
             The unit subsystem was not able to locate the unit file in the
        working directoy or in the directories specified in GLPATH.
     */
-    // wunlock(&trylock);
     return;
   }
 
@@ -659,8 +655,6 @@ void unit_init(void) {
 
   /* done */
   fclose(fp);
-
-  // wunlock(&trylock);
   return;
 }
 

@@ -2021,8 +2021,6 @@ int http_get_rb(HTTPCNX *http, char *uri)
  **/
 int http_kml_request(HTTPCNX *http, char *action)
 {
-  //	static long long lock;
-  //	wlock(&lock);
   char *p = strchr(action, '?');
   http_type(http, "text/kml");
   if (p == nullptr)
@@ -2050,7 +2048,6 @@ int http_kml_request(HTTPCNX *http, char *action)
     }
     return http_format(http, "%s", buffer);
   }
-  //	wunlock(&lock);
 }
 /** Process an incoming action request
         @returns non-zero on success, 0 on failure (errno set)

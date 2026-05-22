@@ -132,8 +132,6 @@ set(SOURCE_LIST
         test_callbacks.h
         test_framework.cpp
         test_framework.h
-        threadpool.cpp
-        threadpool.h
         timestamp.cpp
         timestamp.h
         transform.cpp

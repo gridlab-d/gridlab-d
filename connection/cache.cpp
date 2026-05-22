@@ -74,8 +74,6 @@ bool cache::read(VARMAP *var, TRANSLATOR *xltr) {
   char buffer[1025];
   if (item->read(buffer, sizeof(buffer))) {
     if (strlen(buffer) > 0) {
-      // gld_wlock lock(var->obj->get_object());
-      // replace above with SharedMutexManager
       std::unique_lock<std::shared_mutex> lock(
           SharedMutexManager::get_mutex(var->obj->get_object()));
       return var->obj->from_string(buffer) > 0; // convert incoming data

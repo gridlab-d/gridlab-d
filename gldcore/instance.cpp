@@ -147,15 +147,11 @@ void *instance_runproc_socket(void *ptr) {
       output_error("instance_runproc_socket(): error receiving data");
       running = 0;
     }
-    // pthread_mutex_lock(&inst->sock_lock);
-    // replace the above with SharedMutexManager
     std::unique_lock<std::shared_mutex> lock(
         SharedMutexManager::get_mutex(&inst->sock_lock));
     if (0 == memcmp(inst->buffer, MSG_DATA, strlen(MSG_DATA))) {
       got_data = 1;
-      //			wlock(&inst->has_data_lock);
       inst->has_data += 1;
-      //			wunlock(&inst->has_data_lock);
       // output_debug("instance_runproc_socket(): found "MSG_DATA);
       // output_debug("instance_runproc_socket(): recv'd %d bytes", rv);
     } else if (0 == memcmp(inst->buffer, MSG_ERR, strlen(MSG_ERR))) {
@@ -396,46 +392,6 @@ int instance_master_wait_socket(instance *inst) {
 
   return 1;
 }
-
-// int instance_master_wait_socket(instance *inst){
-//
-//	if(0 == inst){
-//		output_error("instance_master_wait_socket(): null inst
-//pointer"); 		return 0;
-//	}
-//
-//	if(sock_created){
-//		// wait for message
-////		wlock(&inst->has_data_lock);
-//		pthread_mutex_lock(&inst->sock_lock);
-//		if(inst->has_data > 0){ // maybe 'while' this?
-////			wunlock(&inst->has_data_lock);
-//			output_debug("instance_master_wait_socket(): already has
-//data for %d", inst->id); 		} else {
-//			//wunlock(&inst->has_data_lock);
-//			//output_debug("instance_master_wait_socket():
-//requesting unwait on %d", inst->sock_signal);
-//			output_debug("instance_master_wait_socket(): inst %d
-//waiting on %x", inst->id, &inst->sock_signal);
-//			//pthread_cond_broadcast(&inst->wait_signal);
-//
-////			pthread_mutex_lock(&inst->sock_lock);
-////			pthread_cond_broadcast(&inst->wait_signal);
-//			output_debug("inst %d waiting on signal 0x%x", inst->id,
-//&(inst->sock_signal)); 			pthread_cond_wait(&inst->sock_signal,
-//&inst->sock_lock); 			pthread_mutex_unlock(&inst->sock_lock);
-//
-//		}
-////		wlock(&inst->has_data_lock);
-//		inst->has_data -= 1;
-////		wunlock(&inst->has_data_lock);
-//		pthread_mutex_unlock(&inst->sock_lock);
-//	} else {
-//		output_debug("instance_master_wait_socket(): no socket
-//mutexes"); 		return 0;
-//	}
-//	return 1;
-//}
 
 /** instance_master_wait
         Wait the master into a wait state for all the slave->master signal.

@@ -394,7 +394,6 @@ int output_fatal(const char *format, ...) /**< \bprintf style argument list */
   static char lastfmt[4096] = "";
   static int count = 0;
   int result = 0;
-  // wlock(&output_lock);
   std::unique_lock<std::shared_mutex> lock;
 
   if (format != nullptr && strcmp(lastfmt, format) == 0 &&
@@ -432,7 +431,6 @@ Output:
     result =
         (*printerr)("%sFATAL    [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
-  // wunlock(&output_lock);
   return 0;
 }
 
@@ -451,7 +449,6 @@ int output_error(const char *format, ...) /**< \bprintf style argument list */
   static char lastfmt[4096] = "";
   static int count = 0;
   int result = 0;
-  // wlock(&output_lock);
 
   if (format != nullptr && strcmp(lastfmt, format) == 0 &&
       global_suppress_repeat_messages && !global_verbose_mode) {
@@ -491,7 +488,6 @@ Output:
     result =
         (*printerr)("%sERROR    [%s] : %s\n", prefix, time_context, buffer);
 Unlock:
-  // wunlock(&output_lock);
   return 0;
 }
 
@@ -509,7 +505,6 @@ int output_error_raw(const char *format,
   static char lastfmt[4096] = "";
   static int count = 0;
   int result = 0;
-  // wlock(&output_lock);
   std::unique_lock<std::shared_mutex> lock;
   if (format != nullptr && strcmp(lastfmt, format) == 0 &&
       global_suppress_repeat_messages && !global_verbose_mode) {
@@ -546,7 +541,6 @@ Output:
   else
     result = (*printerr)("%s%s\n", prefix, buffer);
 Unlock:
-  // wunlock(&output_lock);
   return 0;
 }
 
@@ -567,8 +561,6 @@ int output_test(const char *format, ...) /**< \bprintf style argument list */
   std::unique_lock<std::shared_mutex> lock;
 
   int result = 0;
-  // wlock(&output_lock);
-
   if (format == nullptr) {
     return 0;
   }
@@ -599,7 +591,6 @@ int output_test(const char *format, ...) /**< \bprintf style argument list */
 
   result = fprintf(fp, "%s\n", buffer);
 Unlock:
-  // wunlock(&output_lock);
   return 0;
 }
 
@@ -618,7 +609,6 @@ int output_warning(const char *format, ...) /**< \bprintf style argument list */
     static char lastfmt[4096] = "";
     static int count = 0;
     int result = 0;
-    // wlock(&output_lock);
     std::unique_lock<std::shared_mutex> lock;
 
     if (format != nullptr && strcmp(lastfmt, format) == 0 &&
@@ -680,7 +670,6 @@ int output_debug(const char *format, ...) /**< \bprintf style argument list */
     static char lastfmt[4096] = "";
     static int count = 0;
     int result = 0;
-    // wlock(&output_lock);
     if (format != nullptr && strcmp(lastfmt, format) == 0 &&
         global_suppress_repeat_messages && !global_verbose_mode) {
       count++;
@@ -740,7 +729,6 @@ int output_verbose(const char *format, ...) /**< \bprintf style argument list */
     static char lastfmt[4096] = "";
     static int count = 0;
     int result = 0;
-    // wlock(&output_lock);
 
     if (format != nullptr && strcmp(lastfmt, format) == 0 &&
         global_suppress_repeat_messages && !global_verbose_mode) {
@@ -809,8 +797,6 @@ int output_message(const char *format, ...) {
       return 0;
     }
 
-    // wlock(&output_lock);  // Acquire lock for thread-safety
-
     // Check for repeated message suppression
     if (strcmp(lastfmt, format) == 0 && global_suppress_repeat_messages &&
         !global_verbose_mode) {
@@ -876,54 +862,6 @@ int output_message(const char *format, ...) {
   }
   return 0; // Return 0 if `global_quiet_mode` is enabled
 }
-
-// int output_message(const char *format,...) /**< \bprintf style argument list
-// */
-//{
-//	if (!global_quiet_mode)
-//	{
-//		/* check for repeated message */
-//		static char lastfmt[4096] = "";
-//		static int count=0;
-//		size_t sz = strlen(format?format:"");
-//		int result = 0;
-//		wlock(&output_lock);
-//		if (format!=nullptr && strcmp(lastfmt,format)==0 &&
-// global_suppress_repeat_messages && !global_verbose_mode)
-//		{
-//			count++;
-//			return 0;
-//		}
-//		else
-//		{
-//			va_list ptr;
-//			int len=0;
-//			strncpy(lastfmt,format?format:"",sizeof(lastfmt)-1);
-//			if (count>0 && global_suppress_repeat_messages &&
-//! global_verbose_mode)
-//			{
-//				len = sprintf(buffer,"%slast message was
-// repeated %d times\n", prefix, count); 				count =
-// 0; 				if(format == nullptr) goto Output;
-//			}
-//			if (format==nullptr)
-//				return 0;
-//			va_start(ptr,format);
-//			int result = vsnprintf(buffer + len, sizeof(buffer) -
-// len, format, ptr);
-//			//vsprintf(buffer+len,format,ptr); /* note the lack of
-// check on buffer overrun */ 			va_end(ptr);
-//		}
-// Output:
-//		if (redirect.output)
-//			result = fprintf(redirect.output,"%s%s\n", prefix,
-// buffer); 		else 			result = (*printstd)("%s%s\n",
-// prefix, buffer); Unlock:
-//		wunlock(&output_lock);
-//		return result;
-//	}
-//	return 0;
-// }
 
 /** Output a profiler message
  **/
@@ -992,7 +930,6 @@ int output_raw(const char *format, ...) /**< \bprintf style argument list */
   if (!global_quiet_mode) {
     va_list ptr;
     int result = 0;
-    // wlock(&output_lock);
 
     va_start(ptr, format);
     vsprintf(buffer, format,
@@ -1011,7 +948,6 @@ int output_raw(const char *format, ...) /**< \bprintf style argument list */
       result = (*printstd)("%s%s", prefix, buffer);
       fflush(curr_stream[FS_STD]);
     }
-    // wunlock(&output_lock);
     return result;
   }
   return 0;

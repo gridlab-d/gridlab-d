@@ -908,9 +908,7 @@ static TIMESTAMP sync_multi_recorder_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0,
-                                                    PASSCONFIG pass) {
-
+extern "C" MODULE_API TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_multi_recorder_impl(obj, t0, pass);
 }
 #else

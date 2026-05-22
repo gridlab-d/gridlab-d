@@ -6,8 +6,7 @@
  @{
  **/
 
-/* absolutely nothing must be placed before this per feature_test_macros(7) man
- * page */
+/* absolutely nothing must be placed before this per feature_test_macros(7) man page */
 #ifndef WIN32
 #ifndef __APPLE__
 #undef _GNU_SOURCE
@@ -180,25 +179,19 @@ static unsigned int malloc_lock = 0;
 void *module_malloc(size_t size)
 {
 	void *ptr;
-	// wlock(&malloc_lock);
-	// replace the above with SharedMutexManager
 	std::unique_lock<std::shared_mutex> lock(
 		SharedMutexManager::get_mutex(&malloc_lock));
 	ptr = (void *)malloc(size);
-	// wunlock(&malloc_lock);
 	return ptr;
 }
 void module_free(void **pptr)
 {
-	// wlock(&malloc_lock);
 	std::unique_lock<std::shared_mutex> lock(
 		SharedMutexManager::get_mutex(&malloc_lock));
 	if (pptr && *pptr)
 	{
 		free(*pptr);
 		*pptr = nullptr;
-
-		// wunlock(&malloc_lock);
 	}
 }
 
@@ -396,9 +389,7 @@ size_t module_getcount(void) { return module_count; }
 // Define a global/static handle for the mutex (or create/open it locally)
 static HANDLE moduleLoadMutex = nullptr;
 // Choose a unique name for your mutex across all GridLAB-D processes
-const char *mutexName =
-	"Global\\GridLABD_ModuleLoad_Mutex"; // "Global\" prefix for system-wide
-										 // mutex
+const char *mutexName = "Global\\GridLABD_ModuleLoad_Mutex"; // "Global\" prefix for system-wide mutex
 
 // Ensure this is initialized only once (or create/open on each call)
 // For simplicity here, we'll open/create on each call
@@ -447,12 +438,10 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 
 	if (callbacks->magic != MAGIC)
 	{
-		output_fatal("callback function table alignment error (magic number "
-					 "position mismatch)");
+		output_fatal("callback function table alignment error (magic number position mismatch)");
 		return nullptr;
 	}
-#ifdef NEVER /* this shouldn't ever be necessary but sometimes for debugging \
-				purposes it is helpful */
+#ifdef NEVER /* this shouldn't ever be necessary but sometimes for debugging purposes it is helpful */
 	/* if LD_LIBRARY_PATH is not set, default to current directory */
 	if (getenv("LD_LIBRARY_PATH") == nullptr)
 	{
@@ -595,9 +584,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			}
 			if (p == nullptr)
 			{
-				output_error("module_load(file='%s',...): foreign module type %s not "
-							 "recognized or supported",
-							 fmod);
+				output_error("module_load(file='%s',...): foreign module type %s not recognized or supported", fmod);
 				return release_and_return(nullptr); // Release and retur
 			}
 		}
@@ -865,8 +852,7 @@ static void _module_list(char *path)
 	if ((count++ % 25) == 0)
 	{
 		output_message("Module name              Version Location");
-		output_message("------------------------ ------- "
-					   "----------------------------------------");
+		output_message("------------------------ ------- ----------------------------------------");
 	}
 
 	/* open directory */
@@ -1163,8 +1149,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod)
 						? buffer
 						: "(invalid)");
 		count += fprintf(fp, "\t\t\t</clock>\n");
-		/* why do latitude/longitude have 2 values?  I currently only store as float
-		 * in the schema... -dc */
+		/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... -dc */
 		if (!isnan(obj->latitude))
 			count +=
 				fprintf(fp, "\t\t\t<latitude>%s</latitude>\n",
@@ -1257,13 +1242,8 @@ int module_saveall_xml_old(FILE *fp)
 					sizeof(value)))
 			{ /* TODO: support other types (ticket #46) */
 				count += fprintf(fp, "\t\t\t\t<property> \n");
-				count += fprintf(
-					fp, "\t\t\t\t\t <type>double</type>\n"); // TODO: Is
-															 // varname.get_string() to
-															 // be printed? Currently
-															 // hardcoded as double.
-				count +=
-					fprintf(fp, "\t\t\t\t\t <name>%s</name>\n", value.get_string());
+				count += fprintf(fp, "\t\t\t\t\t <type>double</type>\n"); // TODO: Is varname.get_string() to be printed? Currently hardcoded as double.
+				count += fprintf(fp, "\t\t\t\t\t <name>%s</name>\n", value.get_string());
 				count += fprintf(fp, "\t\t\t\t</property> \n");
 			}
 		}
@@ -1445,15 +1425,11 @@ void module_termall(void)
 #ifdef X64
 #define CC "gcc"
 #define CCFLAGS "-DWIN32 -DX64"
-#define LDFLAGS                                                                                                                    \
-	"" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" \
-		*/
+#define LDFLAGS "" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" */
 #else  // !X64
 #define CC "gcc"
 #define CCFLAGS "-DWIN32"
-#define LDFLAGS                                                                                                                    \
-	"" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" \
-		*/
+#define LDFLAGS "" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" */
 #endif // X64
 #define fstat _fstat
 #define stat _stat
@@ -1598,8 +1574,7 @@ int module_compile(const char *name,   /**< name of library */
 	fclose(fp);
 
 	/* compile the code */
-	// gcc -m64 -DWIN32 -c "test_schedule_xform_external.c" -o
-	// "test_schedule_xform_external.o"
+	// gcc -m64 -DWIN32 -c "test_schedule_xform_external.c" -o "test_schedule_xform_external.o"
 
 #ifdef _WIN32
 	FILE *bat = fopen("build_dll.bat", "w");
@@ -1607,12 +1582,10 @@ int module_compile(const char *name,   /**< name of library */
 	{
 		fprintf(bat, "@echo off\n");
 		fprintf(bat, "call vcvars64.bat\n");
-		fprintf(bat, "if errorlevel 1 echo Error: vcvars64.bat not found or "
-					 "failed. Ensure it is on PATH. & exit /b 1\n");
+		fprintf(bat, "if errorlevel 1 echo Error: vcvars64.bat not found or failed. Ensure it is on PATH. & exit /b 1\n");
 		fprintf(bat, "cl /c /DWIN32 \"%s\" /Fo:\"%s\"\n", cfile, ofile);
 		fprintf(bat, "if errorlevel 1 exit /b %%errorlevel%%\n");
-		// fprintf(bat, "link /DLL /OUT:\"%s\" \"%s\" /DEF:%s.def\n", afile, ofile,
-		// name);
+		// fprintf(bat, "link /DLL /OUT:\"%s\" \"%s\" /DEF:%s.def\n", afile, ofile, name);
 		fprintf(bat, "link /DLL /OUT:\"%s\" \"%s\"\n", afile, ofile);
 		fprintf(bat, "if errorlevel 1 exit /b %%errorlevel%%\n");
 		fclose(bat);
@@ -1672,8 +1645,7 @@ typedef struct s_exfnmap
 } EXTERNALFUNCTION;
 EXTERNALFUNCTION *external_function_list = nullptr;
 
-/* saves mapping - fctname will be stored in new malloc copy, libname must
- * already be a copy in heap */
+/* saves mapping - fctname will be stored in new malloc copy, libname must already be a copy in heap */
 static int add_external_function(char *fctname, char *libname, void *lib)
 {
 	if (module_get_transform_function(fctname) == nullptr)
@@ -1684,17 +1656,13 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 			static_cast<EXTERNALFUNCTION *>(malloc(sizeof(EXTERNALFUNCTION)));
 		if (item == nullptr)
 		{
-			output_error("add_external_function(char *fn='%s',lib='%s',...): memory "
-						 "allocation failed",
-						 fctname, libname);
+			output_error("add_external_function(char *fn='%s',lib='%s',...): memory allocation failed", fctname, libname);
 			return 0;
 		}
 		item->fname = static_cast<char *>(malloc(strlen(fctname) + 1));
 		if (item->fname == nullptr)
 		{
-			output_error("add_external_function(char *fn='%s',lib='%s',...): memory "
-						 "allocation failed",
-						 fctname, libname);
+			output_error("add_external_function(char *fn='%s',lib='%s',...): memory allocation failed", fctname, libname);
 			return 0;
 		}
 		item->libname = libname;
@@ -1760,8 +1728,9 @@ int module_load_function_list(char *libname, char *fnclist)
 		LPTSTR error;
 		LPTSTR end;
 		DWORD result = FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr,
-			GetLastError(), 0, (LPTSTR)&error, 0, nullptr);
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+			nullptr, GetLastError(), 0,
+			(LPTSTR)&error, 0, nullptr);
 		if (!result)
 			error = TEXT(const_cast<char *>("[FormatMessage failed]"));
 		else
@@ -1966,9 +1935,7 @@ struct thread_affinity_policy policy;
 static unsigned char procs[65536]; /* processor map */
 static unsigned char n_procs = 0;  /* number of processors in map */
 
-#define MAPNAME                                                               \
-	"gridlabd-pmap-3" /* TODO: change the pmap number each time the structure \
-						 changes */
+#define MAPNAME "gridlabd-pmap-3" /* TODO: change the pmap number each time the structure changes */
 typedef struct s_gldprocinfo
 {
 	unsigned int lock;	 /* field lock */
@@ -2012,18 +1979,6 @@ pid_t sched_get_procid()
 	return process_map[cpuid].pid;
 }
 
-// void sched_lock(unsigned short proc)
-//{
-//	if ( process_map )
-//		wlock(&process_map[proc].lock);
-// }
-//
-// void sched_unlock(unsigned short proc)
-//{
-//	if ( process_map )
-//		wunlock(&process_map[proc].lock);
-// }
-
 /** update the process info **/
 void sched_update(TIMESTAMP clock, enumeration status)
 {
@@ -2033,15 +1988,12 @@ void sched_update(TIMESTAMP clock, enumeration status)
 	for (t = 0; t < my_proc->n_procs; t++)
 	{
 		int n = my_proc->list[t];
-		// sched_lock(n);
-		// replace the above with SharedMutexManager
 		std::unique_lock<std::shared_mutex> lock(
 			SharedMutexManager::get_mutex(&process_map[n].lock));
 		process_map[n].status = status;
 		process_map[n].progress = clock;
 		process_map[n].starttime = global_starttime;
 		process_map[n].stoptime = global_stoptime;
-		// sched_unlock(n);
 	}
 }
 int sched_isdefunct(pid_t pid)
@@ -2063,11 +2015,9 @@ void sched_finish(void)
 	for (t = 0; t < my_proc->n_procs; t++)
 	{
 		int n = my_proc->list[t];
-		// sched_lock(n);
 		std::unique_lock<std::shared_mutex> lock(
 			SharedMutexManager::get_mutex(&process_map[n].lock));
 		process_map[n].status = MLS_DONE;
-		// sched_unlock(n);
 	}
 }
 
@@ -2334,9 +2284,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	if (hProc == nullptr)
 	{
 		unsigned long err = GetLastError();
-		output_warning("unable to access current process info, err code %d--job "
-					   "not added to process map",
-					   err);
+		output_warning("unable to access current process info, err code %d--job not added to process map", err);
 		return nullptr;
 	}
 #elif defined MACOSX
@@ -2483,9 +2431,7 @@ void sched_init(int readonly)
 								 mapsize, MAPNAME);
 		if (hMap == nullptr)
 		{
-			output_warning("unable to create global process map, error code %d--job "
-						   "not added to process map",
-						   GetLastError());
+			output_warning("unable to create global process map, error code %d--job not added to process map", GetLastError());
 			return;
 		}
 	}
@@ -2495,9 +2441,7 @@ void sched_init(int readonly)
 		(GLDPROCINFO *)MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, mapsize);
 	if (process_map == nullptr)
 	{
-		output_warning("unable to access global process map, error code %d--job "
-					   "not added to process map",
-					   GetLastError());
+		output_warning("unable to access global process map, error code %d--job not added to process map", GetLastError());
 		return;
 	}
 
@@ -2513,8 +2457,7 @@ void sched_init(int readonly)
 	my_proc = sched_allocate_procs(global_threadcount, pid);
 	if (my_proc == nullptr)
 	{
-		output_warning("no processor available to avoid overloading--job not added "
-					   "to process map");
+		output_warning("no processor available to avoid overloading--job not added to process map");
 		return;
 	}
 	atexit(sched_finish);
@@ -2587,15 +2530,12 @@ void sched_init(int readonly)
 			output_error("global process map already exists");
 			break;
 		case EINVAL:
-			output_error("size of existing process map is not %d bytes or map size "
-						 "exceed system limit for shared memory",
-						 mapsize);
+			output_error("size of existing process map is not %d bytes or map size exceed system limit for shared memory", mapsize);
 			break;
 		/* TROUBLESHOOT
-		   The process map changed size or it is too big for the limits on shared
-		   memory. Reboot your system to clear the old process map.  If the problem
-		   persists, consult your system's manuals to learn how to increase the size
-		   of shared memory.
+		   The process map changed size or it is too big for the limits on shared memory.
+		   Reboot your system to clear the old process map.  If the problem persists,
+		   consult your system's manuals to learn how to increase the size of shared memory.
 		 */
 		case ENOENT:
 			output_error("process map %s not found", mfile);
@@ -2643,8 +2583,7 @@ void sched_init(int readonly)
 	my_proc = sched_allocate_procs(global_threadcount, pid);
 	if (my_proc == nullptr)
 	{
-		output_warning("no processor available to avoid overloading--job not added "
-					   "to process map");
+		output_warning("no processor available to avoid overloading--job not added to process map");
 		return;
 	}
 	atexit(sched_finish);
@@ -2819,9 +2758,7 @@ void sched_continuous(void)
 			tb = localtime(&now);
 			strftime(ts, sizeof(ts), "%Y/%m/%d %H:%M:%S", tb);
 			mvprintw(n_procs + 7, 0, "%s: %s", ts, message);
-			mvprintw(n_procs + 8, 0,
-					 "C to clear defunct, Up/Down to select, R/P to display "
-					 "runtime/progress, K to kill, Q to quit: ");
+			mvprintw(n_procs + 8, 0, "C to clear defunct, Up/Down to select, R/P to display runtime/progress, K to kill, Q to quit: ");
 		}
 		c = wgetch(stdscr);
 		switch (c)

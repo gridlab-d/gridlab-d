@@ -41,7 +41,6 @@ class Command(Enum):
     
     # Checkpoints
     SAVE_CHECKPOINT = "save_checkpoint"
-    LOAD_CHECKPOINT = "load_checkpoint"
     GET_CHECKPOINT_JSON = "get_checkpoint_json"
     
     # Lifecycle
