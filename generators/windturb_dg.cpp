@@ -240,6 +240,7 @@ int windturb_dg::create(void)
 	parent_is_valid = false;
 	parent_is_triplex = false;
 	parent_is_inverter = false;
+	parent_is_rectifier = false;
 
 	inverter_power_property = nullptr;
 	inverter_flag_property = nullptr;
@@ -1099,6 +1100,7 @@ int windturb_dg::init(OBJECT *parent)
 			parent_is_valid = true;
 			parent_is_triplex = false;
 			parent_is_inverter = false;
+			parent_is_rectifier = true;
 
 			number_of_phases_out = 3;
 
@@ -1132,13 +1134,13 @@ int windturb_dg::init(OBJECT *parent)
 			*/
 
 			// Map the values of the parent
-			pCircuit_V[0] = map_complex_value(parent, "voltage_A");
-			pCircuit_V[1] = map_complex_value(parent, "voltage_B");
-			pCircuit_V[2] = map_complex_value(parent, "voltage_C");
+			pCircuit_V[0] = map_double_value(parent, "voltage_A");
+			pCircuit_V[1] = map_double_value(parent, "voltage_B");
+			pCircuit_V[2] = map_double_value(parent, "voltage_C");
 
-			pLine_I[0] = map_complex_value(parent, "current_A");
-			pLine_I[1] = map_complex_value(parent, "current_B");
-			pLine_I[2] = map_complex_value(parent, "current_C");
+			pLine_I[0] = map_double_value(parent, "current_A");
+			pLine_I[1] = map_double_value(parent, "current_B");
+			pLine_I[2] = map_double_value(parent, "current_C");
 		}
 		else if (gl_object_isa(parent, "inverter", "generators"))
 		{
@@ -1595,9 +1597,18 @@ void windturb_dg::compute_current_injection(void)
 		// Pull the voltage values
 		if (parent_is_valid)
 		{
-			value_Circuit_V[0] = pCircuit_V[0]->get_complex();
-			value_Circuit_V[1] = pCircuit_V[1]->get_complex();
-			value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+			if (parent_is_rectifier)
+			{
+				value_Circuit_V[0] = pCircuit_V[0]->get_double();
+				value_Circuit_V[1] = pCircuit_V[1]->get_double();
+				value_Circuit_V[2] = pCircuit_V[2]->get_double();
+			}
+			else
+			{
+				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+				value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+			}
 		}
 
 		voltage_A = value_Circuit_V[0]; // Syncs the meter parent to the generator.
@@ -1848,22 +1859,17 @@ void windturb_dg::compute_current_injection(void)
 		}
 
 		// sum up and finalize everything for output
-		double PowerA, PowerB, PowerC, QA, QB, QC;
+		gld::complex totpowersum;
 
-		PowerA = -voltage_A.Mag() * current_A.Mag() * cos(voltage_A.Arg() - current_A.Arg());
-		PowerB = -voltage_B.Mag() * current_B.Mag() * cos(voltage_B.Arg() - current_B.Arg());
-		PowerC = -voltage_C.Mag() * current_C.Mag() * cos(voltage_C.Arg() - current_C.Arg());
+		power_A = ~voltage_A*current_A;
+		power_B = ~voltage_B*current_B;
+		power_C = ~voltage_C*current_C;
 
-		QA = -voltage_A.Mag() * current_A.Mag() * sin(voltage_A.Arg() - current_A.Arg());
-		QB = -voltage_B.Mag() * current_B.Mag() * sin(voltage_B.Arg() - current_B.Arg());
-		QC = -voltage_C.Mag() * current_C.Mag() * sin(voltage_C.Arg() - current_C.Arg());
+		//Add them
+		totpowersum = gld::complex(-1.0,0.0) * (power_A + power_B + power_C);
 
-		power_A = gld::complex(PowerA, QA);
-		power_B = gld::complex(PowerB, QB);
-		power_C = gld::complex(PowerC, QC);
-
-		TotalRealPow = PowerA + PowerB + PowerC;
-		TotalReacPow = QA + QB + QC;
+		TotalRealPow = totpowersum.Re();
+		TotalReacPow = totpowersum.Im();
 
 		GenElecEff = TotalRealPow / Pconv * 100;
 
@@ -1899,9 +1905,18 @@ void windturb_dg::compute_current_injection_pc(void)
 
 	if (parent_is_valid)
 	{
-		value_Circuit_V[0] = pCircuit_V[0]->get_complex();
-		value_Circuit_V[1] = pCircuit_V[1]->get_complex();
-		value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+		if (parent_is_rectifier)
+		{
+			value_Circuit_V[0] = pCircuit_V[0]->get_double();
+			value_Circuit_V[1] = pCircuit_V[1]->get_double();
+			value_Circuit_V[2] = pCircuit_V[2]->get_double();
+		}
+		else
+		{
+			value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+			value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+			value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+		}
 	}
 
 	voltage_A = value_Circuit_V[0]; // Syncs the meter parent to the wind turbine
@@ -2123,14 +2138,28 @@ void windturb_dg::push_complex_powerflow_values(void)
 		{
 			//**** Current value ***/
 			// Pull current value again, just in case
-			temp_complex_val = pLine_I[indexval]->get_complex();
+			if (parent_is_rectifier)
+			{
+				temp_complex_val = pLine_I[indexval]->get_double();
+			}
+			else
+			{
+				temp_complex_val = pLine_I[indexval]->get_complex();
+			}
 
 			// Add the difference
 			// temp_complex_val += value_Line_I[indexval];
 			temp_complex_val += value_Line_I[indexval] - prev_current[indexval];
 
 			// Push it back up
-			pLine_I[indexval]->setp<gld::complex>(temp_complex_val, test_rlock);
+			if (parent_is_rectifier)
+			{
+				pLine_I[indexval]->setp<double>(temp_complex_val.Re(), test_rlock);
+			}
+			else
+			{
+				pLine_I[indexval]->setp<gld::complex>(temp_complex_val, test_rlock);
+			}
 
 			// Store the update value
 			prev_current[indexval] = value_Line_I[indexval];

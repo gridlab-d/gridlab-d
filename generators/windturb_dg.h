@@ -50,6 +50,7 @@ private:
 	bool parent_is_valid;				//< Flag to pointers
 	bool parent_is_triplex;
 	bool parent_is_inverter;
+	bool parent_is_rectifier;
 	
 	double Power_Curve[2][100];  //Look-up table carrying power curve values. Maximum points limited to 100. Equals default (defined in .cpp) or user defined power curve 
 	int number_of_points;
