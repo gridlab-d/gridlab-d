@@ -1,0 +1,21 @@
+---
+name: Latex
+---
+import { useState, useEffect } from 'react';
+
+export const Latex = ({ children }) => {
+const [content, setContent] = useState(null); // Start with null
+
+useEffect(() => {
+  import("https://cdn.jsdelivr.net/npm/react-latex-next@3.0.0/+esm").then(Module => {
+  setContent(() => <Module.default>{children}</Module.default>);
+ });
+}, [children]); // Make sure children are a dependency
+
+return <>
+  <link href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" rel="stylesheet" />
+  {content}
+  </>
+};
+
+<Latex>{`$x^n + y^n = z^n$`}</Latex>

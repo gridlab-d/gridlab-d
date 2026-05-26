@@ -1,0 +1,4 @@
+requests>=2.28.0
+beautifulsoup4>=4.11.0
+html2text>=2020.1.16
+lxml>=4.9.0

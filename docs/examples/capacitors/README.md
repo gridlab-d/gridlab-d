@@ -1,0 +1,4 @@
+- Model name: dist_sys_capacitor.glm
+- Model source: [GLD Tutorial Chapter 7](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%207%20-%20Advanced%20Distribution%20Systems/Distribution%20Systems%20-%20Capacitors/dist_sys_capacitor.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 7](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%206%20-%20Distributed%20Generation/Distributed%20Generation%20-%20Load-Following/dist_gen_load_following.glm)
+- Example purpose: Demonstrates the use of switched capacitors to regulate voltage.

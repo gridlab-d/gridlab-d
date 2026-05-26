@@ -1,0 +1,332 @@
+module powerflow {
+     solver_method NR;
+     NR_iteration_limit 50;
+};
+module tape;
+
+
+clock {
+     timezone PST+8PDT;
+     starttime '2009-01-01 00:00:00';
+     stoptime '2009-01-01 01:00:00';
+}
+
+
+object line_configuration {     
+      name line_configuration_1;     
+      conductor_A overhead_line_conductor_1;     
+      conductor_B overhead_line_conductor_1;     
+      conductor_C overhead_line_conductor_1;     
+      conductor_N overhead_line_conductor_1;     
+      spacing line_spacing_1;     
+} 
+object line_configuration {     
+      name line_configuration_2;     
+      conductor_A underground_line_conductor_1;     
+      conductor_B underground_line_conductor_1;     
+      conductor_C underground_line_conductor_1;     
+      conductor_N underground_line_conductor_1;     
+      spacing line_spacing_2;     
+} 
+
+object line_spacing {     
+      name line_spacing_1;     
+      distance_AB 57.6 in;    
+      distance_BC 57.6 in;    
+      distance_AC 57.6 in;    
+      distance_AN 51.6 in;    
+      distance_BN 51.6 in;    
+      distance_CN 51.6 in;    
+}  
+object line_spacing {     
+      name line_spacing_2;     
+      distance_AB 24 in;    
+      distance_BC 24 in;    
+      distance_AC 48 in;    
+      distance_AN 60 in;    
+      distance_BN 48 in;    
+      distance_CN 24 in;    
+} 
+
+object overhead_line_conductor {     
+      name overhead_line_conductor_1;      
+      rating.summer.continuous 325.0;     
+      geometric_mean_radius 0.01200 ft;    
+      resistance 0.1;     
+}  
+object underground_line_conductor {     
+    name underground_line_conductor_1;      
+	outer_diameter 2.20;
+	conductor_gmr 0.04;
+	conductor_diameter 1.2500;
+	conductor_resistance 0.109;
+	neutral_gmr 0.005;
+	neutral_resistance 9.6;
+	neutral_diameter 0.19;
+	neutral_strands 20;
+	shield_gmr 0;
+	shield_resistance 0;    
+} 
+
+object overhead_line_conductor {     
+      name overhead_line_conductor_2;      
+  	  rating.summer.continuous 150.0;     
+      geometric_mean_radius 0.02200 ft;    
+      resistance 0.2;     
+}
+
+object transformer_configuration {
+    	name substation_transformer_config;
+    	connect_type WYE_WYE;
+     	install_type PADMOUNT;
+     	primary_voltage 132790;
+     	secondary_voltage 7216;
+     	power_rating 8.4 MVA;
+     	impedance 0.00033+0.0022j;
+}
+
+
+
+
+
+object node {
+	name feeder_head;
+	bustype SWING;
+	phases ABCN;
+    nominal_voltage 132790;
+    object player {
+          property voltage_A;
+          file sub_voltage.player;
+     };
+}
+object transformer {
+     name substation_transformer;
+     from feeder_head;
+     to substation_meter;
+     phases ABCN;
+     configuration substation_transformer_config;
+}
+
+object meter {     
+      name substation_meter;     
+      phases ABCN;     
+      nominal_voltage 7216.88;         
+} 
+
+
+//Branch 1
+object overhead_line {     
+      name branch_1_line_1;     
+      phases ABCN;     
+      from substation_meter;     
+      to load_node;     
+      length 10000;     
+      configuration line_configuration_1;     
+} 
+object node {
+	name load_node;
+	phases ABCN;     
+    nominal_voltage 7216.88; 
+}
+object overhead_line {     
+      name load_line_a;     
+      phases ABCN;     
+      from load_node;     
+      to branch_1_meter_1a;     
+      length 1;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_1_meter_1a; 
+      groupid branch_1_meter;    
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+object load {
+     parent branch_1_meter_1a;
+     name b1m1_load_a;
+     nominal_voltage 7216.88;
+     phases ABC;
+	 constant_power_A 30000+40000j;
+	 constant_current_A 10+10j;
+	 constant_impedance_A 1000+500j;
+}
+object overhead_line {     
+      name load_line_b;     
+      phases ABCN;     
+      from load_node;     
+      to branch_1_meter_1b;     
+      length 1;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_1_meter_1b; 
+      groupid branch_1_meter;    
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+object load {
+     parent branch_1_meter_1b;
+     name b1m1_load_b;
+     nominal_voltage 7216.88;
+     phases ABC;
+	 base_power_A 190 kVA;
+	 power_fraction_A 0.26;  
+	 current_fraction_A 0.51;  
+	 impedance_fraction_A 0.23;   
+	 power_pf_A 0.60;
+	 current_pf_A -0.71;
+	 impedance_pf_A 0.91;
+}
+object overhead_line {     
+      name branch_1_line_2;     
+      phases ABCN;     
+      from load_node;     
+      to branch_1_meter_2;     
+      length 5000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_1_meter_2;  
+      groupid branch_1_meter;   
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+object load {
+     parent branch_1_meter_2;
+     name b1m2_load;
+     nominal_voltage 7216.88;
+     phases ABC;
+	 constant_power_A 3000+4000j;
+	 constant_current_A 20+20j;
+	 constant_impedance_A 100+50j;
+}
+object overhead_line {     
+      name branch_1_line_3;     
+      phases ABCN;     
+      from branch_1_meter_2;     
+      to branch_1_meter_3;     
+      length 15000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_1_meter_3;  
+      groupid branch_1_meter;   
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+object load {
+     parent branch_1_meter_3;
+     name b1m3_load;
+     nominal_voltage 7216.88;
+     phases ABC;
+	 constant_power_A 3000+4000j;
+	 constant_current_A 20+20j;
+	 constant_impedance_A 100+50j;
+}
+
+
+
+//Branch 2
+object overhead_line {     
+      name branch_2_line_1;     
+      phases ABCN;     
+      from substation_meter;     
+      to branch_2_meter_1;     
+      length 10000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_2_meter_1; 
+      groupid branch_2_meter;    
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+object load {
+     parent branch_2_meter_1;
+     name b2m1_load;
+     nominal_voltage 7216.88;
+     phases ABC;
+	 constant_power_A 3000+4000j;
+	 constant_current_A 20+20j;
+	 constant_impedance_A 100+50j;
+}
+object overhead_line {     
+      name branch_2_line_2;     
+      phases ABCN;     
+      from branch_2_meter_1;     
+      to branch_2_meter_2;     
+      length 5000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_2_meter_2;
+      groupid branch_2_meter;    
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+object load {
+     parent branch_2_meter_2;
+     name b2m2_load;
+     nominal_voltage 7216.88;
+     phases ABC;
+	 constant_power_A 3000+4000j;
+	 constant_current_A 20+20j;
+	 constant_impedance_A 100+50j;
+}
+object overhead_line {     
+      name branch_2_line_3;     
+      phases ABCN;     
+      from branch_2_meter_2;     
+      to branch_2_meter_3;     
+      length 15000;     
+      configuration line_configuration_1;     
+} 
+object meter {     
+      name branch_2_meter_3; 
+      groupid branch_2_meter;    
+      phases ABCN;     
+      nominal_voltage 7216.88;     
+} 
+object load {
+     parent branch_2_meter_3;
+     name b2m3_load;
+     nominal_voltage 7216.88;
+     phases ABC;
+	 constant_power_A 3000+4000j;
+	 constant_current_A 20+20j;
+	 constant_impedance_A 100+50j;
+}
+
+
+object recorder {
+	name substation_recorder;
+	parent substation_meter;
+     file substation_data.csv;
+     interval 60;
+     property measured_voltage_A, measured_current_A, measured_power_A;
+} 
+
+object recorder {
+	name swing_node;
+	parent feeder_head;
+     file swing_node_stuff.csv;
+     interval 60;
+     property voltage_A;
+}
+
+
+object multi_recorder{
+	name meter_voltages;
+	file meter_voltages.csv;
+	interval 60;
+	property branch_1_meter_1a:measured_voltage_A.real,branch_1_meter_1a:measured_voltage_A.imag,branch_1_meter_1b:measured_voltage_A, branch_1_meter_1b:measured_voltage_A.real,branch_1_meter_1b:measured_voltage_A.imag,branch_2_meter_1:measured_voltage_A, branch_1_meter_2:measured_voltage_A, branch_2_meter_2:measured_voltage_A, branch_1_meter_3:measured_voltage_A, branch_2_meter_3:measured_voltage_A;
+}
+
+object multi_recorder{
+	name meter_powers;
+	file meter_powers.csv;
+	interval 60;
+	property branch_1_meter_1a:measured_power_A.real,branch_1_meter_1a:measured_power_A.imag,branch_1_meter_1b:measured_power_A.real,branch_1_meter_1b:measured_power_A.imag, branch_2_meter_1:measured_power_A, branch_1_meter_2:measured_power_A, branch_2_meter_2:measured_power_A, branch_1_meter_3:measured_power_A, branch_2_meter_3:measured_power_A;
+}
+

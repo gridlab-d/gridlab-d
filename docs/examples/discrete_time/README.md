@@ -1,0 +1,4 @@
+- Model name: discrete_time_demo.glm
+- Model source: [GLD Tutorial Chapter 2](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%202%20-%20Key%20Attributes/Discrete%20Time/discrete_time_demo.glm)
+- Supporting narrative source: [GLD Tutorial Chapter 2](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_2_-_GridLAB-D_Key_Attributes)
+- Example purpose: Show how GridLAB-D is driven through time by specific objects (a recorder in this case) and how this impacts total calculation time.

@@ -1,0 +1,1372 @@
+clock {
+  timezone PST+8PDT;
+  timestamp '2023-07-01 00:00:00';
+  stoptime '2023-07-01 01:00:00';
+}
+
+#set profiler=1
+#set iteration_limit=100000;
+#set relax_naming_rules=1;
+
+
+#include "water_and_setpoint_schedule_v5.glm";
+#include "appliance_schedules.glm";
+
+
+module tape;
+module climate;
+object climate {
+     name "WA-Pasco";
+     tmyfile "WA-Pasco.tmy3";
+     interpolate QUADRATIC;
+};
+
+module generators;
+module powerflow {
+  solver_method NR;
+}
+module residential {
+  implicit_enduses NONE;
+}
+
+object regulator_configuration {     
+      name regulator_configuration_3887;     
+      name feeder_reg_cfg;     
+      Control OUTPUT_VOLTAGE;     
+      band_center 7900.0;     
+      band_width 133;     
+      connect_type WYE_WYE;     
+      time_delay 30;     
+      raise_taps 16;     
+      lower_taps 16;     
+      regulation 0.10;     
+      tap_pos_A 0;     
+      tap_pos_B 0;     
+      tap_pos_C 0;     
+}   
+object transformer_configuration {
+     name trans_config_to_feeder;
+     connect_type WYE_WYE;
+     install_type PADMOUNT;
+     primary_voltage 230000;
+     secondary_voltage 13800.000;
+     power_rating 6.4 MVA;
+     impedance 0.00033+0.0022j;
+}  
+object transformer_configuration {
+     name CTTF_config_A_R4-12-47-1_load_2;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type POLETOP;
+     impedance 0.00033+0.0022j;
+     shunt_impedance 100000+100000j;
+     primary_voltage 7967.43;
+     secondary_voltage 120;
+     powerA_rating 50 kVA;
+}
+object transformer_configuration {
+     name CTTF_config_B_R4-12-47-1_load_2;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type POLETOP;
+     impedance 0.00033+0.0022j;
+     shunt_impedance 100000+100000j;
+     primary_voltage 7967.43;
+     secondary_voltage 120;
+     powerB_rating 50 kVA;
+}
+object transformer_configuration {
+     name CTTF_config_C_R4-12-47-1_load_2;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type POLETOP;
+     impedance 0.00033+0.0022j;
+     shunt_impedance 100000+100000j;
+     primary_voltage 7967.43;
+     secondary_voltage 120;
+     powerC_rating 50 kVA;
+}
+object triplex_line_configuration {     
+      name triplex_line_configuration_1;     
+      conductor_1 triplex_4/0 AA;    
+      conductor_2 triplex_4/0 AA;    
+      conductor_N triplex_4/0 AA;    
+      insulation_thickness 0.08;     
+      diameter 0.522;     
+}   
+object triplex_line_conductor {     
+      name triplex_4/0 AA;    
+      resistance 0.48;     
+      geometric_mean_radius 0.0158;     
+}     
+object line_configuration {     
+      name line_configuration_A;     
+      conductor_A overhead_line_conductor_2;     
+      conductor_N overhead_line_conductor_2;     
+      spacing line_spacing_8;     
+}
+object line_configuration {     
+      name line_configuration_B;     
+      conductor_B overhead_line_conductor_2;     
+      conductor_N overhead_line_conductor_2;     
+      spacing line_spacing_8;     
+}
+object line_configuration {     
+      name line_configuration_C;     
+      conductor_C overhead_line_conductor_2;     
+      conductor_N overhead_line_conductor_2;     
+      spacing line_spacing_8;     
+}
+object overhead_line_conductor {     
+      name overhead_line_conductor_2;     
+      rating.summer.continuous 149.0;     
+      geometric_mean_radius 0.00663 ft;    
+      resistance 1.50000;     
+}       
+object line_spacing {     
+      name line_spacing_8;     
+      distance_BN 69.99999999996 in;    
+}
+
+// Feeder
+object meter {
+     name network_node;
+     bustype SWING;
+     nominal_voltage 727488;
+     voltage_A 140320.608000+30d;
+     voltage_B 142052.646000-90d;
+     voltage_C 141681.840000+150d;
+     phases ABCN;
+}
+object transformer {
+     name substation_transformer;
+     from network_node;
+     to R4-12-47-1_node_572;
+     phases ABCN;
+     configuration trans_config_to_feeder;
+}
+object node {     
+      name R4-12-47-1_node_572;     
+      phases ABCN;     
+      nominal_voltage 7967.43;     
+      voltage_A 7967.43+0.0j;     
+      voltage_B -3983.72-6900j;     
+      voltage_C -3983.72+6900j;     
+}  
+object regulator {     
+      name R4-12-47-1_reg_1;     
+      from R4-12-47-1_node_572;     
+      to R4-12-47-1_meter_76;     
+      phases ABCN;     
+      configuration feeder_reg_cfg;     
+} 
+
+object meter {     
+      name R4-12-47-1_meter_76;     
+      phases ABCN;     
+      nominal_voltage 7967.43;     
+      voltage_A 7967.43+0.0j;     
+      voltage_B -3983.72-6900j;     
+      voltage_C -3983.72+6900j;     
+}   
+
+// Phase A
+object overhead_line {     
+     groupid Distribution_Line;
+     name R4-12-47-1_ol_A;     
+     phases AN;     
+     from R4-12-47-1_meter_76;     
+     to R4-12-47-1_node_TA;     
+     length 19.000;     
+     configuration line_configuration_A;     
+} 
+object node {     
+      name R4-12-47-1_node_TA;     
+      phases AN;     
+      voltage_A 7967.43+0.0j;     
+      nominal_voltage 7967.43;     
+}   
+object transformer {
+     name R4-12-47-1_load_2_CTTF_A_1;
+     phases AS;
+     from R4-12-47-1_node_TA;
+     to R4-12-47-1_tn_A;
+     groupid Distribution_Trans;
+     configuration CTTF_config_A_R4-12-47-1_load_2;
+}
+object triplex_node {     
+      name R4-12-47-1_tn_A;     
+      phases AS;     
+      voltage_1 -60-103.92j;     
+      voltage_2 -60-103.92j;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+}  
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_A1;     
+      phases AS;     
+      from R4-12-47-1_tn_A;     
+      to house1_billing_meter;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+} 
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_A4;     
+      phases AS;     
+      from R4-12-47-1_tn_A;     
+      to house4_billing_meter;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}   
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_A7;     
+      phases AS;     
+      from R4-12-47-1_tn_A;     
+      to house7_billing_meter;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}  
+
+// Phase B
+object overhead_line {     
+     groupid Distribution_Line;
+     name R4-12-47-1_ol_B;     
+     phases BN;     
+     from R4-12-47-1_meter_76;     
+     to R4-12-47-1_node_TB;     
+     length 19.000;     
+     configuration line_configuration_B;     
+} 
+object node {     
+      name R4-12-47-1_node_TB;     
+      phases BN;     
+      voltage_B 7967.43+0.0j;     
+      nominal_voltage 7967.43;     
+}   
+object transformer {
+     name R4-12-47-1_load_2_CTTF_B_1;
+     phases BS;
+     from R4-12-47-1_node_TB;
+     to R4-12-47-1_tn_B;
+     groupid Distribution_Trans;
+     configuration CTTF_config_B_R4-12-47-1_load_2;
+}
+object triplex_node {     
+      name R4-12-47-1_tn_B;     
+      phases BS;     
+      voltage_1 -60-103.92j;     
+      voltage_2 -60-103.92j;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+}  
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_B2;     
+      phases BS;     
+      from R4-12-47-1_tn_B;     
+      to house2_billing_meter;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+} 
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_B5;     
+      phases BS;     
+      from R4-12-47-1_tn_B;     
+      to house5_billing_meter;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}   
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_B8;     
+      phases BS;     
+      from R4-12-47-1_tn_B;     
+      to house8_billing_meter;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}  
+
+
+// Phase C
+object overhead_line {     
+     groupid Distribution_Line;
+     name R4-12-47-1_ol_C;     
+     phases CN;     
+     from R4-12-47-1_meter_76;     
+     to R4-12-47-1_node_TC;     
+     length 19.000;     
+     configuration line_configuration_C;     
+} 
+object node {     
+      name R4-12-47-1_node_TC;     
+      phases CN;     
+      voltage_C 7967.43+0.0j;     
+      nominal_voltage 7967.43;     
+}   
+object transformer {
+     name R4-12-47-1_load_2_CTTF_C_1;
+     phases CS;
+     from R4-12-47-1_node_TC;
+     to R4-12-47-1_tn_C;
+     groupid Distribution_Trans;
+     configuration CTTF_config_C_R4-12-47-1_load_2;
+}
+object triplex_node {     
+      name R4-12-47-1_tn_C;     
+      phases CS;     
+      voltage_1 -60-103.92j;     
+      voltage_2 -60-103.92j;     
+      voltage_N 0;     
+      nominal_voltage 120;     
+}  
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_C3;     
+      phases CS;     
+      from R4-12-47-1_tn_C;     
+      to house3_billing_meter;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+} 
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_C6;     
+      phases CS;     
+      from R4-12-47-1_tn_C;     
+      to house6_billing_meter;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}   
+object triplex_line {     
+      groupid Triplex_Line;
+      name R4-12-47-1_tl_C9;     
+      phases CS;     
+      from R4-12-47-1_tn_C;     
+      to house9_billing_meter;     
+      length 30;     
+      configuration triplex_line_configuration_1;     
+}  
+
+
+object triplex_meter {
+      name house1_billing_meter;
+      phases AS;
+      nominal_voltage 120;
+      groupid Billing_Meter;
+}
+object triplex_meter {
+      phases AS;
+      parent house1_billing_meter;
+      name house1_house_meter;
+      nominal_voltage 120;
+      groupid House_Meter;
+}
+object house {
+     parent house1_house_meter;
+     name house1;
+     groupid Residential;
+     schedule_skew 714;
+     floor_area 3664;
+     number_of_stories 1;
+     ceiling_height 8;
+     over_sizing_factor 0.1;
+     //Thermal integrity -> Single Family 7
+     Rroof 41.8;
+     Rwall 20.61;
+     Rfloor 35.59;
+     glazing_layers 3;
+     glass_type 2;
+     glazing_treatment 2;
+     window_frame 4;
+     Rdoors 10.51;
+     airchange_per_hour 0.29;
+     cooling_COP 3.8;
+     air_temperature 71.22;
+     mass_temperature 71.22;
+     total_thermal_mass_per_floor_area 3.504;
+     heating_system_type HEAT_PUMP;
+     cooling_system_type ELECTRIC;
+     breaker_amps 1000;
+     hvac_breaker_rating 1000;
+     cooling_setpoint 78;
+     heating_setpoint 87;
+     object ZIPload {
+           name house1_resp_R1-12-47-4_tn_39;
+           // Responsive load
+           schedule_skew 853;
+           base_power responsive_loads*1.20;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           // Unresponsive load
+           schedule_skew 1087;
+           base_power unresponsive_loads*1.10;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object waterheater {
+          schedule_skew 2843;
+          heating_element_capacity 4.5 kW;
+          tank_setpoint 157.17;
+          temperature 132;
+          thermostat_deadband 7.8;
+          location INSIDE;
+          tank_UA 3.7;
+          demand large_6*0.99;
+          tank_volume 63;
+     };
+
+}
+object triplex_meter {
+      phases AS;
+      parent house1_billing_meter;
+      name house1_solar_meter;
+      nominal_voltage 120;
+      groupid Solar_Meter;
+}
+object inverter {
+    name house1_sol_inverter;
+    parent house1_solar_meter;
+    generator_status ONLINE;
+    inverter_efficiency 0.95;
+    rated_power 5000;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    power_factor 1.0;
+    object solar {
+      name house1_solar;
+      panel_type SINGLE_CRYSTAL_SILICON;
+      tilt_angle 20;
+      orientation_azimuth 180;
+      efficiency 0.20;
+      area 357.28; //square feet
+    };
+}
+
+
+
+object triplex_meter {
+      name house2_billing_meter;
+      phases BS;
+      nominal_voltage 120;
+      groupid Billing_Meter;
+}
+object triplex_meter {
+      phases BS;
+      parent house2_billing_meter;
+      name house2_house_meter;
+      nominal_voltage 120;
+      groupid House_Meter;
+}
+object house {
+     parent house2_house_meter;
+     name house2;
+     groupid Residential;
+     schedule_skew 607;
+     floor_area 1810;
+     number_of_stories 1;
+     ceiling_height 9;
+     over_sizing_factor 0.1;
+     //Thermal integrity -> Single Family 1
+     Rroof 16.46;
+     Rwall 12.63;
+     Rfloor 8.77;
+     glazing_layers 1;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 1;
+     Rdoors 3.17;
+     airchange_per_hour 0.66;
+     cooling_COP 2.5;
+     air_temperature 69.58;
+     mass_temperature 69.58;
+     total_thermal_mass_per_floor_area 2.566;
+     heating_system_type HEAT_PUMP;
+     cooling_system_type ELECTRIC;
+     breaker_amps 1000;
+     hvac_breaker_rating 1000;
+     cooling_setpoint 66;
+     heating_setpoint 59;
+     object ZIPload {
+           name house2_resp_R1-12-47-4_tn_41;
+           // Responsive load
+           schedule_skew 881;
+           base_power responsive_loads*1.35;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           // Unresponsive load
+           schedule_skew 812;
+           base_power unresponsive_loads*1.26;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object waterheater {
+          schedule_skew 1109;
+          heating_element_capacity 5.0 kW;
+          tank_setpoint 140.73;
+          temperature 132;
+          thermostat_deadband 5.5;
+          location INSIDE;
+          tank_UA 3.7;
+          demand large_5*0.99;
+          tank_volume 56;
+     };
+}
+object triplex_meter {
+      phases BS;
+      parent house2_billing_meter;
+      name house2_solar_meter;
+      nominal_voltage 120;
+      groupid Solar_Meter;
+}
+object inverter {
+    name house2_sol_inverter;
+    parent house2_solar_meter;
+    generator_status ONLINE;
+    inverter_efficiency 0.95;
+    rated_power 7000;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    power_factor 1.0;
+    object solar {
+      name house2_solar;
+      panel_type SINGLE_CRYSTAL_SILICON;
+      tilt_angle 30;
+      orientation_azimuth 180;
+      efficiency 0.20;
+      area 163.93; //square feet
+    };
+}
+
+
+
+object triplex_meter {
+      name house3_billing_meter;
+      phases CS;
+      nominal_voltage 120;
+      groupid Billing_Meter;
+}
+object triplex_meter {
+      phases CS;
+      parent house3_billing_meter;
+      name house3_house_meter;
+      nominal_voltage 120;
+      groupid House_Meter;
+}
+object house {
+     parent house3_house_meter;
+     name house3;
+     groupid Residential;
+     schedule_skew 4229;
+     floor_area 1755;
+     number_of_stories 2;
+     ceiling_height 9;
+     over_sizing_factor 0.2;
+     //Thermal integrity -> Single Family 1
+     Rroof 15.48;
+     Rwall 6.05;
+     Rfloor 11.42;
+     glazing_layers 1;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 1;
+     Rdoors 3.13;
+     airchange_per_hour 0.44;
+     cooling_COP 2.7;
+     air_temperature 69.23;
+     mass_temperature 69.23;
+     total_thermal_mass_per_floor_area 3.227;
+     heating_system_type RESISTANCE;
+     cooling_system_type ELECTRIC;
+     breaker_amps 1000;
+     hvac_breaker_rating 1000;
+     cooling_setpoint 106;
+     heating_setpoint 53;
+     object ZIPload {
+           name house2_resp_R2-12-47-2_tn_230;
+           // Responsive load
+           schedule_skew 4978;
+           base_power responsive_loads*1.04;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           // Unresponsive load
+           schedule_skew 2539;
+           base_power unresponsive_loads*0.98;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object waterheater {
+          schedule_skew 9321;
+          heating_element_capacity 4.0 kW;
+          tank_setpoint 137.47;
+          temperature 132;
+          thermostat_deadband 6.8;
+          location INSIDE;
+          tank_UA 2.4;
+          demand large_2*1.04;
+          tank_volume 21;
+     };
+}
+object triplex_meter {
+      phases CS;
+      parent house3_billing_meter;
+      name house3_solar_meter;
+      nominal_voltage 120;
+      groupid Solar_Meter;
+}
+object inverter {
+    name house3_sol_inverter;
+    parent house3_solar_meter;
+    generator_status ONLINE;
+    inverter_efficiency 0.95;
+    rated_power 6000;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    power_factor 1.0;
+    object solar {
+      name house3_solar;
+      panel_type SINGLE_CRYSTAL_SILICON;
+      tilt_angle 15;
+      orientation_azimuth 180;
+      efficiency 0.20;
+      area 225.1; //square feet
+    };
+}
+
+
+object triplex_meter {
+      name house4_billing_meter;
+      phases AS;
+      nominal_voltage 120;
+      groupid Billing_Meter;
+}
+object triplex_meter {
+      phases AS;
+      parent house4_billing_meter;
+      name house4_house_meter;
+      nominal_voltage 120;
+      groupid House_Meter;
+}
+object house {
+     parent house4_billing_meter;
+     name house4;
+     groupid Residential;
+     schedule_skew 4399;
+     floor_area 2994;
+     number_of_stories 2;
+     ceiling_height 9;
+     over_sizing_factor 0.2;
+     //Thermal integrity -> Single Family 1
+     Rroof 15.92;
+     Rwall 9.56;
+     Rfloor 11.22;
+     glazing_layers 1;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 1;
+     Rdoors 2.88;
+     airchange_per_hour 0.65;
+     cooling_COP 2.6;
+     air_temperature 70.12;
+     mass_temperature 70.12;
+     total_thermal_mass_per_floor_area 3.522;
+     heating_system_type HEAT_PUMP;
+     cooling_system_type ELECTRIC;
+     breaker_amps 1000;
+     hvac_breaker_rating 1000;
+     cooling_setpoint 71;
+     heating_setpoint 100;
+     object ZIPload {
+           name house1_resp_R2-12-47-2_tn_289;
+           // Responsive load
+           schedule_skew 3310;
+           base_power responsive_loads*1.56;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           // Unresponsive load
+           schedule_skew 2807;
+           base_power unresponsive_loads*1.56;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object waterheater {
+          schedule_skew 8655;
+          heating_element_capacity 5.0 kW;
+          tank_setpoint 98.74;
+          temperature 132;
+          thermostat_deadband 6.0;
+          location INSIDE;
+          tank_UA 3.2;
+          demand large_6*0.98;
+          tank_volume 28;
+     };
+}
+object triplex_meter {
+      phases AS;
+      parent house4_billing_meter;
+      name house4_solar_meter;
+      nominal_voltage 120;
+      groupid Solar_Meter;
+}
+object inverter {
+    name house4_sol_inverter;
+    parent house4_solar_meter;
+    generator_status ONLINE;
+    inverter_efficiency 0.95;
+    rated_power 10000;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    power_factor 1.0;
+    object solar {
+      name house4_solar;
+      panel_type SINGLE_CRYSTAL_SILICON;
+      tilt_angle 30;
+      orientation_azimuth 180;
+      efficiency 0.20;
+      area 227.83; //square feet
+    };
+}
+
+
+object triplex_meter {
+      name house5_billing_meter;
+      phases BS;
+      nominal_voltage 120;
+      groupid Billing_Meter;
+}
+object triplex_meter {
+      phases BS;
+      parent house5_billing_meter;
+      name house5_house_meter;
+      nominal_voltage 120;
+      groupid House_Meter;
+}
+object house {
+     parent house5_house_meter;
+     name house5;
+     groupid Residential;
+     schedule_skew 465;
+     floor_area 4557;
+     number_of_stories 1;
+     ceiling_height 8;
+     over_sizing_factor 0.2;
+     //Thermal integrity -> Single Family 3
+     Rroof 13.0;
+     Rwall 16.97;
+     Rfloor 14.21;
+     glazing_layers 2;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 1;
+     Rdoors 3.33;
+     airchange_per_hour 0.35;
+     cooling_COP 2.8;
+     air_temperature 68.17;
+     mass_temperature 68.17;
+     total_thermal_mass_per_floor_area 2.847;
+     heating_system_type RESISTANCE;
+     cooling_system_type ELECTRIC;
+     breaker_amps 1000;
+     hvac_breaker_rating 1000;
+     cooling_setpoint 67;
+     heating_setpoint 64;
+     object ZIPload {
+           name house1_resp_R2-12-47-2_tn_276;
+           // Responsive load
+           schedule_skew 373;
+           base_power responsive_loads*1.47;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           // Unresponsive load
+           schedule_skew 374;
+           base_power unresponsive_loads*1.63;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object waterheater {
+          schedule_skew 2311;
+          heating_element_capacity 4.5 kW;
+          tank_setpoint 150.99;
+          temperature 132;
+          thermostat_deadband 6.9;
+          location INSIDE;
+          tank_UA 3.8;
+          demand large_2*1.02;
+          tank_volume 58;
+     };
+}
+object triplex_meter {
+      phases BS;
+      parent house5_billing_meter;
+      name house5_solar_meter;
+      nominal_voltage 120;
+      groupid Solar_Meter;
+}
+object inverter {
+    name house5_sol_inverter;
+    parent house5_solar_meter;
+    generator_status ONLINE;
+    inverter_efficiency 0.95;
+    rated_power 6000;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    power_factor 1.0;
+    object solar {
+      name house5_solar;
+      panel_type SINGLE_CRYSTAL_SILICON;
+      tilt_angle 30;
+      orientation_azimuth 180;
+      efficiency 0.20;
+      area 475.07; //square feet
+    };
+}
+
+
+
+object triplex_meter {
+      name house6_billing_meter;
+      phases CS;
+      nominal_voltage 120;
+      groupid Billing_Meter;
+}
+object triplex_meter {
+      phases CS;
+      parent house6_billing_meter;
+      name house6_house_meter;
+      nominal_voltage 120;
+      groupid House_Meter;
+}
+object house {
+     parent house6_house_meter;
+     name house6;
+     groupid Residential;
+     schedule_skew 3897;
+     floor_area 2797;
+     number_of_stories 1;
+     ceiling_height 10;
+     over_sizing_factor 0.2;
+     //Thermal integrity -> Single Family 1
+     Rroof 15.57;
+     Rwall 11.19;
+     Rfloor 10.28;
+     glazing_layers 1;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 1;
+     Rdoors 3.09;
+     airchange_per_hour 0.6;
+     cooling_COP 2.6;
+     air_temperature 68.75;
+     mass_temperature 68.75;
+     total_thermal_mass_per_floor_area 3.057;
+     heating_system_type HEAT_PUMP;
+     cooling_system_type ELECTRIC;
+     breaker_amps 1000;
+     hvac_breaker_rating 1000;
+     cooling_setpoint 61;
+     heating_setpoint 46;
+     object ZIPload {
+           name house12_resp_R2-12-47-2_tn_274;
+           // Responsive load
+           schedule_skew 4530;
+           base_power responsive_loads*1.25;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           // Unresponsive load
+           schedule_skew 4283;
+           base_power unresponsive_loads*1.33;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object waterheater {
+          schedule_skew -115;
+          heating_element_capacity 5.0 kW;
+          tank_setpoint 93.17;
+          temperature 132;
+          thermostat_deadband 6.4;
+          location INSIDE;
+          tank_UA 3.3;
+          demand large_3*1.04;
+          tank_volume 30;
+     };
+}
+object triplex_meter {
+      phases CS;
+      parent house6_billing_meter;
+      name house6_solar_meter;
+      nominal_voltage 120;
+      groupid Solar_Meter;
+}
+object inverter {
+    name house6_sol_inverter;
+    parent house6_solar_meter;
+    generator_status ONLINE;
+    inverter_efficiency 0.95;
+    rated_power 8000;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    power_factor 1.0;
+    object solar {
+      name house6_solar;
+      panel_type SINGLE_CRYSTAL_SILICON;
+      tilt_angle 30;
+      orientation_azimuth 180;
+      efficiency 0.20;
+      area 527.35; //square feet
+    };
+}
+
+
+
+object triplex_meter {
+      name house7_billing_meter;
+      phases AS;
+      nominal_voltage 120;
+      groupid Billing_Meter;
+}
+object triplex_meter {
+      phases AS;
+      parent house7_billing_meter;
+      name house7_house_meter;
+      nominal_voltage 120;
+      groupid House_Meter;
+}
+object house {
+     parent house7_house_meter;
+     name house7;
+     groupid Residential;
+     schedule_skew -5164;
+     floor_area 5202;
+     number_of_stories 1;
+     ceiling_height 8;
+     over_sizing_factor 0.2;
+     //Thermal integrity -> Single Family 2
+     Rroof 27.39;
+     Rwall 13.45;
+     Rfloor 12.07;
+     glazing_layers 2;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 1;
+     Rdoors 3.22;
+     airchange_per_hour 1.02;
+     cooling_COP 2.8;
+     air_temperature 68.52;
+     mass_temperature 68.52;
+     total_thermal_mass_per_floor_area 2.570;
+     heating_system_type RESISTANCE;
+     cooling_system_type ELECTRIC;
+     breaker_amps 1000;
+     hvac_breaker_rating 1000;
+     cooling_setpoint 77;
+     heating_setpoint 45;
+     object ZIPload {
+           name house2_resp_R2-12-47-2_tn_275;
+           // Responsive load
+           schedule_skew -3305;
+           base_power responsive_loads*1.27;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           // Unresponsive load
+           schedule_skew -3805;
+           base_power unresponsive_loads*1.55;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object waterheater {
+          schedule_skew 10618;
+          heating_element_capacity 4.0 kW;
+          tank_setpoint 117.42;
+          temperature 132;
+          thermostat_deadband 4.0;
+          location INSIDE;
+          tank_UA 2.1;
+          demand large_5*1.05;
+          tank_volume 84;
+     };
+}
+object triplex_meter {
+      phases AS;
+      parent house7_billing_meter;
+      name house7_solar_meter;
+      nominal_voltage 120;
+      groupid Solar_Meter;
+}
+object inverter {
+    name house7_sol_inverter;
+    parent house7_solar_meter;
+    generator_status ONLINE;
+    inverter_efficiency 0.95;
+    rated_power 6000;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    power_factor 1.0;
+    object solar {
+      name house7_solar;
+      panel_type SINGLE_CRYSTAL_SILICON;
+      tilt_angle 30;
+      orientation_azimuth 180;
+      efficiency 0.20;
+      area 295.84; //square feet
+    };
+}
+
+
+
+object triplex_meter {
+      name house8_billing_meter;
+      phases BS;
+      nominal_voltage 120;
+      groupid Billing_Meter;
+}
+object triplex_meter {
+      phases BS;
+      parent house8_billing_meter;
+      name house8_house_meter;
+      nominal_voltage 120;
+      groupid House_Meter;
+}
+object house {
+     parent house8_house_meter;
+     name house8;
+     groupid Residential;
+     schedule_skew -189;
+     floor_area 2178;
+     number_of_stories 1;
+     ceiling_height 8;
+     over_sizing_factor 0.2;
+     //Thermal integrity -> Single Family 3
+     Rroof 20.5;
+     Rwall 16.55;
+     Rfloor 12.89;
+     glazing_layers 2;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 1;
+     Rdoors 2.46;
+     airchange_per_hour 0.78;
+     cooling_COP 3.1;
+     air_temperature 70.51;
+     mass_temperature 70.51;
+     total_thermal_mass_per_floor_area 3.180;
+     heating_system_type HEAT_PUMP;
+     cooling_system_type ELECTRIC;
+     breaker_amps 1000;
+     hvac_breaker_rating 1000;
+     cooling_setpoint 70;
+     heating_setpoint 55;
+     object ZIPload {
+           name house9_resp_R2-12-47-2_tn_274;
+           // Responsive load
+           schedule_skew -226;
+           base_power responsive_loads*1.20;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           // Unresponsive load
+           schedule_skew -182;
+           base_power unresponsive_loads*1.09;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           name house9_ppump_R2-12-47-2_tn_274;
+           // Pool Pump
+           schedule_skew 794757;
+           base_power pool_pump_season*1.55;
+           duty_cycle 0.32;
+           phase 0.18;
+           period 7.07;
+           heatgain_fraction 0.0;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+           is_240 TRUE;
+     };
+     object waterheater {
+          schedule_skew -4453;
+          heating_element_capacity 5.0 kW;
+          tank_setpoint 123.69;
+          temperature 132;
+          thermostat_deadband 7.2;
+          location INSIDE;
+          tank_UA 3.3;
+          demand large_6*0.99;
+          tank_volume 92;
+     };
+}
+object triplex_meter {
+      phases BS;
+      parent house8_billing_meter;
+      name house8_solar_meter;
+      nominal_voltage 120;
+      groupid Solar_Meter;
+}
+object inverter {
+    name house8_sol_inverter;
+    parent house8_solar_meter;
+    generator_status ONLINE;
+    inverter_efficiency 0.95;
+    rated_power 7500;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    power_factor 1.0;
+    object solar {
+      name house8_solar;
+      panel_type SINGLE_CRYSTAL_SILICON;
+      tilt_angle 25;
+      orientation_azimuth 180;
+      efficiency 0.20;
+      area 167.14; //square feet
+    };
+}
+
+
+
+object triplex_meter {
+      name house9_billing_meter;
+      phases CS;
+      nominal_voltage 120;
+      groupid Billing_Meter;
+}
+object triplex_meter {
+      phases CS;
+      parent house9_billing_meter;
+      name house9_house_meter;
+      nominal_voltage 120;
+      groupid House_Meter;
+}
+object house {
+     parent house9_house_meter;
+     name house9;
+     groupid Residential;
+     schedule_skew -3992;
+     floor_area 2754;
+     number_of_stories 1;
+     ceiling_height 8;
+     over_sizing_factor 0.2;
+     //Thermal integrity -> Single Family 5
+     Rroof 44.39;
+     Rwall 24.29;
+     Rfloor 17.89;
+     glazing_layers 2;
+     glass_type 1;
+     glazing_treatment 1;
+     window_frame 2;
+     Rdoors 2.64;
+     airchange_per_hour 0.49;
+     cooling_COP 3.2;
+     air_temperature 69.95;
+     mass_temperature 69.95;
+     total_thermal_mass_per_floor_area 2.568;
+     heating_system_type RESISTANCE;
+     cooling_system_type ELECTRIC;
+     breaker_amps 1000;
+     hvac_breaker_rating 1000;
+     cooling_setpoint 77;
+     heating_setpoint 75;
+     object ZIPload {
+           name house3_resp_R2-12-47-2_tn_274;
+           // Responsive load
+           schedule_skew -4216;
+           base_power responsive_loads*1.27;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           // Unresponsive load
+           schedule_skew -3479;
+           base_power unresponsive_loads*1.02;
+           heatgain_fraction 0.900;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+     };
+     object ZIPload {
+           name house3_ppump_R2-12-47-2_tn_274;
+           // Pool Pump
+           schedule_skew 174582;
+           base_power pool_pump_season*1.68;
+           duty_cycle 0.29;
+           phase 0.38;
+           period 5.17;
+           heatgain_fraction 0.0;
+           power_pf 1.000;
+           current_pf 1.000;
+           impedance_pf 1.000;
+           impedance_fraction 0.200000;
+           current_fraction 0.400000;
+           power_fraction 0.400000;
+           is_240 TRUE;
+     };
+     object waterheater {
+          schedule_skew -1761;
+          heating_element_capacity 4.0 kW;
+          tank_setpoint 184.0;
+          temperature 132;
+          thermostat_deadband 4.2;
+          location INSIDE;
+          tank_UA 2.9;
+          demand large_4*1.03;
+          tank_volume 19;
+     };
+
+}
+object triplex_meter {
+      phases CS;
+      parent house9_billing_meter;
+      name house9_solar_meter;
+      nominal_voltage 120;
+      groupid Solar_Meter;
+}
+object inverter {
+    name house9_sol_inverter;
+    parent house9_solar_meter;
+    generator_status ONLINE;
+    inverter_efficiency 0.95;
+    rated_power 8000;
+    inverter_type FOUR_QUADRANT;
+    four_quadrant_control_mode CONSTANT_PF;
+    power_factor 1.0;
+    object solar {
+      name house9_solar;
+      panel_type SINGLE_CRYSTAL_SILICON;
+      tilt_angle 20;
+      orientation_azimuth 180;
+      efficiency 0.20;
+      area 299.5; //square feet
+    };
+}
+
+
+//object group_recorder {
+//  name house_real_power;
+//  group "groupid=House_Meter";
+//  property measured_real_power;
+//  file residential_real_power.csv;
+//  interval 300;
+//}
+
+//object group_recorder {
+//  name solar_real_power;
+//  group "groupid=Solar_Meter";
+//  property measured_real_power;
+//  file residential_real_power.csv;
+//  interval 300;
+//}
+
+//object group_recorder {
+//  name indoor_air_temperature;
+//  group "groupid=Residential";
+//  property air_temperature;
+//  file indoor_air_temperature.csv;
+//  interval 300;
+//}
+
+
