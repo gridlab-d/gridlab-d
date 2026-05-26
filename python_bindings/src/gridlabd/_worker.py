@@ -26,6 +26,8 @@ _TZ_OFFSETS = {
 
 def _to_iso8601(time_str: str) -> str:
     value = time_str.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        value = value[1:-1].strip()
     if re.match(r"^\d{4}-\d{2}-\d{2}T", value):
         return value
 
