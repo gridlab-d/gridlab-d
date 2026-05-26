@@ -130,6 +130,7 @@ int residential_enduse::isa(char *classname)
 TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
     gl_debug("%s shape load = %8g", get_name(), gl_get_loadshape_value(&shape));
+    gl_enduse_sync(&load, t1, PC_BOTTOMUP);
     if (load.voltage_factor > 1.2 || load.voltage_factor < 0.8)
 		gl_verbose("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", get_name(), load.voltage_factor);
     /* TROUBLESHOOT
@@ -212,7 +213,7 @@ static TIMESTAMP sync_residential_enduse_impl(OBJECT *obj, TIMESTAMP t1, PASSCON
 #ifndef __APPLE__
 extern "C" MODULE_API TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-    return sync_residential_enduse_impl(obj, t0, pass);
+    return sync_residential_enduse_impl(obj, t0, PC_BOTTOMUP);
 }
 #else
 extern "C" MODULE_API TIMESTAMP sync_residential_enduse(OBJECT *obj, ...)
@@ -220,7 +221,7 @@ extern "C" MODULE_API TIMESTAMP sync_residential_enduse(OBJECT *obj, ...)
     va_list args;
     va_start(args, obj);
     TIMESTAMP t0 = va_arg(args, TIMESTAMP);
-    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    PASSCONFIG pass = PC_BOTTOMUP;
     va_end(args);
     return sync_residential_enduse_impl(obj, t0, pass);
 }

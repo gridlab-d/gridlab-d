@@ -596,14 +596,14 @@ static TIMESTAMP sync_thermal_storage_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG
 #ifndef __APPLE__
 extern "C" MODULE_API TIMESTAMP sync_thermal_storage(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-    return sync_thermal_storage_impl(obj, t0, pass);
+    return sync_thermal_storage_impl(obj, t0, PC_BOTTOMUP);
 }
 #else
 extern "C" MODULE_API TIMESTAMP sync_thermal_storage(OBJECT *obj, ...) {
     va_list args;
     va_start(args, obj);
     TIMESTAMP t0 = va_arg(args, TIMESTAMP);
-    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    PASSCONFIG pass = PC_BOTTOMUP;
     va_end(args);
     return sync_thermal_storage_impl(obj, t0, pass);
 }
