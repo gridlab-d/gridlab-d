@@ -68,12 +68,13 @@ using std::isnan;
 // properties to defaults, object_restore_checkpoint_properties() re-applies
 // these saved values so the checkpoint state takes precedence.
 // ---------------------------------------------------------------------------
-static std::unordered_map<std::string, std::vector<std::pair<std::string,std::string>>>
+static std::unordered_map<std::string, std::vector<std::pair<std::string, std::string>>>
     checkpoint_prop_store;
 
 void object_store_checkpoint_property(OBJECT *obj, const char *name, const char *value)
 {
-    if (obj == nullptr || obj->name == nullptr || name == nullptr || value == nullptr) return;
+    if (obj == nullptr || obj->name == nullptr || name == nullptr || value == nullptr)
+        return;
     auto &props = checkpoint_prop_store[obj->name];
     for (auto &entry : props)
     {
@@ -98,20 +99,24 @@ static std::unordered_map<std::string, std::unordered_map<std::string, std::stri
 
 void object_set_raw_value_by_name(OBJECT *obj, const PROPERTYNAME name, const char *value)
 {
-    if (obj == nullptr || obj->name == nullptr || name == nullptr || value == nullptr) return;
+    if (obj == nullptr || obj->name == nullptr || name == nullptr || value == nullptr)
+        return;
     raw_value_store[obj->name][name] = value;
 }
 
 int object_get_raw_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size)
 {
-    if (obj == nullptr || obj->name == nullptr || name == nullptr || value == nullptr) return 0;
-    
+    if (obj == nullptr || obj->name == nullptr || name == nullptr || value == nullptr)
+        return 0;
+
     auto obj_iter = raw_value_store.find(obj->name);
-    if (obj_iter == raw_value_store.end()) return 0;
-    
+    if (obj_iter == raw_value_store.end())
+        return 0;
+
     auto prop_iter = obj_iter->second.find(name);
-    if (prop_iter == obj_iter->second.end()) return 0;
-    
+    if (prop_iter == obj_iter->second.end())
+        return 0;
+
     const std::string &stored_value = prop_iter->second;
     int copy_size = std::min((int)stored_value.length(), size - 1);
     if (copy_size > 0)
@@ -1202,19 +1207,28 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
 
 STATUS object_restore_checkpoint_properties(OBJECT *obj)
 {
-    if (obj == nullptr || obj->name == nullptr) return SUCCESS;
+    if (obj == nullptr || obj->name == nullptr)
+        return SUCCESS;
     auto it = checkpoint_prop_store.find(obj->name);
-    if (it == checkpoint_prop_store.end()) return SUCCESS;
+    if (it == checkpoint_prop_store.end())
+        return SUCCESS;
 
     struct checkpoint_replay_scope
     {
         checkpoint_replay_scope() { global_checkpoint_replay_active = 1; }
         ~checkpoint_replay_scope() { global_checkpoint_replay_active = 0; }
     } replay_scope;
-    for (auto& [name, value] : it->second)
+    for (auto &[name, value] : it->second)
     {
+        std::string objName = std::string(obj->name);
         PROPERTY *prop = class_find_property(obj->oclass, name.c_str());
-        if (prop == nullptr)
+        if (name.compare("rng_state") == 0)
+        {
+            // rng_state is a special case — it's not a real property, but we want to restore it if present in the checkpoint.
+            obj->rng_state = static_cast<unsigned int>(stoul(value));
+            continue;
+        }
+        if (prop == nullptr || prop->ptype == PT_object)
         {
             // Header properties (in_svc, out_svc, parent, name, etc.) are set
             // correctly during loadObject() and init() does not reset them.
@@ -1983,28 +1997,28 @@ TIMESTAMP object_heartbeat(OBJECT *obj)
  **/
 int object_init(OBJECT *obj) /**< the object to initialize */
 {
-	clock_t t = (clock_t)exec_clock();
-	int rv = 1;
-	obj->clock = global_starttime;
-	if (obj->oclass->init != nullptr)
-	{
-		rv = (int)(*(obj->oclass->init))(obj, obj->parent);
-	}
-	// When restoring from a checkpoint, re-apply saved property values after
-	// init() so that checkpoint state overrides any defaults set by init().
-	// Only restore on a successful (non-deferred) init return.
-	if (rv == 1 && global_checkpoint_loaded)
-	{
-		if (object_restore_checkpoint_properties(obj) != SUCCESS)
-			rv = 0;
-	}
-	object_profile(obj, OPI_INIT, t);
-	if (global_debug_output > 0)
-	{
-		output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv ? "ok" : "failed");
-	}
+    clock_t t = (clock_t)exec_clock();
+    int rv = 1;
+    obj->clock = global_starttime;
+    if (obj->oclass->init != nullptr)
+    {
+        rv = (int)(*(obj->oclass->init))(obj, obj->parent);
+    }
+    // When restoring from a checkpoint, re-apply saved property values after
+    // init() so that checkpoint state overrides any defaults set by init().
+    // Only restore on a successful (non-deferred) init return.
+    if (rv == 1 && global_checkpoint_loaded)
+    {
+        if (object_restore_checkpoint_properties(obj) != SUCCESS)
+            rv = 0;
+    }
+    object_profile(obj, OPI_INIT, t);
+    if (global_debug_output > 0)
+    {
+        output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv ? "ok" : "failed");
+    }
 
-	return rv;
+    return rv;
 }
 
 /** Run events that should only occur at the start of a timestep.

@@ -1,41 +1,41 @@
 /** $Id: exec.c 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file exec.c
-	@addtogroup exec Main execution loop
-	@ingroup core
-	
-	The main execution loop sets up the main simulation, initializes the
-	objects, and runs the simulation until it either settles to equilibrium
-	or runs into a problem.  It also takes care multicore/multiprocessor
-	parallelism when possible.  Objects of the same rank will be synchronized
-	simultaneously, resources permitting.
+    Copyright (C) 2008 Battelle Memorial Institute
+    @file exec.c
+    @addtogroup exec Main execution loop
+    @ingroup core
 
-	The main processing loop calls each object passing to it a TIMESTAMP
-	indicating the desired synchronization time.  The sync() call attempts to
-	advance the object's internal clock to the time indicated, and if successful it
-	returns the time of the next expected change in the object's state.  An
-	object state change is one which requires the equilibrium equations of
-	the object to be updated.  When an object's state changes, all the other
-	objects in the simulator are given an opportunity to consider the change
-	and possibly alter the time of their next state change.  The core
-	continues calling objects, advancing the global clock when
-	necessary, and continuing in this way until all objects indicate that
-	no further state changes are expected.  This is the equilibrium condition
-	and the simulation consequently ends.
+    The main execution loop sets up the main simulation, initializes the
+    objects, and runs the simulation until it either settles to equilibrium
+    or runs into a problem.  It also takes care multicore/multiprocessor
+    parallelism when possible.  Objects of the same rank will be synchronized
+    simultaneously, resources permitting.
 
-	\section exec_sync Sync Event API
+    The main processing loop calls each object passing to it a TIMESTAMP
+    indicating the desired synchronization time.  The sync() call attempts to
+    advance the object's internal clock to the time indicated, and if successful it
+    returns the time of the next expected change in the object's state.  An
+    object state change is one which requires the equilibrium equations of
+    the object to be updated.  When an object's state changes, all the other
+    objects in the simulator are given an opportunity to consider the change
+    and possibly alter the time of their next state change.  The core
+    continues calling objects, advancing the global clock when
+    necessary, and continuing in this way until all objects indicate that
+    no further state changes are expected.  This is the equilibrium condition
+    and the simulation consequently ends.
 
-	 Sync handling is done using an API implemented in #core_exec
-	 There are several types of sync events that are handled.
-	 - Hard sync is a sync time that should always be considered
-	 - Soft sync is a sync time should only be considered when
-	   the hard sync is not TS_NEVER
-	 - Status is SUCCESS if the sync time is valid
+    \section exec_sync Sync Event API
 
-	 Sync logic table:
+     Sync handling is done using an API implemented in #core_exec
+     There are several types of sync events that are handled.
+     - Hard sync is a sync time that should always be considered
+     - Soft sync is a sync time should only be considered when
+       the hard sync is not TS_NEVER
+     - Status is SUCCESS if the sync time is valid
+
+     Sync logic table:
 @verbatim
  hard t
- 
+
   sync_to    | t==INVALID  | t<sync_to   | t==sync_to  | sync_to<t<NEVER | t==NEVER
   ---------- | ----------- | ----------- | ----------- | --------------- | ----------
   INVALID    | INVALID     | INVALID     | INVALID     | INVALID         | INVALID
@@ -46,40 +46,40 @@
 
 @verbatim
  soft t
- 
+
   sync_to    | t==INVALID  | t<sync_to   | t==sync_to  | sync_to<t<NEVER | t==NEVER
   ---------- | ----------- | ----------- | ----------- | --------------- | ----------
   INVALID    | INVALID     | INVALID     | INVALID     | INVALID         | INVALID
   soft       | INVALID     | t           | t           | sync_to         | sync_to
   hard       | INVALID     | t*          | t*          | sync_to         | sync_to
   NEVER      | INVALID     | t           | sync_to     | sync_to         | NEVER
- 
+
  * indicates soft event is made hard
 @endverbatim
 
     The Sync Event API functions are as follows:
-	- #exec_sync_reset is used to reset a sync event to initial steady state sync (NEVER)
-	- #exec_sync_merge is used to update an existing sync event with a new sync event
-	- #exec_sync_set is used to set a sync event
-	- #exec_sync_get is used to get a sync event
-	- #exec_sync_getevents is used to get the number of hard events in a sync event
-	- #exec_sync_getstatus is used to get the status of a sync event
-	- #exec_sync_ishard is used to determine whether a sync event is a hard event
-	- #exec_sync_isinvalid is used to determine whether a sync event is valid
-	- #exec_sync_isnever is used to determine whether a sync event is pending
+    - #exec_sync_reset is used to reset a sync event to initial steady state sync (NEVER)
+    - #exec_sync_merge is used to update an existing sync event with a new sync event
+    - #exec_sync_set is used to set a sync event
+    - #exec_sync_get is used to get a sync event
+    - #exec_sync_getevents is used to get the number of hard events in a sync event
+    - #exec_sync_getstatus is used to get the status of a sync event
+    - #exec_sync_ishard is used to determine whether a sync event is a hard event
+    - #exec_sync_isinvalid is used to determine whether a sync event is valid
+    - #exec_sync_isnever is used to determine whether a sync event is pending
 
-	@future [Chassin Oct'07]
+    @future [Chassin Oct'07]
 
-	There is some value in exploring whether it is necessary to update all
-	objects when a particular objects implements a state change.  The idea is
-	based on the fact that updates propagate through the model based on known
-	relations, such at the parent-child relation or the link-node relation.
-	Consequently, it should obvious that unless a value in a related object
-	has changed, there can be no significant change to an object that hasn't reached
-	it's declared update time.  Thus only the object that "won" the next update
-	time and those that are immediately related to it need be updated.  This 
-	change could result in a very significant improvement in performance,
-	particularly in models with many lightly coupled objects. 
+    There is some value in exploring whether it is necessary to update all
+    objects when a particular objects implements a state change.  The idea is
+    based on the fact that updates propagate through the model based on known
+    relations, such at the parent-child relation or the link-node relation.
+    Consequently, it should obvious that unless a value in a related object
+    has changed, there can be no significant change to an object that hasn't reached
+    it's declared update time.  Thus only the object that "won" the next update
+    time and those that are immediately related to it need be updated.  This
+    change could result in a very significant improvement in performance,
+    particularly in models with many lightly coupled objects.
 
  @{
  **/
@@ -163,7 +163,6 @@ using namespace std::literals;
 
 // Only setup threadpool for each object rank list at the first iteration;
 cpp_threadpool *threadpool;
-
 
 /** Set/get exit code **/
 int exec_setexitcode(int xc)
@@ -462,8 +461,8 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             else
             {
                 const char *json_dir = (global_workdir[0] != '\0')
-                                        ? global_workdir
-                                        : ".";
+                                           ? global_workdir
+                                           : ".";
                 if (!directory_exists(json_dir))
                 {
                     output_error("directory '%s' does not exist for JSON checkpoint files", json_dir);
@@ -477,29 +476,29 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
 
             // ── Build checkpoint JSON (preamble) ──
             if (!checkpoint.contains("__preamble"))
-                checkpoint["__preamble"] = nlohmann::ordered_json::object();
-            if (!checkpoint["__preamble"].contains("comments") || !checkpoint["__preamble"]["comments"].is_array())
-                checkpoint["__preamble"]["comments"] = nlohmann::ordered_json::array();
-            checkpoint["__preamble"]["comments"].push_back("// GridLAB-D checkpoint data export");
             {
-                std::time_t sys_now = std::time(nullptr);
-                struct tm *tm_local = std::localtime(&sys_now);
-                char sys_time_buf[64] = "";
-                std::strftime(sys_time_buf, sizeof(sys_time_buf), "%Y-%m-%d %H:%M:%S %Z", tm_local);
-                std::string timestamp_comment = std::string("// Generated at: ") + sys_time_buf;
-                checkpoint["__preamble"]["comments"].push_back(timestamp_comment);
+                checkpoint["__preamble"] = nlohmann::ordered_json::object();
             }
+            if (!checkpoint["__preamble"].contains("comments") || !checkpoint["__preamble"]["comments"].is_array())
+            {
+                checkpoint["__preamble"]["comments"] = nlohmann::ordered_json::array();
+            }
+            checkpoint["__preamble"]["comments"].push_back("// GridLAB-D checkpoint data export");
+            std::time_t sys_now = std::time(nullptr);
+            struct tm *tm_local = std::localtime(&sys_now);
+            char sys_time_buf[64] = "";
+            std::strftime(sys_time_buf, sizeof(sys_time_buf), "%Y-%m-%d %H:%M:%S %Z", tm_local);
+            std::string timestamp_comment = std::string("// Generated at: ") + sys_time_buf;
+            checkpoint["__preamble"]["comments"].push_back(timestamp_comment);
 
             // ── Clock info ──
             char ts_buffer[64];
             std::string tz = timestamp_current_timezone();
             size_t first_digit = tz.find_first_of("0123456789");
-            if (first_digit != std::string::npos &&
-                (first_digit == 0 || (tz[first_digit - 1] != '+' && tz[first_digit - 1] != '-')))
+            if (first_digit != std::string::npos && (first_digit == 0 || (tz[first_digit - 1] != '+' && tz[first_digit - 1] != '-')))
             {
                 tz.insert(first_digit, "+");
             }
-
             convert_from_timestamp(global_clock, ts_buffer, sizeof(ts_buffer));
             checkpoint["clock"]["timestamp"] = "'" + std::string(ts_buffer) + "'";
 
@@ -515,12 +514,17 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             // ── Collect objects by class ──
             std::map<std::string, std::vector<OBJECT *>> objects_by_class;
 
-            auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str) -> nlohmann::json {
+            auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str) -> nlohmann::json
+            {
                 switch (ptype)
                 {
                 case PT_double:
                 {
                     double val = strtod(value_str, nullptr);
+                    if (abs(val) < 1e-12)
+                    {
+                        val = 0.0;
+                    }
                     return val;
                 }
                 case PT_int32:
@@ -547,17 +551,40 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                 case PT_char32:
                 case PT_char256:
                 case PT_char1024:
-                case PT_complex:
+                case PT_object:
                     return std::string(value_str);
+                case PT_complex:
+                {
+                    std::string strVal = std::string(value_str);
+                    bool isRectangular = strVal.find_first_of("j") != std::string::npos;
+                    if (isRectangular)
+                    {
+                        double realPart = 0.0;
+                        double imagPart = 0.0;
+                        sscanf(value_str, "%lf%lfj", &realPart, &imagPart);
+                        std::string realPartStr = (abs(realPart) < 1e-12) ? "+0.0" : std::to_string(realPart);
+                        std::string imagPartStr = (abs(imagPart) < 1e-12) ? "+0.0j" : std::to_string(imagPart) + "j";
+                        return std::string(realPartStr + imagPartStr);
+                    }
+                    else
+                    {
+                        double magnitude = 0.0;
+                        double angleDegrees = 0.0;
+                        sscanf(value_str, "%lf%lfd", &magnitude, &angleDegrees);
+                        std::string magnitudeStr = (abs(magnitude) < 1e-12) ? "+0.0" : std::to_string(magnitude);
+                        std::string angleStr = (abs(angleDegrees) < 1e-12) ? "+0.0d" : std::to_string(angleDegrees) + "d";
+                        return std::string(magnitudeStr + angleStr);
+                    }
+                }
                 default:
                     return std::string(value_str);
                 }
             };
-            OBJECT * iterator_object = object_get_first();
-            while(iterator_object != nullptr)
+            OBJECT *iterator_object = object_get_first();
+            while (iterator_object != nullptr)
             {
                 std::string class_name = iterator_object->oclass->name;
-                
+
                 objects_by_class[class_name].push_back(iterator_object);
                 iterator_object = object_get_next(iterator_object);
             }
@@ -609,12 +636,11 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     if (!std::isnan(obj->out_svc_double) && obj->out_svc_double != 0.0 && obj->out_svc_double != TS_NEVER_DBL)
                         instance["out_svc_double"] = obj->out_svc_double;
                     if (obj->rng_state != 0)
-                        instance["rng_state"] = static_cast<uint32_t>(obj->rng_state);
+                        instance["rng_state"] = static_cast<unsigned int>(obj->rng_state);
                     if (obj->heartbeat != 0 && obj->heartbeat != TS_NEVER)
                         instance["heartbeat"] = static_cast<int64_t>(obj->heartbeat);
                     if (obj->flags & OF_DELTAMODE)
                         instance["flags"] = std::string("DELTAMODE");
-
 
                     std::set<std::string> processed_properties;
                     CLASS *current_class = obj->oclass;
@@ -637,118 +663,117 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             // restored.  pmap->raw is intentionally NOT used here
                             // because it is per-class (shared across all instances),
                             // not per-object.
+                            std::string xform_expr;
+                            TRANSFORM *xf = transform_getnext(nullptr);
+                            while (xf != nullptr)
                             {
-                                std::string xform_expr;
-                                TRANSFORM *xf = transform_getnext(nullptr);
-                                while (xf != nullptr)
+                                if (xf->target_obj == obj &&
+                                    xf->target_prop == pmap &&
+                                    xf->function_type == XT_LINEAR)
                                 {
-                                    if (xf->target_obj == obj &&
-                                        xf->target_prop == pmap &&
-                                        xf->function_type == XT_LINEAR)
+                                    if (xf->source_type == XS_SCHEDULE &&
+                                        xf->source_schedule != nullptr)
                                     {
-                                        if (xf->source_type == XS_SCHEDULE &&
-                                            xf->source_schedule != nullptr)
+                                        xform_expr = xf->source_schedule->name;
+                                        if (xf->scale != 1.0)
                                         {
-                                            xform_expr = xf->source_schedule->name;
-                                            if (xf->scale != 1.0)
-                                            {
-                                                char sbuf[64];
-                                                snprintf(sbuf, sizeof(sbuf), "*%g", xf->scale);
-                                                xform_expr += sbuf;
-                                            }
-                                            if (xf->bias != 0.0)
-                                            {
-                                                char bbuf[64];
-                                                snprintf(bbuf, sizeof(bbuf),
-                                                         xf->bias > 0 ? "+%g" : "%g", xf->bias);
-                                                xform_expr += bbuf;
-                                            }
+                                            char sbuf[64];
+                                            snprintf(sbuf, sizeof(sbuf), "*%g", xf->scale);
+                                            xform_expr += sbuf;
                                         }
-                                        else
+                                        if (xf->bias != 0.0)
                                         {
-                                            // Reverse-lookup source object/property by address
-                                            for (OBJECT *so = object_get_first();
-                                                 so != nullptr && xform_expr.empty();
-                                                 so = object_get_next(so))
-                                            {
-                                                CLASS *sc = so->oclass;
-                                                while (sc != nullptr && xform_expr.empty())
-                                                {
-                                                    for (PROPERTY *sp = sc->pmap;
-                                                         sp != nullptr; sp = sp->next)
-                                                    {
-                                                        void *addr = object_get_addr(so, sp->name);
-                                                        if (addr != nullptr &&
-                                                            static_cast<double *>(addr) == xf->source)
-                                                        {
-                                                            char sname[256] = "";
-                                                            object_name(so, sname, sizeof(sname));
-                                                            xform_expr = std::string(sname) + "." + sp->name;
-                                                            if (xf->scale != 1.0)
-                                                            {
-                                                                char sbuf[64];
-                                                                snprintf(sbuf, sizeof(sbuf), "*%g", xf->scale);
-                                                                xform_expr += sbuf;
-                                                            }
-                                                            if (xf->bias != 0.0)
-                                                            {
-                                                                char bbuf[64];
-                                                                snprintf(bbuf, sizeof(bbuf),
-                                                                         xf->bias > 0 ? "+%g" : "%g",
-                                                                         xf->bias);
-                                                                xform_expr += bbuf;
-                                                            }
-                                                            break;
-                                                        }
-                                                    }
-                                                    sc = sc->parent;
-                                                }
-                                            }
+                                            char bbuf[64];
+                                            snprintf(bbuf, sizeof(bbuf),
+                                                     xf->bias > 0 ? "+%g" : "%g", xf->bias);
+                                            xform_expr += bbuf;
                                         }
-                                        break;
                                     }
-                                    xf = transform_getnext(xf);
+                                    else
+                                    {
+                                        // Reverse-lookup source object/property by address
+                                        for (OBJECT *so = object_get_first();
+                                             so != nullptr && xform_expr.empty();
+                                             so = object_get_next(so))
+                                        {
+                                            CLASS *sc = so->oclass;
+                                            while (sc != nullptr && xform_expr.empty())
+                                            {
+                                                for (PROPERTY *sp = sc->pmap;
+                                                     sp != nullptr; sp = sp->next)
+                                                {
+                                                    void *addr = object_get_addr(so, sp->name);
+                                                    if (addr != nullptr &&
+                                                        static_cast<double *>(addr) == xf->source)
+                                                    {
+                                                        char sname[256] = "";
+                                                        object_name(so, sname, sizeof(sname));
+                                                        xform_expr = std::string(sname) + "." + sp->name;
+                                                        if (xf->scale != 1.0)
+                                                        {
+                                                            char sbuf[64];
+                                                            snprintf(sbuf, sizeof(sbuf), "*%g", xf->scale);
+                                                            xform_expr += sbuf;
+                                                        }
+                                                        if (xf->bias != 0.0)
+                                                        {
+                                                            char bbuf[64];
+                                                            snprintf(bbuf, sizeof(bbuf),
+                                                                     xf->bias > 0 ? "+%g" : "%g",
+                                                                     xf->bias);
+                                                            xform_expr += bbuf;
+                                                        }
+                                                        break;
+                                                    }
+                                                }
+                                                sc = sc->parent;
+                                            }
+                                        }
+                                    }
+                                    break;
                                 }
-                                if (!xform_expr.empty())
-                                {
-                                    instance[pmap->name] = xform_expr;
-                                    continue;
-                                }
+                                xf = transform_getnext(xf);
+                            }
+                            if (!xform_expr.empty())
+                            {
+                                instance[pmap->name] = xform_expr;
+                                continue;
                             }
                             switch (pmap->ptype)
                             {
                             case PT_double:
                             {
-                                // saturation_calculated_vals is published as PT_double but
-                                // is actually a gld::complex* pointer.  Dereference it and
-                                // emit all 12 elements as a JSON array of complex strings.
-                                if (strcmp(pmap->name, "saturation_calculated_vals") == 0)
-                                {
-                                    double *dptr = object_get_double_quick(obj, pmap);
-                                    if (dptr != nullptr)
-                                    {
-                                        gld::complex *carray = *reinterpret_cast<gld::complex **>(dptr);
-                                        if (carray != nullptr)
-                                        {
-                                            nlohmann::json arr = nlohmann::json::array();
-                                            for (int ci = 0; ci < 12; ci++)
-                                            {
-                                                char cbuf[64];
-                                                snprintf(cbuf, sizeof(cbuf), "%+lg%+lgj",
-                                                         carray[ci].Re(), carray[ci].Im());
-                                                arr.push_back(std::string(cbuf));
-                                            }
-                                            instance[pmap->name] = arr;
-                                        }
-                                    }
-                                    break;
-                                }
                                 double *dptr = object_get_double_quick(obj, pmap);
                                 if (dptr != nullptr)
                                 {
                                     double val = *dptr;
                                     if (!std::isnan(val) && std::fpclassify(val) != FP_SUBNORMAL)
                                         instance[pmap->name] = val;
+                                    else if (std::fpclassify(val) == FP_SUBNORMAL)
+                                        instance[pmap->name] = 0.0;
+                                }
+                                break;
+                            }
+                            case PT_complex:
+                            {
+                                gld::complex *cptr = object_get_complex_quick(obj, pmap);
+                                if (cptr != nullptr)
+                                {
+                                    double realPart = cptr->Re();
+                                    double imagPart = cptr->Im();
+                                    std::string realPartStr = "";
+                                    std::string imagPartStr = "";
+                                    if (std::isnan(realPart) || std::fpclassify(realPart) != FP_SUBNORMAL)
+                                        realPartStr = std::format("{:+}", realPart);
+                                    else if (std::fpclassify(realPart) == FP_SUBNORMAL)
+                                        realPartStr = "+0.0";
+                                    if (std::isnan(imagPart) || std::fpclassify(imagPart) != FP_SUBNORMAL)
+                                        imagPartStr = std::format("{:+}j", imagPart);
+                                    else if (std::fpclassify(imagPart) == FP_SUBNORMAL)
+                                        imagPartStr = "+0.0j";
+                                    std::string complexStr = realPartStr + imagPartStr;
+                                    if (!complexStr.empty())
+                                        instance[pmap->name] = complexStr;
                                 }
                                 break;
                             }
@@ -805,12 +830,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                                     instance[pmap->name] = std::string(raw_value);
                                     break;
                                 }
-                                if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0
-                                    && strlen(value_str) > 0
-                                    && strcmp(value_str, "null") != 0 && strcmp(value_str, "NULL") != 0
-                                    && strcmp(value_str, "\"\"") != 0 && strcmp(value_str, "''") != 0
-                                    && strcmp(value_str, "NAN") != 0 && strcmp(value_str, "nan") != 0
-                                    && strstr(value_str, "nan") == nullptr && strstr(value_str, "NAN") == nullptr)
+                                if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0 && strlen(value_str) > 0 && strcmp(value_str, "null") != 0 && strcmp(value_str, "NULL") != 0 && strcmp(value_str, "\"\"") != 0 && strcmp(value_str, "''") != 0 && strcmp(value_str, "NAN") != 0 && strcmp(value_str, "nan") != 0 && strstr(value_str, "nan") == nullptr && strstr(value_str, "NAN") == nullptr)
                                 {
                                     std::string out_value(value_str);
                                     // Some PT_char* properties are returned with an extra quoted layer
@@ -927,7 +947,14 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                                 strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
                                 strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
                             {
-                                globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+                                if (global_name.compare("randomseed") != 0)
+                                {
+                                    globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+                                }
+                                else
+                                {
+                                    globals[global_name] = static_cast<unsigned int>(strtoul(buffer, nullptr, 10));
+                                }
                             }
                         }
                     }
@@ -945,7 +972,6 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             }
             checkpoint["globals"] = globals;
             checkpoint["modules"] = modules;
-
 
             // ── Schedules ──
             nlohmann::ordered_json schedules = nlohmann::ordered_json::object();
@@ -993,7 +1019,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                 }
             }
             checkpoint["schedules"] = schedules;
-            
+
             // ── Write JSON to file using resolved path ──
             std::ofstream json_file(full_path);
             if (json_file.is_open())
@@ -1766,25 +1792,32 @@ static int commit_init()
 }
 
 /* single / multiple threaded version of commit_all */
-static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
-	std::atomic_long result{static_cast<long>(TS_NEVER)};
-	SIMPLELINKLIST *item;
-	unsigned int pc;
-	static int n_commits = -1;
-	TRY	{
+static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
+{
+    std::atomic_long result{static_cast<long>(TS_NEVER)};
+    SIMPLELINKLIST *item;
+    unsigned int pc;
+    static int n_commits = -1;
+    TRY
+    {
         /* build commit list */
-        if (n_commits == -1) 
+        if (n_commits == -1)
             n_commits = commit_init();
 
         /* if no commits found, stop here */
-        if (n_commits == 0) {
+        if (n_commits == 0)
+        {
             result = TS_NEVER;
-        } 
-        else {
-            for (pc = 0; pc < 2; pc++) {
-                if (global_threadcount == 1) {
+        }
+        else
+        {
+            for (pc = 0; pc < 2; pc++)
+            {
+                if (global_threadcount == 1)
+                {
                     // Single-threaded fallback
-                    for (item = commit_list[pc].get(); item != nullptr; item = item->next.get()) {
+                    for (item = commit_list[pc].get(); item != nullptr; item = item->next.get())
+                    {
                         OBJECT *obj = (OBJECT *)item->data;
                         if (t0 < obj->in_svc)
                         {
@@ -1799,13 +1832,14 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
                         else if (obj->out_svc >= t0)
                         {
                             TIMESTAMP next = object_commit(obj, t0, t2);
-                            if (next == TS_INVALID) {
+                            if (next == TS_INVALID)
+                            {
                                 char name[64];
                                 throw_exception("object %s commit failed",
-                                    object_name(obj, name, sizeof(name) - 1));
+                                                object_name(obj, name, sizeof(name) - 1));
                                 /* TROUBLESHOOT
-                                    The commit function of the named object has failed.  
-                                    Make sure that the object's requirements for committing are 
+                                    The commit function of the named object has failed.
+                                    Make sure that the object's requirements for committing are
                                     satisfied and try again. (likely internal state aberrations)
                                 */
                             }
@@ -1813,11 +1847,14 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
                                 result = next;
                         }
                     }
-                } 
-                else {
-                    for (item = commit_list[pc].get(); item != nullptr; item = item->next.get()) {
-                        OBJECT *obj = (OBJECT *) item->data;
-                        threadpool->add_job([=, &obj, &result]() {
+                }
+                else
+                {
+                    for (item = commit_list[pc].get(); item != nullptr; item = item->next.get())
+                    {
+                        OBJECT *obj = (OBJECT *)item->data;
+                        threadpool->add_job([=, &obj, &result]()
+                                            {
                             auto inner_result = result.load();
                             if (t0 < obj->in_svc) {
                                 if (obj->in_svc < inner_result) 
@@ -1841,8 +1878,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2) {
                                 }
                                 if (next < result.load()) 
                                     result.store(next);
-                            }
-                        });
+                            } });
                     }
                     threadpool->await();
                 }
@@ -2382,44 +2418,46 @@ STATUS multi_thread_init()
 
 static void *obj_syncproc(void *ptr)
 {
-	OBJSYNCDATA *data = (OBJSYNCDATA*)ptr;
-	LISTITEM *s;
-	unsigned int n;
-	int i = data->i;
+    OBJSYNCDATA *data = (OBJSYNCDATA *)ptr;
+    LISTITEM *s;
+    unsigned int n;
+    int i = data->i;
 
-	// begin processing loop
-	while (data->ok)
-	{
-		for (s=data->ls, n=0; s!=nullptr, n<data->nObj; s=s->next,n++) {
-			OBJECT *obj = static_cast<OBJECT *>(s->data);
+    // begin processing loop
+    while (data->ok)
+    {
+        for (s = data->ls, n = 0; s != nullptr, n < data->nObj; s = s->next, n++)
+        {
+            OBJECT *obj = static_cast<OBJECT *>(s->data);
             clock_t ts = (clock_t)exec_clock();
             ss_do_object_sync(data->n, s->data);
-        	objs_synctime += (clock_t)exec_clock() - ts;
+            objs_synctime += (clock_t)exec_clock() - ts;
             if (obj->valid_to == TS_INVALID)
             {
                 // Get us out of the loop so others don't exec on bad status
                 break;
             }
-		}
+        }
         return nullptr;
-	}
-   return nullptr;
+    }
+    return nullptr;
 }
 
 void multithread_stuff(int iObjRankList, int i, int k)
 {
-	unsigned int n_items, objn = 0, n;
-	unsigned int n_obj = ranks[pass]->ordinal[i]->size;
-	LISTITEM *ptr;
-	int incr;
-	int j = 0;
-	OBJSYNCDATA *objsyncdata = nullptr;
+    unsigned int n_items, objn = 0, n;
+    unsigned int n_obj = ranks[pass]->ordinal[i]->size;
+    LISTITEM *ptr;
+    int incr;
+    int j = 0;
+    OBJSYNCDATA *objsyncdata = nullptr;
 
-	// Only create threadpool for each object rank list at the first iteration.
-	// Reuse the threadppol of each object rank list at all other iterations.
-	if (setTP) {
+    // Only create threadpool for each object rank list at the first iteration.
+    // Reuse the threadppol of each object rank list at all other iterations.
+    if (setTP)
+    {
         incr = (int)ceil((float)n_obj / global_threadcount);
-        // if the number of objects is less than or equal to the number of threads, each thread process one object 	
+        // if the number of objects is less than or equal to the number of threads, each thread process one object
         if (incr <= 1)
         {
             n_threads[iObjRankList] = std::make_unique<unsigned int>(n_obj);
@@ -2442,7 +2480,8 @@ void multithread_stuff(int iObjRankList, int i, int k)
         objsyncdata = new OBJSYNCDATA();
         for (ptr = ranks[pass]->ordinal[i]->first; ptr != nullptr; ptr = ptr->next)
         {
-            if (objsyncdata->nObj == n_items) {
+            if (objsyncdata->nObj == n_items)
+            {
                 objn++;
                 thread.push_back(std::unique_ptr<OBJSYNCDATA>(objsyncdata));
                 objsyncdata = new OBJSYNCDATA();
@@ -2451,34 +2490,38 @@ void multithread_stuff(int iObjRankList, int i, int k)
                 objsyncdata->ls = ptr;
             objsyncdata->nObj++;
         }
-        if (objn < *n_threads[iObjRankList]) 
+        if (objn < *n_threads[iObjRankList])
             thread.push_back(std::unique_ptr<OBJSYNCDATA>(objsyncdata));
         n_idx.push_back(k + *n_threads[iObjRankList]);
     }
 
-    for (n = 0; n < *n_threads[iObjRankList]; n++) {
-        thread[n+k]->ok = true;
-        thread[n+k]->t0 = 0;
-        thread[n+k]->i = iObjRankList;
-        if (!threadpool->add_job([=] { obj_syncproc(&*thread[n+k]); })) {
+    for (n = 0; n < *n_threads[iObjRankList]; n++)
+    {
+        thread[n + k]->ok = true;
+        thread[n + k]->t0 = 0;
+        thread[n + k]->i = iObjRankList;
+        if (!threadpool->add_job([=]
+                                 { obj_syncproc(&*thread[n + k]); }))
+        {
             output_fatal("obj_sync thread creation failed");
-            thread[n+k]->ok = false;
-        } 
-        else {
-            thread[n+k]->n = n;
+            thread[n + k]->ok = false;
+        }
+        else
+        {
+            thread[n + k]->n = n;
         }
     }
 
     threadpool->await();
 
-	for (j = 0; j < thread_data->count; j++)
-	{
-		if (thread_data->data[j]->status == FAILED)
-		{
-			exec_sync_set(thread_data->data[j], TS_INVALID, false);
-			THROW("synchronization failed");
-		}
-	}
+    for (j = 0; j < thread_data->count; j++)
+    {
+        if (thread_data->data[j]->status == FAILED)
+        {
+            exec_sync_set(thread_data->data[j], TS_INVALID, false);
+            THROW("synchronization failed");
+        }
+    }
 }
 
 /******************************************************************
@@ -3064,7 +3107,7 @@ static bool execute_single_simulation_iteration(int64 &passes, int64 &tsteps,
                         OBJECT *obj = static_cast<OBJECT *>(ptr->data);
                         clock_t ts = (clock_t)exec_clock();
                         ss_do_object_sync(0, ptr->data);
-                    	objs_synctime += (clock_t)exec_clock() - ts;
+                        objs_synctime += (clock_t)exec_clock() - ts;
 
                         if (obj->valid_to == TS_INVALID)
                         {
@@ -3076,8 +3119,8 @@ static bool execute_single_simulation_iteration(int64 &passes, int64 &tsteps,
                     // printf("\n");
                 }
                 else
-                { // implement multithreading
-//                    printf("****PASS: %d, RANK: %d, iObjRankList: %d\n", pass, i, iObjRankList);
+                {                                                        // implement multithreading
+                                                                         //                    printf("****PASS: %d, RANK: %d, iObjRankList: %d\n", pass, i, iObjRankList);
                     multithread_stuff(iObjRankList, i, n_idx.at(n_cnt)); // Function
                     n_cnt++;
                 }
@@ -3687,7 +3730,6 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
     // Only setup threadpool for each object rank list at the first iteration;
     threadpool = new cpp_threadpool(global_threadcount);
 
-
     // Create local variables for internal use (use provided values or defaults)
     int64 local_passes = (passes != nullptr) ? *passes : 0;
     int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
@@ -3871,4 +3913,3 @@ STATUS exec_test(struct sync_data *data, /**< the synchronization state data */
     }
     return data->status;
 }
-

@@ -79,7 +79,7 @@ STATUS loader::convert(ojson value, string &out)
     else
     {
         output_debug("loader::convert() parsing file, %s:  unable to convert value to string: %s",
-                         this->filename.string().c_str(), value.dump(4).c_str());
+                     this->filename.string().c_str(), value.dump(4).c_str());
     }
     return FAILED;
 }
@@ -775,7 +775,11 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             {
                 continue;
             }
-            if (this->convert(propValue, propValueStr) == FAILED)
+            if (propName.compare("rng_state") == 0)
+            {
+                propValueStr = std::to_string(propValue.get<unsigned int>());
+            }
+            else if (this->convert(propValue, propValueStr) == FAILED)
             {
                 // The JSON value is an array or object (e.g. saturation_calculated_vals
                 // stored as a 12-element complex array).  We can't convert it to a plain
@@ -1069,12 +1073,12 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 }
             }
         }
-                else if (prop != nullptr &&
-                                 (((prop->ptype >= PT_double && prop->ptype <= PT_int64) ||
-                                     (prop->ptype >= PT_bool && prop->ptype <= PT_timestamp) ||
-                                     (prop->ptype >= PT_float && prop->ptype <= PT_enduse) ||
-                                     prop->ptype == PT_enumeration || prop->ptype == PT_set) &&
-                                    this->parse.linear_transform(propValue, &xstype, &source, &scale, &bias, obj) > 0))
+        else if (prop != nullptr &&
+                 (((prop->ptype >= PT_double && prop->ptype <= PT_int64) ||
+                   (prop->ptype >= PT_bool && prop->ptype <= PT_timestamp) ||
+                   (prop->ptype >= PT_float && prop->ptype <= PT_enduse) ||
+                   prop->ptype == PT_enumeration || prop->ptype == PT_set) &&
+                  this->parse.linear_transform(propValue, &xstype, &source, &scale, &bias, obj) > 0))
         {
             void *target = (void *)((char *)(obj + 1) + (int64)prop->addr);
             /* add the transform list */
@@ -1459,6 +1463,11 @@ STATUS loader::loadGlobals()
     {
         if (skip_globals.count(name))
         {
+            continue;
+        }
+        if (name.compare("randomseed") == 0)
+        {
+            global_randomseed = value.get<unsigned int>();
             continue;
         }
         if (convert(value, propValue) == FAILED)
