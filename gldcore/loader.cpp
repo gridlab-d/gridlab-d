@@ -928,7 +928,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             else if (object_set_double_by_name(obj, propName.c_str(), dval) == 0)
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: property %s of %s could not be set to "
-                                 "%g", this->filename.string().c_str(), propName, this->parse.format_object(obj), dval);
+                                 "%g", this->filename.string().c_str(), propName.c_str(), this->parse.format_object(obj), dval);
                 status = FAILED;
             }
         }
