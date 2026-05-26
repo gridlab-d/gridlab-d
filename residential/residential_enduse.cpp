@@ -130,7 +130,10 @@ int residential_enduse::isa(char *classname)
 TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
     gl_debug("%s shape load = %8g", get_name(), gl_get_loadshape_value(&shape));
+
+    // >>> Ensure the embedded enduse 'load' computes P/Q at this tick
     gl_enduse_sync(&load, t1, PC_BOTTOMUP);
+
     if (load.voltage_factor > 1.2 || load.voltage_factor < 0.8)
 		gl_verbose("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", get_name(), load.voltage_factor);
     /* TROUBLESHOOT
