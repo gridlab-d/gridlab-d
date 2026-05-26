@@ -850,19 +850,9 @@ COMMAND_HANDLERS = {
 
 def main():
     """Main worker loop - reads commands from stdin, executes them, writes responses to stdout."""
-    # CRITICAL: Redirect C++ stdout to stderr to prevent GridLAB-D debug output
-    # from corrupting the JSON protocol on stdout
-    import os
-    # Duplicate stdout to a safe place, then redirect stdout fd to stderr
-    original_stdout_fd = os.dup(1)  # Save original stdout
-    os.dup2(2, 1)  # Redirect stdout (fd 1) to stderr (fd 2)
-    
-    # Create a Python file object from the saved stdout for protocol communication
-    protocol_out = os.fdopen(original_stdout_fd, 'w', buffering=1)
-    
     # Send READY signal to parent to indicate worker is ready to receive commands
-    protocol_out.write("READY\n")
-    protocol_out.flush()
+    sys.stdout.write("READY\n")
+    sys.stdout.flush()
     
     for line in sys.stdin:
         try:
@@ -874,14 +864,14 @@ def main():
             else:
                 response = handler(message)
             
-            protocol_out.write(response.to_json() + "\n")
-            protocol_out.flush()
+            sys.stdout.write(response.to_json() + "\n")
+            sys.stdout.flush()
             if message.command in (Command.EXIT_GLD, Command.FINALIZE):
                 break
         except Exception as e:
             response = Response(success=False, error=f"Worker error: {str(e)}")
-            protocol_out.write(response.to_json() + "\n")
-            protocol_out.flush()
+            sys.stdout.write(response.to_json() + "\n")
+            sys.stdout.flush()
 
 
 

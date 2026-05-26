@@ -234,55 +234,51 @@ class IsolatedGridLabD:
             exit_code = self._process.poll()
             raise RuntimeError(f"Failed to send {command.name} to worker (exit code: {exit_code}): {e}")
         
-        response_line = self._process.stdout.readline()
-        if not response_line:
-            # Check if worker died
-            exit_code = self._process.poll()
-            if command in (Command.EXIT_GLD, Command.FINALIZE):
-                # EXIT_GLD may close stdout before replying; treat as success and
-                # ensure the worker is terminated.
-                if exit_code is None:
-                    try:
-                        self._process.wait(timeout=2)
-                    except subprocess.TimeoutExpired:
+        non_protocol_lines: list[str] = []
+        while True:
+            response_line = self._process.stdout.readline()
+            if not response_line:
+                # Check if worker died
+                exit_code = self._process.poll()
+                if command in (Command.EXIT_GLD, Command.FINALIZE):
+                    # EXIT_GLD may close stdout before replying; treat as success and
+                    # ensure the worker is terminated.
+                    if exit_code is None:
                         try:
-                            self._process.kill()
-                            self._process.wait(timeout=3)
-                        except Exception:
-                            pass
-                self._process = None
-                return Response(success=True, result=0)
-            if exit_code is not None:
-                raise RuntimeError(
-                    f"Worker process exited unexpectedly with code {exit_code} while processing {command.name}")
-            raise RuntimeError(f"Worker process closed stdout while processing {command.name}")
-        
-        response_line = response_line.strip()
-        if not response_line:
-            # Empty line - check if worker is still alive
-            exit_code = self._process.poll()
-            if exit_code is not None:
-                raise RuntimeError(f"Worker process died (exit code {exit_code}) while processing {command.name}")
-            # Worker is alive but sent empty line - this means stdout is corrupted
-            # Read a few more lines to see what's interfering
-            extra_lines = []
-            for _ in range(5):
-                try:
-                    line = self._process.stdout.readline()
-                    if line:
-                        extra_lines.append(line.strip())
-                except:
-                    break
-            raise RuntimeError(f"Worker sent empty response for {command.name}. Next lines from stdout: {extra_lines}")
-        
-        try:
-            return Response.from_json(response_line)
-        except Exception as e:
-            # Check if worker died during JSON parse
-            exit_code = self._process.poll()
-            if exit_code is not None:
-                raise RuntimeError(f"Worker process crashed (exit code {exit_code}) while processing {command.name}. Last output: {response_line[:100]}")
-            raise RuntimeError(f"Invalid JSON response from worker for {command.name}: {e}. Response: {response_line[:100]}")
+                            self._process.wait(timeout=2)
+                        except subprocess.TimeoutExpired:
+                            try:
+                                self._process.kill()
+                                self._process.wait(timeout=3)
+                            except Exception:
+                                pass
+                    self._process = None
+                    return Response(success=True, result=0)
+
+                details = ""
+                if non_protocol_lines:
+                    details = f" Last worker output: {non_protocol_lines[-1][:200]}"
+                if exit_code is not None:
+                    raise RuntimeError(
+                        f"Worker process exited unexpectedly with code {exit_code} while processing {command.name}.{details}")
+                raise RuntimeError(f"Worker process closed stdout while processing {command.name}.{details}")
+
+            response_line = response_line.strip()
+            if not response_line:
+                continue
+
+            try:
+                return Response.from_json(response_line)
+            except Exception:
+                # GridLAB-D may still emit console output; ignore non-JSON lines
+                # and keep reading until a protocol response is found.
+                non_protocol_lines.append(response_line)
+                if self._verbose:
+                    print(
+                        f"Worker non-protocol stdout during {command.name}: {response_line}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
 
     @classmethod
     def _shutdown_all(cls):
