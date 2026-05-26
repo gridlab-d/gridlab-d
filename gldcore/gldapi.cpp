@@ -24,7 +24,7 @@ extern size_t output_get_message_capture_limit();
 #include "load.h"
 #include "object.h"
 #include "save.h"
-#include "threadpool.h"
+#include "cpp_threadpool.h"
 #include <array>
 #include <algorithm>
 #include <chrono>
@@ -2054,7 +2054,7 @@ GLDErrorCode GridLabD::validate_api(bool verbose) {
   char *argv[] = {const_cast<char *>("gridlabd"),
                   const_cast<char *>(test_file_str.c_str())};
   int argc = 2;
-  void *test_house_obj = nullptr;
+  OBJECT *test_house_obj = nullptr;
 
   if (verbose)
     std::cout << "Test 1: Basic GLM loading... " << std::flush;
@@ -2079,7 +2079,7 @@ GLDErrorCode GridLabD::validate_api(bool verbose) {
   if (verbose)
     std::cout << "Test 2: Object lookup... " << std::flush;
   try {
-    test_house_obj = this->find_object_by_name("test_house");
+    test_house_obj = object_find_name("test_house");
     if (test_house_obj != nullptr) {
       if (verbose)
         std::cout << "[PASS]\n";
@@ -2101,7 +2101,7 @@ GLDErrorCode GridLabD::validate_api(bool verbose) {
     if (test_house_obj) {
       std::string floor_area;
       GLDErrorCode result =
-          this->get_property_value(test_house_obj, "floor_area", floor_area);
+          this->get_property("test_house", "floor_area", floor_area);
       if (result == GLD_SUCCESS && !floor_area.empty()) {
         if (verbose)
           std::cout << "[PASS]\n";
