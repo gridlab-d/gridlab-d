@@ -46,7 +46,6 @@ public:
 	bool tpmeter_interrupted;		///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool tpmeter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in a "secondary interrupted" state - i.e., momentary
 	TIMESTAMP next_time;
-	TIMESTAMP dt;
 	TIMESTAMP last_t;
 
 #ifdef SUPPORT_OUTAGES

@@ -22,9 +22,6 @@
 
 #include "meter.h"
 
-// useful macros
-#define TO_HOURS(t) (((double)t) / (3600 * TS_SECOND))
-
 // meter reset function
 EXPORT int64 meter_reset(OBJECT *obj)
 {
@@ -356,8 +353,6 @@ int meter::create()
 	//Flag us as a meter
 	node_type = METER_NODE;
 
-	meter_NR_servered = false;	//Assume we are just a normal meter at first
-
 	//power min/max/average items, 3 phase
 	measured_real_max_power_in_interval = 0.0;
 	measured_reactive_max_power_in_interval = 0.0;
@@ -423,8 +418,8 @@ int meter::create()
 // Initialize a distribution meter, return 1 on success
 int meter::init(OBJECT *parent)
 {
-	char temp_buff[128];
 	OBJECT *obj = object_header(this);
+	DATETIME dtval;
 
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, "current_market.clearing_price");
@@ -446,40 +441,11 @@ int meter::init(OBJECT *parent)
 	}
 
 	check_prices();
-	last_t = dt = 0;
+	last_t = gl_globalclock;
 
-	//Update tracking flag
-	//Get server mode variable
-	gl_global_getvar("multirun_mode",temp_buff,sizeof(temp_buff));
-
-	//See if we're not in standalone
-	if (strcmp(temp_buff,"STANDALONE"))	//strcmp returns a 0 if they are the same
-	{
-		if ((solver_method == SM_NR) && (bustype == SWING))
-		{
-			meter_NR_servered = true;	//Set this flag for later use
-
-			//Allocate the storage vector
-			prev_voltage_value = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
-
-			//Check it
-			if (prev_voltage_value==nullptr)
-			{
-				GL_THROW("Failure to allocate memory for voltage tracking array");
-				/*  TROUBLESHOOT
-				While attempting to allocate memory for the voltage tracking array used
-				by the master/slave functionality, an error occurred.  Please try again.
-				If the error persists, please submit your code and a bug report via the trac
-				website.
-				*/
-			}
-
-			//Populate it with zeros for now, just cause - init sets voltages in node
-			prev_voltage_value[0] = gld::complex(0.0,0.0);
-			prev_voltage_value[1] = gld::complex(0.0,0.0);
-			prev_voltage_value[2] = gld::complex(0.0,0.0);
-		}
-	}
+	//Initialize month to current one
+	gl_localtime(last_t,&dtval);
+	last_bill_month = dtval.month;
 
 	//Check power and energy properties - if they are initialized, send a warning
 	if ((measured_real_power != 0.0) || (measured_reactive_power != 0.0) || (measured_real_energy != 0.0) || (measured_reactive_energy != 0.0))
@@ -560,7 +526,16 @@ TIMESTAMP meter::presync(TIMESTAMP t0)
     
     // Capturing first timestamp of simulation for use in delta energy measurements.
     if (t0 != 0 && start_timestamp == 0)
+	{
         start_timestamp = t0;
+
+		//Also good for price inits
+		last_price = price;
+		last_price_base = price_base;
+		last_tier_price[0] = tier_price[0];
+		last_tier_price[1] = tier_price[1];
+		last_tier_price[2] = tier_price[2];
+	}
 
 	return node::presync(t0);
 }
@@ -644,7 +619,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = object_header(this);
 	gld::complex temp_current;
-	TIMESTAMP tretval;
+	TIMESTAMP tretval, dt;
 
 	//Perform node update - do it now, otherwise current_inj isn't populated
 	tretval = node::postsync(t1);
@@ -659,15 +634,10 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if ((solver_method == SM_NR)||solver_method  == SM_FBS)
 	{
-		TIMESTAMP sync_t = t1;
-		// In some restore/event-jump paths, postsync may receive a non-advancing
-		// t1 while t0 advances. Fall back to t0 so dt/energy accumulation remains correct.
-		if (sync_t <= last_t && t0 > last_t)
-			sync_t = t0;
-		if (sync_t > last_t)
+		if (t1 > last_t)
 		{
-			dt = sync_t - last_t;
-			last_t = sync_t;
+			dt = t1 - last_t;
+			last_t = t1;
 		}
 		else
 			dt = 0;
@@ -680,8 +650,8 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		// - everything below this can moved to commit function once tape:recorder is collecting from commit function7
 		if (dt > 0 && last_t != dt)
 		{	
-			measured_real_energy += measured_real_power * TO_HOURS(dt);
-			measured_reactive_energy += measured_reactive_power * TO_HOURS(dt);
+			measured_real_energy += measured_real_power / 3600.0 * (double)dt;
+			measured_reactive_energy += measured_reactive_power / 3600.0 * (double)dt;
 		}
 
 		// compute demand power
@@ -1199,7 +1169,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}//End Min/Max/Stat calculation
 
-		monthly_energy = measured_real_energy/1000 - previous_energy_total;
+		monthly_energy = measured_real_energy/1000 - previous_monthly_energy;
 
 		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 		{
@@ -1298,15 +1268,6 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
         last_measured_voltageD[0] = measured_voltageD[0];
         last_measured_voltageD[1] = measured_voltageD[1];
         last_measured_voltageD[2] = measured_voltageD[2];
-	}
-
-	//Multi run (for now) updates to power values
-	if (meter_NR_servered)
-	{
-		// compute demand power
-		indiv_measured_power[0] = voltage[0]*(~current_inj[0]);
-		indiv_measured_power[1] = voltage[1]*(~current_inj[1]);
-		indiv_measured_power[2] = voltage[2]*(~current_inj[2]);
 	}
 
 	return tretval;

@@ -24,9 +24,6 @@
 
 #include "triplex_meter.h"
 
-// useful macros
-#define TO_HOURS(t) (((double)t) / (3600 * TS_SECOND))
-
 // meter reset function
 EXPORT int64 triplex_meter_reset(OBJECT *obj)
 {
@@ -223,7 +220,7 @@ int triplex_meter::create()
     last_delta_timestamp = 0;
 	measured_power = 0;
 	measured_demand = 0;
-	last_t = dt = next_time = 0;
+	last_t = next_time = 0;
 	previous_energy_total = 0;
 
 	hourly_acc = 0.0;
@@ -284,6 +281,7 @@ int triplex_meter::init(OBJECT *parent)
 	t_flag=0;
 	pre_load=0;
 #endif
+	DATETIME dtval;
 
 	OBJECT *obj = object_header(this);
 
@@ -294,6 +292,11 @@ int triplex_meter::init(OBJECT *parent)
 		}
 	}
 	check_prices();
+	last_t = gl_globalclock;
+
+	//Initialize month to current one
+	gl_localtime(last_t,&dtval);
+	last_bill_month = dtval.month;
 
 	//Check power and energy properties - if they are initialized, send a warning
 	if ((measured_real_power != 0.0) || (measured_reactive_power != 0.0) || (measured_real_energy != 0.0) || (measured_reactive_energy != 0.0))
@@ -375,7 +378,16 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 
     // Capturing first timestamp of simulation for use in delta energy measurements.
     if (t0 != 0 && start_timestamp == 0)
+	{
         start_timestamp = t0;
+
+		//Also good for price inits
+		last_price = price;
+		last_price_base = price_base;
+		last_tier_price[0] = tier_price[0];
+		last_tier_price[1] = tier_price[1];
+		last_tier_price[2] = tier_price[2];
+	}
 
 	return triplex_node::presync(t0);
 }
@@ -462,6 +474,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = object_header(this);
 	TIMESTAMP rv = TS_NEVER;
 	TIMESTAMP hr = TS_NEVER;
+	TIMESTAMP dt;
 
 	//Call node postsync now, otherwise current_inj isn't right
 	rv = triplex_node::postsync(t1);
@@ -475,15 +488,10 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	measured_voltage[1].SetPolar(voltage[1].Mag(),voltage[1].Arg());
 	measured_voltage[2].SetPolar(voltage[2].Mag(),voltage[2].Arg());
 
-	TIMESTAMP sync_t = t1;
-	// In some restore/event-jump paths, postsync may receive a non-advancing t1
-	// while t0 advances. Fall back to t0 so dt/energy accumulation is preserved.
-	if (sync_t <= last_t && t0 > last_t)
-		sync_t = t0;
-	if (sync_t > last_t)
+	if (t1 > last_t)
 	{
-		dt = sync_t - last_t;
-		last_t = sync_t;
+		dt = t1 - last_t;
+		last_t = t1;
 	}
 	else
 		dt = 0;
@@ -494,11 +502,11 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	//READUNLOCK_OBJECT(obj);
 	measured_current[2] = -(measured_current[1]+measured_current[0]);
 
-//		if (dt > 0 && last_t != dt)
+//	if (dt > 0 && last_t != dt)
 	if (dt > 0)
 	{
-		measured_real_energy += measured_real_power * TO_HOURS(dt);
-		measured_reactive_energy += measured_reactive_power * TO_HOURS(dt);
+		measured_real_energy += measured_real_power / 3600.0 * (double)dt;
+		measured_reactive_energy += measured_reactive_power / 3600.0 * (double)dt;
 	}
 
 	indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
@@ -728,7 +736,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}//End min/max/avg updates
 
-	monthly_energy = measured_real_energy/1000 - previous_energy_total;
+	monthly_energy = measured_real_energy/1000 - previous_monthly_energy;
 
 	if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 	{
