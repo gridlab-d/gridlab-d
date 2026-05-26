@@ -1,10 +1,10 @@
 """
 Created on 03/25/2026
 
-This example shows how to read data out of GridLAB-D while the simulation is
+This example shows how to read data out of GridLAB-D™ while the simulation is
 running and write or edit parameter values of objects in the running model. 
 This effectively demonstrates the ability to create controllers in Python that
-interact with the GridLAB-D model during runtime.
+interact with the GridLAB-D™ model during runtime.
 
 As an example, this code seeks to increase energy self-consumption by reading 
 the power output of the solar panel and if it is sufficiently large, decrease
@@ -275,7 +275,7 @@ script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
 
-# Initilize GridLAB-D and load the model
+# Initilize GridLAB-D™ and load the model
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))

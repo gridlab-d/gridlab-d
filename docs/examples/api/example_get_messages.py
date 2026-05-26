@@ -1,7 +1,7 @@
 """
 Created on 03/24/2026
 
-This example shows how to control GridLAB-D to advance through simulation 
+This example shows how to control GridLAB-D™ to advance through simulation 
 time using various API calls. 
 
 @author: Trevor Hardy
@@ -21,7 +21,7 @@ script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
 
-# Instanate GridLAB-D and load model
+# Instanate GridLAB-D™ and load model
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))

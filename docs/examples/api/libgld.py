@@ -1,15 +1,15 @@
 """
 Created on 10/14/2026
 
-This is a proposed implementation of the GridLAB-D API in Python with the
-purpose of showing GridLAB-D developers how a Python user might want to use
-GridLAB-D. The fully realized version of this library will include calls to a
+This is a proposed implementation of the GridLAB-D™ API in Python with the
+purpose of showing GridLAB-D™ developers how a Python user might want to use
+GridLAB-D™. The fully realized version of this library will include calls to a
 compiled C library; these details are not included here, just the signatures
 and the docstrings describing what the method does.
 
 This borrows from the implementation and experience of the Transactive
 Systems Program and its implemented GLMModifier API for working with 
-GridLAB-D models.
+GridLAB-D™ models.
 
 Modifying a model consists entirely of manipulating the checkpoint dictionary.
 
@@ -25,7 +25,7 @@ import json
 import typing
 
 class GLDSimMessages():
-    """Data structure for holding messages from GridLAB-D after advancing
+    """Data structure for holding messages from GridLAB-D™ after advancing
     simulation time
     """
 
@@ -36,7 +36,7 @@ class GLDSimMessages():
         self.profile = {}
 
 class GLDCheckpoint():
-    """Dictionary representing a specific comprehensive GridLAB-D model state.
+    """Dictionary representing a specific comprehensive GridLAB-D™ model state.
 
     The raw checkpoint dictionary is provided as an attribute and convenience
     attributes are created from that 
@@ -87,9 +87,9 @@ class GLDCheckpoint():
 
 
 class GLD():
-    """Library for using GridLAB-D programmatically. 
+    """Library for using GridLAB-D™ programmatically. 
 
-    This library allows a user to interact with the GridLAB-D engine, 
+    This library allows a user to interact with the GridLAB-D™ engine, 
     providing support for such activites as loading a model, modifying
     or extending a model, running the model, and retrieving information
     from the model.
@@ -99,22 +99,22 @@ class GLD():
         pass
 
     def open_model_file(self, model_file: TextIOWrapper) -> GLDCheckpoint:
-        """Loads a .glm or JSON model from disk into the GridLAB-D core
+        """Loads a .glm or JSON model from disk into the GridLAB-D™ core
         and returns a representation as a Python dictionary in the
-        GridLAB-D checkpoint format.
+        GridLAB-D™ checkpoint format.
 
         Args:
             model_file (TextIOWrapper): File-like object for the GridLAB-D
             model to be loaded in memory
 
         Returns:
-            GLDCheckpoint: GridLAB-D checkpoint dictionary
+            GLDCheckpoint: GridLAB-D™ checkpoint dictionary
         """
         pass
     
     def load_model(self, glm: GLDCheckpoint) -> GLDSimMessages:
         """ Takes an existing in-memory GLDCheckpoint object and loads it into
-        the GridLAB-D core, effectively changing the model that will be used
+        the GridLAB-D™ core, effectively changing the model that will be used
         during the simulation. This method ensures that the gldcore is ready
         to start running the simulation from the time specified in the loaded
         model; that is, the simulation time is effectively zero.
@@ -133,7 +133,7 @@ class GLD():
         pass
 
     def make_checkpoint() -> GLDCheckpoint:
-        """Makes a GridLAB-D checkpoint.
+        """Makes a GridLAB-D™ checkpoint.
 
         This can be saved to file as a JSON using the `save_to_file()` method
         of the GLDCheckpoint object.
@@ -167,10 +167,10 @@ class GLD():
 
     def get_names(self, class_name: str) -> list:
         """Gets the names of all the objects in the model of the specified 
-        GridLAB-D class name 
+        GridLAB-D™ class name 
 
         Args:
-            class_name (str): GridLAB-D class name 
+            class_name (str): GridLAB-D™ class name 
 
         Returns:
             list: names as strings of the objects in the model
@@ -179,8 +179,8 @@ class GLD():
 
     def sim_register_time(self, step_size: float) -> GLDSimMessages:
         """Registers a simulation time step size with the gldcore to ensure
-        that GridLAB-D will stop the simulation no later than the
-        simulation step size indicated. GridLAB-D may stop earlier than 
+        that GridLAB-D™ will stop the simulation no later than the
+        simulation step size indicated. GridLAB-D™ may stop earlier than 
         the given step size depending on the other objects in the model.
 
         Args:
@@ -232,7 +232,7 @@ class GLD():
         Returns:
             tuple: 
                 - GLDSimMessages: Error/warning messages from running the model
-                - float: next time to simulate as determined by GridLAB-D 
+                - float: next time to simulate as determined by GridLAB-D™ 
         """
         pass
 
@@ -251,7 +251,7 @@ class GLD():
         Returns:
             tuple: 
                 - GLDSimMessages: Error/warning messages from running the model
-                - float: next time to simulate as determined by GridLAB-D 
+                - float: next time to simulate as determined by GridLAB-D™ 
         """
         pass
 
@@ -263,7 +263,7 @@ class GLD():
         Returns:
             tuple: 
                 - GLDSimMessages: Error/warning messages from running the model
-                - float: next time to simulate as determined by GridLAB-D 
+                - float: next time to simulate as determined by GridLAB-D™ 
         """
         pass
 

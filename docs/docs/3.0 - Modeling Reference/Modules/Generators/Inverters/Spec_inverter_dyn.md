@@ -158,7 +158,7 @@ For a practical grid-following inverter, it also uses a voltage source converter
 
 ### Equivalent Circuit of a Detailed Grid-Following Inverter
 
-Figure 4 (a) and (b) show the equivalent circuits of three-phased and single-phased grid-following inverters respectively. It can be seen that the main circuit of a grid-following inverter is fundamentally either a three-phased or single-phased voltage source. This is because the inverter itself is a voltage source converter. The grid-following controller makes the inverter behaves as a current source. When implemented in GridLAB-D™, these voltage sources behind coupling reactance are converted to the Norton equivalent circuits for power flow calculation. The following assumptions are made when implementing grid-following inverter in GridLAB-D: 
+Figure 4 (a) and (b) show the equivalent circuits of three-phased and single-phased grid-following inverters respectively. It can be seen that the main circuit of a grid-following inverter is fundamentally either a three-phased or single-phased voltage source. This is because the inverter itself is a voltage source converter. The grid-following controller makes the inverter behaves as a current source. When implemented in GridLAB-D™, these voltage sources behind coupling reactance are converted to the Norton equivalent circuits for power flow calculation. The following assumptions are made when implementing grid-following inverter in GridLAB-D™: 
 
   * For simplicity, the grid-following controller is modeled per phase. This means each phase has its own PLL and current control loop.
   * We assume each phase injects the same amount of P and Q into the grid.

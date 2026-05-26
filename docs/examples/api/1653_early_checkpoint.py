@@ -2,7 +2,7 @@
 Created on 02/09/2026
 
 This example tests the ability of GLD to make a checkpoint before initiating a
-GridLAB-D step.
+GridLAB-D™ step.
 https://github.com/gridlab-d/gridlab-d/issues/1653
 
 

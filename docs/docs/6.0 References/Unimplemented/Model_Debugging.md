@@ -6,7 +6,7 @@
 	
 	**This page does not reflect the current state of GridLAB-D™**
 
-The debug option produces all the debugging output from GridLAB-D. It is managed by the global variable **debug**, which is by default **FALSE**.
+The debug option produces all the debugging output from GridLAB-D™. It is managed by the global variable **debug**, which is by default **FALSE**.
 
 ## GLM
 
@@ -47,7 +47,7 @@ To disable debug mode use the option
     
 in the GLM file. The debugger supports two methods of interrupting the simulation. 
 
-The **debugger** option enables the debugger in GridLAB-D. To enable the debugger use the command option 
+The **debugger** option enables the debugger in GridLAB-D™. To enable the debugger use the command option 
     
     
     host% gridlabd --debugger
@@ -230,15 +230,15 @@ You can run a script containing debug commands using the script command:
     
 # GDB
 
-When `gdb` is non-zero, runtime classes are built with debugging enabled and GridLAB-D is started inside the host platform's debugging environment. This is specifically to allow user to debug runtime classes.
+When `gdb` is non-zero, runtime classes are built with debugging enabled and GridLAB-D™ is started inside the host platform's debugging environment. This is specifically to allow user to debug runtime classes.
 
-The `gdb` option interacts in complex ways with debug, `gdb_window`, `compile_once`, and `use_msvc`. For details, see further documentation on working with MS Visual Studio 2005 in GridLAB-D. To implement:
+The `gdb` option interacts in complex ways with debug, `gdb_window`, `compile_once`, and `use_msvc`. For details, see further documentation on working with MS Visual Studio 2005 in GridLAB-D™. To implement:
 
     host% gridlabd -D gdb=0|1
     host% gridlabd --define gdb=0|1
     #set gdb=0|1
 
-`gdb_window` controls the use of the source debugger window for runtime classes. When gdb_window is non-zero, runtime classes are built with debugging enabled and GridLAB-D is started inside the host platform's debugging environment using a debugging window. This is specifically to allow users to debug runtime classes using a debugging window. To implement: 
+`gdb_window` controls the use of the source debugger window for runtime classes. When gdb_window is non-zero, runtime classes are built with debugging enabled and GridLAB-D™ is started inside the host platform's debugging environment using a debugging window. This is specifically to allow users to debug runtime classes using a debugging window. To implement: 
 
     host% gridlabd -D gdb_window=0|1
     host% gridlabd --define gdb_window=0|1
@@ -268,9 +268,9 @@ The default C++ runtime class linker options are as follows:
 * `-shared`:
     Generate a shared library (always included)
 * `-m32:`
-    Generate 32-bit code (always included on 32-bit GridLAB-D versions)
+    Generate 32-bit code (always included on 32-bit GridLAB-D™ versions)
 * `-m64:`
-    Generate 64-bit code (always included on 64-bit GridLAB-D versions)
+    Generate 64-bit code (always included on 64-bit GridLAB-D™ versions)
 * `-lstdc++`:
     Use the standard C++ library (always included)
 

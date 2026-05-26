@@ -246,12 +246,12 @@ def main():
 
 
 def plot_series(ep_series, gld_series):
-    """Plot EnergyPlus purchased electricity energy and GridLAB-D real power on a dual y-axis chart.
+    """Plot EnergyPlus purchased electricity energy and GridLAB-D™ real power on a dual y-axis chart.
 
     Parameters:
     ep_series (list[dict]): EnergyPlus timestep records with keys year, month, day,
         hour, minute, value_j (Joules per 15-min timestep).
-    gld_series (list[dict]): GridLAB-D timestep records with the same calendar keys
+    gld_series (list[dict]): GridLAB-D™ timestep records with the same calendar keys
         and value_j holding measured real power in watts.
     """
     if not ep_series and not gld_series:
@@ -289,11 +289,11 @@ def plot_series(ep_series, gld_series):
         gld_times = to_datetimes(gld_series)
         gld_values_kw = [rec["value_j"] / 1000 for rec in gld_series]  # W -> kW
         ax2.plot(gld_times, gld_values_kw, color="tab:orange", label="GLD Real Power (kW)")
-        ax2.set_ylabel("GridLAB-D Measured Real Power (kW)", color="tab:orange")
+        ax2.set_ylabel("GridLAB-D™ Measured Real Power (kW)", color="tab:orange")
         ax2.tick_params(axis="y", labelcolor="tab:orange")
 
     ax1.set_xlabel("Simulation Time")
-    plt.title("EnergyPlus vs GridLAB-D Power")
+    plt.title("EnergyPlus vs GridLAB-D™ Power")
     fig.legend(loc="upper left", bbox_to_anchor=(0.1, 0.9))
     plt.xticks(rotation=45)
     plt.tight_layout()

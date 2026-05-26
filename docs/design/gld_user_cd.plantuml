@@ -11,7 +11,7 @@ class GLD {
     step_size: float
     console_messages: list
 
-    -- Existing GridLAB-D Native APIs --
+    -- Existing GridLAB-D™ Native APIs --
     get_model()
     set_install_root(path:str) -> None
     get_install_root() -> str
@@ -76,7 +76,7 @@ class GLD {
     
 
 }
-note right of GLD: Python API for interacting with GridLAB-D.\n Some of these APIs are the native GLD APIs\n and some are just implemented in Python
+note right of GLD: Python API for interacting with GridLAB-D™.\n Some of these APIs are the native GLD APIs\n and some are just implemented in Python
 
 class _GLDObj {
     _data = dict
@@ -89,7 +89,7 @@ class _GLDObj {
     __contains__(key: str)
     __repr__() -> str
 }
-note left of _GLDObj: dictionary-like structure for holding\n a single GridLAB-D object
+note left of _GLDObj: dictionary-like structure for holding\n a single GridLAB-D™ object
 
 
 class _GLDObjHolder {
@@ -106,7 +106,7 @@ class _GLDObjHolder {
     __repr__() -> str
 
 }
-note left of _GLDObjHolder: dictionary-like structure for holding\n all objects in a given GridLAB-D class
+note left of _GLDObjHolder: dictionary-like structure for holding\n all objects in a given GridLAB-D™ class
 
 class GLDModel {
     model: _GLDObjHolder
@@ -114,7 +114,7 @@ class GLDModel {
 
     _load_model() -> None
 }
-note left of GLDModel: dictionary-like structure for holding\n GridLAB-D models
+note left of GLDModel: dictionary-like structure for holding\n GridLAB-D™ models
 
 class PythonEnum {
 

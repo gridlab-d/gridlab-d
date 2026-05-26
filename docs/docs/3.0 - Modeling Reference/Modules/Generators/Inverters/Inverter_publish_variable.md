@@ -1,4 +1,4 @@
-# GridLAB-D Published Variables
+# GridLAB-D™ Published Variables
 
 Total variables found: 193
 

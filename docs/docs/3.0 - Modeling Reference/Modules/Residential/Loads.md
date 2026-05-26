@@ -37,7 +37,7 @@ If no implicit enduses are desired (you are using explicit enduse devices, or de
 
 Explicit enduses are distinct objects within a house that have their own internal state-based models.  They will typically adjust their conditions based on inputs from the house itself (environmental properties like temperature), usage patterns provided (water usage, occupancy, time of day), and local electrical paramters (voltage).  Explicit enduse load models are often used to capture how different system conditions or user behaviors can impact the studied system, such as modifying a setpoint temperature, having the device respond to demand response or transactive signals, or even how lower voltage conditions on a feeder may impact operations.
 
-Unlike the **implicit_enduse** load, explicit enduse loads are individual objects that have to be instantiated inside the GridLAB-D model within the **house** object of interest.  As a simple example, this house has an explicit enduse load of a [waterheater](./Waterheater.md) defined:
+Unlike the **implicit_enduse** load, explicit enduse loads are individual objects that have to be instantiated inside the GridLAB-D™ model within the **house** object of interest.  As a simple example, this house has an explicit enduse load of a [waterheater](./Waterheater.md) defined:
 
     object house {
       name house1;

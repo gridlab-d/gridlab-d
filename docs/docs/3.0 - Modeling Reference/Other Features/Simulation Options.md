@@ -286,7 +286,7 @@ Option | Description
 
 #### Control
 
-When operating in server mode, GridLAB-D accepts main loop state control messages from HTTP clients connected on the server's port. All control messages are in the form of HTTP 1.1 requests with the standard query format:
+When operating in server mode, GridLAB-D™ accepts main loop state control messages from HTTP clients connected on the server's port. All control messages are in the form of HTTP 1.1 requests with the standard query format:
 
      http://server :port /control/command
 
@@ -338,7 +338,7 @@ The server shall support HTTP 1.1 traffic according to [RFC2616](http://www.w3.o
 
 ### Exit Codes
 
-The GridLAB-D core solver and most GridLAB-D modules use the following exit code: 
+The GridLAB-D™ core solver and most GridLAB-D™ modules use the following exit code: 
 
   * -1 exec failed
   * 0 success
@@ -357,7 +357,7 @@ The GridLAB-D core solver and most GridLAB-D modules use the following exit code
 
 !!! caveat
 
-    Some libraries used by GridLAB-D module do not following the GridLAB-D exit code standard. 
+    Some libraries used by GridLAB-D™ module do not following the GridLAB-D™ exit code standard. 
 
     Some systems cannot distinguish between -1 and 255.
 

@@ -52,20 +52,20 @@ Macro expansions will expand macro variables, global variables, and environment 
 
 ## Environment Variables
 
-GridLAB-D uses many environment variable during operation.
+GridLAB-D™ uses many environment variable during operation.
 
 * DBFLAGS - Specifies debugging options to use when compiling inline C and C++ code.
 * CC - Specifies the C compiler to use when compiling inline C code.
 * COMSPEC (windows only)
 * SHELL (linux/unix only)
-* GLPATH - Specifies where to search for GridLAB-D modules and support files.
-* GLTEMP - Specifies the path to GridLAB-D temporary folder
+* GLPATH - Specifies where to search for GridLAB-D™ modules and support files.
+* GLTEMP - Specifies the path to GridLAB-D™ temporary folder
 * HOMEVAR (windows only)
 * HOMEDRIVE (windows only)
 * TEMP
 * USER (linux/unix only)
 * USERNAME (windows only)
-* GRIDLABD - Specifies the path to the GridLAB-D install.
+* GRIDLABD - Specifies the path to the GridLAB-D™ install.
 * PATH
 * INCLUDE
 * LIB

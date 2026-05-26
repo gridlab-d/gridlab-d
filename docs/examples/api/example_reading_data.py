@@ -1,7 +1,7 @@
 """
 Created on 03/24/2026
 
-This example shows how to read data out of GridLAB-D while the simulation is
+This example shows how to read data out of GridLAB-D™ while the simulation is
 running and writing this to an HDF5 file on disk. The data of interest is the
 indoor air temperature for each house.
 
@@ -222,7 +222,7 @@ script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
 
-# Initilize GridLAB-D and load the model
+# Initilize GridLAB-D™ and load the model
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))

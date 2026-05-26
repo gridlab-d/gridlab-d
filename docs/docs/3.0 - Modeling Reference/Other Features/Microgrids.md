@@ -2,7 +2,7 @@
 
 The microgrids use case in GridLAB-D™ is implemented to allow islanded, smaller power system simulations. These simulations examine sub-second influences on parameters like frequency and voltage. The final capability allows the examination of transients in the voltage and frequency associated with microgrid operations. 
 
-Microgrids functionality in GridLAB-D is primarily an overall capability of the simulation engine. No specific microgrid module exists, but rather objects in several modules support transient-level time scales (~10 ms) and islanded operation.
+Microgrids functionality in GridLAB-D™ is primarily an overall capability of the simulation engine. No specific microgrid module exists, but rather objects in several modules support transient-level time scales (~10 ms) and islanded operation.
 
 Microgrids are typically operated in a manner that there is no strong, stiff source bus on the system. During microgrid operations, connections to the larger, bulk transmission system are disconnected and only local, smaller, often distributed, generation sources are utilized. Under such scenarios, the dynamics of the system are expected to play a more significant part in the stability of the power system.
 
@@ -661,7 +661,7 @@ Capabilities have slowly been evolving. This section documents what milestones c
 
 ## Version 2.3 - Grizzly
 
-  * transient mode capabilities - ability to transition to simulation timesteps as small as one nanosecond, then transition back into traditional, event-driven GridLAB-D mode.
+  * transient mode capabilities - ability to transition to simulation timesteps as small as one nanosecond, then transition back into traditional, event-driven GridLAB-D™ mode.
   * Player capabilities - the ability to play in subsecond data to influence objects during transient mode execution.
   * Recorder capabilities - the ability to record subsecond data during transient mode operations.
   * Powerflow capabilities - basic support for three-phase, unbalanced powerflow operations in transient mode and in isolated operation
