@@ -2754,6 +2754,8 @@ static int pathname(PARSER, char *path, int size)
 	{var} embeds the current value of the current object's variable <var>
 
  **/
+static OBJECT *current_object = nullptr; /* context object */
+static MODULE *current_module = nullptr; /* context module */
 static int expanded_value(char *text, char *result, int size, const char *delims)
 {
 	int n = 0;
@@ -4959,10 +4961,10 @@ static int object_name_id_count(PARSER, char *classname, int64 *count)
 
 static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 {
-#define NAMEOBJ /* DPC: not sure what this does, but it doesn't seem to be harmful */
-#ifdef NAMEOBJ
+//#define NAMEOBJ /* DPC: not sure what this does, but it doesn't seem to be harmful */
+//#ifdef NAMEOBJ
 	static OBJECT nameobj;
-#endif
+//#endif
 	FULLNAME space;
 	CLASSNAME classname;
 	CLASS *oclass;
@@ -5065,9 +5067,9 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		}
 
 	/* id(s) is/are valid */
-#ifdef NAMEOBJ
+//#ifdef NAMEOBJ
 	nameobj.name = classname;
-#endif
+//#endif
 	if (id2 == -1)
 		id2 = id + 1; /* create singleton */
 	BEGIN_REPEAT;
@@ -5076,18 +5078,18 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 		REPEAT;
 		if (oclass->create != nullptr)
 		{
-#ifdef NAMEOBJ
+//#ifdef NAMEOBJ
 			obj = &nameobj;
-#endif
+//#endif
 			if ((*oclass->create)(&obj, parent) == 0)
 			{
 				output_error_raw("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
 				REJECT;
 			}
 			else if (obj == nullptr
-#ifdef NAMEOBJ
+//#ifdef NAMEOBJ
 					 || obj == &nameobj
-#endif
+//#endif
 			)
 			{
 				output_error_raw("%s(%d): create failed name object %s:%d", filename, linenum, classname, id);
@@ -5102,8 +5104,29 @@ static int object_block(PARSER, OBJECT *parent, OBJECT **subobj)
 				output_error_raw("%s(%d): create failed for object %s:%d", filename, linenum, classname, id);
 				REJECT;
 			}
-			object_set_parent(obj, parent);
+            // object_set_parent(obj, parent);
+        }
+
+        // Unconditional parent assignment — this is the actual fix
+        if (parent != nullptr && obj->parent == nullptr)
+        {
+            if (object_set_parent(obj, parent) < 0)
+            {
+                output_error_raw("%s(%d): failed to set parent for %s:%d", filename,
+                                 linenum, classname, obj->id);
+                // REJECT;allow the simulation to continue
+                // The user can use explicit 'parent' property instead
 		}
+        }
+
+        // Auto-naming — stack buffer is fine since object_tree_add copies
+        if (obj->name == nullptr || obj->name[0] == '\0')
+        {
+            char buf[256];
+            snprintf(buf, sizeof(buf), "%s_auto_%d", obj->oclass->name, obj->id);
+            object_set_name(obj, buf);
+        }
+
 		if (id != -1 && load_set_index(obj, (OBJECTNUM)id) == FAILED)
 		{
 			output_error_raw("%s(%d): unable to index object id number for %s:%d", filename, linenum, classname, id);
@@ -6928,7 +6951,6 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 
 	/* reset line counter for parser */
 	include_list = self;
-	// count = buffer_read(fp,buffer,incname,size); // fread(buffer,1,stat.st_size,fp);
 
 	move = buffer_read_alt(fp, buffer2, incname, 20479);
 	while (move > 0)
@@ -6997,81 +7019,86 @@ int is_autodef(char *value)
 }
 
 /* started processes */
+#include "threadpool.h"
 #include <csignal>
-#include <iostream>
-#include <vector>
-#include <thread>
-#include <functional>
-#include <atomic>
+// struct s_threadlist {
+//	pthread_t *data;
+//	struct s_threadlist *next;
+// } *threadlist = nullptr;
+
 #include <algorithm>
+#include <atomic>
+#include <functional>
+#include <iostream>
 #include <memory>
 #include <mutex>
+#include <thread>
+#include <vector>
 
 class ThreadManager
 {
-	// Structure to manage each thread's data
-	struct ThreadData
-	{
-		std::thread thread;			   // A thread
-		std::atomic<bool> stop_signal; // Atomic flag to indicate the thread should stop
+    // Structure to manage each thread's data
+    struct ThreadData
+    {
+        std::thread thread; // A thread
+        std::atomic<bool>
+            stop_signal; // Atomic flag to indicate the thread should stop
 
-		ThreadData(std::function<void(std::atomic<bool> &)> task)
-			: stop_signal(false), thread(task, std::ref(stop_signal))
-		{
-		}
-	};
+        ThreadData(std::function<void(std::atomic<bool> &)> task)
+            : stop_signal(false), thread(task, std::ref(stop_signal)) {}
+    };
 
-	std::vector<std::unique_ptr<ThreadData>> threads; // Vector of managed threads
-	std::mutex mtx;									  // Mutex for thread safety
+    std::vector<std::unique_ptr<ThreadData>> threads; // Vector of managed threads
+    std::mutex mtx;                                   // Mutex for thread safety
 
 public:
-	// Add a new thread to the thread pool
-	void add_thread(std::function<void(std::atomic<bool> &)> task)
-	{
-		std::lock_guard<std::mutex> lock(mtx); // Ensure thread safety when adding
-		threads.emplace_back(std::make_unique<ThreadData>(task));
-	}
+    // Add a new thread to the thread pool
+    void add_thread(std::function<void(std::atomic<bool> &)> task)
+    {
+        std::lock_guard<std::mutex> lock(mtx); // Ensure thread safety when adding
+        threads.emplace_back(std::make_unique<ThreadData>(task));
+    }
 
-	// Gracefully request all threads to stop
-	void kill_all()
-	{
-		std::lock_guard<std::mutex> lock(mtx); // Ensure thread safety
-		for (auto &thread_data : threads)
-		{
-			thread_data->stop_signal.store(true); // Notify thread to stop
-		}
-	}
+    // Gracefully request all threads to stop
+    void kill_all()
+    {
+        std::lock_guard<std::mutex> lock(mtx); // Ensure thread safety
+        for (auto &thread_data : threads)
+        {
+            thread_data->stop_signal.store(true); // Notify thread to stop
+        }
+    }
 
-	// Wait for all threads to finish their work
-	void join_all()
-	{
-		std::lock_guard<std::mutex> lock(mtx); // Ensure thread safety
-		for (auto &thread_data : threads)
-		{
-			if (thread_data->thread.joinable())
-			{
-				thread_data->thread.join();
-			}
-		}
-		threads.clear(); // Clean up the thread pool
-	}
+    // Wait for all threads to finish their work
+    void join_all()
+    {
+        std::lock_guard<std::mutex> lock(mtx); // Ensure thread safety
+        for (auto &thread_data : threads)
+        {
+            if (thread_data->thread.joinable())
+            {
+                thread_data->thread.join();
+            }
+        }
+        threads.clear(); // Clean up the thread pool
+    }
 
-	~ThreadManager()
-	{
-		kill_all(); // Ensure threads are notified to stop
-		join_all(); // Ensure all threads are joined
-	}
+    ~ThreadManager()
+    {
+        kill_all(); // Ensure threads are notified to stop
+        join_all(); // Ensure all threads are joined
+    }
 
-	// Function to start a process using a thread
-	void start_process(const std::string &cmd)
-	{
-		add_thread([cmd](std::atomic<bool> &stop_signal)
-				   {
-			// Thread task - execute the system command until stop_signal is triggered
-			while (!stop_signal.load()) {
-				system(cmd.c_str());  // Execute the command
-			} });
-	}
+    // Function to start a process using a thread
+    void start_process(const std::string &cmd)
+    {
+        add_thread([cmd](std::atomic<bool> &stop_signal)
+                   {
+      // Thread task - execute the system command until stop_signal is triggered
+      while (!stop_signal.load()) {
+        system(cmd.c_str()); // Execute the command
+      } });
+    }
 } threadlist;
 
 //// Example worker thread function
@@ -7081,7 +7108,8 @@ public:
 //		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 //		std::cout << "Thread is running..." << std::endl;
 //	}
-//	std::cout << "Thread received stop signal and is shutting down..." << std::endl;
+//	std::cout << "Thread received stop signal and is shutting down..." <<
+// std::endl;
 // }
 
 // Usage example
@@ -8041,7 +8069,6 @@ STATUS loadall(char *file)
 	// }
 
 	/* if nothing requested only config files are loaded */
-	if (file == nullptr)
 	if (file == nullptr)
 		return SUCCESS;
 

@@ -27,8 +27,6 @@ public:
 	} DISHWASHER_MOTOR;										///< control state
 	enumeration state;
 
-
-
 	double circuit_split;				///< -1=100% negative, 0=balanced, +1=100% positive
 	bool is_240;						///< load connected at 220 
 	
@@ -77,9 +75,9 @@ public:
 
 
 	double motor_power;					///< installed dishwasher motor power [W] (default = random uniform between 150-350 W)
-	double coil_power[4];					///< installed heating coil power [W] (default = random uniform between 3500-5000 W, 0 for gas)
+	double coil_power[4];				///< installed heating coil power [W] (default = random uniform between 3500-5000 W, 0 for gas)
 	double controls_power;
-	double dishwasher_demand;				///< amount of demand added per hour (units/hr)
+	double dishwasher_demand;			///< amount of demand added per hour (units/hr)
 	double enduse_queue;				///< accumulated demand (units)
 	double cycle_duration;				///< typical cycle runtime (s)
 	double cycle_time;					///< remaining time in main cycle (s)
@@ -97,19 +95,15 @@ public:
 	double count_control_only;
 	double count_control_only1;
 
-	//****Changes by Niru
-	TIMESTAMP next_change_time;			///< time when the current change changes to the next state (s)
-	//***changes stop here
-
 	double stall_voltage;				///< voltage at which the motor stalls
 	double start_voltage;				///< voltage at which motor can start
-	gld::complex stall_impedance;			///< impedance of motor when stalled
+	gld::complex stall_impedance;		///< impedance of motor when stalled
 	double trip_delay;					///< stalled time before thermal trip
 	double reset_delay;					///< trip time before thermal reset and restart
 	double heat_fraction;				///< internal gain fraction of installed power
 	
-	//double load_relative_humidity;		///< relative amount of water in load - will be used to determine cycle length
-	//double slope_of_rh_vs_time;			///< slope of how fast water is removed from load as function of time
+	//double load_relative_humidity;	///< relative amount of water in load - will be used to determine cycle length
+	//double slope_of_rh_vs_time;		///< slope of how fast water is removed from load as function of time
 	double energy_baseline;				///< amount of energy needed to dry clothes in baseline mode
 	double energy_used;					///< amount of energy used in current cycle to dry clothes
 	double actual_dishwasher_demand;
@@ -132,8 +126,6 @@ public:
 	~dishwasher();
 	int create();
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
-	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP last_t;
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

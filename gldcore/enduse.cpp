@@ -107,7 +107,6 @@ int enduse_init(enduse *e)
 #endif
 
 	e->t_last = TS_ZERO;
-
 	return 0;
 }
 
@@ -122,7 +121,7 @@ int enduse_initall(void)
 	return SUCCESS;
 }
 
-TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
+static TIMESTAMP enduse_sync_impl(enduse *e, TIMESTAMP t1, PASSCONFIG pass)
 {
 #ifdef _DEBUG
 	if (e->magic!=enduse_magic)
@@ -197,6 +196,25 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 	return (e->shape && e->shape->type != MT_UNKNOWN) ? e->shape->t2 : TS_NEVER;
 }
 
+//#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP enduse_sync(enduse *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return enduse_sync_impl(obj, t1, pass);
+}
+// #else
+// extern "C" MODULE_API TIMESTAMP enduse_sync(enduse *obj, ...)
+// {
+// 	va_list args;
+// 	va_start(args, obj);
+// 	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+// 	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+// 	va_end(args);
+//
+// 	return enduse_sync_impl(obj, pass, t1);
+// }
+
+//#endif
+
 typedef struct s_endusesyncdata {
 	unsigned int n;
 	std::thread worker;
@@ -207,7 +225,7 @@ typedef struct s_endusesyncdata {
 	unsigned int ran;
 } ENDUSESYNCDATA;
 
-// thread constructs with C++17 
+// thread constructs with C++17
 static bool setED = true;
 static std::mutex startlock_ed;
 static std::condition_variable_any start_ed;
@@ -226,14 +244,14 @@ void enduse_syncproc(ENDUSESYNCDATA* data) {
 		std::unique_lock<std::mutex> start_lock(startlock_ed);
 
 		// Wait for thread start condition
-		while (!enduse_ready) 
+		while (!enduse_ready)
 			start_ed.wait(startlock_ed);
 
 		// Process the list for this thread
 		t2 = TS_NEVER;
 		for (e = data->e, n = 0; e != nullptr && n < data->ne; e = e->next, n++) {
-			TIMESTAMP t3 = enduse_sync(e, PC_PRETOPDOWN, next_t1_ed);
-			if (t3 < t2) 
+			TIMESTAMP t3 = enduse_sync(e, next_t1_ed, PC_PRETOPDOWN);
+			if (t3 < t2)
 				t2 = t3;
 		}
 
@@ -317,8 +335,8 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1) {
 	if (n_threads_ed < 2) {
 		// Process list directly
 		for (enduse* e = enduse_list; e != nullptr; e = e->next) {
-			TIMESTAMP t3 = enduse_sync(e, PC_PRETOPDOWN, t1);
-			if (t3 < t2) 
+			TIMESTAMP t3 = enduse_sync(e, t1, PC_PRETOPDOWN);
+			if (t3 < t2)
 				t2 = t3;
 		}
 		next_t2_ed = t2;

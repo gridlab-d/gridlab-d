@@ -17,7 +17,6 @@
 
 #include "occupantload.h"
 
-
 //////////////////////////////////////////////////////////////////////////
 // occupantload CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -63,41 +62,24 @@ int occupantload::create()
 	return res;
 }
 
-int occupantload::shared_init(OBJECT *parent)
+int occupantload::init(OBJECT *parent)
 {
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("occupantload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	// These variables need initialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	// (occupantload class has no non-published variables at this time)
-	return 1;
-}
-
-int occupantload::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return SUCCESS;
-}
-
-int occupantload::init(OBJECT *parent)
-{
-	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	
 	if (number_of_occupants==0)	number_of_occupants = 4;		// defaulted to 4, but perhaps define it based on house size??
 	if (heatgain_per_person==0) heatgain_per_person = 400.0;	// Based on DOE-2, includes latent and sensible heatgain
 
-	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	if (parent==nullptr || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
@@ -159,7 +141,6 @@ TIMESTAMP occupantload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		heatgain_per_person = 400.0;
 	}
 
-
 	if(shape.type == MT_UNKNOWN){
 		if(number_of_occupants < 0){
 			gl_error("negative number of occupants, reseting to zero");
@@ -198,7 +179,7 @@ EXPORT int create_occupantload(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			occupantload *my = object_data<occupantload>(*obj);;
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -227,22 +208,44 @@ EXPORT int isa_occupantload(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT int checkpoint_init_occupantload(OBJECT *obj)
-{
-	occupantload *my = object_data<occupantload>(obj);
-	return my->checkpoint_init(obj->parent);
-}
-
-EXPORT TIMESTAMP sync_occupantload(OBJECT *obj, TIMESTAMP t0)
+static TIMESTAMP sync_occupantload_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
 		occupantload *my = object_data<occupantload>(obj);
-		TIMESTAMP t1 = my->sync(obj->clock, t0);
-		obj->clock = t0;
+        TIMESTAMP t1 = TS_NEVER;
+        switch (pass) {
+        case PC_PRETOPDOWN:
+            break;
+        case PC_BOTTOMUP:
+            t1 = my->sync(obj->clock, t0);
+            obj->clock = t0;
+            break;
+        case PC_POSTTOPDOWN:
+            break;
+        default:
+            gl_error("thermal_storage::sync- invalid pass configuration");
+            t1 = TS_INVALID; // serious error in exec.c
+        }
 		return t1;
 	}
 	SYNC_CATCHALL(occupantload);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_occupantload(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_occupantload_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_occupantload(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_occupantload_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

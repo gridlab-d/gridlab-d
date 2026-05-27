@@ -11,12 +11,12 @@ Copyright (C) 2008 Battelle Memorial Institute
 #include <cstdlib>
 #include <gld_complex.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <iterator>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <iterator>
 
 #include "windturb_dg.h"
 
@@ -338,6 +338,11 @@ int windturb_dg::init_climate()
 int windturb_dg::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+  parent = obj->parent;
+#endif
+
 	double temp_double_value;
 	gld_property *temp_property_pointer;
 	enumeration temp_enum;
@@ -2182,7 +2187,7 @@ void windturb_dg::push_complex_power_values(gld::complex inv_P)
 STATUS windturb_dg::updateCurrInjection(int64 iteration_count, bool *converged_failure)
 {
 	// Assume no convergence failure - mostly for deltamode/Norton-equivalent initialization
-	*converged_failure = false;
+  *converged_failure = false;
 
 	// Call the current updating function
 	switch (Turbine_implementation)
@@ -2268,7 +2273,7 @@ EXPORT int create_windturb_dg(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			windturb_dg *my = /*OBJECTDATA(*obj,<>)*/ object_data<windturb_dg>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -2289,8 +2294,7 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(windturb_dg);
 }
 
-EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-{
+static TIMESTAMP sync_windturb_dg_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 	TIMESTAMP t1 = TS_NEVER;
 	windturb_dg *my = /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj);
 	try
@@ -2314,6 +2318,23 @@ EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(windturb_dg);
 	return t1;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0,
+                                                 PASSCONFIG pass) {
+  return sync_windturb_dg_impl(obj, t0, pass);
+}
+#else
+// variadic
+extern "C" MODULE_API TIMESTAMP sync_windturb_dg(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_windturb_dg_impl(obj, t0, pass);
+}
+#endif
 
 // Current injection exposed function
 EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure)

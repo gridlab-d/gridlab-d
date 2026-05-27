@@ -13,7 +13,6 @@
 #include "residential.h"
 #include "residential_enduse.h"
 
-
 #include <vector>
 using std::vector;
 
@@ -261,37 +260,37 @@ public:
 	gld::complex waterheater_actual_power;	///< the actual power draw of the object after accounting for voltage
 //	Fortran water heater parameters
 public:
-	double dr_signal;				//dr_signal
-	double simulation_time;		//sim_time
+	double dr_signal;		//dr_signal
+	double simulation_time;	//sim_time
 	double fwh_cop_current;	//COP
-	double operating_mode;			//op_mode
+	double operating_mode;	//op_mode
 
 public:
 	// Tank physical parameters
-	double tank_heat_loss_rate;									//heat_loss_rate
+	double tank_heat_loss_rate;			//heat_loss_rate
 
 	// Water_related_parameters
 	double thermal_conductivity;		//water_k0
 
 	// Simulation parameters
-	int coarse_tank_grid;								//large_bins
-	int fine_tank_grid;									//small_bins
+	int coarse_tank_grid;				//large_bins
+	int fine_tank_grid;					//small_bins
 	int ncomp;
 	int nheat[2];
     int heat_up;
 	double init_tank_temp[144];
 
 	// Time variable input parameters
-	double ambient_temp;						//temp_amb
-	double inlet_water_flow;					//v_flow
+	double ambient_temp;				//temp_amb
+	double inlet_water_flow;			//v_flow
 	double inlet_water_flow_threshold;	//v_flow_threshold
-	double ambient_rh;							//hum_amb
+	double ambient_rh;					//hum_amb
 	
 	// Output variables
-	double fwh_power;						//power
+	double fwh_power; //power
 	double fwh_power_now;
-	double tank_water_temp[144];		//ca
-	double fwh_cop;								//COP
+	double tank_water_temp[144];        //ca
+	double fwh_cop;                     //COP
 	double fwh_energy;
 
 	TIMESTAMP fwh_sim_time;
@@ -355,8 +354,8 @@ private:
 	double last_lower_thermostat_setpoint;
 	enumeration last_override_value;
 	int last_transition_time;
-
 	bool conditions_changed;
+
 public:
 	double tank_setpoint_1;
 	double tank_setpoint_2;
@@ -373,6 +372,7 @@ public:
 	double discrete_step_size;
 	double Vdot_circ;
 	double T_mixing_valve;
+
 public:
 	static CLASS *oclass, *pclass;
 	static waterheater *defaults;
@@ -381,8 +381,6 @@ public:
 	~waterheater(void);
 	int create();
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
-	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	void thermostat(TIMESTAMP t0, TIMESTAMP t1);					// Thermostat plc control code - determines whether to heat...
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);

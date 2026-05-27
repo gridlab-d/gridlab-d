@@ -38,7 +38,7 @@ microwave::microwave(MODULE *module) : residential_enduse(module)
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
-			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power),PT_DESCRIPTION,"rated microwave power level",			
+			PT_double,"installed_power[kW]",PADDR(shape.params.analog.power),PT_DESCRIPTION,"rated microwave power level",
 			PT_double,"standby_power[kW]",PADDR(standby_power),PT_DESCRIPTION,"standby microwave power draw (unshaped only)",
 			PT_double,"circuit_split",PADDR(circuit_split),
 			PT_enumeration,"state",PADDR(state),PT_DESCRIPTION,"on/off state of the microwave",
@@ -104,40 +104,22 @@ void microwave::init_noshape(){
 	}
 }
 
-int microwave::shared_init(OBJECT *parent)
+int microwave::init(OBJECT *parent)
 {
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("microwave::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	// These variables need initialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	cycle_start = 0;
-	cycle_on = 0;
-	cycle_off = 0;
-	return 1;
-}
 
-int microwave::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
-int microwave::init(OBJECT *parent)
-{
-	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	
-	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	if (load.voltage_factor==0) load.voltage_factor = 1.0;
@@ -349,7 +331,7 @@ EXPORT int create_microwave(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			microwave *my = object_data<microwave>(*obj);
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -357,7 +339,6 @@ EXPORT int create_microwave(OBJECT **obj, OBJECT *parent)
 			return 0;
 	}
 	CREATE_CATCHALL(microwave);
-
 }
 
 EXPORT int init_microwave(OBJECT *obj)
@@ -378,21 +359,45 @@ EXPORT int isa_microwave(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT int checkpoint_init_microwave(OBJECT *obj)
+static TIMESTAMP sync_microwave_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	microwave *my = object_data<microwave>(obj);
-	return my->checkpoint_init(obj->parent);
+    try {
+        microwave *my = object_data<microwave>(obj);
+        TIMESTAMP t1 = TS_NEVER;
+        switch (pass) {
+        case PC_PRETOPDOWN:
+            break;
+
+        case PC_BOTTOMUP:
+            t1 = my->sync(obj->clock, t0);
+            obj->clock = t0;
+            break;
+
+        case PC_POSTTOPDOWN:
+            break;
+
+        default:
+            gl_error("microwave::sync- invalid pass configuration");
+            t1 = TS_INVALID; // serious error in exec.c
+        }
+        return t1;
+    }
+    SYNC_CATCHALL(microwave);
 }
 
-EXPORT TIMESTAMP sync_microwave(OBJECT *obj, TIMESTAMP t0)
-{
-	try {
-		microwave *my = object_data<microwave>(obj);
-		TIMESTAMP t2 = my->sync(obj->clock, t0);
-		obj->clock = t0;
-		return t2;
-	}
-	SYNC_CATCHALL(microwave);
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_microwave(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+    return sync_microwave_impl(obj, t0, pass);
 }
+#else
+extern "C" MODULE_API TIMESTAMP sync_microwave(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_microwave_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

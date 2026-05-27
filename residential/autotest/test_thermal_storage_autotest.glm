@@ -78,9 +78,28 @@ object triplex_meter{
 			impedance_pf 0;
 			impedance_fraction 0;
 		};
+
+		//object recorder {
+    		//	parent triplex_meter_auto_2;  // Assumes this is the meter's name; adjust if needed
+    		//	property measured_real_energy;
+   		//	file "new_thermal_storage_energy.player";
+   		//	interval 1;  // Match the player's resolution
+    		//	limit 86400;  // Cover the full run
+		//};
+
+
 		object thermal_storage{
 			SOC 50;
 			k 0.024;
+
+			//object recorder {
+    			//	property SOC;
+    			//	file "new_thermal_storage_SOC.player";
+    			//	interval 1;  // Matches the original player's resolution
+    			//	limit 86400;  // Covers the full simulation
+			//};
+
+
 			object double_assert{
 				target "SOC";
 				object player{

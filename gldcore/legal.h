@@ -1,5 +1,5 @@
 /* legal.h
-	Copyright (C) 2008 Battelle Memorial Institute
+        Copyright (C) 2008 Battelle Memorial Institute
  *
  */
 

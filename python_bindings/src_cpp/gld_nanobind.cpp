@@ -307,17 +307,16 @@ NB_MODULE(gridlabd_core, m) {
             }
             return std::string(buffer);
           },
-          nb::arg("name"),
-          "Get a global variable value")
+          nb::arg("name"), "Get a global variable value")
       .def(
           "set_global",
-          [](GridLabD &self, const std::string &name, const std::string &value) {
+          [](GridLabD &self, const std::string &name,
+             const std::string &value) {
             std::string def = name + "=" + value;
             int result = global_setvar(def.c_str());
             return result;
           },
-          nb::arg("name"), nb::arg("value"),
-          "Set a global variable value");
+          nb::arg("name"), nb::arg("value"), "Set a global variable value");
 
 #ifdef VERSION_INFO
   m.attr("__version__") = NB_STRINGIFY(VERSION_INFO);
