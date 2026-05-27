@@ -280,7 +280,6 @@ protected:
 	double cloud_reflectivity;							///< cloud reflectivity
 	double cloud_speed_factor;							///< cloud speed factor
 	enumeration cloud_model;							///< cloud model
-	double update_time;									///< update time for weather calculations
 
 public:
 	climate() {}
