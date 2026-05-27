@@ -1,7 +1,7 @@
 /** $Id: convert.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file convert.h
-	@addtogroup convert
+        Copyright (C) 2008 Battelle Memorial Institute
+        @file convert.h
+        @addtogroup convert
  @{
  **/
 
@@ -21,7 +21,8 @@ int convert_from_double(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_double(const char *buffer, void *data, PROPERTY *prop);
 int convert_from_complex(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_complex(const char *buffer, void *data, PROPERTY *prop);
-int convert_from_enumeration(char *buffer, int size, void *data, PROPERTY *prop);
+int convert_from_enumeration(char *buffer, int size, void *data,
+                             PROPERTY *prop);
 int convert_to_enumeration(const char *buffer, void *data, PROPERTY *prop);
 int convert_from_set(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_set(const char *buffer, void *data, PROPERTY *prop);
@@ -29,8 +30,8 @@ int convert_from_int16(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_int16(const char *buffer, void *data, PROPERTY *prop);
 int convert_from_int32(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_int32(const char *buffer, void *data, PROPERTY *prop);
-int convert_from_uint32(char* buffer, int size, void* data, PROPERTY* prop);
-int convert_to_uint32(const char* buffer, void* data, PROPERTY* prop);
+int convert_from_uint32(char *buffer, int size, void *data, PROPERTY *prop);
+int convert_to_uint32(const char *buffer, void *data, PROPERTY *prop);
 int convert_from_int64(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_int64(const char *buffer, void *data, PROPERTY *prop);
 int convert_from_char8(char *buffer, int size, void *data, PROPERTY *prop);
@@ -47,15 +48,18 @@ int convert_from_delegated(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_delegated(const char *buffer, void *data, PROPERTY *prop);
 int convert_from_boolean(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_boolean(const char *buffer, void *data, PROPERTY *prop);
-int convert_from_timestamp_stub(char *buffer, int size, void *data, PROPERTY *prop);
+int convert_from_timestamp_stub(char *buffer, int size, void *data,
+                                PROPERTY *prop);
 int convert_to_timestamp_stub(const char *buffer, void *data, PROPERTY *prop);
-int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop);
+int convert_from_double_array(char *buffer, int size, void *data,
+                              PROPERTY *prop);
 int convert_to_double_array(const char *buffer, void *data, PROPERTY *prop);
-int convert_from_complex_array(char *buffer, int size, void *data, PROPERTY *prop);
+int convert_from_complex_array(char *buffer, int size, void *data,
+                               PROPERTY *prop);
 int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop);
 
-int convert_unit_double(char *buffer,const char *unit, double *data);
-int convert_unit_complex(char *buffer,char *unit, gld::complex *data);
+int convert_unit_double(char *buffer, const char *unit, double *data);
+int convert_unit_complex(char *buffer, char *unit, gld::complex *data);
 
 int convert_from_real(char *a, int b, void *c, PROPERTY *d);
 int convert_to_real(const char *a, void *b, PROPERTY *c);

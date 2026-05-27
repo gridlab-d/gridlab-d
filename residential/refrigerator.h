@@ -16,15 +16,14 @@
 class refrigerator : public residential_enduse {
 private:
 	double *pTout;
+
 public:
-	
 	typedef enum e_state {	
 			RS_DEFROST=1,			
 			RS_COMPRESSSOR_OFF_NORMAL=2,		
 			RS_COMPRESSSOR_ON_NORMAL=3,		
 			RS_COMPRESSSOR_ON_LONG=4,
 	} REFRIGERATOR_STATE;	
-
 
 public:
 	double size;  ///< refrigerator volume (cf) 
@@ -73,7 +72,7 @@ public:
 	double defrost_power; 
 	double icemaking_energy; 
 	double icemaking_power; 	
-	
+
 	double delay_defrost_time;
 
 	double ice_making_probability;
@@ -115,15 +114,12 @@ public:
 	TIMESTAMP last_time, next_time;
 
 public:
-
 	static CLASS *oclass, *pclass;
 	refrigerator(MODULE *module);
 	~refrigerator() {}
 	
 	int create();
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
-	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	void thermostat(TIMESTAMP t0, TIMESTAMP t1);

@@ -372,7 +372,8 @@ diesel_dg::diesel_dg(MODULE *module)
 								PT_timestamp, "last_time", PADDR(last_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_time",
 								PT_double, "pwr_electric_init", PADDR(pwr_electric_init), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pwr_electric_init",
 
-								//-- This hides from modehelp -- PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
+								//-- This hides from modehelp --
+								// PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -682,6 +683,13 @@ int diesel_dg::create(void)
 int diesel_dg::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+                   // in init - it is always null, even when it shouldn't be.
+                   // This is a workaround to get the proper parent pointer
+#endif
+
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
 
@@ -5083,7 +5091,6 @@ void diesel_dg::pdispatch_sync()
 			{
 				GL_THROW("diesel_dg::pdispatch_map:GGOV1 pdispatch property cannot be used with Rselec=%d", gov_ggv1_rselect);
 			}
-
 			break;
 
 		case DEGOV1:
@@ -5114,8 +5121,8 @@ EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(diesel_dg::oclass);
 		if (*obj != nullptr)
 		{
-			diesel_dg *my = /*OBJECTDATA(*obj, diesel_dg)*/ object_data<diesel_dg>(*obj);
-			gl_set_parent(*obj, parent);
+			diesel_dg *my = object_data<diesel_dg>(*obj);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -5129,17 +5136,17 @@ EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj)->init(parent);
+			return object_data<diesel_dg>(obj)->init(parent);
 		else
 			return 0;
 	}
 	INIT_CATCHALL(diesel_dg);
 }
 
-EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_diesel_dg_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
-	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
+	diesel_dg *my = object_data<diesel_dg>(obj);
 	try
 	{
 		switch (pass)
@@ -5164,6 +5171,21 @@ EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return t1;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+    return sync_diesel_dg_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_diesel_dg(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = (PASSCONFIG)va_arg(args, int);
+    va_end(args);
+    return sync_diesel_dg_impl(obj, t0, pass);
+}
+#endif
+
 // EXPORT for object-level call (as opposed to module-level)
 /*
 EXPORT STATUS update_diesel_dg(OBJECT *obj, unsigned int64 dt, unsigned int iteration_count_val)
@@ -5185,12 +5207,12 @@ EXPORT STATUS update_diesel_dg(OBJECT *obj, unsigned int64 dt, unsigned int iter
 
 EXPORT int isa_diesel_dg(OBJECT *obj, char *classname)
 {
-	return /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj)->isa(classname);
+	return object_data<diesel_dg>(obj)->isa(classname);
 }
 
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
+	diesel_dg *my = object_data<diesel_dg>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -5206,7 +5228,7 @@ EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_ti
 
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
+	diesel_dg *my = object_data<diesel_dg>(obj);
 	STATUS status = FAILED;
 	try
 	{
@@ -5220,13 +5242,13 @@ EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsi
 	}
 }
 
-//// Define export function that update the current injection IGenerated to the grid
+// Define export function that update the current injection IGenerated to the grid
 EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure)
 {
 	STATUS temp_status;
 
 	// Map the node
-	diesel_dg *my = /*OBJECTDATA(obj, diesel_dg)*/ object_data<diesel_dg>(obj);
+	diesel_dg *my = object_data<diesel_dg>(obj);
 
 	// Call the function, where we can update the IGenerated injection
 	temp_status = my->updateCurrInjection(iteration_count, converged_failure);

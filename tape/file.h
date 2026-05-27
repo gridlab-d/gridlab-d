@@ -14,12 +14,12 @@ struct recorder;
 struct collector;
 
 int file_open_player(struct player *my, char *fname, char *flags);
-char *file_read_player(struct player *my,char *buffer,unsigned int size);
+char *file_read_player(struct player *my, char *buffer, unsigned int size);
 int file_rewind_player(struct player *my);
 void file_close_player(struct player *my);
 
 int file_open_shaper(struct shaper *my, char *fname, char *flags);
-char *file_read_shaper(struct shaper *my,char *buffer,unsigned int size);
+char *file_read_shaper(struct shaper *my, char *buffer, unsigned int size);
 int file_rewind_shaper(struct shaper *my);
 void file_close_shaper(struct shaper *my);
 

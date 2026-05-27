@@ -9,7 +9,7 @@
 #include "object.h"
 #include "server.h"
 /*** DO NOT DELETE THE NEXT LINE ***/
-//NEWCLASSINC
+// NEWCLASSINC
 
 /* optional exports */
 #ifdef OPTIONAL

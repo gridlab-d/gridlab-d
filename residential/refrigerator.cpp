@@ -171,44 +171,22 @@ int refrigerator::create()
 	return res;
 }
 
-/** Shared initialization for both normal init and checkpoint restore
- **/
-int refrigerator::shared_init(OBJECT *parent)
+int refrigerator::init(OBJECT *parent)
 {
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("refrigerator::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = object_header(this);
-	
-	// Initialize pointer to parent properties
-	pTout = (double*)gl_get_addr(parent, "air_temperature");
-	if (pTout==nullptr)
-	{
-		static double default_air_temperature = 72;
-		gl_warning("%s (%s:%d) parent object lacks air temperature, using %0f degF instead", hdr->name, hdr->oclass->name, hdr->id, default_air_temperature);
-		pTout = &default_air_temperature;
-	}
-	return 1;
-}
 
-/** Called when restoring from checkpoint to reinitialize non-published variables
- **/
-int refrigerator::checkpoint_init(OBJECT *parent)
-{
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
-int refrigerator::init(OBJECT *parent)
-{
-	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	// defaults for unset values */
@@ -218,9 +196,13 @@ int refrigerator::init(OBJECT *parent)
 	if (UA == 0)				UA = 0.6;
 	if (load.power_factor==0)		load.power_factor = 0.95;
 
-	// Initialize pointers and other non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
+	pTout = (double*)gl_get_addr(parent, "air_temperature");
+	if (pTout==nullptr)
+	{
+		static double default_air_temperature = 72;
+		gl_warning("%s (%s:%d) parent object lacks air temperature, using %0f degF instead", hdr->name, hdr->oclass->name, hdr->id, default_air_temperature);
+		pTout = &default_air_temperature;
+	}
 
 	/* derived values */
 	Tair = gl_random_uniform(&hdr->rng_state,Tset-thermostat_deadband/2, Tset+thermostat_deadband/2);
@@ -333,7 +315,6 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			// compute the total energy usage in this interval
 			load.energy += load.total * dt0/3600.0;
-		
 		}
 			
 		double dt1 = update_refrigerator_state(dt0, t1);
@@ -342,10 +323,9 @@ TIMESTAMP refrigerator::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 }
 
-TIMESTAMP refrigerator::postsync(TIMESTAMP t0, TIMESTAMP t1){
-	
+TIMESTAMP refrigerator::postsync(TIMESTAMP t0, TIMESTAMP t1)
+{
 	return TS_NEVER;
-
 }
 
 double refrigerator::update_refrigerator_state(double dt0,TIMESTAMP t1)
@@ -448,8 +428,7 @@ double refrigerator::update_refrigerator_state(double dt0,TIMESTAMP t1)
 
 		if(check_DO==0){ 	
 			no_of_defrost++;
-			
-		}		
+		}
 	}
 
 
@@ -791,22 +770,21 @@ double refrigerator::update_refrigerator_state(double dt0,TIMESTAMP t1)
 //////////////////////////////////////////////////////////////////////////
 EXPORT int create_refrigerator(OBJECT **obj, OBJECT *parent)
 {
-	
 	*obj = gl_create_object(refrigerator::oclass);
 	if (*obj!=nullptr)
 	{
 		refrigerator *my = object_data<refrigerator>(*obj);;
-		gl_set_parent(*obj,parent);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
 	return 0;
 }
 
-EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass,  TIMESTAMP t1)
+static TIMESTAMP sync_refrigerator_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	refrigerator *my = object_data<refrigerator>(obj);
-	TIMESTAMP next_time = TS_NEVER;
+	TIMESTAMP t1 = TS_NEVER;
 
 	// obj->clock = 0 is legit
 
@@ -843,9 +821,23 @@ EXPORT TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass,  
 	}
 		
 	return t1;
-	
-
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_refrigerator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_refrigerator_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_refrigerator(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_refrigerator_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT int init_refrigerator(OBJECT *obj)
 {
@@ -860,11 +852,6 @@ EXPORT int isa_refrigerator(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_refrigerator(OBJECT *obj)
-{
-	return object_data<refrigerator>(obj)->checkpoint_init(obj->parent);
 }
 
 /*	determine if we're turning the motor on or off and nothing else. */

@@ -119,7 +119,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the previous load based on voltage across the coils at the last sync operation",
 			PT_complex,"actual_power[kVA]",PADDR(waterheater_actual_power), PT_DESCRIPTION, "the actual power based on the current voltage across the coils",
 			PT_double,"time_to_transition",PADDR(time_to_transition), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for time to transition",
-			PT_double,"Tlower",PADDR(Tlower), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tlower", 
+			PT_double,"Tlower",PADDR(Tlower), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tlower",
 			PT_bool,"heating_element_on",PADDR(heating_element_on), PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for heating element on",
 			PT_bool,"turn_fan_on",PADDR(turn_fan_on), PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for turn fan on",
 			PT_bool,"heat_needed",PADDR(heat_needed), PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for heat needed",
@@ -255,22 +255,37 @@ int waterheater::create()
 	T_mixing_valve = -1;
 }
 
-/** Shared initialization for both normal init and checkpoint restore
+/** Initialize water heater model properties - randomized defaults for all published variables
  **/
-int waterheater::shared_init(OBJECT *parent)
+int waterheater::init(OBJECT *parent)
 {
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+  parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+	nominal_voltage = (2.0 * default_line_voltage); //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
+	actual_voltage = nominal_voltage;
+	
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("waterheater::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
+
+	obj->flags |= OF_SKIPSAFE;
+
 	static double sTair = 74;
 	static double sTout = 68;
 	static double sRH = 0.05;
+
+	if(current_model == FORTRAN){
+		tank_setpoint = 126.05;
+		thermostat_deadband = 4.05;
+	}
 
 	// Initialize pointers to parent properties
 	if(parent){
@@ -291,37 +306,6 @@ int waterheater::shared_init(OBJECT *parent)
 		pRH = &sRH;
 		gl_warning("waterheater parent lacks \'outdoor_rh\' property, using default");
 	}
-	return 1;
-}
-
-/** Called when restoring from checkpoint to reinitialize non-published variables
- **/
-int waterheater::checkpoint_init(OBJECT *parent)
-{
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
-/** Initialize water heater model properties - randomized defaults for all published variables
- **/
-int waterheater::init(OBJECT *parent)
-{
-	OBJECT *hdr = object_header(this);
-
-	nominal_voltage = (2.0 * default_line_voltage); //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
-	actual_voltage = nominal_voltage;
-
-	hdr->flags |= OF_SKIPSAFE;
-
-	if(current_model == FORTRAN){
-		tank_setpoint = 126.05;
-		thermostat_deadband = 4.05;
-	}
-
-	// Initialize pointers and other non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
 
 	/* sanity checks */
 	/* initialize water tank volume */
@@ -354,7 +338,7 @@ int waterheater::init(OBJECT *parent)
 			} else {
 				// Tank volume was not set, so calculating size
 				gl_verbose( "waterheater::init() : tank volume was not specified, calculating from height and diameter");
-
+				
 				area 		  = (pi * pow(tank_diameter,2))/4;
 				tank_volume   = area * tank_height * GALPCF;
 			}
@@ -371,14 +355,14 @@ int waterheater::init(OBJECT *parent)
 			if (tank_diameter <= 0) {
 				// Only tank volume was set, set defaulting to a standard size
 				gl_warning( "waterheater::init() : height and diameter were not specified, defaulting to 3.78 ft");
-
+		
 				tank_height   = 3.782; // was the old default for a 1.5 ft diameter
 				tank_diameter = 2 * sqrt( tank_volume * (1/GALPCF) / (pi * tank_height) );
 				area 		  = (pi * pow(tank_diameter,2))/4;
 			} else {
 				// Tank height was not set, so calculating size
 				gl_verbose( "waterheater::init() : tank height was not specified, calculating from volume and diameter");
-
+				
 				area 		  = (pi * pow(tank_diameter,2))/4;
 				tank_height	  = tank_volume/GALPCF / area;
 			}
@@ -386,7 +370,7 @@ int waterheater::init(OBJECT *parent)
 			if (tank_diameter <= 0) {
 				// Tank volume and height were set, so calculating diameter
 				gl_verbose( "waterheater::init() : diameter was not specified, calculating from volume and height");
-
+		
 				tank_diameter = 2 * sqrt( tank_volume * (1/GALPCF) / (pi * tank_height) );
 				area 		  = (pi * pow(tank_diameter,2))/4;
 			} else {
@@ -785,7 +769,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 	DATETIME t_next;
 	gl_localtime(t1,&t_next);
-
+	
 	if (t_next.day > 7 ) {
 		if (t_next.hour >= 8) {
 				double temp = 2;
@@ -838,7 +822,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			attached to the bug report.
 		 */
 	}
-
+	
 	/* determine loadshape effects */
 	switch(shape.type){
 		case MT_UNKNOWN:
@@ -920,7 +904,7 @@ void waterheater::sync_energytake()
 	When HPWH is in idle mode (losing heat over time), energytake increases. Further, energytake drops significantly if a water draw occurs.
 	*/
 
-
+	
 	/*
 	* idle losses calc
 			* ET as function of TIME
@@ -929,29 +913,23 @@ void waterheater::sync_energytake()
 
 	/* Model created by Portland State - Midrar Adham submitted under PR #1355 */
 	actual_kW();
-
+	
 
 	if (interval == 60 && (water_demand > 0) && turn_fan_on)
 		heating_element_capacity = nominal_voltage * 0.000171; 							// rated fan current is 0.000171.
 
 	if ((Toff >= Tw) && (Tw >= Ton)  && (heating_element_capacity == 0)) 				// when energy take is between setpoints, HPWH is in idle mode.
 	{
-
 		energytake = log(70 / (get_Tambient(location) * 0.39) ) * time_step; // Constants are based on trial and error to get the most appropraite behavior similar to the physical unit.
 		Tw = (tank_setpoint - (energytake/(tank_volume * 2.44)))+ 1.00034;
 		heat_needed = false;
 		current_model = ONENODE;
-
-
 	}
 	else // when energy take is not between setpoints (i.e. waterheater is on)
 	{
-
 		if (Tw <= Ton || heating_element_capacity != 0)
 		{
 			time_step = 0;
-
-
 			if (water_demand > 0)
 			{
 				// HPWH behavior differ depending on the amount of water demand. 
@@ -975,7 +953,7 @@ void waterheater::sync_energytake()
 				}
 				energytake =  ((tank_setpoint - Tw_temp) * tank_volume * 2.44) + energy_increment_value;
 			}
-
+			
 			if (heating_element_capacity <= 0.42) // compressor operation. The resistive heating element should not trigger when the compressor is ON and Energytake within compressor's limits.
 			{	
 				energytake -= (heating_element_capacity - 0.447)/(-( get_Tambient(location)/ pow(get_Tambient(location),2.4)));
@@ -987,16 +965,15 @@ void waterheater::sync_energytake()
 		}	
 		if (energytake <= heating_element_min_threshold)
 			heating_element_on = false;
-
+		
 		Tw = tank_setpoint - ((energytake)/(tank_volume * 2.44));
 	}
 	if (energytake<=0){
-
 		energytake = 0;
 		heating_element_capacity = 0;
 	}	
 	return;
-
+				
 }
 
 
@@ -1040,7 +1017,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		control_lower[0] = 0.0;
 	}
 	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
-
+	
 	// Now find our current temperatures and boundary height...
 	// And compute the time to the next transition...
 	//Adjusted because shapers go on sync, not presync
@@ -1061,7 +1038,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (location == INSIDE){
 		if (heat_mode ==HEAT_PUMP)
 			this->current_model = ONENODE;
-
+	
 		if(this->current_model == ONENODE)
 		{
 
@@ -1069,9 +1046,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Subtract Heat drawn in from Heat pump
 			if(heat_mode == HEAT_PUMP)
 			{
-
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
-
 			}
 		} 
 		else if(this->current_model == TWONODE)
@@ -1083,7 +1058,6 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
 			}
-
 		} else if(this->current_model == MULTILAYER) {
 			//TODO: update internal gain from all layers in the tank.
 			internal_gain = A_bottom*U_val*(T_layers[1][0] - Tamb) + A_top*U_val*(T_layers[10][0] - Tamb);
@@ -1241,9 +1215,9 @@ TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	{
 		if((water_demand- water_demand_old)>0)
 			turn_fan_on = true;
-
+		
 		sync_energytake();
-
+		
 		if (turn_fan_on)
 			turn_fan_on = false;
 	}	
@@ -1332,14 +1306,14 @@ enumeration waterheater::set_current_model_and_load_state(void)
 			{
 				// If the tank is empty, a negative dh/dt means we're still
 				// drawing water, so we'll be switching to the 1-zone model...
-
+				
 				/* original plan */
 				//current_model = NONE;
 				//load_state = DEPLETING;
-
+				
 				current_model = ONENODE;
 				load_state = DEPLETING;
-				Tw = Tinlet + HEIGHT_PRECISION;
+				/*Tupper*/ Tw = Tinlet + HEIGHT_PRECISION;
 				Tlower = Tinlet;
 				h = height;
 				/* empty of hot water? full of cold water! */
@@ -1384,7 +1358,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				}
 
 				double dhdt_full_temp = dhdt(height);
-
+				
 				if (dhdt_full_temp < 0)
 				{
 					if (heat_mode == HEAT_PUMP) {
@@ -1403,7 +1377,6 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				else
 				{
 					current_model = ONENODE;
-
 					heat_needed = cur_heat_needed;
 					load_state = heat_needed ? RECOVERING : DEPLETING;
 				}
@@ -1536,7 +1509,7 @@ void waterheater::update_T_and_or_h(double nHours)
 SingleZone:
 			Tw = new_temp_1node(Tw, nHours);
 			/*Tupper*/ Tw = Tw;
-
+			
 			Tlower = Tinlet;
 			break;
 
@@ -1790,7 +1763,7 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 	if (fabs(c1) <= ROUNDOFF)
         return height;      // if /*Tupper*/ Tw and Tlower are real close, then the new height is the same as tank height
 //		throw MODEL_NOT_2ZONE;
-
+		
 //	#define CWATER		(0.9994)		// BTU/lb/F
 	double cA;
 	if (heat_mode == HEAT_PUMP) {
@@ -2031,7 +2004,6 @@ EXPORT int create_waterheater(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			waterheater *my = object_data<waterheater>(*obj);;
-			gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -2060,12 +2032,8 @@ EXPORT int isa_waterheater(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT int checkpoint_init_waterheater(OBJECT *obj)
-{
-	return object_data<waterheater>(obj)->checkpoint_init(obj->parent);
-}
 
-EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_waterheater_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
 		waterheater *my = object_data<waterheater>(obj);
@@ -2089,13 +2057,27 @@ EXPORT TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(waterheater);
 }
 
-EXPORT TIMESTAMP commit_waterheater(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
-{
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_waterheater(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  return sync_waterheater_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_waterheater(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_waterheater_impl(obj, t0, pass);
+}
+#endif
+
+EXPORT TIMESTAMP commit_waterheater(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) {
 	waterheater *my = object_data<waterheater>(obj);
 	return my->commit();
 }
 
-EXPORT TIMESTAMP plc_waterheater(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP plc_waterheater_impl(OBJECT *obj, TIMESTAMP t0)
 {
 	// this will be disabled if a PLC object is attached to the waterheater
 	if (obj->clock <= ROUNDOFF)
@@ -2110,5 +2092,21 @@ EXPORT TIMESTAMP plc_waterheater(OBJECT *obj, TIMESTAMP t0)
 	/// @todo If external plc codes return a timestamp, it will allow sync sooner but not later than water heater time to transition (ticket #147)
 	return TS_NEVER;  
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP plc_waterheater(OBJECT *obj, TIMESTAMP t0)
+{
+    return plc_waterheater_impl(obj, t0);
+}
+#else
+extern "C" MODULE_API TIMESTAMP plc_waterheater(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    va_end(args);
+    return plc_waterheater_impl(obj, t0);
+}
+#endif
 
 /**@}**/

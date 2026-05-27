@@ -97,8 +97,7 @@ STATUS loader::loadDirectives()
             {
                 result = FAILED;
                 output_error_raw("loader::loadDirectives() parsing file, %s: unable to convert #define value for %s: "
-                                 "%s",
-                                 this->filename.string().c_str(), name.c_str(), value.dump(4).c_str());
+                                 "%s", this->filename.string().c_str(), name.c_str(), value.dump(4).c_str());
                 break;
             }
             result = global_setvar(name.c_str(), propValue.data());
@@ -123,7 +122,7 @@ STATUS loader::loadDirectives()
             {
                 result = FAILED;
                 output_error_raw("loader::loadDirectives() parsing file, %s: unable to convert #set value for %s: %s",
-                                 this->filename.string().c_str(), name.c_str(), value.dump(4).c_str());
+                                this->filename.string().c_str(), name.c_str(), value.dump(4).c_str());
                 break;
             }
             result = global_setvar(name.c_str(), propValue.data());
@@ -155,7 +154,7 @@ STATUS loader::loadIncludes()
             if (!fileName.is_string())
             {
                 output_error_raw("loader::loadDirectives() parsing file, %s: #include value is not a string! value: %s",
-                                 this->filename.string().c_str(), fileName.dump(4).c_str());
+                                this->filename.string().c_str(), fileName.dump(4).c_str());
                 result = FAILED;
                 break;
             }
@@ -163,7 +162,7 @@ STATUS loader::loadIncludes()
             if (loadJsonFile(includeFile) == FAILED)
             {
                 output_error_raw("loader::loadDirectives() parsing file, %s: #include file could not be loaded: %s",
-                                 this->filename.string().c_str(), includeFile.string().c_str());
+                                this->filename.string().c_str(), includeFile.string().c_str());
                 result = FAILED;
                 break;
             }
@@ -304,11 +303,11 @@ bool loader::class_properties(CLASS *oclass, ojson properties, string source_cod
                 // 		KEYWORD *key;
                 // 		for (key=prop->keywords; key!=nullptr; key=key->next) {
                 // 			char key_defined[64];
-                // 			sprintf(key_defined,"#define %s (0x%x)\n", key->name, key->value);
-                // 			source_code = source_code + key_defined;
+				// 			sprintf(key_defined,"#define %s (0x%x)\n", key->name, key->value);
+				// 			source_code = source_code + key_defined;
                 // 		}
                 // 	}
-                // 	source_code = source_code + "\t" + class_get_property_typename(prop->ptype) + prop->name + ";\n";
+				// 	source_code = source_code + "\t" + class_get_property_typename(prop->ptype) + prop->name + ";\n";
                 // 	source_code = source_code + "/*RESETLINE*/\n";
                 // }
             }
@@ -344,24 +343,24 @@ STATUS loader::loadClasses()
         {
             // if (parse.findLastIndex(classname, ':') > -1) {
             // 	child = parse.extractBetween(classname, classname[0], ':');
-            // 	parent = parse.extractBetweenEnd(classname, ':', classname[classname.length()-1]);
-            // 	if (parent.find("public") > -1) {
-            // 		parent = parse.extractBetweenEnd(parent, ' ', parent[parent.length()-1]);
-            // 		inherit = PUBLIC;
+			// 	parent = parse.extractBetweenEnd(classname, ':', classname[classname.length()-1]);
+			// 	if (parent.find("public") > -1) {
+			// 		parent = parse.extractBetweenEnd(parent, ' ', parent[parent.length()-1]);
+			// 		inherit = PUBLIC;
             // 	}
             // 	else if (parent.find("protected") > -1) {
-            // 		parent = parse.extractBetweenEnd(parent, ' ', parent[parent.length()-1]);
-            // 		inherit = PROTECTED;
+			// 		parent = parse.extractBetweenEnd(parent, ' ', parent[parent.length()-1]);
+			// 		inherit = PROTECTED;
             // 	}
             // 	else if (parent.find("private") > -1) {
-            // 		parent = parse.extractBetweenEnd(parent, ' ', parent[parent.length()-1]);
-            // 		inherit = PRIVATE;
+			// 		parent = parse.extractBetweenEnd(parent, ' ', parent[parent.length()-1]);
+			// 		inherit = PRIVATE;
             // 	}
             // 	else {
-            // 		output_error_raw("class %s missing inheritance qualifier", child.data());
+			// 		output_error_raw("class %s missing inheritance qualifier", child.data());
             // 	}
             // 	if (class_get_class_from_classname(parent.data())==nullptr) {
-            // 		output_error_raw("class %s inherits from undefined class %s", child.data(), parent.data());
+			// 		output_error_raw("class %s inherits from undefined class %s", child.data(), parent.data());
             // 	}
             // }
             if (properties.is_array())
@@ -372,23 +371,23 @@ STATUS loader::loadClasses()
                     oclass = class_register(nullptr, classname.data(), 0, 0x00);
                     // switch (inherit) {
                     // case NONE:
-                    // 	source_code = source_code + "class " + oclass->name + "{\npublic:\n\t" + oclass->name + "(MODULE*mod) {};\n";
-                    // 	break;
-                    // case PRIVATE:
-                    // 	source_code = source_code + "class " + oclass->name + " : private " + parent + " {\npublic:\n\t" + oclass->name + "(MODULE*mod) : " + parent + "(mod) {};\n";
-                    // 	oclass->parent = class_get_class_from_classname(parent.data());
-                    // 	break;
-                    // case PROTECTED:
-                    // 	source_code = source_code + "class " + oclass->name + " : protected " + parent + " {\npublic:\n\t" + oclass->name + "(MODULE*mod) : " + parent + "(mod) {};\n", oclass->name, parent, oclass->name, parent);
-                    // 	oclass->parent = class_get_class_from_classname(parent.data());
-                    // 	break;
-                    // case PUBLIC:
-                    // 	source_code = source_code + "class " + oclass->name + " : public " + parent + " {\npublic:\n\t" + oclass->name + "(MODULE*mod) : " + parent + "(mod) {};\n", oclass->name, parent, oclass->name, parent);
-                    // 	oclass->parent = class_get_class_from_classname(parent.data());
-                    // 	break;
-                    // default:
-                    // 	output_error("class_block inherit status is invalid (inherit=%d)", inherit);
-                    // 	break;
+					// 	source_code = source_code + "class " + oclass->name + "{\npublic:\n\t" + oclass->name + "(MODULE*mod) {};\n";
+					// 	break;
+					// case PRIVATE:
+					// 	source_code = source_code + "class " + oclass->name + " : private " + parent + " {\npublic:\n\t" + oclass->name + "(MODULE*mod) : " + parent + "(mod) {};\n";
+					// 	oclass->parent = class_get_class_from_classname(parent.data());
+					// 	break;
+					// case PROTECTED:
+					// 	source_code = source_code + "class " + oclass->name + " : protected " + parent + " {\npublic:\n\t" + oclass->name + "(MODULE*mod) : " + parent + "(mod) {};\n", oclass->name, parent, oclass->name, parent);
+					// 	oclass->parent = class_get_class_from_classname(parent.data());
+					// 	break;
+					// case PUBLIC:
+					// 	source_code = source_code + "class " + oclass->name + " : public " + parent + " {\npublic:\n\t" + oclass->name + "(MODULE*mod) : " + parent + "(mod) {};\n", oclass->name, parent, oclass->name, parent);
+					// 	oclass->parent = class_get_class_from_classname(parent.data());
+					// 	break;
+					// default:
+					// 	output_error("class_block inherit status is invalid (inherit=%d)", inherit);
+					// 	break;
                     // }
                 }
                 if (oclass != nullptr)
@@ -437,15 +436,13 @@ STATUS loader::loadClock()
             if (timestamp_set_tz(tz.data()) == nullptr)
             {
                 output_warning("loader::loadClock() parsing file, %s: timezone is undefined in the clock: provided "
-                               "value: %s",
-                               this->filename.string().c_str(), tz.c_str());
+                               "value: %s", this->filename.string().c_str(), tz.c_str());
             }
         }
         else
         {
             output_error_raw("loader::loadClock() parsing file, %s: expected time zone specification in the clock: "
-                             "timezone value provided: %s",
-                             this->filename.string().c_str(), tz.c_str());
+                             "timezone value provided: %s", this->filename.string().c_str(), tz.c_str());
             return FAILED;
         }
     }
@@ -456,9 +453,8 @@ STATUS loader::loadClock()
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
         if (tsval == TS_INVALID)
         {
-            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. starttime "
-                             "provided: %s.",
-                             this->filename.string().c_str(), ts.c_str());
+            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
+                             "provided: %s.", this->filename.string().c_str(), ts.c_str());
             return FAILED;
         }
         else
@@ -473,9 +469,8 @@ STATUS loader::loadClock()
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
         if (tsval == TS_INVALID)
         {
-            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
-                             "provided: %s.",
-                             this->filename.string().c_str(), ts.c_str());
+            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. starttime "
+                             "provided: %s.", this->filename.string().c_str(), ts.c_str());
             return FAILED;
         }
         else
@@ -491,8 +486,7 @@ STATUS loader::loadClock()
         if (tsval == TS_INVALID)
         {
             output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. stoptime "
-                             "provided: %s.",
-                             this->filename.string().c_str(), ts.c_str());
+                             "provided: %s.", this->filename.string().c_str(), ts.c_str());
             return FAILED;
         }
         else
@@ -520,8 +514,7 @@ bool loader::module_properties(MODULE *mod, ojson properties)
             else
             {
                 output_error("loader::module_properties() parsing file, %s: unable perform variable substitution in "
-                             "module property value %s for property %s of module %s.",
-                             this->filename.string().c_str(),
+                             "module property value %s for property %s of module %s.", this->filename.string().c_str(),
                              strValue.c_str(), name.c_str(), mod->name);
                 return false;
             }
@@ -548,9 +541,8 @@ bool loader::module_properties(MODULE *mod, ojson properties)
                 oClass = class_get_class_from_classname(classname);
                 if (oClass == nullptr || oClass->module != mod)
                 {
-                    output_error_raw("loader::module_properties() parsing file, %s: module, %s, does not implement "
-                                     "class, %s.",
-                                     this->filename.string().c_str(), mod->name, classname);
+					output_error_raw("loader::module_properties() parsing file, %s: module, %s, does not implement "
+                                     "class, %s.", this->filename.string().c_str(), mod->name, classname);
                     rv = false;
                     break;
                 }
@@ -565,11 +557,10 @@ bool loader::module_properties(MODULE *mod, ojson properties)
             {
                 if (this->parse.alternate_value(propValue))
                 {
-                    if (!module_setvar(mod, (const char *)name.c_str(), propValue.data()))
+					if (!module_setvar(mod, (const char*)name.c_str(), propValue.data()))
                     {
-                        output_error_raw("loader::module_properties() parsing file, %s: invalid property, %s, for "
-                                         "module, %s, specified.",
-                                         this->filename.string().c_str(), name.c_str(),
+						output_error_raw("loader::module_properties() parsing file, %s: invalid property, %s, for "
+                                         "module, %s, specified.", this->filename.string().c_str(), name.c_str(),
                                          mod->name);
                         rv = false;
                         break;
@@ -580,8 +571,7 @@ bool loader::module_properties(MODULE *mod, ojson properties)
         else
         {
             output_error_raw("loader::module_properties() parsing file %s: invalid %s module property value provided."
-                             "property %s couldn't be set to value %s.",
-                             this->filename.string().c_str(), mod->name,
+                             "property %s couldn't be set to value %s.", this->filename.string().c_str(), mod->name,
                              name.c_str(), value.dump().c_str());
             rv = false;
             break;
@@ -611,7 +601,7 @@ STATUS loader::loadModules()
         }
         else
         {
-            output_error_raw("loader::loadModules() parsing file, %s: module load failed",
+			output_error_raw("loader::loadModules() parsing file, %s: module load failed",
                              this->filename.string().c_str(), name.data());
             rv = FAILED;
             break;
@@ -724,7 +714,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             else if (obj == nullptr || obj == &nameObj)
             {
                 output_error("loader::loadObject() parsing file, %s: create failed name object %s:%d\n%s",
-                             this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4));
+                             this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4).c_str());
                 rv = FAILED;
                 break;
             }
@@ -735,7 +725,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             if (obj == nullptr)
             {
                 output_error("loader::loadObject() parsing file, %s: create failed for object %s:%d\n%s",
-                             this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4));
+                             this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4).c_str());
                 rv = FAILED;
                 break;
             }
@@ -744,13 +734,16 @@ STATUS loader::loadObject(const string className, ojson objInstance)
         if (id != -1 && this->parse.load_set_index(obj, (OBJECTNUM)id) == FAILED)
         {
             output_error("loader::loadObject() parsing file, %s: create failed for object %s:%d\n%s",
-                         this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4));
+                         this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4).c_str());
             rv = FAILED;
             break;
         }
         for (auto &[propName, propValue] : objInstance.items())
         {
-            if (propName == "inline_comments" || propName == "outside_comments" || propName == "inside_comments" || propName == "object_declaration")
+            if (propName == "inline_comments"
+                || propName == "outside_comments"
+                || propName == "inside_comments"
+                || propName == "object_declaration")
             {
                 continue;
             }
@@ -834,8 +827,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
     if (this->parse.replace_variables(propValue) == false)
     {
         output_error("loader::objectProperties() parsing file, %s: unable perform variable substitution in "
-                     "object property value %s for property %s of object %s/%s.",
-                     this->filename.string().c_str(),
+                     "object property value %s for property %s of object %s/%s.", this->filename.string().c_str(),
                      propValue.c_str(), propName.c_str(), obj->oclass->module->name, obj->oclass->name);
         return FAILED;
     }
@@ -849,8 +841,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             if (method->call(obj, propertyValue) != 1)
             {
                 output_error("loader::objectProperties() parsing file, %s: Load method, %s/%s::%s, failed on value, "
-                             "%s.",
-                             this->filename.string().c_str(), obj->oclass->module->name, obj->oclass->name,
+                             "%s.", this->filename.string().c_str(), obj->oclass->module->name, obj->oclass->name,
                              propName.c_str(), propertyValue.get_string());
                 status = FAILED;
             }
@@ -858,8 +849,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
         else
         {
             output_error_raw("loader::objectProperties() parsing file, %s: unable to parse value for load method, "
-                             "%s/%s::%s.",
-                             this->filename.string().c_str(), obj->oclass->module->name,
+                             "%s/%s::%s.", this->filename.string().c_str(), obj->oclass->module->name,
                              obj->oclass->name, propName.c_str());
             status = FAILED;
         }
@@ -890,55 +880,55 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
 
         if (prop != nullptr && prop->ptype == PT_complex && this->parse.complex_unit(propValue, &cval, &unit) > 0)
         {
-            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0 && unit_convert_complex(unit, prop->unit, &cval) == 0)
+			if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0
+                && unit_convert_complex(unit, prop->unit, &cval) == 0)
             {
-                output_error_raw("loader::objectProperties() parsing file, %s: units of value are incompatible "
+					output_error_raw("loader::objectProperties() parsing file, %s: units of value are incompatible "
                                  "with units of property %s, cannot convert from %s to %s",
-                                 this->filename.string().c_str(), propName.c_str(), unit->name, prop->unit->name);
+                                     this->filename.string().c_str(), propName.c_str(), unit->name, prop->unit->name);
                 status = FAILED;
             }
             else if (object_set_complex_by_name(obj, propName.c_str(), cval) == 0)
             {
-                output_error_raw("loader::objectProperties() parsing file, %s: property %s of %s could not be set "
-                                 "to %g%+gi",
-                                 this->filename.string().c_str(), propName.c_str(),
+					output_error_raw("loader::objectProperties() parsing file, %s: property %s of %s could not be set "
+                                     "to %g%+gi", this->filename.string().c_str(), propName.c_str(),
                                  this->parse.format_object(obj), cval.Re(), cval.Im());
                 status = FAILED;
             }
         }
-        else if (prop != nullptr && prop->ptype == PT_double && this->parse.expression(propValue, &dval, &unit, obj) > 0)
+        else if (prop != nullptr && prop->ptype == PT_double
+                 && this->parse.expression(propValue, &dval, &unit, obj) > 0)
         {
-            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0)
+            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0
+                && unit_convert_ex(unit, prop->unit, &dval) == 0)
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: units of value are incompatible with "
-                                 "units of property %s, cannot convert from %s to %s",
-                                 this->filename.string().c_str(),
+                                 "units of property %s, cannot convert from %s to %s", this->filename.string().c_str(),
                                  propName.c_str(), unit->name, prop->unit->name);
                 status = FAILED;
             }
             else if (object_set_double_by_name(obj, propName.c_str(), dval) == 0)
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: property %s of %s could not be set to "
-                                 "%g",
-                                 this->filename.string().c_str(), propName, this->parse.format_object(obj), dval);
+                                 "%g", this->filename.string().c_str(), propName.c_str(), this->parse.format_object(obj), dval);
                 status = FAILED;
             }
         }
-        else if (prop != nullptr && prop->ptype == PT_double && this->parse.functional_unit(propValue, &dval, &unit) > 0)
+        else if (prop != nullptr && prop->ptype == PT_double
+                 && this->parse.functional_unit(propValue, &dval, &unit) > 0)
         {
-            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0)
+            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0
+                && unit_convert_ex(unit, prop->unit, &dval) == 0)
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: units of value are incompatible with "
-                                 "units of property %s, cannot convert from %s to %s",
-                                 this->filename.string().c_str(),
+                                 "units of property %s, cannot convert from %s to %s", this->filename.string().c_str(),
                                  propName.c_str(), unit->name, prop->unit->name);
                 status = FAILED;
             }
             else if (object_set_double_by_name(obj, propName.c_str(), dval) == 0)
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: property %s of %s could not be set to "
-                                 "%g",
-                                 this->filename.string().c_str(), propName, this->parse.format_object(obj), dval);
+                                 "%g", this->filename.string().c_str(), propName.c_str(), this->parse.format_object(obj), dval);
                 status = FAILED;
             }
         }
@@ -949,11 +939,11 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             int32 ival32 = 0;
             int64 ival64 = 0;
             int rv = 0;
-            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)(unit), "") != 0 && unit_convert_ex(unit, prop->unit, &dval) == 0)
+            if (unit != nullptr && prop->unit != nullptr && strcmp((char *)(unit), "") != 0
+                && unit_convert_ex(unit, prop->unit, &dval) == 0)
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: units of value are incompatible with "
-                                 "units of property %s, cannot convert from %s to %s",
-                                 this->filename.string().c_str(),
+                                 "units of property %s, cannot convert from %s to %s", this->filename.string().c_str(),
                                  propName.c_str(), unit->name, prop->unit->name);
                 status = FAILED;
             }
@@ -974,22 +964,24 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                     rv = object_set_int64_by_name(obj, propName.c_str(), ival64);
                     break;
                 default:
-                    output_error("loader::objectProperties() parsing file, %s: function_int operating on a "
-                                 "non-integer (we shouldn't be here!)",
-                                 this->filename.string().c_str());
+                        output_error("loader::objectProperties() parsing file, %s: function_int operating on a "
+                                     "non-integer (we shouldn't be here!)", this->filename.string().c_str());
                     rv = 0;
                 }
                 if (rv == 0)
                 {
                     output_error_raw("loader::objectProperties() parsing file, %s: property %s of %s could not be set "
-                                     "to %g",
-                                     this->filename.string().c_str(), propName.c_str(),
+                                     "to %g", this->filename.string().c_str(), propName.c_str(),
                                      this->parse.format_object(obj), ival);
                     status = FAILED;
                 }
             }
         }
-        else if (prop != nullptr && ((prop->ptype >= PT_double && prop->ptype <= PT_int64) || (prop->ptype >= PT_bool && prop->ptype <= PT_timestamp) || (prop->ptype >= PT_float && prop->ptype <= PT_enduse)) && this->parse.linear_transform(propValue, &xstype, &source, &scale, &bias, obj) > 0)
+        else if (prop!=nullptr
+                 && ((prop->ptype >= PT_double && prop->ptype <= PT_int64)
+                     || (prop->ptype >= PT_bool && prop->ptype <= PT_timestamp)
+                     || (prop->ptype >= PT_float && prop->ptype <= PT_enduse))
+                 && this->parse.linear_transform(propValue, &xstype, &source,&scale,&bias,obj) > 0)
         {
             void *target = (void *)((char *)(obj + 1) + (int64)prop->addr);
             /* add the transform list */
@@ -997,8 +989,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                                       static_cast<SCHEDULE *>(xstype == XS_SCHEDULE ? source : 0)))
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: schedule transform could not be "
-                                 "created - %s",
-                                 this->filename.string().c_str(), errno ? strerror(errno) : "(no details)");
+                                 "created - %s", this->filename.string().c_str(), errno?strerror(errno):"(no details)");
                 status = FAILED;
             }
             else if (source != nullptr)
@@ -1022,12 +1013,11 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 }
                 else if (propName.compare("parent") == 0)
                 {
-                    if (parse.add_unresolved(obj, PT_object, (void *)&obj->parent, oClass, propValue.data(),
+                    if (parse.add_unresolved(obj, PT_object, (void*)&obj->parent, oClass, propValue.data(),
                                              this->filename.string().data(), UR_RANKS) == nullptr)
                     {
                         output_error_raw("loader::objectProperties() parsing file, %s: unable to add unresolved "
-                                         "reference to parent %s",
-                                         this->filename.string().c_str(), propValue.c_str());
+                                         "reference to parent %s", this->filename.string().c_str(), propValue.c_str());
                         status = FAILED;
                     }
                 }
@@ -1098,8 +1088,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                     if (object_set_name(obj, propValue.data()) == nullptr)
                     {
                         output_error_raw("loader::objectProperties() parsing file, %s: property name %s could not be "
-                                         "used",
-                                         this->filename.string().c_str(), propValue.c_str());
+                                         "used", this->filename.string().c_str(), propValue.c_str());
                         status = FAILED;
                     }
                 }
@@ -1130,8 +1119,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 else
                 {
                     output_error_raw("loader::objectProperties() parsing file, %s: property %s is not defined in class "
-                                     "%s",
-                                     this->filename.string().c_str(), propName.c_str(), oClass->name);
+                                     "%s", this->filename.string().c_str(), propName.c_str(), oClass->name);
                     status = FAILED;
                 }
             }
@@ -1152,11 +1140,10 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             }
             else
             {
-                if (object_set_value_by_name(obj, propName.data(), propValue.data()) == 0)
+                if (object_set_value_by_name(obj, propName.data(), propValue.data())==0)
                 {
                     output_error_raw("loader::objectProperties() parsing file, %s: property %s of %s could not be set "
-                                     "to %s",
-                                     this->filename.string().c_str(), propName.c_str(),
+                                     "to %s", this->filename.string().c_str(), propName.c_str(),
                                      this->parse.format_object(obj), propValue.c_str());
                     status = FAILED;
                 }
@@ -1165,8 +1152,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
         else
         {
             output_error("loader::objectProperties() parsing file, %s: Encountered invalid property value pairing! "
-                         "Property %s of %s with value of %s",
-                         this->filename.string().c_str(), propName.c_str(),
+                         "Property %s of %s with value of %s", this->filename.string().c_str(), propName.c_str(),
                          this->parse.format_object(obj), propValue.c_str());
             status = FAILED;
         }
@@ -1190,24 +1176,24 @@ double loader::loadLatitude(char *buffer)
 {
     char oname[128], pname[128];
     double v = convert_to_latitude(buffer);
-    if (sscanf(buffer, "(%[^.].%[^)])", oname, pname) == 2 && strcmp(pname, "latitude") == 0)
+	if (sscanf(buffer, "(%[^.].%[^)])", oname, pname) == 2 && strcmp(pname, "latitude") == 0)
     {
         OBJECT *obj = object_find_name(oname);
         if (obj == nullptr)
         {
-            output_error_raw("loader::loadLatitude() parsing file, %s: %s does not refer to an existing object.",
+			output_error_raw("loader::loadLatitude() parsing file, %s: %s does not refer to an existing object.",
                              this->filename.string().c_str(), buffer);
         }
         return obj->latitude;
     }
-    else if (isnan(v) && (strcmp(buffer, "") != 0 || stricmp(buffer, "none") != 0))
+	else if (isnan(v) && (strcmp(buffer, "") != 0 || strcasecmp(buffer, "none") != 0))
     {
-        output_error_raw("loader::loadLatitude() parsing file, %s: %s is not a valid latitude",
+		output_error_raw("loader::loadLatitude() parsing file, %s: %s is not a valid latitude",
                          this->filename.string().c_str(), buffer);
     }
     else
     {
-        output_debug("loader::loadLatitude() parsing file, %s: latitude is converted to %lf",
+		output_debug("loader::loadLatitude() parsing file, %s: latitude is converted to %lf",
                      this->filename.string().c_str(), v);
     }
     return v;
@@ -1217,24 +1203,24 @@ double loader::loadLongitude(char *buffer)
 {
     char oname[128], pname[128];
     double v = convert_to_longitude(buffer);
-    if (sscanf(buffer, "(%[^.].%[^)])", oname, pname) == 2 && strcmp(pname, "longitude") == 0)
+	if (sscanf(buffer, "(%[^.].%[^)])", oname, pname) == 2 && strcmp(pname, "longitude") == 0)
     {
         OBJECT *obj = object_find_name(oname);
         if (obj == nullptr)
         {
-            output_error_raw("loader::loadLongitude() parsing file, %s: %s does not refer to an existing object",
+			output_error_raw("loader::loadLongitude() parsing file, %s: %s does not refer to an existing object",
                              this->filename.string().c_str(), buffer);
         }
         return obj->longitude;
     }
-    else if (isnan(v) && (strcmp(buffer, "") != 0 || stricmp(buffer, "none") != 0))
+	else if (isnan(v) && (strcmp(buffer, "") != 0 || strcasecmp(buffer, "none") != 0))
     {
-        output_error_raw("loader::loadLongitude() parsing file, %s: %s is not a valid longitude",
+		output_error_raw("loader::loadLongitude() parsing file, %s: %s is not a valid longitude",
                          this->filename.string().c_str(), buffer);
     }
     else
     {
-        output_debug("loader::loadLongitude() parsing file, %s: longitude is convert to %lf",
+		output_debug("loader::loadLongitude() parsing file, %s: longitude is convert to %lf",
                      this->filename.string().c_str(), v);
     }
     return v;
@@ -1245,7 +1231,7 @@ int loader::set_flags(OBJECT *obj, char *propval)
     extern KEYWORD oflags[];
     if (convert_to_set(propval, &(obj->flags), object_flag_property()) <= 0)
     {
-        output_error_raw("loader::set_flags() parsing file, %s: flags of %s:%d %s could not be set to %s",
+		output_error_raw("loader::set_flags() parsing file, %s: flags of %s:%d %s could not be set to %s",
                          this->filename.string().c_str(), obj->oclass->name, obj->id, obj->name, propval);
         return 0;
     };
@@ -1298,9 +1284,8 @@ STATUS loader::loadSchedules()
                 }
                 else
                 {
-                    output_error_raw("loader::loadSchedules() parsing file, %s: schedule %s is not valid or does not "
-                                     "have an items array",
-                                     this->filename.string().c_str(), name.data());
+					output_error_raw("loader::loadSchedules() parsing file, %s: schedule %s is not valid or does not "
+                                     "have an items array", this->filename.string().c_str(), name.data());
                     rv = FAILED;
                     break;
                 }
@@ -1314,7 +1299,7 @@ STATUS loader::loadSchedules()
             }
             else
             {
-                output_error_raw("loader::loadSchedules() parsing file, %s: schedule '%s' could not be created",
+				output_error_raw("loader::loadSchedules() parsing file, %s: schedule '%s' could not be created",
                                  this->filename.string().c_str(), name.data());
                 rv = FAILED;
                 break;
@@ -1322,7 +1307,7 @@ STATUS loader::loadSchedules()
         }
         else
         {
-            output_error_raw("loader::loadSchedules() parsing file, %s: schedule '%s' is not valid array",
+			output_error_raw("loader::loadSchedules() parsing file, %s: schedule '%s' is not valid array",
                              this->filename.string().c_str(), name.data());
             rv = FAILED;
             break;
@@ -1453,10 +1438,10 @@ STATUS loader::loadall_json_roll(char *file_name)
         return FAILED;
     }
     /* establish ranks */
-    for (obj = first ? first : object_get_first(); obj != nullptr; obj = obj->next)
+ 	for (obj=first?first:object_get_first(); obj!=nullptr; obj=obj->next)
     {
         object_set_parent(obj, obj->parent);
     }
-    output_verbose("loader::loadall_json_roll(): %d object%s loaded", object_get_count(), object_get_count() > 1 ? "s" : "");
+ 	output_verbose("loader::loadall_json_roll(): %d object%s loaded", object_get_count(), object_get_count()>1?"s":"");
     return status;
 }

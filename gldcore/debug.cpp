@@ -322,9 +322,9 @@ void debug_notify_error(void) { error_caught = 1; }
 // 		/* TROUBLESHOOT
 // 			A signal from the operating system was caught, which
 // aborts 			the current simulation.   This is not normal,
-// but may be intentional. 			If it is not intentional, make sure that the signal
-// is not being 			raised accidentally by another
-// application.
+// but may be intentional. 			If it is not intentional, make
+// sure that the signal is not being 			raised accidentally by
+// another application.
 // 		 */
 // 		exit(XC_SIGNAL | SIGABRT);
 // 	}
@@ -353,8 +353,9 @@ void debug_notify_error(void) { error_caught = 1; }
 // 	/* TROUBLESHOOT
 // 		A signal was received that is not handled.  This is not serious,
 // but 		may indicate that a behavior was expected by another application
-// that 		GridLAB-D does not support.  If this is unexpected, make sure that
-// the signal is not being	raised accidentally by another application.
+// that 		GridLAB-D does not support.  If this is unexpected, make
+// sure that the signal is not being	raised accidentally by another
+// application.
 // 	*/
 // }
 

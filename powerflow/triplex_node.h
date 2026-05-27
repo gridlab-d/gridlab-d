@@ -30,4 +30,3 @@ public:
 };
 
 #endif // _TRIPLEXNODE_H
-

@@ -1,12 +1,12 @@
 /** $Id: underground_line.cpp 1182 2008-12-22 22:08:36Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file underground_line.cpp
-	@addtogroup underground_line 
-	@ingroup line
+        Copyright (C) 2008 Battelle Memorial Institute
+        @file underground_line.cpp
+        @addtogroup underground_line
+        @ingroup line
 
-	@{
+        @{
 **/
-//3.2
+// 3.2
 #include <cerrno>
 #include <cmath>
 #include <cstdio>
@@ -16,1384 +16,1614 @@ using namespace std;
 
 #include "line.h"
 
-CLASS* underground_line::oclass = nullptr;
-CLASS* underground_line::pclass = nullptr;
+CLASS *underground_line::oclass = nullptr;
+CLASS *underground_line::pclass = nullptr;
 
 underground_line::underground_line(MODULE *mod) : line(mod)
 {
-	if(oclass == nullptr)
-	{
-		pclass = line::oclass;
-		
-		oclass = gl_register_class(mod,"underground_line",sizeof(underground_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==nullptr)
-			throw "unable to register class underground_line";
-		else
-			oclass->trl = TRL_PROVEN;
+  if (oclass == nullptr)
+  {
+    pclass = line::oclass;
 
-        if(gl_publish_variable(oclass,
-			PT_INHERIT, "line",
-			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
-		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ugline)==nullptr)
-			GL_THROW("Unable to publish fault creation function");
-		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ugline)==nullptr)
-			GL_THROW("Unable to publish fault restoration function");
-        if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_ugline)==nullptr)
-            GL_THROW("Unable to publish fault clearing function");
+    oclass =
+        gl_register_class(mod, "underground_line", sizeof(underground_line),
+                          PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN |
+                              PC_UNSAFE_OVERRIDE_OMIT | PC_AUTOLOCK);
+    if (oclass == nullptr)
+      throw "unable to register class underground_line";
+    else
+      oclass->trl = TRL_PROVEN;
 
-		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
-			GL_THROW("Unable to publish underground line deltamode function");
-		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_underground_line)==nullptr)
-			GL_THROW("Unable to publish underground line recalc function");
+    if (gl_publish_variable(oclass, PT_INHERIT, "line", nullptr) < 1)
+      GL_THROW("unable to publish properties in %s", __FILE__);
+    if (gl_publish_function(oclass, "create_fault",
+                            (FUNCTIONADDR)create_fault_ugline) == nullptr)
+      GL_THROW("Unable to publish fault creation function");
+    if (gl_publish_function(oclass, "fix_fault",
+                            (FUNCTIONADDR)fix_fault_ugline) == nullptr)
+      GL_THROW("Unable to publish fault restoration function");
+    if (gl_publish_function(oclass, "clear_fault",
+                            (FUNCTIONADDR)clear_fault_ugline) == nullptr)
+      GL_THROW("Unable to publish fault clearing function");
 
-		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
-			GL_THROW("Unable to publish underground line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
-			GL_THROW("Unable to publish underground line external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
-			GL_THROW("Unable to publish underground line external current calculation function");
-    }
+    // Publish deltamode functions
+    if (gl_publish_function(oclass, "interupdate_pwr_object",
+                            (FUNCTIONADDR)interupdate_link) == nullptr)
+      GL_THROW("Unable to publish underground line deltamode function");
+    if (gl_publish_function(oclass, "recalc_distribution_line",
+                            (FUNCTIONADDR)recalc_underground_line) == nullptr)
+      GL_THROW("Unable to publish underground line recalc function");
+
+    // Publish restoration-related function (current update)
+    if (gl_publish_function(oclass, "update_power_pwr_object",
+                            (FUNCTIONADDR)updatepowercalc_link) == nullptr)
+      GL_THROW("Unable to publish underground line external power calculation "
+               "function");
+    if (gl_publish_function(oclass, "check_limits_pwr_object",
+                            (FUNCTIONADDR)calculate_overlimit_link) == nullptr)
+      GL_THROW("Unable to publish underground line external power limit "
+               "calculation function");
+    if (gl_publish_function(oclass, "perform_current_calculation_pwr_link",
+                            (FUNCTIONADDR)currentcalculation_link) == nullptr)
+      GL_THROW("Unable to publish underground line external current "
+               "calculation function");
+  }
 }
 
 int underground_line::create(void)
 {
-	int result = line::create();
-	return result;
+  int result = line::create();
+  return result;
 }
-
 
 int underground_line::init(OBJECT *parent)
 {
-	double *temp_rating_value = nullptr;
-	double temp_rating_continuous = 10000.0;
-	double temp_rating_emergency = 20000.0;
-	char index;
-	int type_A, type_B, type_C, type_N;
-	int cond_present, cond_present_CN, cable_types_value;
-	OBJECT *temp_obj;
-	OBJECT *obj = object_header(this);
+  OBJECT *obj_this = object_header(this);
 
-	int result = line::init(parent);
+#ifdef __APPLE__
+  parent =
+      obj_this
+          ->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+  double *temp_rating_value = nullptr;
+  double temp_rating_continuous = 10000.0;
+  double temp_rating_emergency = 20000.0;
+  char index;
+  int type_A, type_B, type_C, type_N;
+  int cond_present, cond_present_CN, cable_types_value;
+  OBJECT *temp_obj;
+  OBJECT *obj = object_header(this);
 
-	//Check for deferred
-	if (result == 2)
-		return 2;	//Return the deferment - no sense doing everything else!
+  int result = line::init(parent);
 
-	if (!configuration)
-		throw "no underground line configuration specified.";
-		/*  TROUBLESHOOT
-		No underground line configuration was specified.  Please use object line_configuration
-		with appropriate values to specify an underground line configuration
-		*/
+  // Check for deferred
+  if (result == 2)
+    return 2; // Return the deferment - no sense doing everything else!
 
-	if (!gl_object_isa(configuration, "line_configuration"))
-		throw "invalid line configuration for underground line";
-		/*  TROUBLESHOOT
-		The object specified as the configuration for the underground line is not a valid
-		configuration object.  Please ensure you have a line_configuration object selected.
-		*/
+  if (!configuration)
+    throw "no underground line configuration specified.";
+  /*  TROUBLESHOOT
+  No underground line configuration was specified.  Please use object
+  line_configuration with appropriate values to specify an underground line
+  configuration
+  */
 
-	//Test the phases
-	line_configuration *config = object_data<line_configuration>(configuration);
+  if (!gl_object_isa(configuration, "line_configuration"))
+    throw "invalid line configuration for underground line";
+  /*  TROUBLESHOOT
+  The object specified as the configuration for the underground line is not a
+  valid configuration object.  Please ensure you have a line_configuration
+  object selected.
+  */
 
-	type_A = test_phases(config,'A');
-	type_B = test_phases(config,'B');
-	type_C = test_phases(config,'C');
-	type_N = test_phases(config,'N');	//Return value not used right now
+  // Test the phases
+  line_configuration *config = object_data<line_configuration>(configuration);
 
-	//Figure out how many conductors we expected
-	cond_present = 0;
-	
-	if (config->phaseA_conductor != nullptr)
-		cond_present++;
+  type_A = test_phases(config, 'A');
+  type_B = test_phases(config, 'B');
+  type_C = test_phases(config, 'C');
+  type_N = test_phases(config, 'N'); // Return value not used right now
 
-	if (config->phaseB_conductor != nullptr)
-		cond_present++;
+  // Figure out how many conductors we expected
+  cond_present = 0;
 
-	if (config->phaseC_conductor != nullptr)
-		cond_present++;
+  if (config->phaseA_conductor != nullptr)
+    cond_present++;
 
-	//Form the cable-types value (add up tests)
-	cable_types_value = type_A + type_B + type_C;
+  if (config->phaseB_conductor != nullptr)
+    cond_present++;
 
-	//Form the "CN test value"
-	cond_present_CN = cond_present * 10;
+  if (config->phaseC_conductor != nullptr)
+    cond_present++;
 
-	//Check for "consistency"
-	if ((cable_types_value != cond_present) && (cable_types_value != cond_present_CN))
-	{
-		GL_THROW("Underground_line:%d %s - Cable types specified in configuration are not consistent!",obj->id,(obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		An underground_line object needs to have all the same cable-tpe in the configuration (e.g., tape-sheild or concentric neutral).  Please
-		correct this.
-		*/
-	}
+  // Form the cable-types value (add up tests)
+  cable_types_value = type_A + type_B + type_C;
 
-	if ((!config->line_spacing || !gl_object_isa(config->line_spacing,const_cast<char*>( "line_spacing"))) && config->impedance11 == 0.0 && config->impedance22 == 0.0 && config->impedance33 == 0.0)
-		throw "invalid or missing line spacing on underground line";
-		/*  TROUBLESHOOT
-		The configuration object for the underground line is missing the line_spacing configuration
-		or the item specified in that location is invalid.
-		*/
+  // Form the "CN test value"
+  cond_present_CN = cond_present * 10;
 
-	recalc();
+  // Check for "consistency"
+  if ((cable_types_value != cond_present) &&
+      (cable_types_value != cond_present_CN))
+  {
+    GL_THROW("Underground_line:%d %s - Cable types specified in configuration "
+             "are not consistent!",
+             obj->id, (obj->name ? obj->name : "Unnamed"));
+    /*  TROUBLESHOOT
+    An underground_line object needs to have all the same cable-tpe in the
+    configuration (e.g., tape-sheild or concentric neutral).  Please correct
+    this.
+    */
+  }
 
-	//Values are populated now - populate link ratings parameter
-	if (config->phaseA_conductor != nullptr || config->phaseB_conductor != nullptr || config->phaseC_conductor != nullptr) {
-		for (index=0; index<3; index++)
-		{
-			if (index==0)
-			{
-				temp_obj = config->phaseA_conductor;
-			}
-			else if (index==1)
-			{
-				temp_obj = config->phaseB_conductor;
-			}
-			else //Must be 2
-			{
-				temp_obj = config->phaseC_conductor;
-			}
+  if ((!config->line_spacing ||
+       !gl_object_isa(config->line_spacing,
+                      const_cast<char *>("line_spacing"))) &&
+      config->impedance11 == 0.0 && config->impedance22 == 0.0 &&
+      config->impedance33 == 0.0)
+    throw "invalid or missing line spacing on underground line";
+  /*  TROUBLESHOOT
+  The configuration object for the underground line is missing the line_spacing
+  configuration or the item specified in that location is invalid.
+  */
 
-			//See if Phase exists
-			if (temp_obj != nullptr)
-			{
-				//Get continuous - summer
-				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+  recalc();
 
-				//Check if nullptr
-				if (temp_rating_value != nullptr)
-				{
-					//Update - if necessary
-					if (temp_rating_continuous > *temp_rating_value)
-					{
-						temp_rating_continuous = *temp_rating_value;
-					}
-				}
+  // Values are populated now - populate link ratings parameter
+  if (config->phaseA_conductor != nullptr ||
+      config->phaseB_conductor != nullptr ||
+      config->phaseC_conductor != nullptr)
+  {
+    for (index = 0; index < 3; index++)
+    {
+      if (index == 0)
+      {
+        temp_obj = config->phaseA_conductor;
+      }
+      else if (index == 1)
+      {
+        temp_obj = config->phaseB_conductor;
+      }
+      else // Must be 2
+      {
+        temp_obj = config->phaseC_conductor;
+      }
 
-				//Get continuous - winter
-				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+      // See if Phase exists
+      if (temp_obj != nullptr)
+      {
+        // Get continuous - summer
+        temp_rating_value = get_double(temp_obj, "rating.summer.continuous");
 
-				//Check if nullptr
-				if (temp_rating_value != nullptr)
-				{
-					//Update - if necessary
-					if (temp_rating_continuous > *temp_rating_value)
-					{
-						temp_rating_continuous = *temp_rating_value;
-					}
-				}
+        // Check if nullptr
+        if (temp_rating_value != nullptr)
+        {
+          // Update - if necessary
+          if (temp_rating_continuous > *temp_rating_value)
+          {
+            temp_rating_continuous = *temp_rating_value;
+          }
+        }
 
-				//Now get emergency - summer
-				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+        // Get continuous - winter
+        temp_rating_value = get_double(temp_obj, "rating.winter.continuous");
 
-				//Check if nullptr
-				if (temp_rating_value != nullptr)
-				{
-					//Update - if necessary
-					if (temp_rating_emergency > *temp_rating_value)
-					{
-						temp_rating_emergency = *temp_rating_value;
-					}
-				}
+        // Check if nullptr
+        if (temp_rating_value != nullptr)
+        {
+          // Update - if necessary
+          if (temp_rating_continuous > *temp_rating_value)
+          {
+            temp_rating_continuous = *temp_rating_value;
+          }
+        }
 
-				//Now get emergency - winter
-				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+        // Now get emergency - summer
+        temp_rating_value = get_double(temp_obj, "rating.summer.emergency");
 
-				//Check if nullptr
-				if (temp_rating_value != nullptr)
-				{
-					//Update - if necessary
-					if (temp_rating_emergency > *temp_rating_value)
-					{
-						temp_rating_emergency = *temp_rating_value;
-					}
-				}
+        // Check if nullptr
+        if (temp_rating_value != nullptr)
+        {
+          // Update - if necessary
+          if (temp_rating_emergency > *temp_rating_value)
+          {
+            temp_rating_emergency = *temp_rating_value;
+          }
+        }
 
-				//Populate link array
-				link_rating[0][index] = temp_rating_continuous;
-				link_rating[1][index] = temp_rating_emergency;
-			}//End Phase valid
-		}//End FOR
-	}
-	else {
-		temp_obj = configuration;
-		//See if configuration exists
-		if (temp_obj != nullptr)
-		{
-			//Get continuous - summer
-			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+        // Now get emergency - winter
+        temp_rating_value = get_double(temp_obj, "rating.winter.emergency");
 
-			//Check if nullptr
-			if (temp_rating_value != nullptr)
-			{
-				//Update - if necessary
-				if (temp_rating_continuous > *temp_rating_value)
-				{
-					temp_rating_continuous = *temp_rating_value;
-				}
-			}
+        // Check if nullptr
+        if (temp_rating_value != nullptr)
+        {
+          // Update - if necessary
+          if (temp_rating_emergency > *temp_rating_value)
+          {
+            temp_rating_emergency = *temp_rating_value;
+          }
+        }
 
-			//Get continuous - winter
-			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+        // Populate link array
+        link_rating[0][index] = temp_rating_continuous;
+        link_rating[1][index] = temp_rating_emergency;
+      } // End Phase valid
+    } // End FOR
+  }
+  else
+  {
+    temp_obj = configuration;
+    // See if configuration exists
+    if (temp_obj != nullptr)
+    {
+      // Get continuous - summer
+      temp_rating_value = get_double(temp_obj, "rating.summer.continuous");
 
-			//Check if nullptr
-			if (temp_rating_value != nullptr)
-			{
-				//Update - if necessary
-				if (temp_rating_continuous > *temp_rating_value)
-				{
-					temp_rating_continuous = *temp_rating_value;
-				}
-			}
+      // Check if nullptr
+      if (temp_rating_value != nullptr)
+      {
+        // Update - if necessary
+        if (temp_rating_continuous > *temp_rating_value)
+        {
+          temp_rating_continuous = *temp_rating_value;
+        }
+      }
 
-			//Now get emergency - summer
-			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+      // Get continuous - winter
+      temp_rating_value = get_double(temp_obj, "rating.winter.continuous");
 
-			//Check if nullptr
-			if (temp_rating_value != nullptr)
-			{
-				//Update - if necessary
-				if (temp_rating_emergency > *temp_rating_value)
-				{
-					temp_rating_emergency = *temp_rating_value;
-				}
-			}
+      // Check if nullptr
+      if (temp_rating_value != nullptr)
+      {
+        // Update - if necessary
+        if (temp_rating_continuous > *temp_rating_value)
+        {
+          temp_rating_continuous = *temp_rating_value;
+        }
+      }
 
-			//Now get emergency - winter
-			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+      // Now get emergency - summer
+      temp_rating_value = get_double(temp_obj, "rating.summer.emergency");
 
-			//Check if nullptr
-			if (temp_rating_value != nullptr)
-			{
-				//Update - if necessary
-				if (temp_rating_emergency > *temp_rating_value)
-				{
-					temp_rating_emergency = *temp_rating_value;
-				}
-			}
+      // Check if nullptr
+      if (temp_rating_value != nullptr)
+      {
+        // Update - if necessary
+        if (temp_rating_emergency > *temp_rating_value)
+        {
+          temp_rating_emergency = *temp_rating_value;
+        }
+      }
 
-			//Populate link array
-			link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = temp_rating_continuous;
-			link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = temp_rating_emergency;
-		}
-	}
-	return result;
+      // Now get emergency - winter
+      temp_rating_value = get_double(temp_obj, "rating.winter.emergency");
+
+      // Check if nullptr
+      if (temp_rating_value != nullptr)
+      {
+        // Update - if necessary
+        if (temp_rating_emergency > *temp_rating_value)
+        {
+          temp_rating_emergency = *temp_rating_value;
+        }
+      }
+
+      // Populate link array
+      link_rating[0][0] = link_rating[0][1] = link_rating[0][2] =
+          temp_rating_continuous;
+      link_rating[1][0] = link_rating[1][1] = link_rating[1][2] =
+          temp_rating_emergency;
+    }
+  }
+  return result;
 }
 
 void underground_line::recalc(void)
 {
-	line_configuration *config = object_data<line_configuration>(configuration);
-	gld::complex Zabc_mat[3][3], Yabc_mat[3][3];
-	bool not_TS_CN = false;
-	bool is_CN_ug_line = false;
-	OBJECT *obj = object_header(this);
+  line_configuration *config = object_data<line_configuration>(configuration);
+  gld::complex Zabc_mat[3][3], Yabc_mat[3][3];
+  bool not_TS_CN = false;
+  bool is_CN_ug_line = false;
+  OBJECT *obj = object_header(this);
 
-	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
-	for (int i = 0; i < 3; i++) 
-	{
-		for (int j = 0; j < 3; j++) 
-		{
-			Zabc_mat[i][j] = 0.0;
-			Yabc_mat[i][j] = 0.0;
-		}
-	}
+  // Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      Zabc_mat[i][j] = 0.0;
+      Yabc_mat[i][j] = 0.0;
+    }
+  }
 
-	// Set auxillary matrices
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			a_mat[i][j] = 0.0;
-			d_mat[i][j] = 0.0;
-			A_mat[i][j] = 0.0;
-			c_mat[i][j] = 0.0;
-			B_mat[i][j] = b_mat[i][j];
-		}
-	}
+  // Set auxillary matrices
+  for (int i = 0; i < 3; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      a_mat[i][j] = 0.0;
+      d_mat[i][j] = 0.0;
+      A_mat[i][j] = 0.0;
+      c_mat[i][j] = 0.0;
+      B_mat[i][j] = b_mat[i][j];
+    }
+  }
 
-	if (config->impedance11 != 0 || config->impedance22 != 0 || config->impedance33 != 0)
-	{
-		// Load Zabc_mat and Yabc_mat based on the z11-z33 and c11-c33 line config parameters
-		load_matrix_based_configuration(Zabc_mat, Yabc_mat);
+  if (config->impedance11 != 0 || config->impedance22 != 0 ||
+      config->impedance33 != 0)
+  {
+    // Load Zabc_mat and Yabc_mat based on the z11-z33 and c11-c33 line config
+    // parameters
+    load_matrix_based_configuration(Zabc_mat, Yabc_mat);
 
-		//Other auxilliary by phase
-		if (has_phase(PHASE_A))
-		{
-			a_mat[0][0] = 1.0;
-			d_mat[0][0] = 1.0;
-			A_mat[0][0] = 1.0;
-		}
+    // Other auxilliary by phase
+    if (has_phase(PHASE_A))
+    {
+      a_mat[0][0] = 1.0;
+      d_mat[0][0] = 1.0;
+      A_mat[0][0] = 1.0;
+    }
 
-		if (has_phase(PHASE_B))
-		{
-			a_mat[1][1] = 1.0;
-			d_mat[1][1] = 1.0;
-			A_mat[1][1] = 1.0;
-		}
+    if (has_phase(PHASE_B))
+    {
+      a_mat[1][1] = 1.0;
+      d_mat[1][1] = 1.0;
+      A_mat[1][1] = 1.0;
+    }
 
-		if (has_phase(PHASE_C))
-		{
-			a_mat[2][2] = 1.0;
-			d_mat[2][2] = 1.0;
-			A_mat[2][2] = 1.0;
-		}
-	}
-	else
-	{
-		double dia_od1, dia_od2, dia_od3;
-		int16 strands_4, strands_5, strands_6;
-		double rad_14, rad_25, rad_36;
-				double dia[7], res[7], gmr[7], gmrcn[3], rcn[3], gmrs[3], ress[3], tap[8];
-		double d[7][7];
-		double perm_A, perm_B, perm_C, c_an, c_bn, c_cn, temp_denom;
-		gld::complex cap_freq_coeff;
-		gld::complex z[7][7],z_ts[3][3]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
-		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
-		double miles = length / 5280.0;
+    if (has_phase(PHASE_C))
+    {
+      a_mat[2][2] = 1.0;
+      d_mat[2][2] = 1.0;
+      A_mat[2][2] = 1.0;
+    }
+  }
+  else
+  {
+    double dia_od1, dia_od2, dia_od3;
+    int16 strands_4, strands_5, strands_6;
+    double rad_14, rad_25, rad_36;
+    double dia[7], res[7], gmr[7], gmrcn[3], rcn[3], gmrs[3], ress[3], tap[8];
+    double d[7][7];
+    double perm_A, perm_B, perm_C, c_an, c_bn, c_cn, temp_denom;
+    gld::complex cap_freq_coeff;
+    gld::complex z[7][7], z_ts[3][3]; //, z_ij[3][3], z_in[3][3], z_nj[3][3],
+                                      // z_nn[3][3], z_abc[3][3];
+    double freq_coeff_real, freq_coeff_imag, freq_additive_term;
+    double miles = length / 5280.0;
 
-		gld::complex test;///////////////
+    gld::complex test; ///////////////
 
-		//Calculate coefficients for self and mutual impedance - incorporates frequency values
-		//Per Kersting (4.39) and (4.40) - coefficients end up same as OHLs
-		if (enable_frequency_dependence)	//See which frequency to use
-		{
-			freq_coeff_real = 0.00158836*current_frequency;
-			freq_coeff_imag = 0.00202237*current_frequency;
-			freq_additive_term = log(EARTH_RESISTIVITY/current_frequency)/2.0 + 7.6786;
-		}
-		else
-		{
-			freq_coeff_real = 0.00158836*nominal_frequency;
-			freq_coeff_imag = 0.00202237*nominal_frequency;
-			freq_additive_term = log(EARTH_RESISTIVITY/nominal_frequency)/2.0 + 7.6786;
-		}
+    // Calculate coefficients for self and mutual impedance - incorporates
+    // frequency values Per Kersting (4.39) and (4.40) - coefficients end up
+    // same as OHLs
+    if (enable_frequency_dependence) // See which frequency to use
+    {
+      freq_coeff_real = 0.00158836 * current_frequency;
+      freq_coeff_imag = 0.00202237 * current_frequency;
+      freq_additive_term =
+          log(EARTH_RESISTIVITY / current_frequency) / 2.0 + 7.6786;
+    }
+    else
+    {
+      freq_coeff_real = 0.00158836 * nominal_frequency;
+      freq_coeff_imag = 0.00202237 * nominal_frequency;
+      freq_additive_term =
+          log(EARTH_RESISTIVITY / nominal_frequency) / 2.0 + 7.6786;
+    }
 
-		#define DIA(i) (dia[i - 1])
-		#define RES(i) (res[i - 1])
-		#define RES_S(i) (ress[i - 4])
-		#define GMR_S(i) (gmrs[i - 4])
-		#define GMR(i) (gmr[i - 1])
-		#define GMRCN(i) (gmrcn[i - 4])
-		#define RCN(i) (rcn[i - 4])
-		#define D(i, j) (d[i - 1][j - 1])
-		#define Z(i, j) (z[i - 1][j - 1])
-		#define Z_TS(i, j) (z_ts[i - 1][j - 1])
-		#define TAP(i) (tap[i - 1])
+#define DIA(i) (dia[i - 1])
+#define RES(i) (res[i - 1])
+#define RES_S(i) (ress[i - 4])
+#define GMR_S(i) (gmrs[i - 4])
+#define GMR(i) (gmr[i - 1])
+#define GMRCN(i) (gmrcn[i - 4])
+#define RCN(i) (rcn[i - 4])
+#define D(i, j) (d[i - 1][j - 1])
+#define Z(i, j) (z[i - 1][j - 1])
+#define Z_TS(i, j) (z_ts[i - 1][j - 1])
+#define TAP(i) (tap[i - 1])
 
-		#define UG_GET(ph, name) (has_phase(PHASE_##ph) && config->phase##ph##_conductor ? \
-				object_data<underground_line_conductor>(config->phase##ph##_conductor)->name : 0)
+#define UG_GET(ph, name)                                  \
+  (has_phase(PHASE_##ph) && config->phase##ph##_conductor \
+       ? object_data<underground_line_conductor>(         \
+             config->phase##ph##_conductor)               \
+             ->name                                       \
+       : 0)
 
-		dia_od1 = UG_GET(A, outer_diameter);
-		dia_od2 = UG_GET(B, outer_diameter);
-		dia_od3 = UG_GET(C, outer_diameter);
-		GMR(1) = UG_GET(A, conductor_gmr);
-		GMR(2) = UG_GET(B, conductor_gmr);
-		GMR(3) = UG_GET(C, conductor_gmr);
-		GMR(7) = UG_GET(N, conductor_gmr);
-		DIA(1) = UG_GET(A, conductor_diameter);
-		DIA(2) = UG_GET(B, conductor_diameter);
-		DIA(3) = UG_GET(C, conductor_diameter);
-		DIA(7) = UG_GET(N, conductor_diameter);
-		RES(1) = UG_GET(A, conductor_resistance);
-		RES(2) = UG_GET(B, conductor_resistance);
-		RES(3) = UG_GET(C, conductor_resistance);
-		RES(7) = UG_GET(N, conductor_resistance);
-		GMR(4) = UG_GET(A, neutral_gmr);
-		GMR(5) = UG_GET(B, neutral_gmr);
-		GMR(6) = UG_GET(C, neutral_gmr);
-		GMR_S(4) = UG_GET(A, shield_gmr);
-		GMR_S(5) = UG_GET(B, shield_gmr);
-		GMR_S(6) = UG_GET(C, shield_gmr);
-		DIA(4) = UG_GET(A, neutral_diameter);
-		DIA(5) = UG_GET(B, neutral_diameter);
-		DIA(6) = UG_GET(C, neutral_diameter);
-		RES(4) = UG_GET(A, neutral_resistance);
-		RES(5) = UG_GET(B, neutral_resistance);
-		RES(6) = UG_GET(C, neutral_resistance);
-		RES_S(4) = UG_GET(A, shield_resistance);
-		RES_S(5) = UG_GET(B, shield_resistance);
-		RES_S(6) = UG_GET(C, shield_resistance);
-		TAP(1) = UG_GET(A, shield_thickness);
-		TAP(2) = UG_GET(B, shield_thickness);
-		TAP(3) = UG_GET(C, shield_thickness);
-		TAP(4) = UG_GET(N, shield_thickness);
-		TAP(5) = UG_GET(A, shield_diameter);
-		TAP(6) = UG_GET(B, shield_diameter);
-		TAP(7) = UG_GET(C, shield_diameter);
-		TAP(8) = UG_GET(N, shield_diameter);
-		strands_4 = UG_GET(A, neutral_strands);
-		strands_5 = UG_GET(B, neutral_strands);
-		strands_6 = UG_GET(C, neutral_strands);
-		if(GMR_S(4) == 0 && GMR_S(5) == 0 && GMR_S(6) == 0){
-			rad_14 = (dia_od1 - DIA(4)) / 24.0;
-			rad_25 = (dia_od2 - DIA(5)) / 24.0;
-			rad_36 = (dia_od3 - DIA(6)) / 24.0;
-		}
-	else
-		{
-			rad_14 = 0.0;
-			rad_25 = 0.0;
-			rad_36 = 0.0;
-		}
-		RCN(4) = has_phase(PHASE_A) && strands_4 > 0 ? RES(4) / strands_4 : 0.0;
-		RCN(5) = has_phase(PHASE_B) && strands_5 > 0 ? RES(5) / strands_5 : 0.0;
-		RCN(6) = has_phase(PHASE_C) && strands_6 > 0 ? RES(6) / strands_6 : 0.0;
+    dia_od1 = UG_GET(A, outer_diameter);
+    dia_od2 = UG_GET(B, outer_diameter);
+    dia_od3 = UG_GET(C, outer_diameter);
+    GMR(1) = UG_GET(A, conductor_gmr);
+    GMR(2) = UG_GET(B, conductor_gmr);
+    GMR(3) = UG_GET(C, conductor_gmr);
+    GMR(7) = UG_GET(N, conductor_gmr);
+    DIA(1) = UG_GET(A, conductor_diameter);
+    DIA(2) = UG_GET(B, conductor_diameter);
+    DIA(3) = UG_GET(C, conductor_diameter);
+    DIA(7) = UG_GET(N, conductor_diameter);
+    RES(1) = UG_GET(A, conductor_resistance);
+    RES(2) = UG_GET(B, conductor_resistance);
+    RES(3) = UG_GET(C, conductor_resistance);
+    RES(7) = UG_GET(N, conductor_resistance);
+    GMR(4) = UG_GET(A, neutral_gmr);
+    GMR(5) = UG_GET(B, neutral_gmr);
+    GMR(6) = UG_GET(C, neutral_gmr);
+    GMR_S(4) = UG_GET(A, shield_gmr);
+    GMR_S(5) = UG_GET(B, shield_gmr);
+    GMR_S(6) = UG_GET(C, shield_gmr);
+    DIA(4) = UG_GET(A, neutral_diameter);
+    DIA(5) = UG_GET(B, neutral_diameter);
+    DIA(6) = UG_GET(C, neutral_diameter);
+    RES(4) = UG_GET(A, neutral_resistance);
+    RES(5) = UG_GET(B, neutral_resistance);
+    RES(6) = UG_GET(C, neutral_resistance);
+    RES_S(4) = UG_GET(A, shield_resistance);
+    RES_S(5) = UG_GET(B, shield_resistance);
+    RES_S(6) = UG_GET(C, shield_resistance);
+    TAP(1) = UG_GET(A, shield_thickness);
+    TAP(2) = UG_GET(B, shield_thickness);
+    TAP(3) = UG_GET(C, shield_thickness);
+    TAP(4) = UG_GET(N, shield_thickness);
+    TAP(5) = UG_GET(A, shield_diameter);
+    TAP(6) = UG_GET(B, shield_diameter);
+    TAP(7) = UG_GET(C, shield_diameter);
+    TAP(8) = UG_GET(N, shield_diameter);
+    strands_4 = UG_GET(A, neutral_strands);
+    strands_5 = UG_GET(B, neutral_strands);
+    strands_6 = UG_GET(C, neutral_strands);
+    if (GMR_S(4) == 0 && GMR_S(5) == 0 && GMR_S(6) == 0)
+    {
+      rad_14 = (dia_od1 - DIA(4)) / 24.0;
+      rad_25 = (dia_od2 - DIA(5)) / 24.0;
+      rad_36 = (dia_od3 - DIA(6)) / 24.0;
+    }
+    else
+    {
+      rad_14 = 0.0;
+      rad_25 = 0.0;
+      rad_36 = 0.0;
+    }
+    RCN(4) = has_phase(PHASE_A) && strands_4 > 0 ? RES(4) / strands_4 : 0.0;
+    RCN(5) = has_phase(PHASE_B) && strands_5 > 0 ? RES(5) / strands_5 : 0.0;
+    RCN(6) = has_phase(PHASE_C) && strands_6 > 0 ? RES(6) / strands_6 : 0.0;
 
-		//Concentric neutral code
-		GMRCN(4) = !(has_phase(PHASE_A) && strands_4 > 0) ? 0.0 :
-			pow(GMR(4) * strands_4 * pow(rad_14, (strands_4 - 1)), (1.0 / strands_4));
-		GMRCN(5) = !(has_phase(PHASE_B) && strands_5 > 0) ? 0.0 :
-			pow(GMR(5) * strands_5 * pow(rad_25, (strands_5 - 1)), (1.0 / strands_5));
-		GMRCN(6) = !(has_phase(PHASE_C) && strands_6 > 0) ? 0.0 :
-			pow(GMR(6) * strands_6 * pow(rad_36, (strands_6 - 1)), (1.0 / strands_6));
+    // Concentric neutral code
+    GMRCN(4) = !(has_phase(PHASE_A) && strands_4 > 0)
+                   ? 0.0
+                   : pow(GMR(4) * strands_4 * pow(rad_14, (strands_4 - 1)),
+                         (1.0 / strands_4));
+    GMRCN(5) = !(has_phase(PHASE_B) && strands_5 > 0)
+                   ? 0.0
+                   : pow(GMR(5) * strands_5 * pow(rad_25, (strands_5 - 1)),
+                         (1.0 / strands_5));
+    GMRCN(6) = !(has_phase(PHASE_C) && strands_6 > 0)
+                   ? 0.0
+                   : pow(GMR(6) * strands_6 * pow(rad_36, (strands_6 - 1)),
+                         (1.0 / strands_6));
 
-		//Check to see if this is not a tape-shielded line or a concentric neutral line
+    // Check to see if this is not a tape-shielded line or a concentric neutral
+    // line
 
-		if (GMR(4) == 0.0 && GMR(5) == 0.0 && GMR(6) == 0.0 && GMR_S(4) == 0.0 && GMR_S(5) == 0.0 && GMR_S(6) == 0.0){// the gmr for the neutral strands and the tape shield is zero this is just an insulated underground cable
-			not_TS_CN = true;
-		}
-		else	//Implies it IS a CN or TS version, figure out which
-		{
-			if ((GMR_S(4) == 0.0) && (GMR_S(5) == 0.0) && (GMR_S(6) == 0.0))
-			{
-				is_CN_ug_line = true;
-			}
-			else	//Just assume tape shield
-			{
-				is_CN_ug_line = false;
-				rad_14 = (TAP(5) - TAP(1))/2;
-				rad_25 = (TAP(6) - TAP(2))/2;
-				rad_36 = (TAP(7) - TAP(3))/2;
-			}
-		}
-		//Capacitance stuff, if desired
-		if (use_line_cap && !not_TS_CN)
-		{
-			//Extract relative permitivitty
-			perm_A = UG_GET(A, insulation_rel_permitivitty);
-			perm_B = UG_GET(B, insulation_rel_permitivitty);
-			perm_C = UG_GET(C, insulation_rel_permitivitty);
+    if (GMR(4) == 0.0 && GMR(5) == 0.0 && GMR(6) == 0.0 && GMR_S(4) == 0.0 &&
+        GMR_S(5) == 0.0 &&
+        GMR_S(6) ==
+            0.0)
+    { // the gmr for the neutral strands and the tape shield is
+      // zero this is just an insulated underground cable
+      not_TS_CN = true;
+    }
+    else // Implies it IS a CN or TS version, figure out which
+    {
+      if ((GMR_S(4) == 0.0) && (GMR_S(5) == 0.0) && (GMR_S(6) == 0.0))
+      {
+        is_CN_ug_line = true;
+      }
+      else // Just assume tape shield
+      {
+        is_CN_ug_line = false;
+        rad_14 = (TAP(5) - TAP(1)) / 2;
+        rad_25 = (TAP(6) - TAP(2)) / 2;
+        rad_36 = (TAP(7) - TAP(3)) / 2;
+      }
+    }
+    // Capacitance stuff, if desired
+    if (use_line_cap && !not_TS_CN)
+    {
+      // Extract relative permitivitty
+      perm_A = UG_GET(A, insulation_rel_permitivitty);
+      perm_B = UG_GET(B, insulation_rel_permitivitty);
+      perm_C = UG_GET(C, insulation_rel_permitivitty);
 
-			//Define the scaling constant for frequency, distance, and microS
-			if (enable_frequency_dependence)	//See which frequency to use
-			{
-				cap_freq_coeff = gld::complex(0,(2.0*PI*current_frequency*0.000001*miles));
-			}
-			else
-			{
-				cap_freq_coeff = gld::complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
-			}
-		}
+      // Define the scaling constant for frequency, distance, and microS
+      if (enable_frequency_dependence) // See which frequency to use
+      {
+        cap_freq_coeff =
+            gld::complex(0, (2.0 * PI * current_frequency * 0.000001 * miles));
+      }
+      else
+      {
+        cap_freq_coeff =
+            gld::complex(0, (2.0 * PI * nominal_frequency * 0.000001 * miles));
+      }
+    }
 
-		#define DIST(ph1, ph2) (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing ? \
-			object_data<line_spacing>(config->line_spacing)->distance_##ph1##to##ph2 : 0.0)
+#define DIST(ph1, ph2)                                                      \
+  (has_phase(PHASE_##ph1) && has_phase(PHASE_##ph2) && config->line_spacing \
+       ? object_data<line_spacing>(config->line_spacing)                    \
+             ->distance_##ph1##to##ph2                                      \
+       : 0.0)
 
-		D(1, 2) = DIST(A, B);
-		D(1, 3) = DIST(A, C);
-		D(1, 4) = rad_14;
-		if(GMR_S(4) > 0)
-			D(1, 4) = GMR_S(4);
-		D(1, 5) = D(1, 2);
-		D(1, 6) = D(1, 3);
-		D(1, 7) = DIST(A, N);
-		D(2, 1) = D(1, 2);
-		D(2, 3) = DIST(B, C);
-		D(2, 4) = D(2, 1);
-		D(2, 5) = rad_25;
-		if(GMR_S(5) > 0)
-			D(2, 5) = GMR_S(5);
-		D(2, 6) = D(2, 3);
-		D(2, 7) = DIST(B, N);
-		D(3, 1) = D(1, 3);
-		D(3, 2) = D(2, 3);
-		D(3, 4) = D(3, 1);
-		D(3, 5) = D(3, 2);
-		D(3, 6) = rad_36;
-		if(GMR_S(6) > 0)
-			D(3, 6) = GMR_S(6);
-		D(3, 7) = DIST(C, N);
-		D(4, 1) = D(1, 4);
-		D(4, 2) = D(2, 4);
-		D(4, 3) = D(3, 4);
-		D(4, 5) = D(1, 2);
-		D(4, 6) = D(1, 3);
-		D(4, 7) = D(1, 7);
-		D(5, 1) = D(1, 5);
-		D(5, 2) = D(2, 5);
-		D(5, 3) = D(3, 5);
-		D(5, 4) = D(4, 5);
-		D(5, 6) = D(2, 3);
-		D(5, 7) = D(2, 7);
-		D(6, 1) = D(1, 6);
-		D(6, 2) = D(2, 6);
-		D(6, 3) = D(3, 6);
-		D(6, 4) = D(4, 6);
-		D(6, 5) = D(5, 6);
-		D(6, 7) = D(3, 7);
-		D(7, 1) = D(1, 7);
-		D(7, 2) = D(2, 7);
-		D(7, 3) = D(3, 7);
-		D(7, 4) = D(1, 7);
-		D(7, 5) = D(2, 7);
-		D(7, 6) = D(3, 7);
+    D(1, 2) = DIST(A, B);
+    D(1, 3) = DIST(A, C);
+    D(1, 4) = rad_14;
+    if (GMR_S(4) > 0)
+      D(1, 4) = GMR_S(4);
+    D(1, 5) = D(1, 2);
+    D(1, 6) = D(1, 3);
+    D(1, 7) = DIST(A, N);
+    D(2, 1) = D(1, 2);
+    D(2, 3) = DIST(B, C);
+    D(2, 4) = D(2, 1);
+    D(2, 5) = rad_25;
+    if (GMR_S(5) > 0)
+      D(2, 5) = GMR_S(5);
+    D(2, 6) = D(2, 3);
+    D(2, 7) = DIST(B, N);
+    D(3, 1) = D(1, 3);
+    D(3, 2) = D(2, 3);
+    D(3, 4) = D(3, 1);
+    D(3, 5) = D(3, 2);
+    D(3, 6) = rad_36;
+    if (GMR_S(6) > 0)
+      D(3, 6) = GMR_S(6);
+    D(3, 7) = DIST(C, N);
+    D(4, 1) = D(1, 4);
+    D(4, 2) = D(2, 4);
+    D(4, 3) = D(3, 4);
+    D(4, 5) = D(1, 2);
+    D(4, 6) = D(1, 3);
+    D(4, 7) = D(1, 7);
+    D(5, 1) = D(1, 5);
+    D(5, 2) = D(2, 5);
+    D(5, 3) = D(3, 5);
+    D(5, 4) = D(4, 5);
+    D(5, 6) = D(2, 3);
+    D(5, 7) = D(2, 7);
+    D(6, 1) = D(1, 6);
+    D(6, 2) = D(2, 6);
+    D(6, 3) = D(3, 6);
+    D(6, 4) = D(4, 6);
+    D(6, 5) = D(5, 6);
+    D(6, 7) = D(3, 7);
+    D(7, 1) = D(1, 7);
+    D(7, 2) = D(2, 7);
+    D(7, 3) = D(3, 7);
+    D(7, 4) = D(1, 7);
+    D(7, 5) = D(2, 7);
+    D(7, 6) = D(3, 7);
 
-		#undef DIST
-		#undef DIA
-		#undef UG_GET
+#undef DIST
+#undef DIA
+#undef UG_GET
 
-		 if (is_CN_ug_line) {
-			#define Z_GMR(i) (GMR(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
-			#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RCN(i), freq_coeff_imag * (log(1.0 / GMRCN(i)) + freq_additive_term)))
-			#define Z_GMR_S(i) (GMR_S(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term)))
-			#define Z_DIST(i, j) (D(i, j) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
+    if (is_CN_ug_line)
+    {
+#define Z_GMR(i)                                          \
+  (GMR(i) == 0.0 ? gld::complex(0.0)                      \
+                 : gld::complex(freq_coeff_real + RES(i), \
+                                freq_coeff_imag *         \
+                                    (log(1.0 / GMR(i)) + freq_additive_term)))
+#define Z_GMRCN(i)                                                         \
+  (GMRCN(i) == 0.0 ? gld::complex(0.0)                                     \
+                   : gld::complex(freq_coeff_real + RCN(i),                \
+                                  freq_coeff_imag * (log(1.0 / GMRCN(i)) + \
+                                                     freq_additive_term)))
+#define Z_GMR_S(i)                                                         \
+  (GMR_S(i) == 0.0 ? gld::complex(0.0)                                     \
+                   : gld::complex(freq_coeff_real + RES_S(i),              \
+                                  freq_coeff_imag * (log(1.0 / GMR_S(i)) + \
+                                                     freq_additive_term)))
+#define Z_DIST(i, j)                                                     \
+  (D(i, j) == 0.0 ? gld::complex(0.0)                                    \
+                  : gld::complex(freq_coeff_real,                        \
+                                 freq_coeff_imag * (log(1.0 / D(i, j)) + \
+                                                    freq_additive_term)))
 
-			for (int i = 1; i < 8; i++) {
-				for (int j = 1; j < 8; j++) {
-					if (i == j) {
-						if (i > 3 && i != 7){
-							Z(i, j) = Z_GMRCN(i);
-							if(Z_GMR_S(i) > 0 && Z(i, j) == 0)
-								Z(i, j) = Z_GMR_S(i);
-							test=Z_GMRCN(i);
-						}
-						else
-							Z(i, j) = Z_GMR(i);
-					}
-					else
-						Z(i, j) = Z_DIST(i, j);
-				}
-			}	
-			#undef Z_GMR_S	//Make the compiler happy
-		 } else {
-                // see example: 4.4
-                #define Z_GMR(i) (GMR(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
-		        //Notes for above #define: z11, z22, z33 - self conductor; z77 - self neutral. RES(i=4,5,6) is neutral_resitance, GMR(i=4,5,6) is neutral GMR. For z77, neutral_resistance to be added in real term
-                //so pick RES(i) such that is is neutral_resistance. For imaginaray temrm, neutral_gmr to be used in ln(1/GMRn) so pick GMR(i) such that it is neutral GMR
-                #define Z_GMR_S_SELF(i) (GMR_S(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real+RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z44, z55, z66 - self tape
+      for (int i = 1; i < 8; i++)
+      {
+        for (int j = 1; j < 8; j++)
+        {
+          if (i == j)
+          {
+            if (i > 3 && i != 7)
+            {
+              Z(i, j) = Z_GMRCN(i);
+              if (Z_GMR_S(i) > 0 && Z(i, j) == 0)
+                Z(i, j) = Z_GMR_S(i);
+              test = Z_GMRCN(i);
+            }
+            else
+              Z(i, j) = Z_GMR(i);
+          }
+          else
+            Z(i, j) = Z_DIST(i, j);
+        }
+      }
+#undef Z_GMR_S // Make the compiler happy
+    }
+    else
+    {
+// see example: 4.4
+#define Z_GMR(i)                                          \
+  (GMR(i) == 0.0 ? gld::complex(0.0)                      \
+                 : gld::complex(freq_coeff_real + RES(i), \
+                                freq_coeff_imag *         \
+                                    (log(1.0 / GMR(i)) + freq_additive_term)))
+// Notes for above #define: z11, z22, z33 - self conductor; z77 - self neutral.
+// RES(i=4,5,6) is neutral_resitance, GMR(i=4,5,6) is neutral GMR. For z77,
+// neutral_resistance to be added in real term so pick RES(i) such that is is
+// neutral_resistance. For imaginaray temrm, neutral_gmr to be used in
+// ln(1/GMRn) so pick GMR(i) such that it is neutral GMR
+#define Z_GMR_S_SELF(i)                           \
+  (GMR_S(i) == 0.0                                \
+       ? gld::complex(0.0)                        \
+       : gld::complex(freq_coeff_real + RES_S(i), \
+                      freq_coeff_imag *           \
+                          (log(1.0 / GMR_S(i)) +  \
+                           freq_additive_term))) // z44, z55, z66 - self tape
 
-		#ifdef Z_GMR_S
-		#undef Z_GMR_S
-		#endif
+#ifdef Z_GMR_S
+#undef Z_GMR_S
+#endif
 
-		        #define Z_GMR_S(i) (GMR_S(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real, freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z14, z25, z36 - mutual - conductor-tape
-                #define Z_DIST(i, j) (D(i, j) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
-               //Notes for above #define: z12,z13,z15,z16,z17,z21,z23,z24,z26,z27,z31,z32,z34,z35,z37,z41,z42,z43,z45,z46,z47,z51-z54,z36,z57,z61-z65,z67,z71-z76 mutual/coupling
+#define Z_GMR_S(i)                               \
+  (GMR_S(i) == 0.0                               \
+       ? gld::complex(0.0)                       \
+       : gld::complex(freq_coeff_real,           \
+                      freq_coeff_imag *          \
+                          (log(1.0 / GMR_S(i)) + \
+                           freq_additive_term))) // z14, z25, z36 - mutual -
+                                                 // conductor-tape
+#define Z_DIST(i, j)                                                     \
+  (D(i, j) == 0.0 ? gld::complex(0.0)                                    \
+                  : gld::complex(freq_coeff_real,                        \
+                                 freq_coeff_imag * (log(1.0 / D(i, j)) + \
+                                                    freq_additive_term)))
+      // Notes for above #define:
+      // z12,z13,z15,z16,z17,z21,z23,z24,z26,z27,z31,z32,z34,z35,z37,z41,z42,z43,z45,z46,z47,z51-z54,z36,z57,z61-z65,z67,z71-z76
+      // mutual/coupling
 
-		for (int i = 1; i < 8; i++) {
-			for (int j = 1; j < 8; j++) {
-				if (i == j) {
-					if (i > 3 && i != 7){
-						Z(i, j) = Z_GMR_S_SELF(i); //44,55,66 //there is 'test' in this if for CN Z formation. is it needed here?
-					}
-					//else if (i == 7) {
-						//if (has_phase(PHASE_A)) {
-							//Z(i, j) = Z_GMR(4); //z77 for phase-A conductor
-						//}
-						//else if (has_phase(PHASE_B)) {
-							//Z(i, j) = Z_GMR(5); //z77 for phase-B conductor
-						//}
-						//else if (has_phase(PHASE_C)) {
-							//Z(i, j) = Z_GMR(6); //z77 for phase-C conductor
-						//}
-					//}
-					else
-						Z(i, j) = Z_GMR(i); //11,22,33,77
-				}
-				else {
-					if ((i == 1 && j == 4) || (i == 2 && j == 5) || (i == 3 && j == 6)) {
-						Z(i, j) = Z_GMR_S(j); //14,25,36
-					}
-					else
-						Z(i, j) = Z_DIST(i, j);//all remaining elements. see Notes below #define Z_DIST
-				}
-					
-			}
-		}
+      for (int i = 1; i < 8; i++)
+      {
+        for (int j = 1; j < 8; j++)
+        {
+          if (i == j)
+          {
+            if (i > 3 && i != 7)
+            {
+              Z(i, j) =
+                  Z_GMR_S_SELF(i); // 44,55,66 //there is 'test' in this if for
+                                   // CN Z formation. is it needed here?
+            }
+            // else if (i == 7) {
+            // if (has_phase(PHASE_A)) {
+            // Z(i, j) = Z_GMR(4); //z77 for phase-A conductor
+            //}
+            // else if (has_phase(PHASE_B)) {
+            // Z(i, j) = Z_GMR(5); //z77 for phase-B conductor
+            //}
+            // else if (has_phase(PHASE_C)) {
+            // Z(i, j) = Z_GMR(6); //z77 for phase-C conductor
+            //}
+            //}
+            else
+              Z(i, j) = Z_GMR(i); // 11,22,33,77
+          }
+          else
+          {
+            if ((i == 1 && j == 4) || (i == 2 && j == 5) ||
+                (i == 3 && j == 6))
+            {
+              Z(i, j) = Z_GMR_S(j); // 14,25,36
+            }
+            else
+              Z(i, j) = Z_DIST(
+                  i,
+                  j); // all remaining elements. see Notes below #define Z_DIST
+          }
+        }
+      }
 
-		/* //this was a test based on example 4.4 in Kersting's book
-                Z(1,1) = Z_GMR(1);
-                Z(1,2) = Z_GMR_S(4);//Does it work for all phases? dont know yet
-                Z(1,3) = Z_DIST(1,7);
-                Z(2,1) = Z_GMR_S(4);// it is Z(1,2);
-                Z(2,2) = Z_GMR_S_M(4);
-                Z(2,3) = Z_DIST(1,7);
-                Z(3,1) = Z_DIST(1,7);// it is Z(1,3);
-                Z(3,2) = Z_DIST(1,7);// it is Z(2,3);
-                Z(3,3) = Z_GMR_F_N(1);
-                */
-             }  
-		#undef RES
-		#undef GMR
-		#undef GMRCN
-		#undef RCN
-		#undef D
-		#undef Z_GMR
-		#undef Z_GMRCN
-		#undef Z_DIST
-		#undef Z_GMR_S
-		
-		if (!not_TS_CN){			
-			if (is_CN_ug_line) {
-				gld::complex z_ij_cn[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
-									  {Z(2, 1), Z(2, 2), Z(2, 3)},
-									  {Z(3, 1), Z(3, 2), Z(3, 3)}};
-				gld::complex z_in_cn[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6),Z(1, 7)},
-									  {Z(2, 4), Z(2, 5), Z(2, 6),Z(2, 7)},
-									  {Z(3, 4), Z(3, 5), Z(3, 6),Z(3, 7)}};
-				gld::complex z_nj_cn[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
-									  {Z(5, 1), Z(5, 2), Z(5, 3)},
-									  {Z(6, 1), Z(6, 2), Z(6, 3)},
-				                      {Z(7, 1), Z(7, 2), Z(7, 3)}};
-				gld::complex z_nn_cn[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
-						               {Z(5, 4), Z(5, 5), Z(5, 6), Z(5, 7)},
-						               {Z(6, 4), Z(6, 5), Z(6, 6), Z(6, 7)},
-						               {Z(7, 4), Z(7, 5), Z(7, 6), Z(7, 7)}};
-				
-				if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C)&&has_phase(PHASE_N))){
-					if (!has_phase(PHASE_A))
-						z_nn_cn[0][0]=gld::complex(1.0);
-					if (!has_phase(PHASE_B))
-						z_nn_cn[1][1]=gld::complex(1.0);
-					if (!has_phase(PHASE_C))
-						z_nn_cn[2][2]=gld::complex(1.0);
-					if (!has_phase(PHASE_N))
-						z_nn_cn[3][3]=gld::complex(1.0);
-				} //add phase_N here
-				gld::complex z_nn_inv_cn[4][4], z_p1_cn[3][4], z_p2_cn[3][3], z_abc_cn[3][3];
-				lu_matrix_inverse(&z_nn_cn[0][0],&z_nn_inv_cn[0][0],4);
+      /* //this was a test based on example 4.4 in Kersting's book
+                      Z(1,1) = Z_GMR(1);
+                      Z(1,2) = Z_GMR_S(4);//Does it work for all phases? dont
+         know yet Z(1,3) = Z_DIST(1,7); Z(2,1) = Z_GMR_S(4);// it is Z(1,2);
+                      Z(2,2) = Z_GMR_S_M(4);
+                      Z(2,3) = Z_DIST(1,7);
+                      Z(3,1) = Z_DIST(1,7);// it is Z(1,3);
+                      Z(3,2) = Z_DIST(1,7);// it is Z(2,3);
+                      Z(3,3) = Z_GMR_F_N(1);
+                      */
+    }
+#undef RES
+#undef GMR
+#undef GMRCN
+#undef RCN
+#undef D
+#undef Z_GMR
+#undef Z_GMRCN
+#undef Z_DIST
+#undef Z_GMR_S
+
+    if (!not_TS_CN)
+    {
+      if (is_CN_ug_line)
+      {
+        gld::complex z_ij_cn[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
+                                      {Z(2, 1), Z(2, 2), Z(2, 3)},
+                                      {Z(3, 1), Z(3, 2), Z(3, 3)}};
+        gld::complex z_in_cn[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6), Z(1, 7)},
+                                      {Z(2, 4), Z(2, 5), Z(2, 6), Z(2, 7)},
+                                      {Z(3, 4), Z(3, 5), Z(3, 6), Z(3, 7)}};
+        gld::complex z_nj_cn[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
+                                      {Z(5, 1), Z(5, 2), Z(5, 3)},
+                                      {Z(6, 1), Z(6, 2), Z(6, 3)},
+                                      {Z(7, 1), Z(7, 2), Z(7, 3)}};
+        gld::complex z_nn_cn[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
+                                      {Z(5, 4), Z(5, 5), Z(5, 6), Z(5, 7)},
+                                      {Z(6, 4), Z(6, 5), Z(6, 6), Z(6, 7)},
+                                      {Z(7, 4), Z(7, 5), Z(7, 6), Z(7, 7)}};
+
+        if (!(has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C) &&
+              has_phase(PHASE_N)))
+        {
+          if (!has_phase(PHASE_A))
+            z_nn_cn[0][0] = gld::complex(1.0);
+          if (!has_phase(PHASE_B))
+            z_nn_cn[1][1] = gld::complex(1.0);
+          if (!has_phase(PHASE_C))
+            z_nn_cn[2][2] = gld::complex(1.0);
+          if (!has_phase(PHASE_N))
+            z_nn_cn[3][3] = gld::complex(1.0);
+        } // add phase_N here
+        gld::complex z_nn_inv_cn[4][4], z_p1_cn[3][4], z_p2_cn[3][3],
+            z_abc_cn[3][3];
+        lu_matrix_inverse(&z_nn_cn[0][0], &z_nn_inv_cn[0][0], 4);
+
+        // inverse(z_nn_cn,z_nn_inv_cn);
+        // multiply(z_in_cn, z_nn_inv_cn, z_p1_cn);
+        // multiply(z_p1_cn, z_nj_cn, z_p2_cn);
+
+        for (int row = 0; row < 3; row++)
+        {
+          for (int col = 0; col < 4; col++)
+          {
+            // Multiply the row of A by the column of B to get the row, column
+            // of product.
+            for (int inner = 0; inner < 4; inner++)
+            {
+              z_p1_cn[row][col] +=
+                  z_in_cn[row][inner] * z_nn_inv_cn[inner][col];
+            }
+          }
+        }
+        // multiply(z_in, z_nn_inv, z_p1);
+
+        for (int roww = 0; roww < 3; roww++)
+        {
+          for (int coll = 0; coll < 3; coll++)
+          {
+            // Multiply the row of A by the column of B to get the row, column
+            // of product.
+            for (int innerr = 0; innerr < 4; innerr++)
+            {
+              z_p2_cn[roww][coll] +=
+                  z_p1_cn[roww][innerr] * z_nj_cn[innerr][coll];
+            }
+          }
+        }
+        // multiply(z_p1, z_nj, z_p2);
+
+        subtract(z_ij_cn, z_p2_cn, z_abc_cn);
+        multiply(miles, z_abc_cn, Zabc_mat);
+      }
+      else
+      {
+        gld::complex z_ij_ts[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
+                                      {Z(2, 1), Z(2, 2), Z(2, 3)},
+                                      {Z(3, 1), Z(3, 2), Z(3, 3)}};
+        gld::complex z_in_ts[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6), Z(1, 7)},
+                                      {Z(2, 4), Z(2, 5), Z(2, 6), Z(2, 7)},
+                                      {Z(3, 4), Z(3, 5), Z(3, 6), Z(3, 7)}};
+        gld::complex z_nj_ts[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
+                                      {Z(5, 1), Z(5, 2), Z(5, 3)},
+                                      {Z(6, 1), Z(6, 2), Z(6, 3)},
+                                      {Z(7, 1), Z(7, 2), Z(7, 3)}};
+
+        gld::complex z_nn_ts[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
+                                      {Z(5, 4), Z(5, 5), Z(5, 6), Z(5, 7)},
+                                      {Z(6, 4), Z(6, 5), Z(6, 6), Z(6, 7)},
+                                      {Z(7, 4), Z(7, 5), Z(7, 6), Z(7, 7)}};
+        if (!(has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C) &&
+              has_phase(PHASE_N)))
+        {
+          if (!has_phase(PHASE_A))
+            z_nn_ts[0][0] = gld::complex(1.0);
+          if (!has_phase(PHASE_B))
+            z_nn_ts[1][1] = gld::complex(1.0);
+          if (!has_phase(PHASE_C))
+            z_nn_ts[2][2] = gld::complex(1.0);
+          if (!has_phase(PHASE_N))
+          {
+            z_nn_ts[3][3] = gld::complex(1.0);
+            gl_warning("Underground_line:%d - %s is a tape-shielded cable and "
+                       "may need an explicit phase N conductor",
+                       obj->id, (obj->name ? obj->name : "Unnamed"));
+            /*  TROUBLESHOOT
+            The underground cable is set up as a tape-shielded cable.  For
+            neutral currents, it may require an explicit neutral to be
+            connected, unless it represents a delta-connected system.
+            */
+          }
+        } // add phase_N here
+        gld::complex z_nn_inv_ts[4][4], z_p1_ts[3][4], z_p2_ts[3][3],
+            z_abc_ts[3][3];
+        lu_matrix_inverse(&z_nn_ts[0][0], &z_nn_inv_ts[0][0], 4);
+
+        for (int row = 0; row < 3; row++)
+        {
+          for (int col = 0; col < 4; col++)
+          {
+            // Multiply the row of A by the column of B to get the row, column
+            // of product.
+            for (int inner = 0; inner < 4; inner++)
+            {
+              z_p1_ts[row][col] +=
+                  z_in_ts[row][inner] * z_nn_inv_ts[inner][col];
+            }
+          }
+        }
+        // multiply(z_in, z_nn_inv, z_p1);
+
+        for (int roww = 0; roww < 3; roww++)
+        {
+          for (int coll = 0; coll < 3; coll++)
+          {
+            // Multiply the row of A by the column of B to get the row, column
+            // of product.
+            for (int innerr = 0; innerr < 4; innerr++)
+            {
+              z_p2_ts[roww][coll] +=
+                  z_p1_ts[roww][innerr] * z_nj_ts[innerr][coll];
+            }
+          }
+        }
+        // multiply(z_p1, z_nj, z_p2);
+
+        subtract(z_ij_ts, z_p2_ts, z_abc_ts);
+        multiply(miles, z_abc_ts, Zabc_mat);
+
+        /* //This is a test example based on example 4.4 in Kersting's
+        gld::complex z_ij_ts[1][1] = {Z(1, 1)};
+        gld::complex z_in_ts[1][2] = {Z(1, 2), Z(1, 3)};
+        gld::complex z_nj_ts[2][1] = {{Z(1, 2)},
+                                                {Z(1, 3)}};
+        gld::complex z_nn_ts[2][2] = {{Z(2, 2), Z(2, 3)},
+                                         {Z(3, 2), Z(3, 3)}};
+
+        if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
+                if (!has_phase(PHASE_A))
+                        z_nn_ts[0][0]=gld::complex(1.0);
+                if (!has_phase(PHASE_B))
+                        z_nn_ts[1][1]=gld::complex(1.0);
+                if (!has_phase(PHASE_C))
+                        z_nn_ts[2][2]=gld::complex(1.0);
+        }
+        gld::complex z_nn_inv_ts[2][2], z_p1_ts[1][2], z_p2_ts[1][1],
+        z_abc_ts[1][1];
+        //lu_matrix_inverse(&z_nn_ts[0][0],&z_nn_inv_ts[0][0],2);
+
+        z_nn_inv_ts[0][0] = z_nn_ts[1][1]/((z_nn_ts[0][0] * z_nn_ts[1][1]) -
+        (z_nn_ts[0][1] * z_nn_ts[1][0])); z_nn_inv_ts[1][1] =
+        z_nn_ts[0][0]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] *
+        z_nn_ts[1][0])); z_nn_inv_ts[0][1] = -z_nn_ts[0][1]/((z_nn_ts[0][0] *
+        z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0])); z_nn_inv_ts[1][0] =
+        -z_nn_ts[1][0]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] *
+        z_nn_ts[1][0]));
+
+        z_p1_ts[0][0] = (z_in_ts[0][0] * z_nn_inv_ts[0][0]) + (z_in_ts[0][1] *
+        z_nn_inv_ts[1][0]); z_p1_ts[0][1] = (z_in_ts[0][0] * z_nn_inv_ts[1][0])
+        + (z_in_ts[0][1] * z_nn_inv_ts[1][1]);
+
+        z_p2_ts[0][0] = (z_p1_ts[0][0] * z_nj_ts[0][0]) + (z_p1_ts[0][1] *
+        z_nj_ts[1][0]);
 
 
-				//inverse(z_nn_cn,z_nn_inv_cn);
-				//multiply(z_in_cn, z_nn_inv_cn, z_p1_cn);
-				//multiply(z_p1_cn, z_nj_cn, z_p2_cn);
+                                        z_abc_ts[0][0]  = z_ij_ts[0][0] -
+        z_p2_ts[0][0];
 
-				for (int row = 0; row < 3; row++) {
-					for (int col = 0; col < 4; col++) {
-						// Multiply the row of A by the column of B to get the row, column of product.
-						for (int inner = 0; inner < 4; inner++) {
-							z_p1_cn[row][col] += z_in_cn[row][inner] * z_nn_inv_cn[inner][col];
-						}
-					}
-				}
-				//multiply(z_in, z_nn_inv, z_p1);
-
-				for (int roww = 0; roww < 3; roww++) {
-					for (int coll = 0; coll < 3; coll++) {
-						// Multiply the row of A by the column of B to get the row, column of product.
-						for (int innerr = 0; innerr < 4; innerr++) {
-							z_p2_cn[roww][coll] += z_p1_cn[roww][innerr] * z_nj_cn[innerr][coll];
-						}
-					}
-				}
-				//multiply(z_p1, z_nj, z_p2);
-
-				subtract(z_ij_cn, z_p2_cn, z_abc_cn);
-				multiply(miles, z_abc_cn, Zabc_mat);
-
-			}
-			else {
-			gld::complex z_ij_ts[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
-									  {Z(2, 1), Z(2, 2), Z(2, 3)},
-									  {Z(3, 1), Z(3, 2), Z(3, 3)}};
-				gld::complex z_in_ts[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6), Z(1,7)},
-									  {Z(2, 4), Z(2, 5), Z(2, 6), Z(2,7)},
-									  {Z(3, 4), Z(3, 5), Z(3, 6), Z(3,7)}};
-				gld::complex z_nj_ts[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
-									  {Z(5, 1), Z(5, 2), Z(5, 3)},
-									  {Z(6, 1), Z(6, 2), Z(6, 3)},
-									  {Z(7, 1), Z(7, 2), Z(7, 3)}};
+        Zabc_mat[0][0] = (z_abc_ts[0][0]) * miles;
+        Zabc_mat[0][1] = gld::complex(0,0);
+        Zabc_mat[0][2] = gld::complex(0,0);
 
 
-				gld::complex z_nn_ts[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
-									  {Z(5, 4), Z(5, 5), Z(5, 6), Z(5, 7)},
-									  {Z(6, 4), Z(6, 5), Z(6, 6), Z(6, 7)},
-									  {Z(7, 4), Z(7, 5), Z(7, 6), Z(7, 7)}};
-			if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C)&&has_phase(PHASE_N))){
-					if (!has_phase(PHASE_A))
-						z_nn_ts[0][0]=gld::complex(1.0);
-					if (!has_phase(PHASE_B))
-						z_nn_ts[1][1]=gld::complex(1.0);
-					if (!has_phase(PHASE_C))
-						z_nn_ts[2][2]=gld::complex(1.0);
-					if(!has_phase(PHASE_N))
-					{
-						z_nn_ts[3][3]=gld::complex(1.0);
-					    gl_warning("Underground_line:%d - %s is a tape-shielded cable and may need an explicit phase N conductor",obj->id,(obj->name ? obj->name : "Unnamed"));
-						/*  TROUBLESHOOT
-						The underground cable is set up as a tape-shielded cable.  For neutral currents, it may require an explicit neutral to be connected, unless it represents a
-						delta-connected system.
-						*/
-					}
-				}  //add phase_N here
-				gld::complex z_nn_inv_ts[4][4], z_p1_ts[3][4], z_p2_ts[3][3], z_abc_ts[3][3];
-				lu_matrix_inverse(&z_nn_ts[0][0],&z_nn_inv_ts[0][0],4);
-				
-				for (int row = 0; row < 3; row++) {
-					for (int col = 0; col < 4; col++) {
-						// Multiply the row of A by the column of B to get the row, column of product.
-						for (int inner = 0; inner < 4; inner++) {
-							z_p1_ts[row][col] += z_in_ts[row][inner] * z_nn_inv_ts[inner][col];
-						}
-					}
-				}				
-				//multiply(z_in, z_nn_inv, z_p1);
-				
-				for (int roww = 0; roww < 3; roww++) {
-					for (int coll = 0; coll < 3; coll++) {
-						// Multiply the row of A by the column of B to get the row, column of product.
-						for (int innerr = 0; innerr < 4; innerr++) {
-							z_p2_ts[roww][coll] += z_p1_ts[roww][innerr] * z_nj_ts[innerr][coll];
-						}
-					}
-				}	
-				//multiply(z_p1, z_nj, z_p2);
-				
-				subtract(z_ij_ts, z_p2_ts, z_abc_ts);
-				multiply(miles, z_abc_ts, Zabc_mat);
+        Zabc_mat[1][0] = gld::complex(0,0);
+        Zabc_mat[1][1] = gld::complex(0,0);
 
-				/* //This is a test example based on example 4.4 in Kersting's
-				gld::complex z_ij_ts[1][1] = {Z(1, 1)};
-				gld::complex z_in_ts[1][2] = {Z(1, 2), Z(1, 3)};
-				gld::complex z_nj_ts[2][1] = {{Z(1, 2)},
-					                {Z(1, 3)}};
-				gld::complex z_nn_ts[2][2] = {{Z(2, 2), Z(2, 3)},
-						         {Z(3, 2), Z(3, 3)}};
+        Zabc_mat[1][2] = gld::complex(0,0);
+        Zabc_mat[2][0] = gld::complex(0,0);
+        Zabc_mat[2][1] = gld::complex(0,0);
 
-				if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
-					if (!has_phase(PHASE_A))
-						z_nn_ts[0][0]=gld::complex(1.0);
-					if (!has_phase(PHASE_B))
-						z_nn_ts[1][1]=gld::complex(1.0);
-					if (!has_phase(PHASE_C))
-						z_nn_ts[2][2]=gld::complex(1.0);
-				}				
-				gld::complex z_nn_inv_ts[2][2], z_p1_ts[1][2], z_p2_ts[1][1], z_abc_ts[1][1];
-				//lu_matrix_inverse(&z_nn_ts[0][0],&z_nn_inv_ts[0][0],2);
-				
-				z_nn_inv_ts[0][0] = z_nn_ts[1][1]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0]));			
-				z_nn_inv_ts[1][1] = z_nn_ts[0][0]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0]));	
-				z_nn_inv_ts[0][1] = -z_nn_ts[0][1]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0]));
-				z_nn_inv_ts[1][0] = -z_nn_ts[1][0]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0]));
-
-				z_p1_ts[0][0] = (z_in_ts[0][0] * z_nn_inv_ts[0][0]) + (z_in_ts[0][1] * z_nn_inv_ts[1][0]);
-				z_p1_ts[0][1] = (z_in_ts[0][0] * z_nn_inv_ts[1][0]) + (z_in_ts[0][1] * z_nn_inv_ts[1][1]);
-				
-				z_p2_ts[0][0] = (z_p1_ts[0][0] * z_nj_ts[0][0]) + (z_p1_ts[0][1] * z_nj_ts[1][0]);
-	
-
-                                z_abc_ts[0][0]  = z_ij_ts[0][0] - z_p2_ts[0][0];
-
-				Zabc_mat[0][0] = (z_abc_ts[0][0]) * miles;
-				Zabc_mat[0][1] = gld::complex(0,0);
-				Zabc_mat[0][2] = gld::complex(0,0);
-
-
-				Zabc_mat[1][0] = gld::complex(0,0);
-				Zabc_mat[1][1] = gld::complex(0,0);
-
-				Zabc_mat[1][2] = gld::complex(0,0);
-				Zabc_mat[2][0] = gld::complex(0,0);
-				Zabc_mat[2][1] = gld::complex(0,0);
-
-				Zabc_mat[2][2] = gld::complex(0,0);
-				//multiply(miles, z_abc_ts, Zabc_mat);
-				*/
-			}
-
-	
-		} else {
-			gld::complex z_nn_inv = 0;
-			if(Z(7, 7) != 0.0){
-				z_nn_inv = Z(7, 7)^(-1.0);
-			}
-			Zabc_mat[0][0] = (Z(1, 1) - Z(1, 7) * Z(1, 7) * z_nn_inv) * miles;
-			Zabc_mat[0][1] = (Z(1, 2) - Z(1, 7) * Z(2, 7) * z_nn_inv) * miles;
-			Zabc_mat[0][2] = (Z(1, 3) - Z(1, 7) * Z(3, 7) * z_nn_inv) * miles;
-			Zabc_mat[1][0] = (Z(2, 1) - Z(2, 7) * Z(1, 7) * z_nn_inv) * miles;
-			Zabc_mat[1][1] = (Z(2, 2) - Z(2, 7) * Z(2, 7) * z_nn_inv) * miles;
-			Zabc_mat[1][2] = (Z(2, 3) - Z(2, 7) * Z(3, 7) * z_nn_inv) * miles;
-			Zabc_mat[2][0] = (Z(3, 1) - Z(3, 7) * Z(1, 7) * z_nn_inv) * miles;
-			Zabc_mat[2][1] = (Z(3, 2) - Z(3, 7) * Z(2, 7) * z_nn_inv) * miles;
-			Zabc_mat[2][2] = (Z(3, 3) - Z(3, 7) * Z(3, 7) * z_nn_inv) * miles;
-		}
+        Zabc_mat[2][2] = gld::complex(0,0);
+        //multiply(miles, z_abc_ts, Zabc_mat);
+        */
+      }
+    }
+    else
+    {
+      gld::complex z_nn_inv = 0;
+      if (Z(7, 7) != 0.0)
+      {
+        z_nn_inv = Z(7, 7) ^ (-1.0);
+      }
+      Zabc_mat[0][0] = (Z(1, 1) - Z(1, 7) * Z(1, 7) * z_nn_inv) * miles;
+      Zabc_mat[0][1] = (Z(1, 2) - Z(1, 7) * Z(2, 7) * z_nn_inv) * miles;
+      Zabc_mat[0][2] = (Z(1, 3) - Z(1, 7) * Z(3, 7) * z_nn_inv) * miles;
+      Zabc_mat[1][0] = (Z(2, 1) - Z(2, 7) * Z(1, 7) * z_nn_inv) * miles;
+      Zabc_mat[1][1] = (Z(2, 2) - Z(2, 7) * Z(2, 7) * z_nn_inv) * miles;
+      Zabc_mat[1][2] = (Z(2, 3) - Z(2, 7) * Z(3, 7) * z_nn_inv) * miles;
+      Zabc_mat[2][0] = (Z(3, 1) - Z(3, 7) * Z(1, 7) * z_nn_inv) * miles;
+      Zabc_mat[2][1] = (Z(3, 2) - Z(3, 7) * Z(2, 7) * z_nn_inv) * miles;
+      Zabc_mat[2][2] = (Z(3, 3) - Z(3, 7) * Z(3, 7) * z_nn_inv) * miles;
+    }
 #undef Z
 
+    if (use_line_cap && !not_TS_CN)
+    {
+      // Concentric neutral code
+      if (is_CN_ug_line)
 
-		if (use_line_cap && !not_TS_CN)
-		{
-			//Concentric neutral code 
-			if (is_CN_ug_line)
+      {
+        // Compute base capacitances - split denominator to handle
+        if (has_phase(PHASE_A))
 
+        {
+          if ((dia[0] == 0.0) || (rad_14 == 0.0) ||
+              (strands_4 ==
+               0)) // Make sure conductor or "neutral ring" radius are not zero
+          {
+            gl_warning("Unable to compute capacitance for %s",
+                       object_header(this)->name);
+            /* TROUBLESHOOT
+            One phase of an underground line has either a conductor diameter, a
+            concentric-neutral location diameter, or a neutral strand count of
+            zero.  This will lead to indeterminant values in the analysis.
+            Please fix these values, or run the simulation with line capacitance
+            disabled.
+            */
 
-			{
-				//Compute base capacitances - split denominator to handle 
-				if (has_phase(PHASE_A))
+            c_an = 0.0;
+          }
+          else // All should be OK
 
-				{
-					if ((dia[0]==0.0) || (rad_14==0.0) || (strands_4 == 0))	//Make sure conductor or "neutral ring" radius are not zero
-					{
-						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
-						/* TROUBLESHOOT
-						One phase of an underground line has either a conductor diameter, a concentric-neutral location diameter, or a neutral
-						strand count of zero.  This will lead to indeterminant values in the analysis.  Please fix these values, or run the simulation
-						with line capacitance disabled.
-						*/
-						
-						c_an = 0.0;
-					}
-					else	//All should be OK
+          {
+            // Compute the denominator (make sure it isn't zero)
+            temp_denom =
+                log(rad_14 / (dia[0] / 24.0)) -
+                (1.0 / ((double)(strands_4))) *
+                    log(((double)(strands_4)) * dia[3] / 24.0 / rad_14);
 
-					{
-						//Compute the denominator (make sure it isn't zero)
-						temp_denom = log(rad_14/(dia[0] / 24.0)) - (1.0 / ((double)(strands_4))) * log(((double)(strands_4))*dia[3] / 24.0 / rad_14);
+            if (temp_denom == 0.0)
+            {
+              gl_warning("Capacitance calculation failure for %s",
+                         object_header(this)->name);
+              /*  TROUBLESHOOT
+              While computing the capacitance, a zero-value denominator was
+              encountered.  Please check your underground_conductor parameter
+              values and try again.
+              */
 
-						if (temp_denom == 0.0)
-						{
-							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
-							/*  TROUBLESHOOT
-							While computing the capacitance, a zero-value denominator was encountered.  Please check
-							your underground_conductor parameter values and try again.
-							*/
-							
-							c_an = 0.0;
-						}
-						else	//Valid, continue
-						{
-							//Calculate capacitance value for A
-							c_an = (2.0 * PI * PERMITIVITTY_FREE * perm_A) / temp_denom;
-						}
-					}
-				}
+              c_an = 0.0;
+            }
+            else // Valid, continue
+            {
+              // Calculate capacitance value for A
+              c_an = (2.0 * PI * PERMITIVITTY_FREE * perm_A) / temp_denom;
+            }
+          }
+        }
 
-				else //No phase A
-				{
+        else // No phase A
+        {
 
-					c_an = 0.0;	//No capacitance
-				}
+          c_an = 0.0; // No capacitance
+        }
 
+        // Compute base capacitances - split denominator to handle
+        if (has_phase(PHASE_B))
 
-				//Compute base capacitances - split denominator to handle 
-				if (has_phase(PHASE_B))
+        {
+          if ((dia[1] == 0.0) || (rad_25 == 0.0) ||
+              (strands_5 ==
+               0)) // Make sure conductor or "neutral ring" radius are not zero
+          {
+            gl_warning("Unable to compute capacitance for %s",
+                       object_header(this)->name);
+            // Defined above
 
+            c_bn = 0.0;
+          }
+          else // All should be OK
+          {
+            // Compute the denominator (make sure it isn't zero)
+            temp_denom =
+                log(rad_25 / (dia[1] / 24.0)) -
+                (1.0 / ((double)(strands_5))) *
+                    log(((double)(strands_5)) * dia[4] / 24.0 / rad_25);
 
-				{
-					if ((dia[1]==0.0) || (rad_25==0.0) || (strands_5 == 0))	//Make sure conductor or "neutral ring" radius are not zero
-					{
-						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
-						//Defined above
+            if (temp_denom == 0.0)
+            {
+              gl_warning("Capacitance calculation failure for %s",
+                         object_header(this)->name);
+              // Defined above
 
-						c_bn = 0.0;
-					}
-					else	//All should be OK
-					{
-						//Compute the denominator (make sure it isn't zero)
-						temp_denom = log(rad_25/(dia[1] / 24.0)) - (1.0 / ((double)(strands_5))) * log(((double)(strands_5))*dia[4] / 24.0 / rad_25);
+              c_bn = 0.0;
+            }
+            else // Valid, continue
+            {
+              // Calculate capacitance value for A
+              c_bn = (2.0 * PI * PERMITIVITTY_FREE * perm_B) / temp_denom;
+            }
+          }
+        }
+        else // No phase B
 
-						if (temp_denom == 0.0)
-						{
-							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
-							//Defined above
+        {
+          c_bn = 0.0; // No capacitance
+        }
 
-							c_bn = 0.0;
-						}
-						else	//Valid, continue
-						{
-							//Calculate capacitance value for A
-							c_bn = (2.0 * PI * PERMITIVITTY_FREE * perm_B) / temp_denom;
-						}
-					}
+        // Compute base capacitances - split denominator to handle
+        if (has_phase(PHASE_C))
+        {
+          if ((dia[2] == 0.0) || (rad_36 == 0.0) ||
+              (strands_6 ==
+               0)) // Make sure conductor or "neutral ring" radius are not zero
 
-				}
-				else //No phase B
+          {
+            gl_warning("Unable to compute capacitance for %s",
+                       object_header(this)->name);
+            // Defined above
 
-				{
-					c_bn = 0.0;	//No capacitance
-				}
+            c_cn = 0.0;
+          }
+          else // All should be OK
 
+          {
+            // Compute the denominator (make sure it isn't zero)
+            temp_denom =
+                log(rad_36 / (dia[2] / 24.0)) -
+                (1.0 / ((double)(strands_6))) *
+                    log(((double)(strands_6)) * dia[5] / 24.0 / rad_36);
 
+            if (temp_denom == 0.0)
+            {
+              gl_warning("Capacitance calculation failure for %s",
+                         object_header(this)->name);
+              // Defined above
 
-				//Compute base capacitances - split denominator to handle 
-				if (has_phase(PHASE_C))
-				{
-					if ((dia[2]==0.0) || (rad_36==0.0) || (strands_6 == 0))	//Make sure conductor or "neutral ring" radius are not zero
+              c_cn = 0.0;
+            }
+            else // Valid, continue
+            {
+              // Calculate capacitance value for C
+              c_cn = (2.0 * PI * PERMITIVITTY_FREE * perm_C) / temp_denom;
+            }
+          }
+        }
 
-					{
-						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
-						//Defined above
+        else // No phase C
+        {
+          c_cn = 0.0; // No capacitance
+        }
+      } // End concentric neutral calculations
+      else // Implies tape-shielded
+      {
+        //*************** THIS HAS NOT BEEN FIXED --- Tape Shield Capacitor Code
+        // would go down here ************************//
+        // Compute base capacitances - split denominator to handle
 
-						c_cn = 0.0;
-					}
-					else	//All should be OK
+        if (has_phase(PHASE_A))
+        {
 
-					{
-						//Compute the denominator (make sure it isn't zero)
-						temp_denom = log(rad_36/(dia[2] / 24.0)) - (1.0 / ((double)(strands_6))) * log(((double)(strands_6))*dia[5] / 24.0 / rad_36);
+          if ((dia[0] == 0.0) ||
+              (rad_14 == 0.0)) // Make sure conductor or "neutral ring" radius
+                               // are not zero
+          {
+            gl_warning("Unable to compute capacitance for %s",
+                       object_header(this)->name);
+            /* TROUBLESHOOT
+            One phase of an underground line has either a conductor diameter, a
+            concentric-neutral location diameter, or a neutral strand count of
+            zero.  This will lead to indeterminant values in the analysis.
+            Please fix these values, or run the simulation with line capacitance
+            disabled.
+            */
 
-						if (temp_denom == 0.0)
-						{
-							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
-							//Defined above
+            c_an = 0.0;
+          }
+          else // All should be OK
+          {
+            // Compute the denominator (make sure it isn't zero)
+            temp_denom = log(rad_14 / (dia[0] / 2.0));
 
-							c_cn = 0.0;
-						}
-						else	//Valid, continue
-						{
-							//Calculate capacitance value for C
-							c_cn = (2.0 * PI * PERMITIVITTY_FREE * perm_C) / temp_denom;
-						}
-					}
-				}
+            if (temp_denom == 0.0)
+            {
+              gl_warning("Capacitance calculation failure for %s",
+                         object_header(this)->name);
+              /*  TROUBLESHOOT
+              While computing the capacitance, a zero-value denominator was
+              encountered.  Please check your underground_conductor parameter
+              values and try again.
+              */
 
-				else //No phase C
-				{
-					c_cn = 0.0;	//No capacitance
-				}
-			}//End concentric neutral calculations
-			else	//Implies tape-shielded
-			{
-				//*************** THIS HAS NOT BEEN FIXED --- Tape Shield Capacitor Code would go down here ************************//
-				//Compute base capacitances - split denominator to handle 
-				
-				if (has_phase(PHASE_A))
-				{
-					
-					if ((dia[0]==0.0) || (rad_14==0.0))	//Make sure conductor or "neutral ring" radius are not zero
-					{
-						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
-						/* TROUBLESHOOT
-						One phase of an underground line has either a conductor diameter, a concentric-neutral location diameter, or a neutral
-						strand count of zero.  This will lead to indeterminant values in the analysis.  Please fix these values, or run the simulation
-						with line capacitance disabled.
-						*/
-						
-						c_an = 0.0;
-					}
-					else	//All should be OK
-					{
-						//Compute the denominator (make sure it isn't zero)
-						temp_denom = log(rad_14/(dia[0] / 2.0));
+              c_an = 0.0;
+            }
+            else // Valid, continue
+            {
+              // Calculate capacitance value for A
+              c_an = (2.0 * PI * PERMITIVITTY_FREE * perm_A) / temp_denom;
+            }
+          }
+        }
+        else // No phase A
+        {
+          c_an = 0.0; // No capacitance
+        }
 
-						if (temp_denom == 0.0)
-						{
-							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
-							/*  TROUBLESHOOT
-							While computing the capacitance, a zero-value denominator was encountered.  Please check
-							your underground_conductor parameter values and try again.
-							*/
-							
-							c_an = 0.0;
-						}
-						else	//Valid, continue
-						{
-							//Calculate capacitance value for A
-							c_an = (2.0 * PI * PERMITIVITTY_FREE * perm_A) / temp_denom;
-						}
-					}
-				}
-				else //No phase A
-				{
-					c_an = 0.0;	//No capacitance
-				}
+        // Compute base capacitances - split denominator to handle
+        if (has_phase(PHASE_B))
 
+        {
 
-				//Compute base capacitances - split denominator to handle 
-				if (has_phase(PHASE_B))
+          if ((dia[1] == 0.0) ||
+              (rad_25 == 0.0)) // Make sure conductor or "neutral ring" radius
+                               // are not zero
+          {
+            gl_warning("Unable to compute capacitance for %s",
+                       object_header(this)->name);
+            // Defined above
 
+            c_bn = 0.0;
+          }
+          else // All should be OK
+          {
+            // Compute the denominator (make sure it isn't zero)
+            temp_denom = log(rad_25 / (dia[1] / 2.0));
 
-				{
-					
-					if ((dia[1]==0.0) || (rad_25==0.0))	//Make sure conductor or "neutral ring" radius are not zero
-					{
-						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
-						//Defined above
+            if (temp_denom == 0.0)
+            {
+              gl_warning("Capacitance calculation failure for %s",
+                         object_header(this)->name);
+              // Defined above
 
-						c_bn = 0.0;
-					}
-					else	//All should be OK
-					{
-						//Compute the denominator (make sure it isn't zero)
-						temp_denom = log(rad_25/(dia[1] / 2.0));
+              c_bn = 0.0;
+            }
+            else // Valid, continue
+            {
+              // Calculate capacitance value for A
+              c_bn = (2.0 * PI * PERMITIVITTY_FREE * perm_B) / temp_denom;
+            }
+          }
+        }
+        else // No phase B
 
-						if (temp_denom == 0.0)
-						{
-							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
-							//Defined above
+        {
+          c_bn = 0.0; // No capacitance
+        }
 
-							c_bn = 0.0;
-						}
-						else	//Valid, continue
-						{
-							//Calculate capacitance value for A
-							c_bn = (2.0 * PI * PERMITIVITTY_FREE * perm_B) / temp_denom;
-						}
-					}
+        // Compute base capacitances - split denominator to handle
+        if (has_phase(PHASE_C))
+        {
 
-				}
-				else //No phase B
+          if ((dia[2] == 0.0) ||
+              (rad_36 == 0.0)) // Make sure conductor or "neutral ring" radius
+                               // are not zero
 
-				{
-					c_bn = 0.0;	//No capacitance
-				}
+          {
+            gl_warning("Unable to compute capacitance for %s",
+                       object_header(this)->name);
+            // Defined above
 
+            c_cn = 0.0;
+          }
+          else // All should be OK
 
+          {
+            // Compute the denominator (make sure it isn't zero)
+            temp_denom = log(rad_36 / (dia[2] / 2.0));
 
-				//Compute base capacitances - split denominator to handle 
-				if (has_phase(PHASE_C))
-				{
-					
-					if ((dia[2]==0.0) || (rad_36==0.0))	//Make sure conductor or "neutral ring" radius are not zero
+            if (temp_denom == 0.0)
+            {
+              gl_warning("Capacitance calculation failure for %s",
+                         object_header(this)->name);
+              // Defined above
 
-					{
-						gl_warning("Unable to compute capacitance for %s",object_header(this)->name);
-						//Defined above
+              c_cn = 0.0;
+            }
+            else // Valid, continue
+            {
+              // Calculate capacitance value for C
+              c_cn = (2.0 * PI * PERMITIVITTY_FREE * perm_C) / temp_denom;
+            }
+          }
+        }
+        else // No phase C
+        {
+          c_cn = 0.0; // No capacitance
+        }
+      }
 
-						c_cn = 0.0;
-					}
-					else	//All should be OK
+      // Make admittance matrix, scaling for frequency, distance, and
+      // microSiemens as well as per Kersting (5.15)
+      Yabc_mat[0][0] = cap_freq_coeff * c_an;
+      Yabc_mat[1][1] = cap_freq_coeff * c_bn;
+      Yabc_mat[2][2] = cap_freq_coeff * c_cn;
+    }
+    else // No line capacitance, carry on as usual
+    {
+      // Set auxillary matrices
+      for (int i = 0; i < 3; i++)
+      {
+        for (int j = 0; j < 3; j++)
+        {
+          a_mat[i][j] = 0.0;
+          d_mat[i][j] = 0.0;
+          A_mat[i][j] = 0.0;
+          c_mat[i][j] = 0.0;
+          B_mat[i][j] = b_mat[i][j];
+        }
+      }
 
-					{
-						//Compute the denominator (make sure it isn't zero)
-						temp_denom = log(rad_36/(dia[2] / 2.0));
+      // Other auxilliary by phase
+      if (has_phase(PHASE_A))
+      {
+        a_mat[0][0] = 1.0;
+        d_mat[0][0] = 1.0;
+        A_mat[0][0] = 1.0;
+      }
 
-						if (temp_denom == 0.0)
-						{
-							gl_warning("Capacitance calculation failure for %s",object_header(this)->name);
-							//Defined above
+      if (has_phase(PHASE_B))
+      {
+        a_mat[1][1] = 1.0;
+        d_mat[1][1] = 1.0;
+        A_mat[1][1] = 1.0;
+      }
 
-							c_cn = 0.0;
-						}
-						else	//Valid, continue
-						{
-							//Calculate capacitance value for C
-							c_cn = (2.0 * PI * PERMITIVITTY_FREE * perm_C) / temp_denom;
-						}
-					}
-				}
-				else //No phase C
-				{
-					c_cn = 0.0;	//No capacitance
-				}
-			}
+      if (has_phase(PHASE_C))
+      {
+        a_mat[2][2] = 1.0;
+        d_mat[2][2] = 1.0;
+        A_mat[2][2] = 1.0;
+      }
+    }
+  }
 
+  // Calculate line matrixies A_mat, B_mat, a_mat, b_mat, c_mat and d_mat based
+  // on Zabc_mat and Yabc_mat
+  recalc_line_matricies(Zabc_mat, Yabc_mat);
 
+  // Check for negative resistance in the line's impedance matrix
+  bool neg_res = false;
+  for (int n = 0; n < 3; n++)
+  {
+    for (int m = 0; m < 3; m++)
+    {
+      if (b_mat[n][m].Re() < 0.0)
+      {
+        neg_res = true;
+      }
+    }
+  }
 
-			//Make admittance matrix, scaling for frequency, distance, and microSiemens as well as per Kersting (5.15) 
-			Yabc_mat[0][0] = cap_freq_coeff * c_an;
-			Yabc_mat[1][1] = cap_freq_coeff * c_bn;
-			Yabc_mat[2][2] = cap_freq_coeff * c_cn;
-		}
-		else	//No line capacitance, carry on as usual
-		{
-			// Set auxillary matrices
-			for (int i = 0; i < 3; i++) {
-				for (int j = 0; j < 3; j++) {
-					a_mat[i][j] = 0.0;
-					d_mat[i][j] = 0.0;
-					A_mat[i][j] = 0.0;
-					c_mat[i][j] = 0.0;
-					B_mat[i][j] = b_mat[i][j];
-				}
-			}
-
-			//Other auxilliary by phase
-			if (has_phase(PHASE_A))
-			{
-				a_mat[0][0] = 1.0;
-				d_mat[0][0] = 1.0;
-				A_mat[0][0] = 1.0;
-			}
-
-			if (has_phase(PHASE_B))
-			{
-				a_mat[1][1] = 1.0;
-				d_mat[1][1] = 1.0;
-				A_mat[1][1] = 1.0;
-			}
-
-			if (has_phase(PHASE_C))
-			{
-				a_mat[2][2] = 1.0;
-				d_mat[2][2] = 1.0;
-				A_mat[2][2] = 1.0;
-			}
-		}
-	}
-
-	// Calculate line matrixies A_mat, B_mat, a_mat, b_mat, c_mat and d_mat based on Zabc_mat and Yabc_mat
-	recalc_line_matricies(Zabc_mat, Yabc_mat);
-	
-	//Check for negative resistance in the line's impedance matrix
-	bool neg_res = false;
-	for (int n = 0; n < 3; n++){
-		for (int m = 0; m < 3; m++){
-			if(b_mat[n][m].Re() < 0.0){
-				neg_res = true;
-			}
-		}
-	}
-	
-	if(neg_res){
-		gl_warning("INIT: underground_line:%s has a negative resistance in it's impedance matrix. This will result in unusual behavior. Please check the line's geometry and cable parameters.", obj->name);
-		/*  TROUBLESHOOT
-		A negative resistance value was found for one or more the real parts of the underground_line's impedance matrix.
-		While this is numerically possible, it is a physical impossibility. This resulted most likely from a improperly 
-		defined conductor cable. Please check and modify the conductor objects used for this line to correct this issue.
-		*/
-	}
+  if (neg_res)
+  {
+    gl_warning("INIT: underground_line:%s has a negative resistance in it's "
+               "impedance matrix. This will result in unusual behavior. Please "
+               "check the line's geometry and cable parameters.",
+               obj->name);
+    /*  TROUBLESHOOT
+    A negative resistance value was found for one or more the real parts of the
+    underground_line's impedance matrix. While this is numerically possible, it
+    is a physical impossibility. This resulted most likely from a improperly
+    defined conductor cable. Please check and modify the conductor objects used
+    for this line to correct this issue.
+    */
+  }
 
 #ifdef _TESTING
-	/// @todo use output_test() instead of cout (powerflow, high priority) (ticket #137)
-	if (show_matrix_values)
-	{
-		OBJECT *obj = GETOBJECT(this);
+  /// @todo use output_test() instead of cout (powerflow, high priority) (ticket
+  /// #137)
+  if (show_matrix_values)
+  {
+    OBJECT *obj = GETOBJECT(this);
 
-		gl_testmsg("underground_line: %s a matrix",obj->name);
-		print_matrix(a_mat);
+    gl_testmsg("underground_line: %s a matrix", obj->name);
+    print_matrix(a_mat);
 
-		gl_testmsg("underground_line: %s A matrix",obj->name);
-		print_matrix(A_mat);
+    gl_testmsg("underground_line: %s A matrix", obj->name);
+    print_matrix(A_mat);
 
-		gl_testmsg("underground_line: %s b matrix",obj->name);
-		print_matrix(b_mat);
+    gl_testmsg("underground_line: %s b matrix", obj->name);
+    print_matrix(b_mat);
 
-		gl_testmsg("underground_line: %s B matrix",obj->name);
-		print_matrix(B_mat);
+    gl_testmsg("underground_line: %s B matrix", obj->name);
+    print_matrix(B_mat);
 
-		gl_testmsg("underground_line: %s c matrix",obj->name);
-		print_matrix(c_mat);
+    gl_testmsg("underground_line: %s c matrix", obj->name);
+    print_matrix(c_mat);
 
-		gl_testmsg("underground_line: %s d matrix",obj->name);
-		print_matrix(d_mat);
-	}
+    gl_testmsg("underground_line: %s d matrix", obj->name);
+    print_matrix(d_mat);
+  }
 #endif
 }
 
 int underground_line::isa(char *classname)
 {
-	return strcmp(classname,"underground_line")==0 || line::isa(classname);
+  return strcmp(classname, "underground_line") == 0 || line::isa(classname);
 }
-
 
 /**
-* test_phases is called to ensure all necessary conductors are included in the
-* configuration object and are of the proper type.
-*
-* @param config the line configuration object
-* @param ph the phase to check
-*
-* Returns 1 for TS, 10 for CN, and 0 for missing/neither/don't care
-*/
+ * test_phases is called to ensure all necessary conductors are included in the
+ * configuration object and are of the proper type.
+ *
+ * @param config the line configuration object
+ * @param ph the phase to check
+ *
+ * Returns 1 for TS, 10 for CN, and 0 for missing/neither/don't care
+ */
 int underground_line::test_phases(line_configuration *config, const char ph)
 {
-	int return_val;
-	bool condCheck, condNotPres;
-	OBJECT *obj = GETOBJECT(this);
-	double temp_shield_gmr_val, temp_neutral_gmr_val;
+  int return_val;
+  bool condCheck, condNotPres;
+  OBJECT *obj = GETOBJECT(this);
+  double temp_shield_gmr_val, temp_neutral_gmr_val;
 
-	//Default return value is "don't care"
-	return_val = 0;
+  // Default return value is "don't care"
+  return_val = 0;
 
-	if (ph=='A')
-	{
-		if (config->impedance11 == 0.0)
-		{
-			condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, "underground_line_conductor","powerflow"));
-			condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
+  if (ph == 'A')
+  {
+    if (config->impedance11 == 0.0)
+    {
+      condCheck = (config->phaseA_conductor &&
+                   !gl_object_isa(config->phaseA_conductor,
+                                  "underground_line_conductor", "powerflow"));
+      condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
 
-			//Check to see what kind of conductor this is - if it exists
-			if ((config->phaseA_conductor != nullptr) && !condCheck)
-			{
-				//Get the values
-				get_cable_values(config->phaseA_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
+      // Check to see what kind of conductor this is - if it exists
+      if ((config->phaseA_conductor != nullptr) && !condCheck)
+      {
+        // Get the values
+        get_cable_values(config->phaseA_conductor, &temp_shield_gmr_val,
+                         &temp_neutral_gmr_val);
 
-				//Both check is inside conductor, so just see which we are
-				if (temp_shield_gmr_val > 0.0)
-				{
-					return_val = 1;
-				}
-				else if (temp_neutral_gmr_val > 0.0)
-				{
-					return_val = 10;
-				}
-				else	//It's somehow unspecified
-				{
-					return_val = 0;
-				}
-			}
-			//Defaulted else - something above wasn't valid, so let error checks below handle it
-		}
-		else
-		{
-			condCheck = false;
-			condNotPres = false;
-			return_val = 0;
-		}
-	}
-	else if (ph=='B')
-	{
-		if (config->impedance22 == 0.0)
-		{
-			condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, "underground_line_conductor","powerflow"));
-			condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
+        // Both check is inside conductor, so just see which we are
+        if (temp_shield_gmr_val > 0.0)
+        {
+          return_val = 1;
+        }
+        else if (temp_neutral_gmr_val > 0.0)
+        {
+          return_val = 10;
+        }
+        else // It's somehow unspecified
+        {
+          return_val = 0;
+        }
+      }
+      // Defaulted else - something above wasn't valid, so let error checks
+      // below handle it
+    }
+    else
+    {
+      condCheck = false;
+      condNotPres = false;
+      return_val = 0;
+    }
+  }
+  else if (ph == 'B')
+  {
+    if (config->impedance22 == 0.0)
+    {
+      condCheck = (config->phaseB_conductor &&
+                   !gl_object_isa(config->phaseB_conductor,
+                                  "underground_line_conductor", "powerflow"));
+      condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
 
-			//Check to see what kind of conductor this is - if it exists
-			if ((config->phaseB_conductor != nullptr) && !condCheck)
-			{
-				//Get the values
-				get_cable_values(config->phaseB_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
+      // Check to see what kind of conductor this is - if it exists
+      if ((config->phaseB_conductor != nullptr) && !condCheck)
+      {
+        // Get the values
+        get_cable_values(config->phaseB_conductor, &temp_shield_gmr_val,
+                         &temp_neutral_gmr_val);
 
-				//Both check is inside conductor, so just see which we are
-				if (temp_shield_gmr_val > 0.0)
-				{
-					return_val = 1;
-				}
-				else if (temp_neutral_gmr_val > 0.0)
-				{
-					return_val = 10;
-				}
-				else	//It's somehow unspecified
-				{
-					return_val = 0;
-				}
-			}
-			//Defaulted else - something above wasn't valid, so let error checks below handle it
-		}
-		else
-		{
-			condCheck = false;
-			condNotPres = false;
-			return_val = 0;
-		}
-	}
-	else if (ph=='C')
-	{
-		if (config->impedance33 == 0.0)
-		{
-			condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, "underground_line_conductor","powerflow"));
-			condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
+        // Both check is inside conductor, so just see which we are
+        if (temp_shield_gmr_val > 0.0)
+        {
+          return_val = 1;
+        }
+        else if (temp_neutral_gmr_val > 0.0)
+        {
+          return_val = 10;
+        }
+        else // It's somehow unspecified
+        {
+          return_val = 0;
+        }
+      }
+      // Defaulted else - something above wasn't valid, so let error checks
+      // below handle it
+    }
+    else
+    {
+      condCheck = false;
+      condNotPres = false;
+      return_val = 0;
+    }
+  }
+  else if (ph == 'C')
+  {
+    if (config->impedance33 == 0.0)
+    {
+      condCheck = (config->phaseC_conductor &&
+                   !gl_object_isa(config->phaseC_conductor,
+                                  "underground_line_conductor", "powerflow"));
+      condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
 
-			//Check to see what kind of conductor this is - if it exists
-			if ((config->phaseC_conductor != nullptr) && !condCheck)
-			{
-				//Get the values
-				get_cable_values(config->phaseC_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
+      // Check to see what kind of conductor this is - if it exists
+      if ((config->phaseC_conductor != nullptr) && !condCheck)
+      {
+        // Get the values
+        get_cable_values(config->phaseC_conductor, &temp_shield_gmr_val,
+                         &temp_neutral_gmr_val);
 
-				//Both check is inside conductor, so just see which we are
-				if (temp_shield_gmr_val > 0.0)
-				{
-					return_val = 1;
-				}
-				else if (temp_neutral_gmr_val > 0.0)
-				{
-					return_val = 10;
-				}
-				else	//It's somehow unspecified
-				{
-					return_val = 0;
-				}
-			}
-			//Defaulted else - something above wasn't valid, so let error checks below handle it
-		}
-		else
-		{
-			condCheck = false;
-			condNotPres = false;
-			return_val = 0;
-		}
-	}
-	else if (ph=='N')
-	{
-		if (config->impedance11 == 0.0 && config->impedance22 == 0.0 && config->impedance33 == 0.0)
-		{
-			condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, "underground_line_conductor","powerflow"));
-			condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
+        // Both check is inside conductor, so just see which we are
+        if (temp_shield_gmr_val > 0.0)
+        {
+          return_val = 1;
+        }
+        else if (temp_neutral_gmr_val > 0.0)
+        {
+          return_val = 10;
+        }
+        else // It's somehow unspecified
+        {
+          return_val = 0;
+        }
+      }
+      // Defaulted else - something above wasn't valid, so let error checks
+      // below handle it
+    }
+    else
+    {
+      condCheck = false;
+      condNotPres = false;
+      return_val = 0;
+    }
+  }
+  else if (ph == 'N')
+  {
+    if (config->impedance11 == 0.0 && config->impedance22 == 0.0 &&
+        config->impedance33 == 0.0)
+    {
+      condCheck = (config->phaseN_conductor &&
+                   !gl_object_isa(config->phaseN_conductor,
+                                  "underground_line_conductor", "powerflow"));
+      condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
 
-			//Check to see what kind of conductor this is - if it exists
-			if ((config->phaseN_conductor != nullptr) && !condCheck)
-			{
-				//Get the values
-				get_cable_values(config->phaseN_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
+      // Check to see what kind of conductor this is - if it exists
+      if ((config->phaseN_conductor != nullptr) && !condCheck)
+      {
+        // Get the values
+        get_cable_values(config->phaseN_conductor, &temp_shield_gmr_val,
+                         &temp_neutral_gmr_val);
 
-				//See if tape shield or concentric neutral parameters are set
-				if ((temp_shield_gmr_val > 0.0) || (temp_neutral_gmr_val > 0.0))
-				{
-					gl_warning("Underground_line:%d %s - phase N conductor should just be a normal conductor!",obj->id,(obj->name ? obj->name : "Unnamed"));
-					/*  TROUBLESHOOT
-					A conductor on phase N has properties that imply it is either a concentric neutral or a tape-shield cable.  This is redundant for
-					a neutral connection and may not be necessary.
-					*/
-				}
-			}
-		}
-		else
-		{
-			condCheck = false;
-			condNotPres = false;
-			return_val = 0;
-		}
-	}
-	//Nothing else down here.  Should never get anything besides ABCN to check
+        // See if tape shield or concentric neutral parameters are set
+        if ((temp_shield_gmr_val > 0.0) || (temp_neutral_gmr_val > 0.0))
+        {
+          gl_warning("Underground_line:%d %s - phase N conductor should just "
+                     "be a normal conductor!",
+                     obj->id, (obj->name ? obj->name : "Unnamed"));
+          /*  TROUBLESHOOT
+          A conductor on phase N has properties that imply it is either a
+          concentric neutral or a tape-shield cable.  This is redundant for a
+          neutral connection and may not be necessary.
+          */
+        }
+      }
+    }
+    else
+    {
+      condCheck = false;
+      condNotPres = false;
+      return_val = 0;
+    }
+  }
+  // Nothing else down here.  Should never get anything besides ABCN to check
 
-	if (condCheck)
-		GL_THROW("invalid conductor for phase %c of underground line",ph,obj->name);
-		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an underground line conductor, it may be an overhead or triplex-line only conductor. */
+  if (condCheck)
+    GL_THROW("invalid conductor for phase %c of underground line", ph,
+             obj->name);
+  /*	TROUBLESHOOT  The conductor specified for the indicated phase is not
+   * necessarily an underground line conductor, it may be an overhead or
+   * triplex-line only conductor. */
 
-	if (condNotPres)
-		GL_THROW("missing conductor for phase %c of underground line",ph,obj->name);
-		/*  TROUBLESHOOT
-		The object specified as the configuration for the underground line is not a valid
-		configuration object.  Please ensure you have a line_configuration object selected.
-		*/
+  if (condNotPres)
+    GL_THROW("missing conductor for phase %c of underground line", ph,
+             obj->name);
+  /*  TROUBLESHOOT
+  The object specified as the configuration for the underground line is not a
+  valid configuration object.  Please ensure you have a line_configuration
+  object selected.
+  */
 
-	return return_val;
+  return return_val;
 }
 
-//Function to extract the shield GMR and neutral GMR values from a conductor - for CN/TS-type checks
-void underground_line::get_cable_values(OBJECT *line_conductor, double *sh_gmr, double *neu_gmr)
+// Function to extract the shield GMR and neutral GMR values from a conductor -
+// for CN/TS-type checks
+void underground_line::get_cable_values(OBJECT *line_conductor, double *sh_gmr,
+                                        double *neu_gmr)
 {
-	gld_property *temp_prop_A;
-	double temp_shield_gmr_val, temp_neutral_gmr_val;
-	OBJECT *obj = object_header(this);
+  gld_property *temp_prop_A;
+  double temp_shield_gmr_val, temp_neutral_gmr_val;
+  OBJECT *obj = object_header(this);
 
-	//Map some properties and get some values
-	temp_prop_A = new gld_property(line_conductor,"shield_gmr");
+  // Map some properties and get some values
+  temp_prop_A = new gld_property(line_conductor, "shield_gmr");
 
-	//Make sure it worked properly
-	if (!temp_prop_A->is_valid() || !temp_prop_A->is_double())
-	{
-		GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While mapping the sheild_gmr or neutral_gmr property from the Phase N conductor of an underground line, that parameter wasn't found.
-		Check your GLM and try again.
-		*/
-	}
+  // Make sure it worked properly
+  if (!temp_prop_A->is_valid() || !temp_prop_A->is_double())
+  {
+    GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",
+             obj->id, (obj->name ? obj->name : "Unnamed"),
+             (line_conductor->name ? line_conductor->name : "Unnamed"));
+    /*  TROUBLESHOOT
+    While mapping the sheild_gmr or neutral_gmr property from the Phase N
+    conductor of an underground line, that parameter wasn't found. Check your
+    GLM and try again.
+    */
+  }
 
-	//Pull the value
-	temp_shield_gmr_val = temp_prop_A->get_double();
+  // Pull the value
+  temp_shield_gmr_val = temp_prop_A->get_double();
 
-	//Clear it
-	delete temp_prop_A;
+  // Clear it
+  delete temp_prop_A;
 
-	//Now map the neutral gmr
-	temp_prop_A = new gld_property(line_conductor,"neutral_gmr");
+  // Now map the neutral gmr
+  temp_prop_A = new gld_property(line_conductor, "neutral_gmr");
 
-	//Make sure it worked properly
-	if (!temp_prop_A->is_valid() || !temp_prop_A->is_double())
-	{
-		GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
-		//Defined above
-	}
+  // Make sure it worked properly
+  if (!temp_prop_A->is_valid() || !temp_prop_A->is_double())
+  {
+    GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",
+             obj->id, (obj->name ? obj->name : "Unnamed"),
+             (line_conductor->name ? line_conductor->name : "Unnamed"));
+    // Defined above
+  }
 
-	//Pull the value
-	temp_neutral_gmr_val = temp_prop_A->get_double();
+  // Pull the value
+  temp_neutral_gmr_val = temp_prop_A->get_double();
 
-	//Clear it
-	delete temp_prop_A;
+  // Clear it
+  delete temp_prop_A;
 
-	//Push the values out
-	*sh_gmr = temp_shield_gmr_val;
-	*neu_gmr = temp_neutral_gmr_val;
+  // Push the values out
+  *sh_gmr = temp_shield_gmr_val;
+  *neu_gmr = temp_neutral_gmr_val;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1401,122 +1631,149 @@ void underground_line::get_cable_values(OBJECT *line_conductor, double *sh_gmr, 
 //////////////////////////////////////////////////////////////////////////
 
 /**
-* REQUIRED: allocate and initialize an object.
-*
-* @param obj a pointer to a pointer of the last object in the list
-* @param parent a pointer to the parent of this object
-* @return 1 for a successfully created object, 0 for error
-*/
-
+ * REQUIRED: allocate and initialize an object.
+ *
+ * @param obj a pointer to a pointer of the last object in the list
+ * @param parent a pointer to the parent of this object
+ * @return 1 for a successfully created object, 0 for error
+ */
 
 /* This can be added back in after tape has been moved to commit
-EXPORT TIMESTAMP commit_underground_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
+EXPORT TIMESTAMP commit_underground_line(OBJECT *obj, TIMESTAMP t1, TIMESTAMP
+t2)
 {
-	if ((solver_method==SM_FBS) || (solver_method==SM_NR))
-	{
-		underground_line *plink = object_data<underground_line>(obj);
-		plink->calculate_power();
-	}
-	return TS_NEVER;
+        if ((solver_method==SM_FBS) || (solver_method==SM_NR))
+        {
+                underground_line *plink = object_data<underground_line>(obj);
+                plink->calculate_power();
+        }
+        return TS_NEVER;
 }*/
 EXPORT int create_underground_line(OBJECT **obj, OBJECT *parent)
 {
-	try
-	{
-		*obj = gl_create_object(underground_line::oclass);
-		if (*obj!=nullptr)
-		{
-			underground_line *my = object_data<underground_line>(*obj);
-			gl_set_parent(*obj,parent);
-			return my->create();
-		}	
-		else
-		return 0;
-	}
-	CREATE_CATCHALL(underground_line);
+  try
+  {
+    *obj = gl_create_object(underground_line::oclass);
+    if (*obj != nullptr)
+    {
+      underground_line *my = object_data<underground_line>(*obj);
+      // gl_set_parent(*obj,parent);
+      return my->create();
+    }
+    else
+      return 0;
+  }
+  CREATE_CATCHALL(underground_line);
 }
 
-EXPORT TIMESTAMP sync_underground_line(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_underground_line_impl(OBJECT *obj, TIMESTAMP t0,
+                                            PASSCONFIG pass)
 {
-	try {
-		underground_line *pObj = object_data<underground_line>(obj);
-		TIMESTAMP t1 = TS_NEVER;
-		switch (pass) {
-		case PC_PRETOPDOWN:
-			return pObj->presync(t0);
-		case PC_BOTTOMUP:
-			return pObj->sync(t0);
-		case PC_POSTTOPDOWN:
-			t1 = pObj->postsync(t0);
-			obj->clock = t0;
-			return t1;
-		default:
-			throw "invalid pass request";
-		}
-	} 
-	SYNC_CATCHALL(underground_line);
+  try
+  {
+    underground_line *pObj = object_data<underground_line>(obj);
+    TIMESTAMP t1 = TS_NEVER;
+    switch (pass)
+    {
+    case PC_PRETOPDOWN:
+      return pObj->presync(t0);
+    case PC_BOTTOMUP:
+      return pObj->sync(t0);
+    case PC_POSTTOPDOWN:
+      t1 = pObj->postsync(t0);
+      obj->clock = t0;
+      return t1;
+    default:
+      throw "invalid pass request";
+    }
+  }
+  SYNC_CATCHALL(underground_line);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_underground_line(OBJECT *obj, TIMESTAMP t0,
+                                                      PASSCONFIG pass)
+{
+  return sync_underground_line_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_underground_line(OBJECT *obj, ...)
+{
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_underground_line_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT int init_underground_line(OBJECT *obj)
 {
-	try {
-		underground_line *my = object_data<underground_line>(obj);
-		return my->init(obj->parent);
-	}
-	INIT_CATCHALL(underground_line);
+  try
+  {
+    underground_line *my = object_data<underground_line>(obj);
+    return my->init(obj->parent);
+  }
+  INIT_CATCHALL(underground_line);
 }
 
 EXPORT int isa_underground_line(OBJECT *obj, char *classname)
 {
-	return object_data<underground_line>(obj)->isa(classname);
+  return object_data<underground_line>(obj)->isa(classname);
 }
 
 EXPORT int recalc_underground_line(OBJECT *obj)
 {
-	object_data<underground_line>(obj)->recalc();
-	return 1;
+  object_data<underground_line>(obj)->recalc();
+  return 1;
 }
 
-EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time)
+EXPORT int create_fault_ugline(OBJECT *thisobj, OBJECT **protect_obj,
+                               char *fault_type, int *implemented_fault,
+                               TIMESTAMP *repair_time)
 {
-	int retval;
+  int retval;
 
-	//Link to ourselves
-	underground_line *thisline = object_data<underground_line>(thisobj);
+  // Link to ourselves
+  underground_line *thisline = object_data<underground_line>(thisobj);
 
-	//Try to fault up
-	retval = thisline->link_fault_on(protect_obj, fault_type, implemented_fault,repair_time);
+  // Try to fault up
+  retval = thisline->link_fault_on(protect_obj, fault_type, implemented_fault,
+                                   repair_time);
 
-	return retval;
+  return retval;
 }
-EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
+EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault,
+                            char *imp_fault_name)
 {
-	int retval;
+  int retval;
 
-	//Link to ourselves
-	underground_line *thisline = object_data<underground_line>(thisobj);
+  // Link to ourselves
+  underground_line *thisline = object_data<underground_line>(thisobj);
 
-	//Clear the fault
-	retval = thisline->link_fault_off(implemented_fault, imp_fault_name);
+  // Clear the fault
+  retval = thisline->link_fault_off(implemented_fault, imp_fault_name);
 
-	//Clear the fault type
-	*implemented_fault = -1;
+  // Clear the fault type
+  *implemented_fault = -1;
 
-	return retval;
+  return retval;
 }
-EXPORT int clear_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
+EXPORT int clear_fault_ugline(OBJECT *thisobj, int *implemented_fault,
+                              char *imp_fault_name)
 {
-	int retval;
+  int retval;
 
-	//Link to ourselves
-	underground_line *thisline = object_data<underground_line>(thisobj);
+  // Link to ourselves
+  underground_line *thisline = object_data<underground_line>(thisobj);
 
-	//Clear the fault
-	retval = thisline->clear_fault_only(implemented_fault, imp_fault_name);
+  // Clear the fault
+  retval = thisline->clear_fault_only(implemented_fault, imp_fault_name);
 
-	//Clear the fault type
-	*implemented_fault = -1;
+  // Clear the fault type
+  *implemented_fault = -1;
 
-	return retval;
+  return retval;
 }
 /**@}**/

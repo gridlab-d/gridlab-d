@@ -16,7 +16,7 @@
 #endif
 
 #ifndef BUILDNUM
-#error("gldcore/build.h was not updated properly (BUILDNUM is missing) - try deleting it and rebuilding again")
+#error ("gldcore/build.h was not updated properly (BUILDNUM is missing) - try deleting it and rebuilding again")
 #ifdef BUILD
 #undef BUILD
 #endif
@@ -24,38 +24,27 @@
 #endif
 
 #ifndef REV_YEAR
-#error("gldcore/build.h was not updated properly (REV_YEAR is missing) - try deleting it and rebuilding again")
+#error ("gldcore/build.h was not updated properly (REV_YEAR is missing) - try deleting it and rebuilding again")
 #endif
 
-char *version_copyright(void)
-{
-	static char buffer[1024];
-	sprintf(buffer,"Copyright (C) 2004-%d\nBattelle Memorial Institute\nAll Rights Reserved", REV_YEAR);
-	return buffer;
+char *version_copyright(void) {
+  static char buffer[1024];
+  sprintf(
+      buffer,
+      "Copyright (C) 2004-%d\nBattelle Memorial Institute\nAll Rights Reserved",
+      REV_YEAR);
+  return buffer;
 }
 
-unsigned int version_major(void)
-{
-	return REV_MAJOR;
-}
-unsigned int version_minor(void)
-{
-	return REV_MINOR;
-}
-unsigned int version_patch(void)
-{
-	return REV_PATCH;
-}
-unsigned int version_build(void)
-{
-#if defined(BUILDNUM) && BUILDNUM+0 != 0
-	return BUILDNUM;
+unsigned int version_major(void) { return REV_MAJOR; }
+unsigned int version_minor(void) { return REV_MINOR; }
+unsigned int version_patch(void) { return REV_PATCH; }
+unsigned int version_build(void) {
+#if defined(BUILDNUM) && BUILDNUM + 0 != 0
+  return BUILDNUM;
 #else
-	return 0; // Default to 0 if BUILDNUM is defined but blank or not a valid number
+  return 0; // Default to 0 if BUILDNUM is defined but blank or not a valid
+            // number
 #endif
 }
-const char *version_branch(void)
-{
-	return BRANCH;
-}
-
+const char *version_branch(void) { return BRANCH; }

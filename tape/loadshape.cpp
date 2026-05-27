@@ -1,8 +1,8 @@
 /** $Id: loadshape.cpp 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2009 Battelle Memorial Institute
-	@file loadshape.cpp
-	@addtogroup loadshape
-	@ingroup tape
+        Copyright (C) 2009 Battelle Memorial Institute
+        @file loadshape.cpp
+        @addtogroup loadshape
+        @ingroup tape
 
 
  @{
@@ -10,11 +10,11 @@
 
 #if 0
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cctype>
 #include <errno.h>
 #include <math.h>
-#include <cctype>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "loadshape.h"
 
@@ -99,6 +99,11 @@ int loadshape::create()
  */
 int loadshape::init(OBJECT *parent)
 {
+		OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+	parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	OBJECT *hdr = object_header(this);
 	
 	state = TS_INIT;
@@ -212,7 +217,7 @@ EXPORT int create_loadshape(OBJECT **obj, OBJECT *parent)
 	if (*obj!=nullptr)
 	{
 		loadshape *my = OBJECTDATA(*obj,loadshape);
-		gl_set_parent(*obj,parent);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -225,7 +230,7 @@ EXPORT int init_loadshape(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
-EXPORT TIMESTAMP sync_loadshape(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_loadshape_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	loadshape *my = OBJECTDATA(obj, loadshape);
 	TIMESTAMP t1 = my->sync(obj->clock, t0);
@@ -260,7 +265,26 @@ EXPORT TIMESTAMP sync_loadshape(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 	obj->clock = t0;
 	return t1;
+
+
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_loadshape(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+	return sync_loadshape_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_loadshape(OBJECT *obj, ...)
+{
+	va_list args;
+	va_start(args, obj);
+	TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+	va_end(args);
+	return sync_loadshape_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT int commit_loadshape(OBJECT *obj){
 	loadshape *my = OBJECTDATA(obj,loadshape);

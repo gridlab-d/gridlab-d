@@ -49,7 +49,7 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 				PT_KEYWORD,"HOME",(enumeration)VL_HOME,
 				PT_KEYWORD,"WORK",(enumeration)VL_WORK,
 				PT_KEYWORD,"DRIVING_HOME",(enumeration)VL_WORK_TO_HOME,
-				PT_KEYWORD,"DRIVING_WORK",(enumeration)VL_HOME_TO_WORK,	
+				PT_KEYWORD,"DRIVING_WORK",(enumeration)VL_HOME_TO_WORK,
 			PT_double,"travel_distance[mile]",PADDR(CarInformation.travel_distance), PT_DESCRIPTION, "Distance vehicle travels from home to home (round trip)",
 			PT_double,"arrival_at_work",PADDR(CarInformation.WorkArrive), PT_DESCRIPTION, "Time vehicle arrives at work - HHMM",
 			PT_double,"duration_at_work[s]",PADDR(CarInformation.WorkDuration), PT_DESCRIPTION, "Duration the vehicle remains at work",
@@ -104,7 +104,7 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 			PT_bool, "J2894_voltage_low_state_1", PADDR(J2894_voltage_low_state[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 low-voltage state (index 1)",
 			PT_double, "J2894_off_accumulator", PADDR(J2894_off_accumulator), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 off accumulator",
 			PT_bool, "J2894_is_ramp_constrained", PADDR(J2894_is_ramp_constrained), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 ramp constrained flag",
-		nullptr)<1)
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
 			if (gl_publish_function(oclass,	"interupdate_res_object", (FUNCTIONADDR)interupdate_evcharger_det)==nullptr)
@@ -138,7 +138,7 @@ int evcharger_det::create()
 	mileage_classification = 33;	//PHEV 33, by default
 
 	Work_Charge_Available = false;	//No work charging
-
+	
 	NHTSDataFile[0] = '\0';			//Null file
 	VehicleLocation = 0;		
 
@@ -201,55 +201,21 @@ int evcharger_det::create()
 	return create_res;
 }
 
-int evcharger_det::shared_init(OBJECT *parent)
-{
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+int evcharger_det::init(OBJECT *parent) {
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+    if (parent != nullptr) {
+        if ((parent->flags & OF_INIT) != OF_INIT) {
 			char objname[256];
 			gl_verbose("evcharger_det::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	// These variables need initialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	deltamode_inclusive = false;		//By default, no deltamode participation
-	
-	//Zero the accumulators - just because
-	J2894_voltage_high_accumulators[0] = J2894_voltage_high_accumulators[1] = 0.0;
-	J2894_voltage_low_accumulators[0] = J2894_voltage_low_accumulators[1] = 0.0;
-	
-	// Recalculate derived values that depend on published variables
-	if (load.config == EUC_IS220)
-	{
-		expected_voltage_base = 2.0 * default_line_voltage;
-	}
-	else	//Assume 110/120 connected
-	{
-		expected_voltage_base = default_line_voltage;
-	}
-	
-	//Populate the "max current" value, based on published values
-	max_overload_charge_current = max_overload_currentPU * CarInformation.MaxChargeRate / expected_voltage_base / 1000.0;
-	return 1;
-}
 
-int evcharger_det::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
-int evcharger_det::init(OBJECT *parent)
-{
-	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	
-	OBJECT *hdr = object_header(this);
 	int init_res;
 	int comma_count, curr_idx, curr_comma_count;
 	char temp_char;
@@ -789,11 +755,11 @@ int evcharger_det::init(OBJECT *parent)
 	{
 		CarInformation.HomeWorkDuration = (temp_sec_C - temp_sec_B);
 	}
-
+	
 	//Get current hours in right format
 	temp_hours_curr = ((double)(temp_date.hour)) + (((double)(temp_date.minute))/60.0) + (((double)(temp_date.second))/3600.0);
 	temp_sec_curr = ((double)(temp_date.hour))*3600.0 + ((double)(temp_date.minute))*60.0 + ((double)(temp_date.second));
-
+	
 	//Determine the schedule we are in
 	if (temp_sec_A < temp_sec_B)	//HArrive < HDepart
 	{
@@ -1028,7 +994,7 @@ int evcharger_det::init(OBJECT *parent)
 		//Populate SOC
 		CarInformation.battery_SOC = CarInformation.battery_capacity / CarInformation.battery_size * 100.0;
 	}
-
+	
 	//Should be set, if was specified, otherwise, give us an init
 	if ((CarInformation.battery_SOC < 0.0) || (CarInformation.battery_capacity < 0.0))
 	{
@@ -1048,7 +1014,7 @@ int evcharger_det::init(OBJECT *parent)
 				The initial battery SOC somehow ended up outside a 0 - 100% range.  It has been forced to 50%.
 				*/
 			}
-
+			
 			//Update capacity
 			CarInformation.battery_capacity = CarInformation.battery_size * CarInformation.battery_SOC / 100.0;
 		}
@@ -1421,7 +1387,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 
 					//Update battery information first - just in case the transition occurred in the middle of a timestep
 					temp_double = tdiff / 3600.0 * RealizedChargeRate * CarInformation.ChargeEfficiency;	//Convert to kWh
-
+					
 					//Accumulate it
 					CarInformation.battery_capacity += temp_double;
 
@@ -1458,7 +1424,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 						//Calculate and remove the energy consumed
 						CarInformation.battery_capacity = CarInformation.battery_capacity - CarInformation.travel_distance / 2.0 / CarInformation.mileage_efficiency;
 					}
-
+					
 					//Make sure the battery didn't go too low
 					if (CarInformation.battery_capacity < 0.0)
 					{
@@ -1711,7 +1677,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 						//Calculate and remove the energy consumed
 						CarInformation.battery_capacity = CarInformation.battery_capacity - CarInformation.travel_distance / 2.0 / CarInformation.mileage_efficiency;
 					}
-
+					
 					//Make sure the battery didn't go too low
 					if (CarInformation.battery_capacity < 0.0)
 					{
@@ -2366,7 +2332,7 @@ EXPORT int create_evcharger_det(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			evcharger_det *my = object_data<evcharger_det>(*obj);
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -2394,14 +2360,7 @@ EXPORT int isa_evcharger_det(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT int checkpoint_init_evcharger_det(OBJECT *obj)
-{
-	evcharger_det *my = object_data<evcharger_det>(obj);
-	return my->checkpoint_init(obj->parent);
-}
-
-EXPORT TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-{
+static TIMESTAMP sync_evcharger_det_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 	TIMESTAMP t1;
 
 	try {
@@ -2426,6 +2385,22 @@ EXPORT TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(evcharger_det);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_evcharger_det_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_evcharger_det(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_evcharger_det_impl(obj, t0, pass);
+}
+#endif
 
 //Deltamode linkage function
 //Deltamode exposed functions

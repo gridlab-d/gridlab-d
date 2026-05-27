@@ -67,40 +67,22 @@ int plugload::create()
 	return res;
 }
 
-int plugload::shared_init(OBJECT *parent)
-{
-	// These variables need initialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	// (plugload class has no non-published variables at this time)
-	return 1;
-}
-
-int plugload::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int plugload::init(OBJECT *parent)
 {
-	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	
-	OBJECT *hdr = object_header(this);
+  OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	hdr->flags |= OF_SKIPSAFE;
-
 	load.breaker_amps = 40;
-
 	if ( (load.power_fraction + load.current_fraction + load.impedance_fraction) == 0.0)
 	{
 		load.power_fraction = 1.0;
 		load.current_fraction = 0.0;
 		load.impedance_fraction = 0.0;
 	}
-
 	return residential_enduse::init(parent);
 }
 
@@ -164,8 +146,7 @@ EXPORT int create_plugload(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(plugload::oclass);
 		if (*obj!=nullptr)
 		{
-			plugload *my = object_data<plugload>(*obj);;
-			gl_set_parent(*obj,parent);
+			plugload *my = object_data<plugload>(*obj);
 			my->create();
 			return 1;
 		}
@@ -194,22 +175,43 @@ EXPORT int isa_plugload(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT int checkpoint_init_plugload(OBJECT *obj)
+static TIMESTAMP sync_plugload_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
-	plugload *my = object_data<plugload>(obj);
-	return my->checkpoint_init(obj->parent);
+    try {
+        plugload *my = object_data<plugload>(obj);
+        TIMESTAMP t2 = TS_NEVER;
+        switch (pass) {
+        case PC_PRETOPDOWN:
+            break;
+        case PC_BOTTOMUP:
+            t2 = my->sync(obj->clock, t1);
+            obj->clock = t1;
+            break;
+        case PC_POSTTOPDOWN:
+            break;
+        default:
+            gl_error("plugload::sync- invalid pass configuration");
+            t2 = TS_INVALID; // serious error in exec.c
+        }
+        return t2;
+    }
+    SYNC_CATCHALL(plugload);
 }
 
-EXPORT TIMESTAMP sync_plugload(OBJECT *obj, TIMESTAMP t0)
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_plugload(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	try
-	{
-		plugload *my = object_data<plugload>(obj);
-		TIMESTAMP t1 = my->sync(obj->clock, t0);
-		obj->clock = t0;
-		return t1;
-	}
-	SYNC_CATCHALL(plugload);
+    return sync_plugload_impl(obj, t0, pass);
 }
+#else
+extern "C" MODULE_API TIMESTAMP sync_plugload(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_plugload_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

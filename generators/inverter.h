@@ -163,7 +163,7 @@ public:
 	double P_Out_t0;
 	double Q_Out_t0;
 	double power_factor_t0;
-	
+
 	double pCircuit_V_Avg;          // average value of 3 phase terminal voltage
 	
 	//Hidden variables for wind turbine checks
