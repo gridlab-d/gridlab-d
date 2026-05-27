@@ -200,11 +200,17 @@ public:
    * @param object_name The name of the object
    * @param property_name The name of the property
    * @param value The value to set (as string)
+    * @param was_normalized Optional output flag indicating whether the value was
+    * adjusted to satisfy model constraints
+    * @param applied_value Optional output string containing the value actually
+    * written
    * @return Error code indicating success or failure
    */
   GLDErrorCode set_property(const std::string &object_name,
                             const std::string &property_name,
-                            const std::string &value);
+                     const std::string &value,
+                     bool *was_normalized = nullptr,
+                     std::string *applied_value = nullptr);
 
   /** Set a property value on all objects of a specific class
    * @param class_name The name of the class

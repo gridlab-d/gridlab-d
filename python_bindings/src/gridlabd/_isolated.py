@@ -916,7 +916,7 @@ class IsolatedGridLabD:
             meta["value"] = self._reconstruct_complex(meta["value"])
         return result
     
-    def set_property(self, object_name: str, property_name: str, value) -> int:
+    def set_property(self, object_name: str, property_name: str, value, detailed: bool = False):
         """Set a property value on an object.
         
         Args:
@@ -924,9 +924,11 @@ class IsolatedGridLabD:
             property_name: Name of the property
             value: Value to set - can be str, int, float, bool, or complex
                    Native Python types are automatically converted to GridLAB-D format
+            detailed: When True, return metadata including normalization details
         
         Returns:
-            Error code (0 for success)
+            Error code (0 for success) by default. When detailed=True, returns
+            a dict containing code, normalized, requested_value, and applied_value.
         """
         # Convert Python native types to strings for C++ binding
         if isinstance(value, bool):
@@ -949,10 +951,21 @@ class IsolatedGridLabD:
         response = self._send_command(Command.SET_PROPERTY, {
             "object_name": object_name,
             "property_name": property_name,
-            "value": str_value
+            "value": str_value,
+            "detailed": bool(detailed),
         })
         if not response.success:
             raise RuntimeError(response.error)
+
+        if detailed:
+            if not isinstance(response.result, dict):
+                return {
+                    "code": int(response.result),
+                    "normalized": False,
+                    "requested_value": str_value,
+                    "applied_value": str_value,
+                }
+            return response.result
         return response.result
     
     def get_properties_by_class(self, class_name: str, property_name: str, typed: bool = True) -> dict[str, Any]:

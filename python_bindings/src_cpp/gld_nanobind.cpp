@@ -256,9 +256,32 @@ NB_MODULE(gridlabd_core, m) {
           },
           nb::arg("object_name"), nb::arg("property_name"),
           "Get property metadata (type, unit, description, access flags)")
-      .def("set_property", &GridLabD::set_property, nb::arg("object_name"),
-           nb::arg("property_name"), nb::arg("value"),
-           "Set a property value on an object")
+               .def(
+                         "set_property",
+                         [](GridLabD &self, const std::string &object_name,
+                               const std::string &property_name, const std::string &value) {
+                              return self.set_property(object_name, property_name, value);
+                         },
+                         nb::arg("object_name"), nb::arg("property_name"), nb::arg("value"),
+                         "Set a property value on an object")
+               .def(
+                         "set_property_detailed",
+                         [](GridLabD &self, const std::string &object_name,
+                               const std::string &property_name, const std::string &value) {
+                              bool normalized = false;
+                              std::string applied_value;
+                              GLDErrorCode code = self.set_property(object_name, property_name,
+                                                                                                                             value, &normalized,
+                                                                                                                             &applied_value);
+                              nb::dict details;
+                              details["code"] = static_cast<int>(code);
+                              details["normalized"] = normalized;
+                              details["requested_value"] = value;
+                              details["applied_value"] = applied_value;
+                              return details;
+                         },
+                         nb::arg("object_name"), nb::arg("property_name"), nb::arg("value"),
+                         "Set a property value and return normalization details")
       .def("get_properties_by_class", &GridLabD::get_properties_by_class,
            nb::arg("class_name"), nb::arg("property_name"),
            "Get property values from all objects of a class")

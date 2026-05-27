@@ -57,6 +57,86 @@ namespace {
 constexpr double kNanosecondsPerSecond = 1e9;
 constexpr double kTimeEpsilon = 1e-12;
 
+bool parse_numeric_prefix(const std::string &text, double &value) {
+  char *endptr = nullptr;
+  value = std::strtod(text.c_str(), &endptr);
+  return endptr != text.c_str();
+}
+
+bool read_object_double_property(OBJECT *obj, const char *property_name,
+                                 double &value) {
+  char buffer[256] = {0};
+  if (object_get_value_by_name(obj, property_name, buffer, sizeof(buffer)) ==
+      0) {
+    return false;
+  }
+  char *endptr = nullptr;
+  value = std::strtod(buffer, &endptr);
+  return endptr != buffer;
+}
+
+std::optional<std::string> maybe_normalize_thermostat_setpoint(
+    OBJECT *obj, const std::string &object_name,
+    const std::string &property_name, const std::string &incoming_value) {
+  if (property_name != "cooling_setpoint" &&
+      property_name != "heating_setpoint") {
+    return std::nullopt;
+  }
+
+  // Only apply this normalization when the counterpart setpoint and deadband
+  // exist and can be parsed as numeric values.
+  PROPERTY *cool_prop = object_get_property(obj, "cooling_setpoint", nullptr);
+  PROPERTY *heat_prop = object_get_property(obj, "heating_setpoint", nullptr);
+  PROPERTY *dead_prop = object_get_property(obj, "thermostat_deadband", nullptr);
+  if (cool_prop == nullptr || heat_prop == nullptr || dead_prop == nullptr) {
+    return std::nullopt;
+  }
+
+  double requested = 0.0;
+  if (!parse_numeric_prefix(incoming_value, requested)) {
+    return std::nullopt;
+  }
+
+  double cooling_setpoint = 0.0;
+  double heating_setpoint = 0.0;
+  double thermostat_deadband = 0.0;
+  if (!read_object_double_property(obj, "cooling_setpoint", cooling_setpoint) ||
+      !read_object_double_property(obj, "heating_setpoint", heating_setpoint) ||
+      !read_object_double_property(obj, "thermostat_deadband",
+                                   thermostat_deadband)) {
+    return std::nullopt;
+  }
+
+  double adjusted = requested;
+  bool clamped = false;
+  if (property_name == "cooling_setpoint") {
+    const double min_cooling = heating_setpoint + thermostat_deadband;
+    if (adjusted < min_cooling) {
+      adjusted = min_cooling;
+      clamped = true;
+    }
+  } else {
+    const double max_heating = cooling_setpoint - thermostat_deadband;
+    if (adjusted > max_heating) {
+      adjusted = max_heating;
+      clamped = true;
+    }
+  }
+
+  if (!clamped) {
+    return std::nullopt;
+  }
+
+  char adjusted_buffer[64] = {0};
+  std::snprintf(adjusted_buffer, sizeof(adjusted_buffer), "%.6f", adjusted);
+  output_warning(
+      "Adjusted %s.%s from '%s' to '%s' to preserve thermostat deadband "
+      "constraints and prevent setpoint overlap",
+      object_name.c_str(), property_name.c_str(), incoming_value.c_str(),
+      adjusted_buffer);
+  return std::string(adjusted_buffer);
+}
+
 double current_api_time_in_seconds() {
   const double event_time =
       (double)global_clock +
@@ -1453,7 +1533,16 @@ GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
 // Set a property value on an object
 GLDErrorCode GridLabD::set_property(const std::string &object_name,
                                     const std::string &property_name,
-                                    const std::string &value) {
+                                    const std::string &value,
+                                    bool *was_normalized,
+                                    std::string *applied_value) {
+  if (was_normalized != nullptr) {
+    *was_normalized = false;
+  }
+  if (applied_value != nullptr) {
+    *applied_value = value;
+  }
+
   // Find the object by name
   OBJECT *obj = nullptr;
 
@@ -1488,9 +1577,23 @@ GLDErrorCode GridLabD::set_property(const std::string &object_name,
     return GLD_SUCCESS;
   }
 
+  std::string value_to_set = value;
+  if (auto normalized = maybe_normalize_thermostat_setpoint(
+          obj, object_name, property_name, value);
+      normalized.has_value()) {
+    value_to_set = *normalized;
+    if (was_normalized != nullptr) {
+      *was_normalized = true;
+    }
+  }
+
+  if (applied_value != nullptr) {
+    *applied_value = value_to_set;
+  }
+
   // Set the property value
   char value_copy[1024];
-  strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
+  strncpy(value_copy, value_to_set.c_str(), sizeof(value_copy) - 1);
   value_copy[sizeof(value_copy) - 1] = '\0';
 
   int result = object_set_value_by_name(
@@ -1498,12 +1601,13 @@ GLDErrorCode GridLabD::set_property(const std::string &object_name,
 
   if (result == 0) {
     output_error("Failed to set property '%s' on object '%s' to value '%s'",
-                 property_name.c_str(), object_name.c_str(), value.c_str());
+                 property_name.c_str(), object_name.c_str(),
+                 value_to_set.c_str());
     return GLD_OPERATION_FAILED;
   }
 
   output_verbose("Set property '%s.%s' = '%s'", object_name.c_str(),
-                 property_name.c_str(), value.c_str());
+                 property_name.c_str(), value_to_set.c_str());
   return GLD_SUCCESS;
 }
 

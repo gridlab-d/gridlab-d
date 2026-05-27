@@ -681,10 +681,31 @@ def handle_get_object_properties_detailed(message: Message) -> Response:
 def handle_set_property(message: Message) -> Response:
     """Set a property value."""
     try:
+        detailed = bool(message.args.get("detailed", False))
+        object_name = message.args["object_name"]
+        property_name = message.args["property_name"]
+        requested_value = message.args["value"]
+
+        if detailed:
+            details = _gld_instance.set_property_detailed(
+                object_name,
+                property_name,
+                requested_value,
+            )
+            return Response(
+                success=True,
+                result={
+                    "code": int(details.get("code", 0)),
+                    "normalized": bool(details.get("normalized", False)),
+                    "requested_value": str(details.get("requested_value", requested_value)),
+                    "applied_value": str(details.get("applied_value", requested_value)),
+                },
+            )
+
         code = _gld_instance.set_property(
-            message.args["object_name"],
-            message.args["property_name"],
-            message.args["value"]
+            object_name,
+            property_name,
+            requested_value,
         )
         return Response(success=True, result=int(code) if isinstance(code, int) else int(code.value))
     except Exception as e:
