@@ -25,7 +25,7 @@ RUNTIME_METHODS = {"presync", "sync", "postsync", "commit", "precommit", "update
 TABLE_HEADERS = {"property name", "parameter", "property"}
 LEGACY_CLASS_NAME_MAPPING = {
     "link_object": "link", "switch_object": "switch", "triplex_line_conductor": "triplex_conductor",
-    "pqload": "parametric_load", "currdump": "current_dump", "billdump": "bill_dump", "voltdump": "volt_dump",
+    "pqload": "pqload", "currdump": "current_dump", "billdump": "bill_dump", "voltdump": "volt_dump",
 }
 
 

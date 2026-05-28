@@ -106,7 +106,7 @@ Table,docs/docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/25-fuse.md,38
 Table,docs/docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/26-switch.md,25,Markdown table without Table: #tbl caption
 Table,docs/docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/27-recloser.md,29,Markdown table without Table: #tbl caption
 Table,docs/docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/29-substation.md,29,Markdown table without Table: #tbl caption
-Table,docs/docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/30-parametric_load.md,30,Markdown table without Table: #tbl caption
+Table,docs/docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/30-pqload.md,30,Markdown table without Table: #tbl caption
 Table,docs/docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/31-volt_var_control.md,44,Markdown table without Table: #tbl caption
 Table,docs/docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/32-volt_dump.md,8,Markdown table without Table: #tbl caption
 Table,docs/docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/32-volt_dump.md,21,Markdown table without Table: #tbl caption

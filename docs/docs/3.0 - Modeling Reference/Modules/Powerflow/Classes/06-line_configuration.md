@@ -77,6 +77,14 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | conductor_C | object | N/A | I | Object describing the conductor of phase C in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
 | conductor_N | object | N/A | I | Object describing the conductor of phase N in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
 | spacing | object | N/A | I | `line_spacing` object describing how the conductors are physically oriented on the pole or in the bundle. |
+
+
+#### Z-matrix and Capacitance Matrix Properties
+
+Describes the z-matrix and c-matrix directly for either underground or overhead lines instead of using the geometric configurations (This will over-write geometric configurations). For this notation, index 1 is phase A, 2 is phase B, and 3 is phase C. So element z12 represents the mutual/cross coupling impedance between phase A and phase B of this line configuration.
+
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
 | z11 | complex | Ohm/mile | I |  |
 | z12 | complex | Ohm/mile | I |  |
 | z13 | complex | Ohm/mile | I |  |
@@ -95,22 +103,16 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | c31 | double | nF/mile | I |  |
 | c32 | double | nF/mile | I |  |
 | c33 | double | nF/mile | I |  |
-| rating.summer.continuous | double | A | I | ⚠️ amp rating in summer, continuous |
-| rating.summer.emergency | double | A | I | ⚠️ amp rating in summer, short term |
-| rating.winter.continuous | double | A | I | ⚠️ amp rating in winter, continuous |
-| rating.winter.emergency | double | A | I | ⚠️ amp rating in winter, short term |
 
-### Line configuration properties
+#### Ampere Rating Properties
 
-Property Name  | Type  | Unit  | Description   
----|---|---|---  
-**conductor_A**  | object  | N/A  | Object describing the conductor of phase A in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`)   
-**conductor_B**  | object  | N/A  | Object describing the conductor of phase B in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`)   
-**conductor_C**  | object  | N/A  | Object describing the conductor of phase C in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`)   
-**conductor_N**  | object  | N/A  | Object describing the conductor of phase N in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`)   
-**spacing**  | object  | N/A  | `line_spacing` object describing how the conductors are physically oriented on the pole or in the bundle.   
-**z11-z33**  | complex  | Ohm/mile  | describes the z-matrix directly for either underground or overhead lines instead of using the geometric configurations (This will over-write geometric configurations). For this notation, index 1 is phase A, 2 is phase B, and 3 is phase C. So element z12 represents the mutual/cross coupling impedance between phase A and phase B of this line configuration.   
-**c11-c33**  | double  | nF/mile  | describes the z-matrix directly for either underground or overhead lines instead of using the geometric configurations (This will over-write geometric configurations). For this notation, index 1 is phase A, 2 is phase B, and 3 is phase C. So element c12 represents the mutual/cross coupling capacitance between phase A and phase B of this line configuration. Unlike the zXX terms, this is raw capacitance and does not have the frequency factored into the calculation yet.   
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| rating.summer.continuous | double | A | I | Amp rating in summer, continuous |
+| rating.summer.emergency | double | A | I | Amp rating in summer, short term |
+| rating.winter.continuous | double | A | I | Amp rating in winter, continuous |
+| rating.winter.emergency | double | A | I | Amp rating in winter, short term |
+
 
 ### Line State of Development
 

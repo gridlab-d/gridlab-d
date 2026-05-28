@@ -153,7 +153,7 @@ nav:
           - 26-switch: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/26-switch.md
           - 27-recloser: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/27-recloser.md
           - 29-substation: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/29-substation.md
-          - 30-parametric_load: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/30-parametric_load.md
+          - 30-pqload: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/30-pqload.md
           - 31-volt_var_control: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/31-volt_var_control.md
           - 32-volt_dump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/32-volt_dump.md
           - 33-current_dump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/33-current_dump.md

@@ -1,8 +1,5 @@
 ## Underground Line Conductor
 
-!!! warning
-    This page was automatically generated and requires review.
-
 Underground lines often contain concentric shielding layers around the central conductor. As a result, they require more parameters than the `overhead_line_conductor` objects to fully describe them. A typical `underground_line_object` is: 
     
     
@@ -38,9 +35,9 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | neutral_diameter | double | in | I | Diameter of the concentric neutral of the cable. |
 | neutral_resistance | double | Ohm/mile | I | Resistance of the concentric neutral of the cable. |
 | neutral_strands | int16 | N/A | I | Number of strands composing the concentric neutral conductor. |
-| shield_thickness | double | in | I | ⚠️ The thickness of Tape shield in inches |
-| shield_diameter | double | in | I | ⚠️ The outside diameter of Tape shield in inches |
-| insulation_relative_permitivitty | double | unit | I | ⚠️ Permitivitty of insulation, relative to air |
+| shield_thickness | double | in | I | The thickness of Tape shield in inches |
+| shield_diameter | double | in | I | The outside diameter of Tape shield in inches |
+| insulation_relative_permitivitty | double | unit | I | Permitivitty of insulation, relative to air |
 | shield_gmr | double | ft | I | Geometric mean radius of the shielding of the cable. |
 | shield_resistance | double | Ohm/mile | I | Resistance of the cable shielding. |
 | rating.summer.continuous | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |

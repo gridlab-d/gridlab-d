@@ -2,6 +2,28 @@
 
 The node object is equivalent to a bus of the distribution system. It provides a connection point for **link**-based objects and a point of known voltages on the system. Three-phase voltage is typically available in either wye-connected or delta-connected form. Wye-connected voltages are contained in `voltage_A`, `voltage_B`, and `voltage_C`. Delta-connected voltages are available in `voltage_AB`, `voltage_BC`, and `voltage_CA`.
 
+### Example Node
+
+A minimalist node could be created with
+
+    object node {
+    	name NodeOne;
+    	phases ABC;
+    	nominal_voltage 7200.0;
+    }
+
+which is the same as specifying
+
+    object node {
+    	name NodeOne;
+    	phases ABC;
+    	nominal_voltage 7200.0;
+    	voltage_A 7200.0+0d;
+    	voltage_B 7200.0-120.0d;
+    	voltage_C 7200.0+120.0d;
+    	bustype PQ;
+    }
+
 ### Node Parameters
 
 **node** objects are derived from **[powerflow_object](02-powerflow_object.md)** objects, so any parameters of the **[powerflow_object](02-powerflow_object.md)** object are available as well.
@@ -46,9 +68,9 @@ These properties track whether the node is in service and how long it has been c
 
 #### Frequency Measurement Properties
 
-These properties configure and report frequency and angle measurements during deltamode simulation. The measurement method is selected by `frequency_measure_type`; if set to `NONE` (the default unless overridden by a module-level global setting), no measurements are performed. The `SIMPLE` method uses a first-order transducer model controlled by `sfm_Tf`. The `PLL` method uses a phase-locked loop controlled by `pll_Kp` and `pll_Ki`.
+These properties configure and report frequency and angle measurements during transient simulation. The measurement method is selected by `frequency_measure_type`; if set to `NONE` (the default unless overridden by a module-level global setting), no measurements are performed. The `SIMPLE` method uses a first-order transducer model controlled by `sfm_Tf`. The `PLL` method uses a phase-locked loop controlled by `pll_Kp` and `pll_Ki`.
 
-The four configuration properties are input only. The seven `measured_*` properties are both input and output — initial values may be set by the user, but the simulation overwrites them each deltamode timestep.
+The four configuration properties are input only. The seven `measured_*` properties are output.
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -56,13 +78,13 @@ The four configuration properties are input only. The seven `measured_*` propert
 | sfm_Tf | double | s | I | Transducer time constant for the `SIMPLE` method. |
 | pll_Kp | double | pu | I | Proportional gain for the `PLL` method. |
 | pll_Ki | double | pu | I | Integration gain for the `PLL` method. |
-| measured_angle_A | double | rad | IO | Measured bus voltage angle on phase A. |
-| measured_angle_B | double | rad | IO | Measured bus voltage angle on phase B. |
-| measured_angle_C | double | rad | IO | Measured bus voltage angle on phase C. |
-| measured_frequency_A | double | Hz | IO | Measured frequency on phase A. |
-| measured_frequency_B | double | Hz | IO | Measured frequency on phase B. |
-| measured_frequency_C | double | Hz | IO | Measured frequency on phase C. |
-| measured_frequency | double | Hz | IO | Measured frequency averaged across all energized phases. |
+| measured_angle_A | double | rad | O | Measured bus voltage angle on phase A. |
+| measured_angle_B | double | rad | O | Measured bus voltage angle on phase B. |
+| measured_angle_C | double | rad | O | Measured bus voltage angle on phase C. |
+| measured_frequency_A | double | Hz | O | Measured frequency on phase A. |
+| measured_frequency_B | double | Hz | O | Measured frequency on phase B. |
+| measured_frequency_C | double | Hz | O | Measured frequency on phase C. |
+| measured_frequency | double | Hz | O | Measured frequency averaged across all energized phases. |
 
 #### Grid Friendly Appliance (GFA) Properties
 
@@ -156,29 +178,9 @@ These properties expose the node's topological parent relationship and its runti
 	| generator_dynamic | bool | N/A | — | Flag indicating a voltage-sourcing or swing-type generator is present. Used for generators and deltamode. |
 	| reset_disabled_island_state | bool | N/A | O | Deltamode/multi-island flag used to reset disabled status and reform an island. |
 
-<!-- </details> -->
 
-### Default Node
 
-A minimalist node could be created with
 
-    object node {
-    	name NodeOne;
-    	phases ABC;
-    	nominal_voltage 7200.0;
-    }
-
-which is the same as specifying
-
-    object node {
-    	name NodeOne;
-    	phases ABC;
-    	nominal_voltage 7200.0;
-    	voltage_A 7200.0+0d;
-    	voltage_B 7200.0-120.0d;
-    	voltage_C 7200.0+120.0d;
-    	bustype PQ;
-    }
 
 ### Node State of Development
 

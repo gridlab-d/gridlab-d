@@ -1,8 +1,5 @@
 ## Regulator Configuration
 
-!!! warning
-    This page was automatically generated and requires review.
-
 The **regulator_configuration** object describes the details of a particular **regulator** object implementation. This includes details such as the control scheme, regulator type, sensing information, and time delays. A typical regulator configuration would look similar to 
     
     
@@ -60,7 +57,7 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | regulation | double | N/A | I | Indicates range of voltage adjustment possible (i.e., per tap change ratio equals regulation / raise taps, or regulation of 0.1 indicates 10% rise in voltage at maximum tap position) |
 | control_level | enumeration | N/A | I | Defines how automatic controls influence the tap settings of the regulator. Valid keywords are: <br/> -  `INDIVIDUAL` \- Each phase is controlled individually. <br/> - `BANK` \- All phases are controlled identically. Using the `PT_phase` property, the regulator determines any control actions and applies it to all phases identically. |
 | Control | enumeration | N/A | I | Defines the control scheme the regulator will use to operate. Valid keywords are: <br/> - `MANUAL` \- Manual control mode. User specifies all tap changes. <br/> - `OUTPUT_VOLTAGE` \- Output node of the regulator's voltage is examined. Tap changes are performed based on `band_center` and `band_width`. <br/> - `LINE_DROP_COMP` \- Line drop compensator control mode. Utilizes compensator information in addition to `band_center` and `band_width` to determine tap changes. <br/> - `REMOTE_NODE` \- Voltage of a remote node (specified by `sense_node` in the **regulator** object) in the system is examined. Tap changes are performed based on `band_center` and `band_width`. |
-| reverse_flow_control | enumeration | N/A | I | ⚠️ Type of control used when power is flowing in reverse through the regulator Valid values: `LOCK_NONE`, `LOCK_NEUTRAL`, `LOCK_CURRENT_POSITION`. |
+| reverse_flow_control | enumeration | N/A | I | Type of control used when power is flowing in reverse through the regulator Valid values: `LOCK_NONE`, `LOCK_NEUTRAL`, `LOCK_CURRENT_POSITION`. |
 | Type | enumeration | N/A | I | Type of step-voltage regulator implemented. Valid keywords are: <br/> - `A` \- Type A step-voltage regulator <br/> - `B` \- Type B step-voltage regulator |
 | tap_pos_A | int16 | N/A | I | Initial tap position for phase `A`. If left empty, the regulator will take a best guess at the initial tap position. |
 | tap_pos_B | int16 | N/A | I | Initial tap position for phase `B`. If left empty, the regulator will take a best guess at the initial tap position. |

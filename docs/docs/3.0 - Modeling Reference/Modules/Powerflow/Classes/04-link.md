@@ -2,6 +2,17 @@
 
 The link object is a connection between nodes in a distribution system. The **link** object is not directly useful, but is the basis for objects associated with overhead lines, underground lines, triplex lines, transformers, regulators, switches, and fuses.
 
+### Example Link
+
+A **link** only requires three parameters to be specified by default. Most of the actual functionality comes through derived objects such as lines, transformers, and switches.
+
+    object link {
+    	name Node1toNode2;
+    	phases ABC;
+    	from Node1;
+    	to Node2;
+    }
+
 ### Link Object Parameters
 
 **link** objects are derived from **[powerflow_object](powerflow_object.md)** objects, so any parameters of the **[powerflow_object](powerflow_object.md)** object are available as well.
@@ -118,16 +129,7 @@ These properties control the numerical integration method and convergence tolera
 	| triplex_neutral_1_value | complex | N/A | O | Internal triplex neutral coupling coefficient for phase 1. |
 	| triplex_neutral_2_value | complex | N/A | O | Internal triplex neutral coupling coefficient for phase 2. |
 
-### Default Link
 
-A **link** only requires three parameters to be specified by default. Most of the actual functionality comes through derived objects such as lines, transformers, and switches.
-
-    object link {
-    	name Node1toNode2;
-    	phases ABC;
-    	from Node1;
-    	to Node2;
-    }
 
 ### Link State of Development
 

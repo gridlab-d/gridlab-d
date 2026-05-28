@@ -1,8 +1,5 @@
 ## Triplex Line Configuration
 
-!!! warning
-    This page was automatically generated and requires review.
-
 Triplex lines utilize their own configuration description method. Since the phases are no longer described as `A`, `B`, or `C`, the configuration is relabeled. A typical `triplex_line_configuration` is given as either a geometric configuration 
     
     
@@ -44,14 +41,14 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | insulation_thickness | double | in | I | Thickness of the insulation around the phase 1 and phase 2 conductors |
 | diameter | double | in | I | Diameter of the conductor |
 | spacing | object | N/A | I | `line_spacing` object with information on the physical layout of the conductors. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| z11 | complex | Ohm/mile | I | ⚠️ phase 1 self-impedance, used for direct entry of impedance values |
-| z12 | complex | Ohm/mile | I | ⚠️ phase 1-2 induced impedance, used for direct entry of impedance values |
-| z21 | complex | Ohm/mile | I | ⚠️ phase 2-1 induced impedance, used for direct entry of impedance values |
-| z22 | complex | Ohm/mile | I | ⚠️ phase 2 self-impedance, used for direct entry of impedance values |
-| rating.summer.continuous | double | A | I | ⚠️ amp rating in summer, continuous |
-| rating.summer.emergency | double | A | I | ⚠️ amp rating in summer, short term |
-| rating.winter.continuous | double | A | I | ⚠️ amp rating in winter, continuous |
-| rating.winter.emergency | double | A | I | ⚠️ amp rating in winter, short term |
+| z11 | complex | Ohm/mile | I | Phase 1 self-impedance, used for direct entry of impedance values |
+| z12 | complex | Ohm/mile | I | Phase 1-2 induced impedance, used for direct entry of impedance values |
+| z21 | complex | Ohm/mile | I | Phase 2-1 induced impedance, used for direct entry of impedance values |
+| z22 | complex | Ohm/mile | I | Phase 2 self-impedance, used for direct entry of impedance values |
+| rating.summer.continuous | double | A | I | Amp rating in summer, continuous |
+| rating.summer.emergency | double | A | I | Amp rating in summer, short term |
+| rating.winter.continuous | double | A | I | Amp rating in winter, continuous |
+| rating.winter.emergency | double | A | I | Amp rating in winter, short term |
 
 ### Triplex Line Configuration State of Development
 

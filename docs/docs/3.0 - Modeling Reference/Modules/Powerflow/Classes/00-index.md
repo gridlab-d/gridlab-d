@@ -60,7 +60,7 @@ The other common property is nominal voltage, which is passed into the objects u
 - [Node](03-node.md)
 - [Load](17-load.md)
 - [Meter](18-meter.md)
-- [Parametric Load](30-parametric_load.md)
+- [PQ Load](30-pqload.md)
 
 ### Triplex (Split-Phase) Nodes and Loads
 

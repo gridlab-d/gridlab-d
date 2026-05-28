@@ -1,8 +1,5 @@
 ## Triplex Line Conductor
 
-!!! warning
-    This page was automatically generated and requires review.
-
 As with the `underground_line` and `overhead_line` objects, `triplex_line` objects have their own conductor objects. This object describes the physical characteristics of the actual wire used in the triple line bundle. A typical implementation would be: 
     
     
@@ -24,10 +21,10 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | --- | --- | --- | --- | --- |
 | resistance | double | Ohm/mile | I | Resistance of the conductor. |
 | geometric_mean_radius | double | ft | I | GMR of conductor. |
-| rating.summer.continuous | double | A | I | ⚠️ amp ratings for the cable during continuous operation in summer |
-| rating.summer.emergency | double | A | I | ⚠️ amp ratings for the cable during short term operation in summer |
-| rating.winter.continuous | double | A | I | ⚠️ amp ratings for the cable during continuous operation in winter |
-| rating.winter.emergency | double | A | I | ⚠️ amp ratings for the cable during short term operation in winter |
+| rating.summer.continuous | double | A | I | Amp ratings for the cable during continuous operation in summer |
+| rating.summer.emergency | double | A | I | Amp ratings for the cable during short term operation in summer |
+| rating.winter.continuous | double | A | I | Amp ratings for the cable during continuous operation in winter |
+| rating.winter.emergency | double | A | I | Amp ratings for the cable during short term operation in winter |
 
 ### Triplex Conductor State of Development
 
