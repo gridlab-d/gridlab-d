@@ -14,6 +14,9 @@ else()
     set(LIB_EXT "so")
 endif()
 
+# Shared module libraries use the same extension as other shared libs on this project.
+set(MODULE_LIB_EXT ${LIB_EXT})
+
 # Find required packages
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
@@ -28,22 +31,22 @@ endif()
 find_package(nanobind CONFIG REQUIRED)
 
 # For PyPI distribution, we expect GridLAB-D to be pre-built
-# The build process should ensure libgldapi.so exists before calling this
+# The build process should ensure libgldapi.${LIB_EXT} exists before calling this
 
 # Determine paths based on build context
 set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(PYPI_MODE FALSE)
-if(EXISTS "${GRIDLABD_ROOT}/cmake-build/lib/libgldapi.so")
+if(EXISTS "${GRIDLABD_ROOT}/cmake-build/lib/libgldapi.${LIB_EXT}")
     # Development mode - prefer cmake out-of-source build
     set(GRIDLABD_BUILD_DIR ${GRIDLABD_ROOT}/cmake-build)
     set(GRIDLABD_LIB_DIR ${GRIDLABD_BUILD_DIR}/lib)
     message(STATUS "Development mode: using pre-built GridLAB-D at ${GRIDLABD_BUILD_DIR}")
-elseif(EXISTS "${GRIDLABD_ROOT}/build/lib/libgldapi.so")
+elseif(EXISTS "${GRIDLABD_ROOT}/build/lib/libgldapi.${LIB_EXT}")
     # Legacy in-tree build fallback
     set(GRIDLABD_BUILD_DIR ${GRIDLABD_ROOT}/build)
     set(GRIDLABD_LIB_DIR ${GRIDLABD_BUILD_DIR}/lib)
     message(STATUS "Development mode: using pre-built GridLAB-D at ${GRIDLABD_BUILD_DIR}")
-elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/lib/libgldapi.so")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/lib/libgldapi.${LIB_EXT}")
     # PyPI mode - use prebuilt libraries included in the package
     set(PYPI_MODE TRUE)
     set(GRIDLABD_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
@@ -69,8 +72,8 @@ endif()
 
 # Define HAVE_CONFIG_H like main build does
 add_definitions(-DHAVE_CONFIG_H)
-if(NOT EXISTS ${GRIDLABD_LIB_DIR}/libgldapi.so)
-    message(FATAL_ERROR "GridLAB-D API library not found at ${GRIDLABD_LIB_DIR}/libgldapi.so. Please build GridLAB-D first or ensure prebuilt libraries are included.")
+if(NOT EXISTS ${GRIDLABD_LIB_DIR}/libgldapi.${LIB_EXT})
+    message(FATAL_ERROR "GridLAB-D API library not found at ${GRIDLABD_LIB_DIR}/libgldapi.${LIB_EXT}. Please build GridLAB-D first or ensure prebuilt libraries are included.")
 
 endif()
 
@@ -95,13 +98,19 @@ target_compile_definitions(gridlabd_core PRIVATE HAVE_CONFIG_H)
 
 # Link against GridLAB-D API library and dependencies
 target_link_libraries(gridlabd_core PRIVATE 
-    ${GRIDLABD_LIB_DIR}/libgldapi.so
+    ${GRIDLABD_LIB_DIR}/libgldapi.${LIB_EXT}
     nlohmann_json::nlohmann_json
 )
 
 # Set RPATH for the module to find the shared library
+if(APPLE)
+    set(GRIDLABD_MODULE_RPATH "@loader_path")
+else()
+    set(GRIDLABD_MODULE_RPATH "$ORIGIN")
+endif()
+
 set_target_properties(gridlabd_core PROPERTIES
-    INSTALL_RPATH "$ORIGIN"
+    INSTALL_RPATH "${GRIDLABD_MODULE_RPATH}"
     BUILD_WITH_INSTALL_RPATH TRUE
 )
 
@@ -137,9 +146,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/bin/gridlabd")
             DESTINATION gridlabd/bin)
 endif()
 
-# Install all GridLAB-D module libraries (.so files) so users can load modules
+# Install all GridLAB-D module libraries so users can load modules
 # These are needed for simulations (residential, climate, powerflow, etc.)
-file(GLOB GRIDLABD_MODULES "${GRIDLABD_LIB_DIR}/*.so")
+file(GLOB GRIDLABD_MODULES "${GRIDLABD_LIB_DIR}/*.${MODULE_LIB_EXT}")
 if(GRIDLABD_MODULES)
     install(PROGRAMS ${GRIDLABD_MODULES}
             DESTINATION gridlabd/lib)

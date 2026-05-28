@@ -306,7 +306,9 @@ class IsolatedGridLabD:
     @staticmethod
     def set_install_root(path: str):
         """Set the GridLAB-D installation root directory."""
-        # Set it as environment variable so worker processes can pick it up
+        # Propagate to both env vars so precedence and legacy behavior remain stable
+        # across worker and direct usage.
+        os.environ["GRIDLABD_HOME"] = path
         os.environ["GRIDLABD_ROOT"] = path
         # Also try to validate it using the C++ class directly
         from .gridlabd_core import GridLabD as CppGridLabD

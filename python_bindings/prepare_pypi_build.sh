@@ -6,11 +6,33 @@ set -e
 
 echo "Building GridLAB-D Python bindings for PyPI distribution..."
 
+# Detect platform-specific shared library extension.
+case "$(uname -s)" in
+    Darwin)
+        LIB_EXT="dylib"
+        ;;
+    MINGW*|MSYS*|CYGWIN*)
+        LIB_EXT="dll"
+        ;;
+    *)
+        LIB_EXT="so"
+        ;;
+esac
+
+# Portable CPU count for parallel builds.
+if command -v nproc >/dev/null 2>&1; then
+    BUILD_JOBS="$(nproc)"
+elif command -v sysctl >/dev/null 2>&1; then
+    BUILD_JOBS="$(sysctl -n hw.ncpu)"
+else
+    BUILD_JOBS=4
+fi
+
 # Ensure we're in the right directory
 cd "$(dirname "$0")"
 
 # Check if GridLAB-D is already built
-if [ ! -f "../build/lib/libgldapi.so" ]; then
+if [ ! -f "../build/lib/libgldapi.${LIB_EXT}" ]; then
     echo "GridLAB-D not found. Building GridLAB-D first..."
     cd ..
     
@@ -24,7 +46,7 @@ if [ ! -f "../build/lib/libgldapi.so" ]; then
     fi
     
     # Build GridLAB-D
-    make -j$(nproc) gldapi
+    make -j"${BUILD_JOBS}" gldapi
     
     cd ../python_bindings
 fi
@@ -37,15 +59,15 @@ mkdir -p prebuilt/share
 
 # Copy GridLAB-D API library
 echo "Copying GridLAB-D libraries..."
-cp ../build/lib/libgldapi.so prebuilt/lib/
+cp "../build/lib/libgldapi.${LIB_EXT}" prebuilt/lib/
 if [ -f "../build/lib/static/libjsoncpp.a" ]; then
     mkdir -p prebuilt/lib/static
     cp ../build/lib/static/libjsoncpp.a prebuilt/lib/static/
 fi
 
-# Copy all GridLAB-D module libraries (.so files) for runtime use
+# Copy all GridLAB-D module libraries for runtime use
 echo "Copying GridLAB-D modules..."
-find ../build/lib -name "*.so" -not -name "libgldapi.so" -exec cp {} prebuilt/lib/ \;
+find ../build/lib -name "*.${LIB_EXT}" -not -name "libgldapi.${LIB_EXT}" -exec cp {} prebuilt/lib/ \;
 
 # Copy essential data files
 echo "Copying data files..."

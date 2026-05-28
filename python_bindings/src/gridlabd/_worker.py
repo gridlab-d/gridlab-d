@@ -64,10 +64,13 @@ def handle_init(message: Message) -> Response:
     """Initialize a new GridLabD instance."""
     global _gld_instance
     try:
-        # Set install root from environment before creating instance
+        # Set install root from environment before creating instance.
+        # Keep precedence aligned with package init logic:
+        # GRIDLABD_HOME (preferred) > GRIDLABD_ROOT (backward compatibility).
         import os
-        if "GRIDLABD_ROOT" in os.environ:
-            DirectGridLabD.set_install_root(os.environ["GRIDLABD_ROOT"])
+        install_root = os.environ.get("GRIDLABD_HOME") or os.environ.get("GRIDLABD_ROOT")
+        if install_root:
+            DirectGridLabD.set_install_root(install_root)
         
         _gld_instance = DirectGridLabD()
         

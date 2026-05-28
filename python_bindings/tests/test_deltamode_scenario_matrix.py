@@ -32,6 +32,35 @@ def _seconds(time_str: str, base: datetime) -> float:
 def _set_model(gld_instance, test_models_dir: Path, filename: str) -> Path:
     model_path = test_models_dir / filename
     assert model_path.exists(), f"Missing model fixture: {model_path}"
+
+    # Validate external input file references before loading the model.
+    # Some fixtures are optional in local/dev environments; skip gracefully
+    # instead of crashing the worker process during runtime stepping.
+    required_inputs: list[Path] = []
+    for raw_line in model_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("//"):
+            continue
+        m = re.search(r"\bfile\s+([^;]+);", line, flags=re.IGNORECASE)
+        if not m:
+            continue
+
+        token = m.group(1).strip().strip("\"'")
+        if not token:
+            continue
+
+        # Recorder outputs are expected to be created during simulation.
+        if "recorder" in token.lower():
+            continue
+
+        candidate = (model_path.parent / token).resolve()
+        if not candidate.exists():
+            required_inputs.append(candidate)
+
+    if required_inputs:
+        missing = ", ".join(str(p) for p in required_inputs)
+        pytest.skip(f"Missing deltamode input fixture(s): {missing}")
+
     assert gld_instance.set_working_directory(str(model_path.parent)) == 0
     assert gld_instance.load(str(model_path)) == 0
     return model_path

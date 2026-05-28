@@ -3,18 +3,20 @@ name: Publish Python Bindings to TestPyPI
 on:
   push:
     branches:
-      - pypi_build  # The branch you want to trigger this workflow
+      - main
+      - pypi_build
 
 jobs:
   build-and-publish:
-    name: Build and Publish to TestPyPI
-    runs-on: ubuntu-latest
+    name: Build wheels (${{ matrix.os }} / py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     environment: testpypi
     permissions:
       id-token: write  # IMPORTANT: Mandatory for trusted publishing
     
     strategy:
       matrix:
+        os: [ubuntu-latest, macos-14]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
 
     steps:
@@ -28,36 +30,49 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         
-    - name: Install System Dependencies
+    - name: Install System Dependencies (Linux)
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake build-essential libxerces-c-dev
+
+    - name: Install System Dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install cmake xerces-c
 
     - name: Build GridLAB-D Core
       run: |
         mkdir -p build
         cd build
         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install ..
-        cmake --build . -j$(nproc)
+        JOBS=$(python -c "import os; print(os.cpu_count() or 2)")
+        cmake --build . -j${JOBS}
       # This builds the core libraries that the Python bindings depend on
 
     - name: Build Python Wheel for Python ${{ matrix.python-version }}
       run: |
         cd python_bindings
-        pip install build auditwheel
+        pip install build
         # Build the wheel
         python -m build --wheel
-        # Repair the wheel to add manylinux tags
-        auditwheel repair dist/*.whl -w dist/
-        # Remove the old linux_x86_64 wheel
-        rm dist/*-linux_x86_64.whl
       # This uses pyproject.toml and scikit-build-core to build the wheel
       # It expects to find the built GridLAB-D libraries in ../build/lib
+
+    - name: Repair Linux wheel
+      if: runner.os == 'Linux'
+      run: |
+        cd python_bindings
+        pip install auditwheel
+        # Repair the wheel to add manylinux tags
+        auditwheel repair dist/*.whl -w dist/
+        # Remove the old platform wheel after repair
+        rm -f dist/*-linux_x86_64.whl
 
     - name: Upload wheel as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: wheel-${{ matrix.python-version }}
+        name: wheel-${{ matrix.os }}-py${{ matrix.python-version }}
         path: python_bindings/dist/*.whl
 
   publish:

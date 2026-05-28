@@ -140,6 +140,14 @@ gridlabd.xml
 *.csv
 *.sh
 
+# Keep required deltamode test input fixtures under version control.
+!python_bindings/tests/test_deltamode_house_player.csv
+!python_bindings/tests/deltamode_window_93.csv
+!python_bindings/tests/deltamode_window_103.csv
+!python_bindings/tests/deltamode_window_62.csv
+!python_bindings/tests/deltamode_start_55_62.csv
+!python_bindings/tests/deltamode_multi_windows.csv
+
 # Python cache files
 __pycache__/
 *.py[cod]
