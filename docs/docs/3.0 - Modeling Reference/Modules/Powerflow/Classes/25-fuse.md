@@ -1,4 +1,4 @@
-## Fuse
+﻿## Fuse
 
 Fuse objects are used to place a current limitation between two nodes. If the current is exceeded, the fuse will open and prevent further current flow. Due to limitations in the Forward-Back Sweep algorithm, fuses only affect the first downstream node. If other loads exist downstream, they will cause an oscillatory voltage swing that has no real representation. **reliability** module functionality only exists in the Newton-Raphson solver at this time. A minimalist **fuse** could be implemented as 
     
@@ -31,6 +31,8 @@ A typical **fuse** object would be implemented, with the same parameters as abov
 **fuse** objects are derived from **[link](04-link.md)** objects, so any parameters of the **[link](04-link.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 25-fuse table 1 { #tbl:25-fuse-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

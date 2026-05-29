@@ -1,4 +1,4 @@
-## Link
+﻿## Link
 
 The link object is a connection between nodes in a distribution system. The **link** object is not directly useful, but is the basis for objects associated with overhead lines, underground lines, triplex lines, transformers, regulators, switches, and fuses.
 
@@ -15,13 +15,15 @@ A **link** only requires three parameters to be specified by default. Most of th
 
 ### Link Object Parameters
 
-**link** objects are derived from **[powerflow_object](powerflow_object.md)** objects, so any parameters of the **[powerflow_object](powerflow_object.md)** object are available as well.
+**link** objects are derived from **[powerflow_object](02-powerflow_object.md)** objects, so any parameters of the **[powerflow_object](02-powerflow_object.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
 #### General Configuration Properties
 
 These properties define the basic topology and operating state of the link.
+
+Table: 04-link table 1 { #tbl:04-link-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -33,6 +35,8 @@ These properties define the basic topology and operating state of the link.
 #### Power Flow Measurements
 
 These properties are computed by the simulation during postsync and are output only. They represent power flowing through the link with respect to the `from` and `to` node designations.
+
+Table: 04-link table 2 { #tbl:04-link-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -54,6 +58,8 @@ These properties are computed by the simulation during postsync and are output o
 
 These properties are computed by the simulation during postsync and are output only. They represent the current flowing through the link. Note: these have not been fully validated for every derived link type.
 
+Table: 04-link table 3 { #tbl:04-link-3 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | current_in_A | complex | A | O | Current flowing into the link on phase A, with respect to the `from` node. |
@@ -66,6 +72,8 @@ These properties are computed by the simulation during postsync and are output o
 #### Fault Current and Voltage Properties
 
 These properties are populated by the fault analysis subsystem (via the **reliability** module or `eventgen` object) and are output only. 
+
+Table: 04-link table 4 { #tbl:04-link-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -83,6 +91,8 @@ These properties are populated by the fault analysis subsystem (via the **reliab
 
 These properties support scheduled power dispatch through the link. When `set_pdispatch` is set to `true`, the simulation computes `pdispatch` as the average of `power_in` and `power_out` real components and resets `pdispatch_offset` to zero. The `set_pdispatch` flag is automatically cleared after triggering.
 
+Table: 04-link table 5 { #tbl:04-link-5 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | pdispatch | double | W | IO | Scheduled real power flow from `from` to `to`. Overwritten when `set_pdispatch` is triggered. |
@@ -90,6 +100,8 @@ These properties support scheduled power dispatch through the link. When `set_pd
 | set_pdispatch | bool | N/A | IO | When set to `true`, triggers computation of `pdispatch` as the average of real power in and out. Automatically reset to `false` after triggering. |
 
 #### Flow Direction and Overload Status
+
+Table: 04-link table 6 { #tbl:04-link-6 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -99,6 +111,8 @@ These properties support scheduled power dispatch through the link. When `set_pd
 #### Thermal Rating Properties
 
 These properties define the current (for lines) or power (for transformers) limits of the link. They are input only. Limit checking is only active when the global `use_link_limits` flag is enabled and the link is a line or transformer (switches, fuses, regulators, and sectionalizers are excluded). Default values are 1000 A continuous and 2000 A emergency.
+
+Table: 04-link table 7 { #tbl:04-link-7 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -113,6 +127,8 @@ These properties define the current (for lines) or power (for transformers) limi
 
 These properties control the numerical integration method and convergence tolerance used for in-rush current calculations during transient (deltamode) simulation. If the integration method is left as `UNDEFINED`, the object inherits the global integration method setting. These properties are only used when both transient and in-rush calculations are enabled.
 
+Table: 04-link table 8 { #tbl:04-link-8 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | inrush_convergence_value | double | V | I | Convergence tolerance for transient in-rush completion, measured as the change in line voltage drop magnitude between iterations. Default is 0.0001 V. |
@@ -123,6 +139,8 @@ These properties control the numerical integration method and convergence tolera
 
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use. They support triplex line neutral current calculations.
+
+Table: 04-link table 9 { #tbl:04-link-9 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |

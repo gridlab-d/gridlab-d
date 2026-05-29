@@ -1,4 +1,4 @@
-## Emissions
+﻿## Emissions
 
 In Development. 
 
@@ -9,6 +9,8 @@ In Development.
 **emissions** does not declare inherited parent classes.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 42-emissions table 1 { #tbl:42-emissions-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

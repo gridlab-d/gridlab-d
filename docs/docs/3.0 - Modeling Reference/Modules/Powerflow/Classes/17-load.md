@@ -22,6 +22,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 #### General Properties
 
+Table: 17-load table 1 { #tbl:17-load-1 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | load_class | enumeration | N/A | I | Describes the type of load the object represents. Used for informational purposes only. Valid types may be referenced by keyword or number <br/> 0 - `U` \- Unknown load type <br/> 1 - `R` \- Residential load <br/> 2 - `C` \- Commercial load <br/> 3 - `I` \- Industrial load <br/> 4 - `A` \- Agricultural load |
@@ -31,6 +33,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 #### ZIP Load Properties
 
 These properties define constant power, constant current, and constant impedance loads directly. The `_A`, `_B`, `_C` variants automatically map to wye (A–N, B–N, C–N) or delta (A–B, B–C, C–A) depending on the object's phase configuration. The `_real` and `_reac` suffixed variants provide access to the real and imaginary components individually.
+
+Table: 17-load table 2 { #tbl:17-load-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -66,6 +70,8 @@ These properties define constant power, constant current, and constant impedance
 
 These properties specify ZIP loads on an explicit wye (phase-to-neutral) connection, regardless of the object's phase configuration. They are input only. The `_real` and `_reac` suffixed variants provide access to the real and imaginary components individually.
 
+Table: 17-load table 3 { #tbl:17-load-3 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | constant_power_AN | complex | VA | I | Constant power load on phase A. |
@@ -99,6 +105,8 @@ These properties specify ZIP loads on an explicit wye (phase-to-neutral) connect
 #### Explicit Delta-Connected Load Properties
 
 These properties specify ZIP loads on an explicit delta (phase-to-phase) connection, regardless of the object's phase configuration. They are input only. The `_real` and `_reac` suffixed variants provide access to the real and imaginary components individually.
+
+Table: 17-load table 4 { #tbl:17-load-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -134,6 +142,8 @@ These properties specify ZIP loads on an explicit delta (phase-to-phase) connect
 
 These properties provide an alternative way to specify ZIP loads using a base power value with fraction and power factor breakdowns per phase, following the same conventions as the ZIPload object. When `base_power` is nonzero for a phase, it overrides the corresponding `constant_power`, `constant_current`, and `constant_impedance` values for that phase.
 
+Table: 17-load table 5 { #tbl:17-load-5 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | base_power_A | double | VA | I | Nominal power on phase A before applying ZIP fractions. |
@@ -162,6 +172,8 @@ These properties provide an alternative way to specify ZIP loads using a base po
 
 These properties are computed by the simulation and are output only. Note that the `measured_voltage` properties lag by one powerflow iteration; for the most current values, read the corresponding `voltage_*` properties from the parent **[node](03-node.md)** object directly.
 
+Table: 17-load table 6 { #tbl:17-load-6 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | measured_voltage_A | complex | V | O | Measured voltage on phase A. |
@@ -178,6 +190,8 @@ These properties are computed by the simulation and are output only. Note that t
 #### Deltamode / In-Rush Properties
 
 These properties control the numerical integration method used for in-rush current calculations during deltamode simulation. If left as `UNDEFINED`, the object inherits the global integration method setting.
+
+Table: 17-load table 7 { #tbl:17-load-7 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

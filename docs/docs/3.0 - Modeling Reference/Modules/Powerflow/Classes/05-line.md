@@ -1,4 +1,4 @@
-## Line
+﻿## Line
 
 The line object represents power lines in a distribution system. The line object has two implementations: `overhead_line`, and `underground_line`. Each line must be called appropriately. Information about the particular line type will be contained in other objects called `line_configuration`. 
 
@@ -36,6 +36,8 @@ and the typical usage of the underground line would be
 **line** objects are derived from **[link](04-link.md)** objects, so any parameters of the **[link](04-link.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 05-line table 1 { #tbl:05-line-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -115,6 +117,8 @@ It is highly recommended to use the `line_spacing` and `overhead_line_conductor`
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
+Table: 05-line table 2 { #tbl:05-line-2 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | conductor_A | object | N/A | I | Object describing the conductor of phase A in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
@@ -127,6 +131,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 #### Z-matrix and Capacitance Matrix Properties
 
 Describes the z-matrix and c-matrix directly for either underground or overhead lines instead of using the geometric configurations (This will over-write geometric configurations). For this notation, index 1 is phase A, 2 is phase B, and 3 is phase C. So element z12 represents the mutual/cross coupling impedance between phase A and phase B of this line configuration.
+
+Table: 05-line table 3 { #tbl:05-line-3 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -150,6 +156,8 @@ Describes the z-matrix and c-matrix directly for either underground or overhead 
 | c33 | double | nF/mile | I |  |
 
 #### Ampere Rating Properties
+
+Table: 05-line table 4 { #tbl:05-line-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -183,6 +191,8 @@ The line spacing object describe how the individual conductors of a distribution
 **line_spacing** does not declare inherited parent classes.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 05-line table 5 { #tbl:05-line-5 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -244,15 +254,17 @@ For overhead lines, the `line_configuration` object must specify the overhead li
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
+Table: 05-line table 6 { #tbl:05-line-6 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | geometric_mean_radius | double | ft | I | The GMR of the wire. |
 | resistance | double | Ohm/mile | I | The resistance of the particular conductor, incorporating size and material effects. |
 | diameter | double | in | I | Diameter of the conductor - used for capacitance calculations. |
-| rating.summer.continuous | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| rating.summer.emergency | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **TODO - Status - This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| rating.winter.continuous | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| rating.winter.emergency | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| rating.summer.continuous | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| rating.summer.emergency | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **TODO - Status - This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| rating.winter.continuous | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| rating.winter.emergency | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
 
 ### Overhead Line Conductor State of Development
 
@@ -261,7 +273,7 @@ Overhead Line Conductor is considered a highly developed and validated model.
 
 ## Underground Line
 
-Underground lines represent burial distribution cables in a powerflow system. In terms of GridLAB-D™ implementation, they are nearly identical to the `overhead_line` objects. A typical `underground_line` object would be written as 
+Underground lines represent burial distribution cables in a powerflow system. In terms of GridLAB-Dâ„¢ implementation, they are nearly identical to the `overhead_line` objects. A typical `underground_line` object would be written as 
     
     
     object underground_line {
@@ -308,6 +320,8 @@ Underground lines often contain concentric shielding layers around the central c
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
+Table: 05-line table 7 { #tbl:05-line-7 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | outer_diameter | double | in | I | Diameter of the outside of the cable, including jacketing and shielding. |
@@ -323,10 +337,10 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | insulation_relative_permitivitty | double | unit | I | Permitivitty of insulation, relative to air |
 | shield_gmr | double | ft | I | Geometric mean radius of the shielding of the cable. |
 | shield_resistance | double | Ohm/mile | I | Resistance of the cable shielding. |
-| rating.summer.continuous | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| rating.summer.emergency | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| rating.winter.continuous | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
-| rating.winter.emergency | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| rating.summer.continuous | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| rating.summer.emergency | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| rating.winter.continuous | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| rating.winter.emergency | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
 
 ### Underground Line Conductor State of Development
 

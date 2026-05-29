@@ -20,6 +20,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 These properties control meter behavior and are input only. They are not modified by the simulation at runtime. Timestep properties must be set to a positive value (in seconds) to activate their corresponding measurement features; the default value of -1 disables them.
 
+Table: 18-meter table 1 { #tbl:18-meter-1 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | meter_power_consumption | complex | VA | I | Power consumed by the meter itself (standby, communication). Divided equally across active phases and added as a constant power load. |
@@ -29,6 +31,8 @@ These properties control meter behavior and are input only. They are not modifie
 #### Instantaneous Measurement Properties
 
 These properties report the meter's current electrical state. All are computed during the postsync pass of each powerflow iteration and are output only, except `measured_demand` which can also be set by the user to establish an initial floor value. The `measured_demand` property can be reset to zero by calling the meter reset function.
+
+Table: 18-meter table 2 { #tbl:18-meter-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -55,6 +59,8 @@ These properties track energy consumption over time. Cumulative values are both 
 
 Delta values are output only. They report the change in energy at each interval boundary defined by `measured_energy_delta_timestep` and are only updated when that property is set to a positive value.
 
+Table: 18-meter table 3 { #tbl:18-meter-3 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | measured_real_energy | double | Wh | IO | Cumulative real energy consumption. |
@@ -69,6 +75,8 @@ These properties report voltage statistics computed over a repeating interval de
 For max and min properties, voltage samples are compared by **magnitude** each timestep. The "real" and "reactive" variants report the real and imaginary components of whichever sample had the greatest or least magnitude during the interval. Average properties track a time-weighted average of the voltage magnitude.
 
 > **Note:** Due to a probable source code bug, the three `measured_reactive_max_voltage_A/B/C_in_interval` properties incorrectly report the imaginary component from the line-to-line peak-magnitude sample instead of the line-to-neutral sample.
+
+Table: 18-meter table 4 { #tbl:18-meter-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -107,6 +115,8 @@ For max and min properties, voltage samples are compared by **magnitude** each t
 
 These properties report power statistics computed over the same repeating interval defined by `measured_stats_interval`, with the same activation and update behavior as the voltage statistics above. All are output only. Total three-phase statistics are listed first, followed by per-phase breakdowns. Averages are time-weighted.
 
+Table: 18-meter table 5 { #tbl:18-meter-5 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | measured_real_max_power_in_interval | double | W | O | Maximum total real power. |
@@ -140,6 +150,8 @@ These properties configure and report the meter's energy billing functionality. 
 
 Tiered pricing modes (`TIERED`, `TIERED_RTP`, `TIERED_TOU`) use up to three energy tiers. Energy consumed below `first_tier_energy` is priced at the base `price` (or `price_base` for `TIERED_RTP`). Energy above each tier threshold is priced at the corresponding tier price. If a higher tier is not defined, the previous tier's price applies to all remaining energy.
 
+Table: 18-meter table 6 { #tbl:18-meter-6 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | bill_mode | enumeration | N/A | I | Billing structure. Valid values: <br/> 0 - `NONE` - Billing disabled (default). <br/> 1 - `UNIFORM` - Flat rate from `price`. <br/> 2 - `TIERED` - Price increases at energy thresholds. <br/> 3 - `HOURLY` - Real-time market pricing via `power_market`. <br/> 4 - `TIERED_RTP` - Real-time market pricing plus tiered base charges via `price_base`. <br/> 5 - `TIERED_TOU` - Time-of-use with tier selection based on cumulative energy. |
@@ -163,12 +175,16 @@ Tiered pricing modes (`TIERED`, `TIERED_RTP`, `TIERED_TOU`) use up to three ener
 
 These properties report the meter's service interruption status. The `customer_interrupted` flag is set automatically when a phase loss is detected through the fault check mechanism in the NR solver. The `customer_interrupted_secondary` flag indicates a momentary interruption and is automatically cleared to `false` at the start of each timestep.
 
+Table: 18-meter table 7 { #tbl:18-meter-7 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | customer_interrupted | bool | N/A | IO | Indicates sustained service interruption due to phase loss. |
 | customer_interrupted_secondary | bool | N/A | IO | Indicates momentary service interruption. |
 
 The following properties are only available in builds compiled with `SUPPORT_OUTAGES` defined. All are input only.
+
+Table: 18-meter table 8 { #tbl:18-meter-8 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

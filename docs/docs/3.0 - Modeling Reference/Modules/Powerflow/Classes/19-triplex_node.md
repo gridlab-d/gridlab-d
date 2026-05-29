@@ -1,4 +1,4 @@
-## Triplex Node
+﻿## Triplex Node
 
 Triplex nodes represent special cases of the **node** object. The **triplex_node** object still serves as connection point between different links of the system and a point of measurable voltage. However, **triplex_node**s are casted to represent phases `1`, `2`, and `N` rather than `A`, `B`, and `C` like normal **node** objects. Simplified, they operate in the split-phase level of distribution rather than the three-phase level. 
 
@@ -27,7 +27,7 @@ A typical **triplex_node** implementation is
 
 #### Properties
 
-**triplex_node** objects are derived from **[powerflow_object](powerflow_object.md)** objects, so any parameters of the **[powerflow_object](powerflow_object.md)** object are available as well.
+**triplex_node** objects are derived from **[powerflow_object](02-powerflow_object.md)** objects, so any parameters of the **[powerflow_object](02-powerflow_object.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
@@ -35,16 +35,20 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 These properties control the fundamental bus configuration and solver behavior of the triplex node.
 
+Table: 19-triplex_node table 1 { #tbl:19-triplex-node-1 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | bustype | enumeration | N/A | I | The type of bus the node represents. The different bus distinctions are only valid for the Gauss-Seidel and Newton-Raphson solver methods. The Forward-Back Sweep method (Kersting's method) does not presently incorporate anything other than the `PQ` bus. Valid choices are <br/> - `PQ` for a constant power bus (default) <br/> - `PV` for a voltage-controlled (magnitude) bus <br/> - `SWING` for the infinite bus of a system. |
 | busflags | set | N/A | I | A flag to indicate if the current bus has a source or not. Mainly used for `PV` implementations. The only valid entries are `HASSOURCE` to indicate it is a supported bus, or an empty value indicating it is not. |
-| reference_bus | object | N/A | I | A reference node elsewhere in the system that the **triplex_node** will use to obtain frequency information if necessary (unimplemented in GridLAB-D™ at this point). |
+| reference_bus | object | N/A | I | A reference node elsewhere in the system that the **triplex_node** will use to obtain frequency information if necessary (unimplemented in GridLAB-Dâ„¢ at this point). |
 | maximum_voltage_error | double | V | I | The maximum voltage error for convergence checks in the different powerflow solvers. If left blank, it is derived from the `nominal_voltage` parameter. |
 
 #### Voltage Properties
 
 These properties hold the bus voltage phasors for split-phase systems. Voltages may be specified in rectangular (`120.0+0.0j`) or polar (`120.0+0.0d`) format. The `_1`, `_2`, `_N` variants are phase-to-neutral voltages and serve as both user-settable initial conditions and simulation outputs updated each powerflow iteration. The `_12`, `_1N`, `_2N` variants are line-to-line or derived voltages; setting them directly is not recommended.
+
+Table: 19-triplex_node table 2 { #tbl:19-triplex-node-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -60,6 +64,8 @@ These properties hold the bus voltage phasors for split-phase systems. Voltages 
 
 These properties track whether the node is in service and how long it has been connected or disconnected. The `service_status_double` property provides a schedule-friendly numeric override for the enumeration-based `service_status`.
 
+Table: 19-triplex_node table 3 { #tbl:19-triplex-node-3 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | service_status | enumeration | N/A | IO | Indicates whether the node is in service or disconnected. Valid values: `IN_SERVICE`, `OUT_OF_SERVICE`. |
@@ -72,6 +78,8 @@ These properties track whether the node is in service and how long it has been c
 These properties configure and report frequency and angle measurements during transient simulation. The measurement method is selected by `frequency_measure_type`; if set to `NONE` (the default unless overridden by a module-level global setting), no measurements are performed. The `SIMPLE` method uses a first-order transducer model controlled by `sfm_Tf`. The `PLL` method uses a phase-locked loop controlled by `pll_Kp` and `pll_Ki`.
 
 The four configuration properties are input only. The seven `measured_*` properties are output.
+
+Table: 19-triplex_node table 4 { #tbl:19-triplex-node-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -93,6 +101,8 @@ These properties configure Grid Friendly Appliance-type voltage and frequency tr
 
 The first eight properties are input-only configuration parameters. `GFA_status` and `GFA_trip_method` are both input and output — they can be set initially but are updated by the simulation at runtime.
 
+Table: 19-triplex_node table 5 { #tbl:19-triplex-node-5 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | GFA_enable | bool | N/A | I | Enables or disables GFA-type functionality on this node. |
@@ -110,6 +120,8 @@ The first eight properties are input-only configuration parameters. `GFA_status`
 
 These properties expose the node's topological parent relationship and its runtime swing-bus behavior. Neither is meaningfully user-configurable — `topological_parent` is determined during initialization and `behaving_as_swing` is recomputed every postsync. Both are effectively output-only or informational.
 
+Table: 19-triplex_node table 6 { #tbl:19-triplex-node-6 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | topological_parent | object | N/A | O | Topological parent of this node as determined during initialization. Reflects the object's `parent` field. |
@@ -119,6 +131,8 @@ These properties expose the node's topological parent relationship and its runti
 
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
+
+Table: 19-triplex_node table 7 { #tbl:19-triplex-node-7 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |
@@ -157,3 +171,5 @@ These properties expose the node's topological parent relationship and its runti
 ### Triplex Node State of Development
 
 Triplex Node is considered a highly developed and validated model in terms of powerflow solutions, however, models may be developed to include more advanced features in the future. 
+
+

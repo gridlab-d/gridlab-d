@@ -1,6 +1,6 @@
-## Switch Object
+﻿## Switch
 
-Switch objects are used to change topology and add or remove elements from a powerflow system. When a switch is opened, no current flow is permitted and the downstream objects will be effectively removed from the system. A typical switch implementation is 
+Switch objects are used to change topology and add or remove elements from a powerflow system. When a switch is opened, no current flow is permitted and the downstream objects will be effectively removed from the system. Further details on switch behavior can be found in the switch section of the [theory](../Theory/04-Controls_and_Devices_Theory.md#switch) page. A typical switch implementation is 
     
     
     object switch {
@@ -11,13 +11,16 @@ Switch objects are used to change topology and add or remove elements from a pow
     	status CLOSED;
     	}
 
-### Switch Object Parameters
+
+### Switch Parameters
 
 #### Properties
 
-**switch_object** objects are derived from **[link](04-link.md)** objects, so any parameters of the **[link](04-link.md)** object are available as well.
+The **switch** objects are derived from **[*link*](04-link.md)** objects, so any parameters of the **[*link*](04-link.md)** object are available as well. The 
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 26-switch table 1 { #tbl:26-switch-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

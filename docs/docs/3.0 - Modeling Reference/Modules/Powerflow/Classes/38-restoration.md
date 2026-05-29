@@ -1,4 +1,4 @@
-## Restoration
+﻿## Restoration
 
 As the **powerflow** module interacts with the **reliability** module, portions of the system may become isolated. The **restoration** object attempts to do feeder reconfiguration to close the isolated sections back into the system. The **restoration** object requires **reliability** or some reliability-like actions to function properly, as well as the **fault_check** object. The **restoration** object only works with the `NR` solver method at this time. 
 
@@ -19,6 +19,8 @@ A **restoration** object can be implemented as:
 **restoration** does not declare inherited parent classes.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 38-restoration table 1 { #tbl:38-restoration-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

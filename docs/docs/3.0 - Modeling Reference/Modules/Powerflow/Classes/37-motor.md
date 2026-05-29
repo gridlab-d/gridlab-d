@@ -1,4 +1,4 @@
-## Motor
+﻿## Motor
 
 The **motor** object models a three-phase or single phase induction motor. For detailed technical information on motor modeling approaches, see the additional documentation: [Tech_DeltaSPIM](../Motor/Tech_DeltaSPIM.md) (single-phase dynamic phasor model), [Tech_DeltaTPIM](../Motor/Tech_DeltaTPIM.md) (three-phase dynamic phasor model), and [Tech_CompositionMotor](../Motor/Tech_CompositionMotor.md) (composite motor models for heat pumps and refrigerators).
 
@@ -13,6 +13,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 
 ##### Operational and Control Parameters
+
+Table: 37-motor table 1 { #tbl:37-motor-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -41,6 +43,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 These are the fundamental electromagnetic and mechanical parameters of the motor.
 
+Table: 37-motor table 2 { #tbl:37-motor-2 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | base_power | double | W | I | Base power |
@@ -57,6 +61,8 @@ These are the fundamental electromagnetic and mechanical parameters of the motor
 
 These properties are specific to the single-phase motor model.
 
+Table: 37-motor table 3 { #tbl:37-motor-3 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | Rds | double | ohm | I | Stator d-axis resistance  |
@@ -71,6 +77,9 @@ These properties are specific to the single-phase motor model.
 #### Three-Phase Model Properties
 
 These properties are specific to the three-phase motor model.
+
+Table: 37-motor table 4 { #tbl:37-motor-4 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | Rs | double | ohm | I | Stator resistance |
@@ -79,6 +88,9 @@ These properties are specific to the three-phase motor model.
 
 #### Protection, relay and contactor Properties
 These properties are related to motor protection features.
+
+Table: 37-motor table 5 { #tbl:37-motor-5 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | contactor_state | enumeration | N/A | IO | The current status of the motor. Valid values: `OPEN`, `CLOSED`. |
@@ -96,6 +108,8 @@ These properties are related to motor protection features.
 
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
+
+Table: 37-motor table 6 { #tbl:37-motor-6 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |
@@ -139,3 +153,5 @@ These properties are related to motor protection features.
 ### Motor State of Development
 
 In Development. 
+
+

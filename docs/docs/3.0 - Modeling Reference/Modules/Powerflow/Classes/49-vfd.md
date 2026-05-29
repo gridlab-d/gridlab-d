@@ -1,4 +1,4 @@
-## VFD
+﻿## VFD
 
 
 ### VFD Parameters
@@ -8,6 +8,8 @@
 **vfd** objects are derived from **[link](04-link.md)** objects, so any parameters of the **[link](04-link.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 49-vfd table 1 { #tbl:49-vfd-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

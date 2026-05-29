@@ -1,4 +1,4 @@
-## Load Tracker
+﻿## Load Tracker
 
 
 ### Load Tracker Parameters
@@ -8,6 +8,8 @@
 **load_tracker** does not declare inherited parent classes.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 46-load_tracker table 1 { #tbl:46-load-tracker-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

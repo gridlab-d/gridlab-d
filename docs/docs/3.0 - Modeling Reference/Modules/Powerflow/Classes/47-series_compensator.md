@@ -1,4 +1,4 @@
-## Series Compensator
+﻿## Series Compensator
 
 
 
@@ -9,6 +9,8 @@
 **series_compensator** objects are derived from **[link](04-link.md)** objects, so any parameters of the **[link](04-link.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 47-series_compensator table 1 { #tbl:47-series-compensator-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -62,6 +64,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
+
+Table: 47-series_compensator table 2 { #tbl:47-series-compensator-2 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |

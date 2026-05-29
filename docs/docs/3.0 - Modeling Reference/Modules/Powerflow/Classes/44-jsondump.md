@@ -1,4 +1,4 @@
-## Jsondump
+﻿## Jsondump
 
 
 ### Jsondump Parameters
@@ -8,6 +8,8 @@
 **jsondump** does not declare inherited parent classes.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 44-jsondump table 1 { #tbl:44-jsondump-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -22,3 +24,5 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | system_base | double | VA | I | System base power rating for per-unit calculations |
 | min_node_voltage | double | pu | I | Per-unit minimum voltage level allowed for nodes |
 | max_node_voltage | double | pu | I | Per-unit maximum voltage level allowed for nodes |
+
+

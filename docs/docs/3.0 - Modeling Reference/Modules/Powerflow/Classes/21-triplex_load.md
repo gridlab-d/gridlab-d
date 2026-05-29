@@ -1,4 +1,4 @@
-## Triplex Load
+﻿## Triplex Load
 
 Triplex load is similar to **load** and **ZIPload** in that load can be specified as a direct value, or as a base load, then a ZIP fraction applied to that base load. The load can be placed on phase 1 (120V), phase 2 (120V) or phase 12 (240V). Much like the **load** object, **player** objects can be used to vary the load with time. **triplex_load** objects provide a means to implement constant current, constant power, and constant impedance losses or generation into the system. The convention is a load is a positive quantity, so generation would need to be represented as a negative number. 
 
@@ -24,6 +24,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 #### General Properties
 
+Table: 21-triplex_load table 1 { #tbl:21-triplex-load-1 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | load_class | enumeration | N/A | I | Describes the type of load the object represents. Used for informational purposes only. Valid types may be referenced by keyword or number <br/> 0 - `U` \- Unknown load type <br/> 1 - `R` \- Residential load <br/> 2 - `C` \- Commercial load <br/> 3 - `I` \- Industrial load <br/> 4 - `A` \- Agricultural load |
@@ -32,6 +34,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 #### ZIP Load Properties
 
 These properties define constant power, constant current, and constant impedance loads directly. The `_1`, `_2`, and `_12` variants represent loads on phase 1 (to neutral), phase 2 (to neutral), and phase 12 (between phases/delta) respectively. The `_real` and `_reac` suffixed variants provide access to the real and imaginary components individually.
+
+Table: 21-triplex_load table 2 { #tbl:21-triplex-load-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -67,6 +71,8 @@ These properties define constant power, constant current, and constant impedance
 
 These properties are computed by the simulation and are output only. Note that the `measured_voltage` properties lag by one powerflow iteration; for the most current values, read the corresponding `voltage_*` properties from the parent **[triplex_node](19-triplex_node.md)** object directly.
 
+Table: 21-triplex_load table 3 { #tbl:21-triplex-load-3 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | measured_voltage_1 | complex | V | O | Measured voltage on phase 1. |
@@ -80,6 +86,8 @@ These properties are computed by the simulation and are output only. Note that t
 #### Base Power and ZIP Fraction Properties
 
 These properties provide an alternative way to specify ZIP loads using a base power value with fraction and power factor breakdowns per phase, following the same conventions as the ZIPload object. When `base_power` is nonzero for a phase, it overrides the corresponding `constant_power`, `constant_current`, and `constant_impedance` values for that phase.
+
+Table: 21-triplex_load table 4 { #tbl:21-triplex-load-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

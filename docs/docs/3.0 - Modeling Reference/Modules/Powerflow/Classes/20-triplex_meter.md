@@ -1,4 +1,4 @@
-## Triplex Meter
+﻿## Triplex Meter
 
 Triplex meters provide similar functionality for triplex systems that **meter** objects do in three-phase systems. A triplex meter provides a measurement point for power and energy on the system at a specific point. Coupled with a **recorder** or **collector**, the **triplex_meter** object provides a method determine how much power and energy have been used by downstream connections, as well as how much current is flowing through the meter object at the present time. A typical implementation would be 
     
@@ -19,6 +19,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 These properties control meter behavior and are input only. They are not modified by the simulation at runtime. Timestep properties must be set to a positive value (in seconds) to activate their corresponding measurement features; the default value of -1 disables them.
 
+Table: 20-triplex_meter table 1 { #tbl:20-triplex-meter-1 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | meter_power_consumption | complex | VA | I | Power consumed by the meter itself (standby, communication). |
@@ -28,6 +30,8 @@ These properties control meter behavior and are input only. They are not modifie
 #### Instantaneous Measurement Properties
 
 These properties report the meter's current electrical state. All are computed during the postsync pass of each powerflow iteration and are output only, except `measured_demand` which can also be set by the user to establish an initial floor value. The `measured_demand` property can be reset to zero by calling the meter reset function.
+
+Table: 20-triplex_meter table 2 { #tbl:20-triplex-meter-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -51,6 +55,8 @@ These properties track energy consumption over time. Cumulative values are both 
 
 Delta values are output only. They report the change in energy at each interval boundary defined by `measured_energy_delta_timestep` and are only updated when that property is set to a positive value.
 
+Table: 20-triplex_meter table 3 { #tbl:20-triplex-meter-3 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | measured_real_energy | double | Wh | IO | Cumulative real energy consumption. |
@@ -63,6 +69,8 @@ Delta values are output only. They report the change in energy at each interval 
 These properties report voltage statistics computed over a repeating interval defined by `measured_stats_interval`. They are only active when `measured_stats_interval` is set to a positive value, and values are updated at the end of each interval. All properties in this section are output only.
 
 For max and min properties, voltage samples are compared by **magnitude** at each timestep. The "real" and "reactive" variants report the real and imaginary components of whichever sample had the greatest or least magnitude during the interval. Average properties track a time-weighted average of the voltage magnitude.
+
+Table: 20-triplex_meter table 4 { #tbl:20-triplex-meter-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -86,6 +94,8 @@ For max and min properties, voltage samples are compared by **magnitude** at eac
 
 These properties report power statistics computed over the same repeating interval defined by `measured_stats_interval`, with the same activation and update behavior as the voltage statistics above. All are output only. Total split-phase statistics are listed first, followed by per-phase breakdowns. Averages are time-weighted.
 
+Table: 20-triplex_meter table 5 { #tbl:20-triplex-meter-5 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | measured_real_max_power_in_interval | double | W | O | Maximum total real power. |
@@ -101,10 +111,12 @@ These properties configure and report the meter's energy billing functionality. 
 
 Tiered pricing modes (`TIERED`, `TIERED_RTP`) use up to three energy tiers. Energy consumed below `first_tier_energy` is priced at the base `price` (or `price_base` for `TIERED_RTP`). Energy above each tier threshold is priced at the corresponding tier price. If a higher tier is not defined, the previous tier's price applies to all remaining energy.
 
+Table: 20-triplex_meter table 6 { #tbl:20-triplex-meter-6 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | bill_mode | enumeration | N/A | I | Billing structure. Valid values: <br/> 0 - `NONE` - Billing disabled (default). <br/> 1 - `UNIFORM` - Flat rate from `price`. <br/> 2 - `TIERED` - Price increases at energy thresholds. <br/> 3 - `HOURLY` - Real-time market pricing via `power_market`. <br/> 4 - `TIERED_RTP` - Real-time market pricing plus tiered base charges via `price_base`. |
-| bill_day | int32 | N/A | I | Day of month the bill is finalized (1–28). |
+| bill_day | int32 | N/A | I | Day of month the bill is finalized (1“28). |
 | monthly_fee | double | $ | I | Flat monthly service fee included as the base of each bill. This is a recurrent monthly service charge that is added into the bill on the first day of the billing cycle (no pro-rating). |
 | price | double | $/kWh | I | Current energy price. Updated from `power_market` in `HOURLY` and `TIERED_RTP` modes. |
 | price_base | double | $/kWh | I | Base energy price used in `TIERED_RTP` mode for energy below the first tier. |
@@ -124,12 +136,16 @@ Tiered pricing modes (`TIERED`, `TIERED_RTP`) use up to three energy tiers. Ener
 
 These properties report the meter's service interruption status. The `customer_interrupted` flag is set automatically when a phase loss is detected through the fault check mechanism in the NR solver. The `customer_interrupted_secondary` flag indicates a momentary interruption and is automatically cleared to `false` at the start of each timestep.
 
+Table: 20-triplex_meter table 7 { #tbl:20-triplex-meter-7 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | customer_interrupted | bool | N/A | IO | Indicates sustained service interruption due to phase loss. |
 | customer_interrupted_secondary | bool | N/A | IO | Indicates momentary service interruption. |
 
 The following properties are only available in builds compiled with `SUPPORT_OUTAGES` defined. All are input only.
+
+Table: 20-triplex_meter table 8 { #tbl:20-triplex-meter-8 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -143,3 +159,4 @@ The following properties are only available in builds compiled with `SUPPORT_OUT
 ### Triplex Meter State of Development
 
 Triplex Meter is considered a highly developed and validated model in terms of powerflow solutions, however, models using billing have not been fully validated. Additional features will be added as needed. 
+

@@ -1,4 +1,4 @@
-## Performance Motor
+﻿## Performance Motor
 
 
 
@@ -11,6 +11,8 @@ The **performance_motor** class implements the LD1PAC load characteristic model,
 **performance_motor** objects are derived from **[node](03-node.md)** objects, so any parameters of the **[node](03-node.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 45-performance_motor table 1 { #tbl:45-performance-motor-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -46,6 +48,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
+Table: 45-performance_motor table 2 { #tbl:45-performance-motor-2 }
+
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |
 	| Vstallbrk | double | N/A | — | Intersection point for power curve and power stall curve - calculated |
@@ -55,3 +59,5 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 	| Q_0 | double | pu | — | Computed power curve initialization point - reactive power |
 	| stall_time_tracker | double | s | — | internal stall time tracker variable |
 	| reconnect_time_tracker | double | s | — | internal reconnect time tracker variable |
+
+

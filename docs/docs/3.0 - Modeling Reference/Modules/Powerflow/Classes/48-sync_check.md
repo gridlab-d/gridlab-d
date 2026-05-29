@@ -1,4 +1,4 @@
-## Sync Check
+﻿## Sync Check
 
 !!! warning
     This page was automatically generated and requires review.
@@ -11,23 +11,27 @@
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
+Table: 48-sync_check table 1 { #tbl:48-sync-check-1 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| armed | bool | N/A | O | ⚠️ Flag to arm the synchronization close |
-| frequency_tolerance | double | Hz | O | ⚠️ tolerance for checking the frequency metric |
-| voltage_tolerance_pu | double | pu | O | ⚠️ voltage_tolerance in per-unit - used in MAG_DIFF mode |
-| voltage_tolerance | double | V | O | ⚠️ voltage_tolerance in Volts - used in MAG_DIFF mode - prioritized over voltage_tolerance_pu |
-| metrics_period | double | s | O | ⚠️ period when both metrics are satisfied |
-| volt_compare_mode | enumeration | N/A | O | ⚠️ Determines which voltage difference calculation approach is used Valid values: `MAG_DIFF`, `SEP_DIFF`. |
-| voltage_magnitude_tolerance_pu | double | pu | O | ⚠️ tolerance in per-unit for the difference in voltage magnitudes - used in SEP_DIFF mode |
-| voltage_magnitude_tolerance | double | V | O | ⚠️ tolerance in Volts for the difference in voltage magnitudes - used in SEP_DIFF mode - prioritized over voltage_magnitude_tolerance_pu |
-| voltage_angle_tolerance | double | deg | O | ⚠️ tolerance in degrees for the difference in voltage angles - used in SEP_DIFF mode |
-| delta_trigger_mult | double | N/A | O | ⚠️ multiplier against voltage and frequency tolerances to trigger/maintain deltamode |
+| armed | bool | N/A | O | âš ï¸ Flag to arm the synchronization close |
+| frequency_tolerance | double | Hz | O | âš ï¸ tolerance for checking the frequency metric |
+| voltage_tolerance_pu | double | pu | O | âš ï¸ voltage_tolerance in per-unit - used in MAG_DIFF mode |
+| voltage_tolerance | double | V | O | âš ï¸ voltage_tolerance in Volts - used in MAG_DIFF mode - prioritized over voltage_tolerance_pu |
+| metrics_period | double | s | O | âš ï¸ period when both metrics are satisfied |
+| volt_compare_mode | enumeration | N/A | O | âš ï¸ Determines which voltage difference calculation approach is used Valid values: `MAG_DIFF`, `SEP_DIFF`. |
+| voltage_magnitude_tolerance_pu | double | pu | O | âš ï¸ tolerance in per-unit for the difference in voltage magnitudes - used in SEP_DIFF mode |
+| voltage_magnitude_tolerance | double | V | O | âš ï¸ tolerance in Volts for the difference in voltage magnitudes - used in SEP_DIFF mode - prioritized over voltage_magnitude_tolerance_pu |
+| voltage_angle_tolerance | double | deg | O | âš ï¸ tolerance in degrees for the difference in voltage angles - used in SEP_DIFF mode |
+| delta_trigger_mult | double | N/A | O | âš ï¸ multiplier against voltage and frequency tolerances to trigger/maintain deltamode |
 
 ??? note "Internal Properties"
 
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
+
+Table: 48-sync_check table 2 { #tbl:48-sync-check-2 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |

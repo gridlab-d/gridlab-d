@@ -1,6 +1,6 @@
-## Pqload
+﻿## Pqload
 
-Parametric loads provide a **load**-like object that allows the load to vary based on other conditions in the system. This may be things such as weather conditions or even time-of-day scheduling. Further details on parametric loads can be found in the [Industrial and agricultural loads](../../Loads/3.0%20-%20Industrial_and_agricultural_loads.md) page. A typical parametric load would be called as 
+Parametric loads provide a **load**-like object that allows the load to vary based on other conditions in the system. This may be things such as weather conditions or even time-of-day scheduling. Further details on parametric loads can be found in the [Industrial and agricultural loads](../../../Loads/3.0%20-%20Industrial_and_agricultural_loads.md) page. A typical parametric load would be called as 
     
     
     object pqload {
@@ -23,6 +23,8 @@ Parametric loads provide a **load**-like object that allows the load to vary bas
 **pqload** objects are derived from **[load](17-load.md)** objects, so any parameters of the **[load](17-load.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 30-pqload table 1 { #tbl:30-pqload-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

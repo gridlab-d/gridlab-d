@@ -1,4 +1,4 @@
-## Impedance Dump
+﻿## Impedance Dump
 
 Impedance dump allow the impedance and line equation matrices to be output into an XML file for debugging or further use. 
 
@@ -17,6 +17,8 @@ with the $\displaystyle{}b$ matrix typically representing the traditional impeda
 **impedance_dump** does not declare inherited parent classes.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 34-impedance_dump table 1 { #tbl:34-impedance-dump-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -47,3 +49,5 @@ Like other "dump" objects in powerflow, additional parameters can be added to de
 ### Impedance Dump State of Development
 
 Impedance Dump is considered a well developed, but unvalidated model. Additional features may be included as needed. 
+
+

@@ -1,6 +1,6 @@
-# Powerflow Classes
+﻿# Powerflow Classes
 
-This page lists all class reference pages for the **powerflow** module. Nearly all objects derive from either **node** or **link** — see [Inherited Classes](01-inherited_classes.md) and [Powerflow Objects](02-powerflow_objects.md) for the shared property foundations.
+This page lists all class reference pages for the **powerflow** module. Nearly all objects derive from either **node** or **link** — see [Inherited Classes](#inherited-classes) and [Powerflow Objects](02-powerflow_object.md) for the shared property foundations.
 
 ## Inherited Classes
 
@@ -55,8 +55,8 @@ The other common property is nominal voltage, which is passed into the objects u
 
 ## Nodes and Loads
 
-- [Inherited Classes](01-inherited_classes.md)
-- [Powerflow Objects](02-powerflow_objects.md)
+- [Inherited Classes](#inherited-classes)
+- [Powerflow Objects](02-powerflow_object.md)
 - [Node](03-node.md)
 - [Load](17-load.md)
 - [Meter](18-meter.md)
@@ -89,7 +89,6 @@ The other common property is nominal voltage, which is passed into the objects u
 - [Fuse](25-fuse.md)
 - [Switch](26-switch.md)
 - [Recloser](27-recloser.md)
-- [Relay](28-relay.md)
 - [Sectionalizer](40-sectionalizer.md)
 - [Sync Check](48-sync_check.md)
 - [Series Compensator](47-series_compensator.md)
@@ -107,7 +106,7 @@ The other common property is nominal voltage, which is passed into the objects u
 - [Impedance Dump](34-impedance_dump.md)
 - [Bill Dump](35-bill_dump.md)
 - [JSON Dump](44-jsondump.md)
-- [Load Tracker](45-load_tracker.md)
+- [Load Tracker](46-load_tracker.md)
 
 ## Reliability and Restoration
 
@@ -119,5 +118,7 @@ The other common property is nominal voltage, which is passed into the objects u
 
 - [Motor](37-motor.md)
 - [Emissions](42-emissions.md)
-- [Performance Motor](46-performance_motor.md)
+- [Performance Motor](45-performance_motor.md)
 - [VFD](49-vfd.md)
+
+

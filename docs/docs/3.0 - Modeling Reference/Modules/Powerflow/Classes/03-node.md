@@ -1,4 +1,4 @@
-## Node
+﻿## Node
 
 The node object is equivalent to a bus of the distribution system. It provides a connection point for **link**-based objects and a point of known voltages on the system. Three-phase voltage is typically available in either wye-connected or delta-connected form. Wye-connected voltages are contained in `voltage_A`, `voltage_B`, and `voltage_C`. Delta-connected voltages are available in `voltage_AB`, `voltage_BC`, and `voltage_CA`.
 
@@ -34,6 +34,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 These properties control the fundamental bus configuration and solver behavior of the node.
 
+Table: 03-node table 1 { #tbl:03-node-1 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | bustype | enumeration | N/A | I | Defines the bus type for powerflow analysis. The bus type distinction is primarily used by the Newton-Raphson solver. In Forward-Back Sweep mode, the first node initialized is automatically promoted to `SWING`. Valid values: <br/> - `PQ` — Constant power bus (default). <br/> - `PV` — Voltage-controlled (magnitude) bus. <br/> - `SWING` — Infinite bus / voltage reference for the system. <br/> - `SWING_PQ` — Swing bus that can revert to PQ behavior when used with a `fault_check` object in `grid_association` mode. |
@@ -45,6 +47,8 @@ These properties control the fundamental bus configuration and solver behavior o
 #### Voltage Properties
 
 These properties hold the bus voltage phasors. Voltages may be specified in rectangular (`7200.0+0.0j`) or polar (`7200.0+0.0d`) format. The `_A`, `_B`, `_C` variants are phase-to-ground (wye) voltages and serve as both user-settable initial conditions and simulation outputs updated each powerflow iteration. The `_AB`, `_BC`, `_CA` variants are line-to-line (delta) voltages derived from the corresponding phase-to-ground differences; setting them directly is not recommended.
+
+Table: 03-node table 2 { #tbl:03-node-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -59,6 +63,8 @@ These properties hold the bus voltage phasors. Voltages may be specified in rect
 
 These properties track whether the node is in service and how long it has been connected or disconnected. The `service_status_double` property provides a schedule-friendly numeric override for the enumeration-based `service_status`.
 
+Table: 03-node table 3 { #tbl:03-node-3 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | service_status | enumeration | N/A | IO | Indicates whether the node is in service or disconnected. Valid values: `IN_SERVICE`, `OUT_OF_SERVICE`. |
@@ -71,6 +77,8 @@ These properties track whether the node is in service and how long it has been c
 These properties configure and report frequency and angle measurements during transient simulation. The measurement method is selected by `frequency_measure_type`; if set to `NONE` (the default unless overridden by a module-level global setting), no measurements are performed. The `SIMPLE` method uses a first-order transducer model controlled by `sfm_Tf`. The `PLL` method uses a phase-locked loop controlled by `pll_Kp` and `pll_Ki`.
 
 The four configuration properties are input only. The seven `measured_*` properties are output.
+
+Table: 03-node table 4 { #tbl:03-node-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -92,6 +100,8 @@ These properties configure Grid Friendly Appliance-type voltage and frequency tr
 
 The first eight properties are input-only configuration parameters. `GFA_status` and `GFA_trip_method` are both input and output — they can be set initially but are updated by the simulation at runtime.
 
+Table: 03-node table 5 { #tbl:03-node-5 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | GFA_enable | bool | N/A | I | Enables or disables GFA-type functionality on this node. |
@@ -109,6 +119,8 @@ The first eight properties are input-only configuration parameters. `GFA_status`
 
 These properties expose the node's topological parent relationship and its runtime swing-bus behavior. Neither is meaningfully user-configurable — `topological_parent` is determined during initialization and `behaving_as_swing` is recomputed every postsync. Both are effectively output-only or informational.
 
+Table: 03-node table 6 { #tbl:03-node-6 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | topological_parent | object | N/A | O | Topological parent of this node as determined during initialization. Reflects the object's `parent` field. |
@@ -120,6 +132,8 @@ These properties expose the node's topological parent relationship and its runti
 
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
+
+Table: 03-node table 7 { #tbl:03-node-7 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |
@@ -185,3 +199,5 @@ These properties expose the node's topological parent relationship and its runti
 ### Node State of Development
 
 Node is considered a highly developed and validated model.
+
+

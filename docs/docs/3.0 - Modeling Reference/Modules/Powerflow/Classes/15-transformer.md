@@ -1,4 +1,4 @@
-## Transformer
+﻿## Transformer
 
 Transformers provide a means to change the voltage from one node to another in the distribution system. Similar to the different **line** objects, a **transformer** object requires a configuration object to specify the details of the implementation. A typical transform implementation is 
     
@@ -18,6 +18,8 @@ Transformers provide a means to change the voltage from one node to another in t
 **transformer** objects are derived from **[link](04-link.md)** objects, so any parameters of the **[link](04-link.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 15-transformer table 1 { #tbl:15-transformer-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
@@ -83,6 +85,8 @@ The `transformer_configuration` object describes the details of a particular tra
 **transformer_configuration** does not declare inherited parent classes.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 15-transformer table 2 { #tbl:15-transformer-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

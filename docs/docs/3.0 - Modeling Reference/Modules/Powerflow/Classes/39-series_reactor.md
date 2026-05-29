@@ -1,4 +1,4 @@
-## Series Reactor
+﻿## Series Reactor
 
 The series reactor is a link object designed to model a series reactance on each of the three phases. 
     
@@ -19,6 +19,8 @@ The series reactor is a link object designed to model a series reactance on each
 **series_reactor** objects are derived from **[link](04-link.md)** objects, so any parameters of the **[link](04-link.md)** object are available as well.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 39-series_reactor table 1 { #tbl:39-series-reactor-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |

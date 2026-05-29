@@ -79,6 +79,77 @@ $$[A] = \left [ \begin{matrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{matrix} 
 
 [B] = \left [ Z_{abc} \right ]$$
 
+Implementation for the two different solver method (FBS and NR) are similar, but different enough that the details are outlined here. Switches are assumed to just connect direct phases. e.g., phase A of `from` to phase A of `to`; no phase-switching or other configurations are supported. 
+
+### FBS
+
+The Forward-Backward Sweep method implementation follows the standard line equations from Distribution System Modeling and Analysis, by William Kersting: 
+
+$\mathbf{V}_{to}=\mathbf{A}\mathbf{V}_{from}-\mathbf{B}\mathbf{I}_{to}$
+
+$\mathbf{V}_{to}=\mathbf{d}\mathbf{V}_{from}-\mathbf{b}\mathbf{I}_{from}$
+
+$\mathbf{V}_{from}=\mathbf{a}\mathbf{V}_{to}+\mathbf{b}\mathbf{I}_{to}$
+
+$\mathbf{I}_{to}=\mathbf{-c}\mathbf{V}_{from}+\mathbf{d}\mathbf{I}_{from}$
+
+$\mathbf{I}_{to}=-\mathbf{c}\mathbf{V}_{from}+\mathbf{a}\mathbf{I}_{from}$
+
+$\mathbf{I}_{from}=\mathbf{c}\mathbf{V}_{to}+\mathbf{d}\mathbf{I}_{to}$
+
+
+The matrices $\mathbf{A},\mathbf{B},\mathbf{a},\mathbf{b},\mathbf{c},$ and $\mathbf{d}$ must be defined. By Kersting's equations, $\mathbf{A}=\mathbf{a}^{-1}$ and $\mathbf{B}=\mathbf{a}^{-1}\mathbf{b}$. 
+
+For `OPEN` states, the relevant phases of the diagonal elements of the matrices are zero: 
+
+$\mathbf{A}=0.0$
+$\mathbf{B}=0.0$
+$\mathbf{a}=0.0$
+$\mathbf{b}=0.0$
+$\mathbf{c}=0.0$
+$\mathbf{d}=0.0$
+
+For `CLOSED` states, the relevant phases of the diagonal elements of the matrices are: 
+
+$\mathbf{A}=1.0$,
+$\mathbf{B}=$`switch_impedance`,
+$\mathbf{a}=1.0$,
+$\mathbf{b}=$ `switch_impedance`,
+$\mathbf{c}=0.0$,
+$\mathbf{d}=1.0$
+
+### NR
+
+The Newton-Raphson method implementation is simplified into four matrices. The specifics of their use are detailed, but equations will be omitted, for brevity. 
+
+$\mathbf{Y}$ \- admittance matrix - used in the powerflow solution
+
+$\mathbf{b}$ \- impedance matrix - used for current and power calculations
+
+$\mathbf{a}$ \- voltage ratio matrix - used in some fault and standard current calculations
+
+$\mathbf{d}$ \- voltage ratio matrix - used for current and power calculations
+
+For `OPEN` states, the relevant phases of the diagonal elements of the matrices are zero: 
+
+$\mathbf{Y}=0.0$,
+$\mathbf{b}=0.0$,
+$\mathbf{a}=0.0$,
+$\mathbf{d}=0.0$
+
+For `CLOSED` states, the relevant phases of the diagonal elements of the matrices are: 
+
+$\mathbf{Y}=\frac{1}{Z_s}$,
+$\mathbf{b}=Z_{s}$,
+$\mathbf{a}=1.0$,
+$\mathbf{d}=1.0$
+
+where $Z_{s}$ is the value of `switch_impedance`. 
+
+Whenever a switch state changes (`OPEN` to `CLOSED` and vice-versa), the switch will also set the powerflow global `NR_admit_change` to a value of `true`. 
+
+
+
 ## Fuse
 
 System line fuses have been modified as a simple over-current device. The equations are shown below. 

@@ -1,3 +1,5 @@
+﻿
+Table: class_documentation_tracking table 1 { #tbl:class-documentation-tracking-1 }
 
 | File                             | # prop | Progress | todo           | intro paragraph | sample                                                                         |
 | -------------------------------- | -----: | -------: | -------------- | --------------- | ------------------------------------------------------------------------------ |
@@ -13,7 +15,7 @@
 | 47-series_compensator.md         |     50 |      50% | intro + sample |                 |                                                                                |
 | 04-link.md                       |     48 |     100% |                | done            | done                                                                           |
 | 16-transformer_configuration.md  |     39 |     100% |                |                 |                                                                                |
-| 45-performance_motor.md          |     33 |          |                |                 |                                                                                |
+| 45-performance_motor.md          |     33 |      75% | sample         | done            |                                                                                |
 | 24-capacitor.md                  |     31 |     100% |                | done            | done                                                                           |
 | 48-sync_check.md                 |     31 |      50% | intro+sample   |                 |                                                                                |
 | 06-line_configuration.md         |     27 |     100% |                | done            | done                                                                           |

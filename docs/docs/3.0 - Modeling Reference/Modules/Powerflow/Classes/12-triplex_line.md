@@ -1,4 +1,4 @@
-## Triplex Line
+﻿## Triplex Line
 
 The third type of line available in the **powerflow** module is the triplex lines. Triplex lines represent the distribution wires coming from the transformer into a typical residential home. That is, they are typically composed of one neutral wire and two "hot" wires. Triplex lines require the phase `S` to be specified as part of the `phases` parameter for proper implementation. A typical triplex line would be implemented in a similar fashion to 
 
@@ -55,6 +55,8 @@ Note: The explicit z-matrix version is an under-determined system. Ground and ne
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
+Table: 12-triplex_line table 1 { #tbl:12-triplex-line-1 }
+
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
 | conductor_1 | object | N/A | I | `triplex_conductor` object that represents the physical wire of phase 1. |
@@ -62,7 +64,7 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | conductor_N | object | N/A | I | `triplex_conductor` object that represents the physical wire of the neutral phase. |
 | insulation_thickness | double | in | I | Thickness of the insulation around the phase 1 and phase 2 conductors |
 | diameter | double | in | I | Diameter of the conductor |
-| spacing | object | N/A | I | `line_spacing` object with information on the physical layout of the conductors. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| spacing | object | N/A | I | `line_spacing` object with information on the physical layout of the conductors. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
 | z11 | complex | Ohm/mile | I | Phase 1 self-impedance, used for direct entry of impedance values |
 | z12 | complex | Ohm/mile | I | Phase 1-2 induced impedance, used for direct entry of impedance values |
 | z21 | complex | Ohm/mile | I | Phase 2-1 induced impedance, used for direct entry of impedance values |
@@ -95,6 +97,8 @@ As with the `underground_line` and `overhead_line` objects, `triplex_line` objec
 **triplex_line_conductor** does not declare inherited parent classes.
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
+
+Table: 12-triplex_line table 2 { #tbl:12-triplex-line-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
