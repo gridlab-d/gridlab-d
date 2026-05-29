@@ -1,8 +1,5 @@
 ## Billdump
 
-!!! warning
-    This page was automatically generated and requires review.
-
 Similar to **voltdump**, **billdump** allows users to generate a single file where all customers' bills are written from **triplex_meter** to a single output file in a similar format 
 
 meter_name,  | previous_monthly_bill,  | previous_monthly_energy   
@@ -23,8 +20,8 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | group | char32 | N/A | I | Using the `groupid` feature, this allows only triplex meters with the matching `groupid` to be dumped into the output file. If this is not specified, every triplex meter in the system will be recorded. |
 | runtime | timestamp | N/A | IO | Tells the object at what time to output the bills of the system. Can be in either seconds from epoch (Unix time) or with a timestamp ('2006-01-01 00:00:00'). If not specified, the default is immediately after the first time step solution. |
 | filename | char256 | N/A | I | Tells the object what file to print all information to. While a *.csv is not necessary, it is recommended as the formatted output is in *.csv format. |
-| runcount | int32 | N/A | — | ⚠️ the number of times the file has been written to |
-| meter_type | enumeration | N/A | I | ⚠️ describes whether to collect from 3-phase or S-phase meters Valid values: `TRIPLEX_METER`, `METER`. |
+| runcount | int32 | N/A | — | The number of times the file has been written to |
+| meter_type | enumeration | N/A | I | Describes whether to collect from 3-phase or S-phase meters. Valid values: `TRIPLEX_METER`, `METER`. |
 
 ### Default Bill Dump
 

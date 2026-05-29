@@ -1,8 +1,5 @@
 ## Currdump
 
-!!! warning
-    This page was automatically generated and requires review.
-
 This object allows the user to collect all of the currents in the system into one *.csv file at a given run time. In all cases, this is the current flowing INTO the link object (as defined by the to/from convention). Currents are placed in the *.csv output file with format: 
 
 link_name,  | currA_real,  | currA_imag,  | currB_real,  | currB_imag,  | currC_real,  | currC_imag,   
@@ -25,7 +22,7 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | group | char32 | N/A | I | Using the `group_id` feature, this allows only nodes with the matching `group_id` to be dumped into the output file. |
 | runtime | timestamp | N/A | IO | Tells the object at what time to output the currents of the system. Can be in either seconds from epoch (Unix time) or with a timestamp ('2006-01-01 00:00:00'). If not specified, the default is immediately after the first time step solution. |
 | filename | char256 | N/A | I | Tells the object what file to print all information to. While a *.csv is not necessary, it is recommended as the formatted output is in *.csv format. |
-| runcount | int32 | N/A | — | ⚠️ the number of times the file has been written to |
+| runcount | int32 | N/A | — | The number of times the file has been written to |
 | mode | enumeration | N/A | I | Allows the user to choose between polar and rectangular coordinates when printing output. Valid choices are <br/> - `rect` rectangular coordinates (default) <br/> - `polar` polar coordinates (in radians) Valid values: `RECT`, `POLAR`. |
 
 ### Default Current Dump

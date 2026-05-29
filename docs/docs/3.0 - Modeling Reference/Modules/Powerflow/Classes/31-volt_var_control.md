@@ -1,8 +1,5 @@
 ## Volt Var Control
 
-!!! warning
-    This page was automatically generated and requires review.
-
 With multiple feeders attached to a common point, it is often useful to coordinate the voltage regulators and capacitors on the system. The **volt_var_control** object coordinates selected **regulator** and **capacitor** objects on the system. Using voltage measurements at **node** object points, the **volt_var_control** tries to maintain a desired voltage. In addition to voltage measurements, the **volt_var_control** utilizes a power measurement at a **link** object to determine how to switch various **capacitor** objects on the system in and out of service. Due to differences in the timing of power calculations in the Forward-Back Sweep and Newton-Raphson powerflow solvers, capacitors may switch at slightly different intervals for the same system. The overall control behaves the same in both solver methods, but this difference in capacitor timing may result in different final operating points. A typical Volt-VAr Controller implementation is 
     
     
@@ -60,7 +57,7 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | max_vdrop | char1024 | N/A | I | List of voltage drop thresholds for high or low loading operation (selection of `high_load_deadband` or `low_load_deadband` for a regulator). If the voltage drop between the regulator and the lowest end-of-line measurement is greater than `max_vdrop`, the corresponding `high_load_deadband` is used. Otherwise, the corresponding `low_load_deadband` is used. `max_vdrop` can be a comma-separated list of values for each regulator of `regulator_list`. if only one value is specified, that value will be used for all regulators. If left blank, `max_vdrop` defaults to 1.5x the corresponding **regulator** object's step up tap voltage value. |
 | high_load_deadband | char1024 | N/A | I | List of tap-changing bandwidth thresholds for high loading operation (as determined by `max_vdrop`). `high_load_deadband` represents a +/- `high_load_deadband` deadband around the desired voltage before a tap change is requested on the regulator. This can be specified for each regulator as a comma-separated list. If a single value is specified, that value will be used on all **regulator**s in the `regulator_list`. If unspecified, `high_load_deadband` defaults to the voltage value associated with a single tap change on the **regulator**. |
 | low_load_deadband | char1024 | N/A | I | List of tap-changing bandwidth thresholds for low loading operation (as determined by `max_vdrop`). `low_load_deadband` represents a +/- `low_load_deadband` deadband around the desired voltage before a tap change is requested on the regulator. This can be specified for each regulator as a comma-separated list. If a single value is specified, that value will be used on all **regulator**s in the `regulator_list`. If unspecified, `low_load_deadband` defaults to the voltage value associated with a two tap change on the **regulator** (2x the default of `high_load_deadband`). |
-| pf_signed | bool | N/A | I | ⚠️ Set to true to consider the sign on the power factor.  Otherwise, it just maintains the deadband of +/-desired_pf |
+| pf_signed | bool | N/A | I | Set to true to consider the sign on the power factor.  Otherwise, it just maintains the deadband of +/-desired_pf |
 
 ### VoltVar Control State of Development
 

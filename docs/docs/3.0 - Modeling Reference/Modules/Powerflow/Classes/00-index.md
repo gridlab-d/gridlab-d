@@ -73,28 +73,18 @@ The other common property is nominal voltage, which is passed into the objects u
 
 - [Link](04-link.md)
 - [Line](05-line.md)
-- [Line Configuration](06-line_configuration.md)
-- [Line Spacing](07-line_spacing.md)
-- [Overhead Line](08-overhead_line.md)
-- [Overhead Line Conductor](09-overhead_line_conductor.md)
-- [Underground Line](10-underground_line.md)
-- [Underground Line Conductor](11-underground_line_conductor.md)
 
 ### Triplex (Split-Phase) Lines
 
 - [Triplex Line](12-triplex_line.md)
-- [Triplex Line Configuration](13-triplex_line_configuration.md)
-- [Triplex Conductor](14-triplex_conductor.md)
 
 ## Transformers
 
 - [Transformer](15-transformer.md)
-- [Transformer Configuration](16-transformer_configuration.md)
 
 ## Controls and Switching Devices
 
 - [Regulator](22-regulator.md)
-- [Regulator Configuration](23-regulator_configuration.md)
 - [Capacitor](24-capacitor.md)
 - [Fuse](25-fuse.md)
 - [Switch](26-switch.md)

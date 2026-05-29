@@ -111,11 +111,11 @@ These properties define the current (for lines) or power (for transformers) limi
 
 #### Transient Simulations / In-Rush Properties
 
-These properties control the numerical integration method and convergence tolerance used for in-rush current calculations during transient (deltamode) simulation. If the integration method is left as `UNDEFINED`, the object inherits the global integration method setting. These properties are only used when both deltamode and in-rush calculations are enabled.
+These properties control the numerical integration method and convergence tolerance used for in-rush current calculations during transient (deltamode) simulation. If the integration method is left as `UNDEFINED`, the object inherits the global integration method setting. These properties are only used when both transient and in-rush calculations are enabled.
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| inrush_convergence_value | double | V | I | Convergence tolerance for deltamode in-rush completion, measured as the change in line voltage drop magnitude between iterations. Default is 0.0001 V. |
+| inrush_convergence_value | double | V | I | Convergence tolerance for transient in-rush completion, measured as the change in line voltage drop magnitude between iterations. Default is 0.0001 V. |
 | inrush_integration_method_capacitance | enumeration | N/A | I | Integration method for capacitive elements of the link. Valid values: `NONE`, `UNDEFINED`, `TRAPEZOIDAL`, `BACKWARD_EULER`. |
 | inrush_integration_method_inductance | enumeration | N/A | I | Integration method for inductive elements of the link. Valid values: `NONE`, `UNDEFINED`, `TRAPEZOIDAL`, `BACKWARD_EULER`. |
 
@@ -135,18 +135,4 @@ These properties control the numerical integration method and convergence tolera
 
 Link is considered a highly developed and validated model.
 
----
 
-### Review Summary
-
-**Factual Errors Fixed:**
-- **Fault current/voltage descriptions**: Rewritten from bare source code comments to complete sentences.
-- **Rating descriptions**: Removed parenthetical "(set individual line segments)" which was confusing; added context about default values and when limit checking is active.
-
-**Behavioral Claims Added to Section Intros with Source Evidence:**
-
-- "Power flow properties computed during postsync" — `BOTH_link_postsync_fxn()` calls `calculate_power()` which writes all power properties; `BOTH_link_postsync_fxn()` is called from `postsync()` (line: `BOTH_link_postsync_fxn();` in `postsync`) and `inter_deltaupdate_link()`.
-- "Fault current values are zeroed at the start of each new timestep in presync" — `presync()` contains `if (prev_LTime != t0) { if (If_in[0] != 0 ...) { If_in[0] = 0; If_in[1] = 0; If_in[2] = 0; If_out[0] = 0; ...} }`.
-- "When `set_pdispatch` is triggered, the simulation computes pdispatch as average of real power in and out" — `BOTH_link_postsync_fxn()` contains `pdispatch.pdispatch = (power_in.Re() + power_out.Re()) / 2.0;`.
-- "Limit checking excludes switches, fuses, regulators, and sectionalizers" — `init()` contains `if (gl_object_isa(obj, "transformer", ...) || gl_object_isa(obj, "underground_line", ...) || ...)` with an `else { check_link_limits = false; }` for other types.
-- "In-rush integration methods default to UNDEFINED and inherit the global setting" — `init()` contains `if (inrush_int_method_inductance == IRM_UNDEFINED) { inrush_int_method_inductance = inrush_integration_method; }`.

@@ -1,8 +1,5 @@
 ## Capacitor
 
-!!! warning
-    This page was automatically generated and requires review.
-
 Capacitors are used for reactive power compensation and voltage support scenarios. The **capacitor** implements a switchable set of capacitors. **capacitor** objects are one of two objects in the **powerflow** module that incorporate a form of automatic control. To take full advantage of this functionality, simulations of greater than one time step (time-varying simulations) are recommended. Single-phase powerflow connections (phase `S`) are not supported by capacitors at this time. A typical capacitor implementation is 
     
     
@@ -42,16 +39,16 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | cap_C_switch_count | double | N/A | IO | Hold of the number of times the switch has changed (OPEN to CLOSED, CLOSED to OPEN) on phase `C` if wye-connected or `CA` if delta-connected. |
 | voltage_set_high | double | V | IO | High setpoint for voltage-based capacitor switching operations. This setpoint will turn the capacitors off. |
 | voltage_set_low | double | V | IO | Low setpoint for voltage-based capacitor switching operations. This setpoint will turn the capacitors on. |
-| voltage_deadband_center | double | V | I | ⚠️ The voltage deadband center |
-| voltage_deadband | double | V | I | ⚠️ The deadband between voltage_set_high and voltage_set_low |
+| voltage_deadband_center | double | V | I | The voltage deadband center |
+| voltage_deadband | double | V | I | The deadband between voltage_set_high and voltage_set_low |
 | VAr_set_high | double | VAr | IO | High setpoint for VAr-based capacitor switching operations. This setpoint will turn the capacitors on. |
 | VAr_set_low | double | VAr | IO | Low setpoint for VAr-based capacitor switching operations. This setpoint will turn the capacitors off. |
-| VAr_deadband_center | double | VAr | I | ⚠️ The VAr deadband center |
-| VAr_deadband | double | VAr | I | ⚠️ The deadband between VAr_set_high and VAr_set_low |
-| current_set_low | double | A | IO | ⚠️ high current set point for current control mode (turn on) |
-| current_set_high | double | A | IO | ⚠️ low current set point for current control mode (turn off) |
-| current_deadband_center | double | A | I | ⚠️ The current deadband center |
-| current_deadband | double | A | I | ⚠️ The deadband between current_set_high and current_set_low |
+| VAr_deadband_center | double | VAr | I | The VAr deadband center |
+| VAr_deadband | double | VAr | I | The deadband between VAr_set_high and VAr_set_low |
+| current_set_low | double | A | IO | high current set point for current control mode (turn on) |
+| current_set_high | double | A | IO | low current set point for current control mode (turn off) |
+| current_deadband_center | double | A | I | The current deadband center |
+| current_deadband | double | A | I | The deadband between current_set_high and current_set_low |
 | capacitor_A | double | VAr | I | Capacitor size information for capacitor connected to phase `A` in a wye connection or on phase `AB` in a delta connection. |
 | capacitor_B | double | VAr | I | Capacitor size information for capacitor connected to phase `B` in a wye connection or on phase `BC` in a delta connection. |
 | capacitor_C | double | VAr | I | Capacitor size information for capacitor connected to phase `C` in a wye connection or on phase `CA` in a delta connection. |

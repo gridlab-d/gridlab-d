@@ -1,8 +1,5 @@
 ## Power Metrics
 
-!!! warning
-    This page was automatically generated and requires review.
-
 The **power_metrics** object is used by the **reliability** module to calculate relevant **powerflow** metrics. The **power_metrics** object calculates the IEEE 1366-2003 metrics for evaluating the reliability indices of a power system. 
 
 A minimalist **power_metrics** implementation is 
@@ -43,7 +40,7 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 | ASAI | double | N/A | IO | The simulation-long computed value of the Average Service Availability Index. |
 | ASAI_int | double | N/A | IO | The interval-long computed value of the Average Service Availability Index. The interval is defined by the `base_time_Value` property. |
 | MAIFI | double | N/A | IO | The simulation-long computed value of the Momentary Average Interruption Frequency Index |
-| MAIFI_int | double | N/A | IO | ⚠️ Displays MAIFI values over the period specified by base_time_value as per IEEE 1366-2003 |
+| MAIFI_int | double | N/A | IO | Displays MAIFI values over the period specified by base_time_value as per IEEE 1366-2003 |
 | base_time_value | double | s | I | Interval duration for IEEE 1366-2003 statistics to be computed. This information is the basis for any time calculations. For example, the interruption duration for a CAIDI calculation can be interruptions per hour, interruptions per minute, or any other time base. `base_time_value` dictates this base for the calculations. The value defaults to 1 minute. |
 
 ### Power Metrics State of Development

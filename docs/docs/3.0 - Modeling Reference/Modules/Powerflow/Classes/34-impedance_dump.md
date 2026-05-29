@@ -1,8 +1,5 @@
 ## Impedance Dump
 
-!!! warning
-    This page was automatically generated and requires review.
-
 Impedance dump allow the impedance and line equation matrices to be output into an XML file for debugging or further use. 
 
 The output format of the impedance dump fits the line equation format of William Kersting's "Distribution System Modeling and Analysis" book. I.e., the `impedance_dump` outputs the $\displaystyle{}a, b, c, d, A, B$ matrices of the equations:
