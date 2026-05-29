@@ -3,13 +3,23 @@ name: Build Python Wheels
 on:
   push:
     branches:
-      - master
+      - main
+      - develop
       - pypi_build
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
+    if: >
+      matrix.platform != 'macos' ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pypi_build'))
     strategy:
       fail-fast: false
       matrix:
@@ -52,7 +62,7 @@ jobs:
     name: Upload to Test PyPI
     needs: [build_wheels]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/pypi_build')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pypi_build')
     
     steps:
       - uses: actions/download-artifact@v4
