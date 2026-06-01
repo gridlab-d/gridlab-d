@@ -147,7 +147,6 @@ dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
                                 PT_double, "count_motor_only_68", PADDR(count_motor_only_68), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only 68",
                                 PT_double, "count_control_only", PADDR(count_control_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles",
                                 PT_double, "count_control_only1", PADDR(count_control_only1), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles 1",
-                                PT_timestamp, "next_change_time", PADDR(next_change_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next change time",
                                 PT_timestamp, "last_t", PADDR(last_t), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal last timestamp",
                                 PT_double, "cycle_time", PADDR(cycle_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal cycle timer",
                                 PT_double, "state_time", PADDR(state_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal state timer",
