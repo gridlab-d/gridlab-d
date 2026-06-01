@@ -1,4 +1,4 @@
-﻿## Node
+## Node
 
 The node object is equivalent to a bus of the distribution system. It provides a connection point for **link**-based objects and a point of known voltages on the system. Three-phase voltage is typically available in either wye-connected or delta-connected form. Wye-connected voltages are contained in `voltage_A`, `voltage_B`, and `voltage_C`. Delta-connected voltages are available in `voltage_AB`, `voltage_BC`, and `voltage_CA`.
 
@@ -34,43 +34,43 @@ The I/O column indicates whether a property is user-settable input (I), simulati
 
 These properties control the fundamental bus configuration and solver behavior of the node.
 
-Table: 03-node table 1 { #tbl:03-node-1 }
+Table: node table 1 { #tbl:03-node-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| bustype | enumeration | N/A | I | Defines the bus type for powerflow analysis. The bus type distinction is primarily used by the Newton-Raphson solver. In Forward-Back Sweep mode, the first node initialized is automatically promoted to `SWING`. Valid values: <br/> - `PQ` — Constant power bus (default). <br/> - `PV` — Voltage-controlled (magnitude) bus. <br/> - `SWING` — Infinite bus / voltage reference for the system. <br/> - `SWING_PQ` — Swing bus that can revert to PQ behavior when used with a `fault_check` object in `grid_association` mode. |
-| busflags | set | N/A | I | Internal flag set for topology analysis. `HASSOURCE` is set by default on all nodes and is unused at this time (the propagation logic that would clear it requires the SUPPORT_OUTAGES compile flag, which is not enabled in standard builds). ISSOURCE marks a bus as an independent source entry point for fault_check grid association mode. Valid values: `HASSOURCE`, `ISSOURCE`. |
-| reference_bus | object | N/A | I | Reference node from which this node inherits its frequency value. Used in the Forward-Back Sweep solver during presync. |
-| maximum_voltage_error | double | V | I | Maximum voltage error threshold for convergence checks. If left at zero, it is automatically derived from `nominal_voltage` multiplied by the global `default_maximum_voltage_error`. |
-| mean_repair_time | double | s | I | Time after a fault clears before the object is considered back in service. Primarily used for reliability module interactions. |
+| **bustype** | enumeration | N/A | I | Defines the bus type for powerflow analysis. The bus type distinction is primarily used by the Newton-Raphson solver. In Forward-Back Sweep mode, the first node initialized is automatically promoted to `SWING`. Valid values: <br/> - `PQ` — Constant power bus (default). <br/> - `PV` — Voltage-controlled (magnitude) bus. <br/> - `SWING` — Infinite bus / voltage reference for the system. <br/> - `SWING_PQ` — Swing bus that can revert to PQ behavior when used with a `fault_check` object in `grid_association` mode. |
+| **busflags** | set | N/A | I | Internal flag set for topology analysis. `HASSOURCE` is set by default on all nodes and is unused at this time (the propagation logic that would clear it requires the SUPPORT_OUTAGES compile flag, which is not enabled in standard builds). ISSOURCE marks a bus as an independent source entry point for fault_check grid association mode. Valid values: `HASSOURCE`, `ISSOURCE`. |
+| **reference_bus** | object | N/A | I | Reference node from which this node inherits its frequency value. Used in the Forward-Back Sweep solver during presync. |
+| **maximum_voltage_error** | double | V | I | Maximum voltage error threshold for convergence checks. If left at zero, it is automatically derived from `nominal_voltage` multiplied by the global `default_maximum_voltage_error`. |
+| **mean_repair_time** | double | s | I | Time after a fault clears before the object is considered back in service. Primarily used for reliability module interactions. |
 
 #### Voltage Properties
 
 These properties hold the bus voltage phasors. Voltages may be specified in rectangular (`7200.0+0.0j`) or polar (`7200.0+0.0d`) format. The `_A`, `_B`, `_C` variants are phase-to-ground (wye) voltages and serve as both user-settable initial conditions and simulation outputs updated each powerflow iteration. The `_AB`, `_BC`, `_CA` variants are line-to-line (delta) voltages derived from the corresponding phase-to-ground differences; setting them directly is not recommended.
 
-Table: 03-node table 2 { #tbl:03-node-2 }
+Table: node table 2 { #tbl:03-node-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| voltage_A | complex | V | IO | Bus voltage on phase A to ground. |
-| voltage_B | complex | V | IO | Bus voltage on phase B to ground. |
-| voltage_C | complex | V | IO | Bus voltage on phase C to ground. |
-| voltage_AB | complex | V | IO | Line-to-line voltage across phases AB. Computed as `voltage_A - voltage_B`. |
-| voltage_BC | complex | V | IO | Line-to-line voltage across phases BC. Computed as `voltage_B - voltage_C`. |
-| voltage_CA | complex | V | IO | Line-to-line voltage across phases CA. Computed as `voltage_C - voltage_A`. |
+| **voltage_A** | complex | V | IO | Bus voltage on phase A to ground. |
+| **voltage_B** | complex | V | IO | Bus voltage on phase B to ground. |
+| **voltage_C** | complex | V | IO | Bus voltage on phase C to ground. |
+| **voltage_AB** | complex | V | IO | Line-to-line voltage across phases AB. Computed as `voltage_A - voltage_B`. |
+| **voltage_BC** | complex | V | IO | Line-to-line voltage across phases BC. Computed as `voltage_B - voltage_C`. |
+| **voltage_CA** | complex | V | IO | Line-to-line voltage across phases CA. Computed as `voltage_C - voltage_A`. |
 
 #### Service Status Properties
 
 These properties track whether the node is in service and how long it has been connected or disconnected. The `service_status_double` property provides a schedule-friendly numeric override for the enumeration-based `service_status`.
 
-Table: 03-node table 3 { #tbl:03-node-3 }
+Table: node table 3 { #tbl:03-node-3 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| service_status | enumeration | N/A | IO | Indicates whether the node is in service or disconnected. Valid values: `IN_SERVICE`, `OUT_OF_SERVICE`. |
-| service_status_double | double | N/A | I | Double-valued override for `service_status`, intended for use with schedules. Set to `1.0` for `IN_SERVICE`, `0.0` for `OUT_OF_SERVICE`. The default value of `-1.0` disables the override. Other values cause an error. |
-| previous_uptime | double | min | IO | Previous uptime duration between the last two disconnects of this node. |
-| current_uptime | double | min | IO | Elapsed time since the most recent disconnect of this node. Set to `-1.0` when the node is out of service. |
+| **service_status** | enumeration | N/A | IO | Indicates whether the node is in service or disconnected. Valid values: `IN_SERVICE`, `OUT_OF_SERVICE`. |
+| **service_status_double** | double | N/A | I | Double-valued override for `service_status`, intended for use with schedules. Set to `1.0` for `IN_SERVICE`, `0.0` for `OUT_OF_SERVICE`. The default value of `-1.0` disables the override. Other values cause an error. |
+| **previous_uptime** | double | min | IO | Previous uptime duration between the last two disconnects of this node. |
+| **current_uptime** | double | min | IO | Elapsed time since the most recent disconnect of this node. Set to `-1.0` when the node is out of service. |
 
 #### Frequency Measurement Properties
 
@@ -78,21 +78,21 @@ These properties configure and report frequency and angle measurements during tr
 
 The four configuration properties are input only. The seven `measured_*` properties are output.
 
-Table: 03-node table 4 { #tbl:03-node-4 }
+Table: node table 4 { #tbl:03-node-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| frequency_measure_type | enumeration | N/A | I | Selects the frequency measurement method. Valid values: `NONE`, `SIMPLE`, `PLL`. |
-| sfm_Tf | double | s | I | Transducer time constant for the `SIMPLE` method. |
-| pll_Kp | double | pu | I | Proportional gain for the `PLL` method. |
-| pll_Ki | double | pu | I | Integration gain for the `PLL` method. |
-| measured_angle_A | double | rad | O | Measured bus voltage angle on phase A. |
-| measured_angle_B | double | rad | O | Measured bus voltage angle on phase B. |
-| measured_angle_C | double | rad | O | Measured bus voltage angle on phase C. |
-| measured_frequency_A | double | Hz | O | Measured frequency on phase A. |
-| measured_frequency_B | double | Hz | O | Measured frequency on phase B. |
-| measured_frequency_C | double | Hz | O | Measured frequency on phase C. |
-| measured_frequency | double | Hz | O | Measured frequency averaged across all energized phases. |
+| **frequency_measure_type** | enumeration | N/A | I | Selects the frequency measurement method. Valid values: `NONE`, `SIMPLE`, `PLL`. |
+| **sfm_Tf** | double | s | I | Transducer time constant for the `SIMPLE` method. |
+| **pll_Kp** | double | pu | I | Proportional gain for the `PLL` method. |
+| **pll_Ki** | double | pu | I | Integration gain for the `PLL` method. |
+| **measured_angle_A** | double | rad | O | Measured bus voltage angle on phase A. |
+| **measured_angle_B** | double | rad | O | Measured bus voltage angle on phase B. |
+| **measured_angle_C** | double | rad | O | Measured bus voltage angle on phase C. |
+| **measured_frequency_A** | double | Hz | O | Measured frequency on phase A. |
+| **measured_frequency_B** | double | Hz | O | Measured frequency on phase B. |
+| **measured_frequency_C** | double | Hz | O | Measured frequency on phase C. |
+| **measured_frequency** | double | Hz | O | Measured frequency averaged across all energized phases. |
 
 #### Grid Friendly Appliance (GFA) Properties
 
@@ -100,31 +100,31 @@ These properties configure Grid Friendly Appliance-type voltage and frequency tr
 
 The first eight properties are input-only configuration parameters. `GFA_status` and `GFA_trip_method` are both input and output — they can be set initially but are updated by the simulation at runtime.
 
-Table: 03-node table 5 { #tbl:03-node-5 }
+Table: node table 5 { #tbl:03-node-5 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| GFA_enable | bool | N/A | I | Enables or disables GFA-type functionality on this node. |
-| GFA_freq_low_trip | double | Hz | I | Low frequency trip point. |
-| GFA_freq_high_trip | double | Hz | I | High frequency trip point. |
-| GFA_volt_low_trip | double | pu | I | Low voltage trip point. |
-| GFA_volt_high_trip | double | pu | I | High voltage trip point. |
-| GFA_freq_disconnect_time | double | s | I | Duration a frequency violation must persist before disconnection. |
-| GFA_volt_disconnect_time | double | s | I | Duration a voltage violation must persist before disconnection. |
-| GFA_reconnect_time | double | s | I | Delay after a trip event before the node is restored to service. |
-| GFA_status | bool | N/A | IO | Whether GFA considers the node in service (`true`) or tripped (`false`). |
-| GFA_trip_method | enumeration | N/A | IO | Reason for the most recent GFA trip. Valid values: `NONE`, `UNDER_FREQUENCY`, `OVER_FREQUENCY`, `UNDER_VOLTAGE`, `OVER_VOLTAGE`. |
+| **GFA_enable** | bool | N/A | I | Enables or disables GFA-type functionality on this node. |
+| **GFA_freq_low_trip** | double | Hz | I | Low frequency trip point. |
+| **GFA_freq_high_trip** | double | Hz | I | High frequency trip point. |
+| **GFA_volt_low_trip** | double | pu | I | Low voltage trip point. |
+| **GFA_volt_high_trip** | double | pu | I | High voltage trip point. |
+| **GFA_freq_disconnect_time** | double | s | I | Duration a frequency violation must persist before disconnection. |
+| **GFA_volt_disconnect_time** | double | s | I | Duration a voltage violation must persist before disconnection. |
+| **GFA_reconnect_time** | double | s | I | Delay after a trip event before the node is restored to service. |
+| **GFA_status** | bool | N/A | IO | Whether GFA considers the node in service (`true`) or tripped (`false`). |
+| **GFA_trip_method** | enumeration | N/A | IO | Reason for the most recent GFA trip. Valid values: `NONE`, `UNDER_FREQUENCY`, `OVER_FREQUENCY`, `UNDER_VOLTAGE`, `OVER_VOLTAGE`. |
 
 #### Topology and Swing Status Properties
 
 These properties expose the node's topological parent relationship and its runtime swing-bus behavior. Neither is meaningfully user-configurable — `topological_parent` is determined during initialization and `behaving_as_swing` is recomputed every postsync. Both are effectively output-only or informational.
 
-Table: 03-node table 6 { #tbl:03-node-6 }
+Table: node table 6 { #tbl:03-node-6 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| topological_parent | object | N/A | O | Topological parent of this node as determined during initialization. Reflects the object's `parent` field. |
-| behaving_as_swing | bool | N/A | O | Whether this bus is currently acting as a reference voltage source. Only meaningful for `SWING` or `SWING_PQ` bus types. |
+| **topological_parent** | object | N/A | O | Topological parent of this node as determined during initialization. Reflects the object's `parent` field. |
+| **behaving_as_swing** | bool | N/A | O | Whether this bus is currently acting as a reference voltage source. Only meaningful for `SWING` or `SWING_PQ` bus types. |
 
 
 
@@ -133,7 +133,7 @@ Table: 03-node table 6 { #tbl:03-node-6 }
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
-Table: 03-node table 7 { #tbl:03-node-7 }
+Table: node table 7 { #tbl:03-node-7 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |

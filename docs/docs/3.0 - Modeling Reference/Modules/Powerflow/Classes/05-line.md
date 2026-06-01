@@ -1,4 +1,4 @@
-﻿## Line
+## Line
 
 The line object represents power lines in a distribution system. The line object has two implementations: `overhead_line`, and `underground_line`. Each line must be called appropriately. Information about the particular line type will be contained in other objects called `line_configuration`. 
 
@@ -37,12 +37,12 @@ and the typical usage of the underground line would be
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-Table: 05-line table 1 { #tbl:05-line-1 }
+Table: line table 1 { #tbl:05-line-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| configuration | object | N/A | I | Name or reference to the particular configuration object **that** describes the properties of the **line** object. |
-| length | double | ft | I | Length of the **line** object. |
+| **configuration** | object | N/A | I | Name or reference to the particular configuration object **that** describes the properties of the **line** object. |
+| **length** | double | ft | I | Length of the **line** object. |
 
 ### Line State of Development
 
@@ -117,54 +117,54 @@ It is highly recommended to use the `line_spacing` and `overhead_line_conductor`
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-Table: 05-line table 2 { #tbl:05-line-2 }
+Table: line table 2 { #tbl:05-line-2 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| conductor_A | object | N/A | I | Object describing the conductor of phase A in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
-| conductor_B | object | N/A | I | Object describing the conductor of phase B in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
-| conductor_C | object | N/A | I | Object describing the conductor of phase C in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
-| conductor_N | object | N/A | I | Object describing the conductor of phase N in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
-| spacing | object | N/A | I | `line_spacing` object describing how the conductors are physically oriented on the pole or in the bundle. |
+| **conductor_A** | object | N/A | I | Object describing the conductor of phase A in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
+| **conductor_B** | object | N/A | I | Object describing the conductor of phase B in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
+| **conductor_C** | object | N/A | I | Object describing the conductor of phase C in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
+| **conductor_N** | object | N/A | I | Object describing the conductor of phase N in the overhead or underground line object. (`overhead_line_conductor` or `underground_line_conductor`) |
+| **spacing** | object | N/A | I | `line_spacing` object describing how the conductors are physically oriented on the pole or in the bundle. |
 
 
 #### Z-matrix and Capacitance Matrix Properties
 
 Describes the z-matrix and c-matrix directly for either underground or overhead lines instead of using the geometric configurations (This will over-write geometric configurations). For this notation, index 1 is phase A, 2 is phase B, and 3 is phase C. So element z12 represents the mutual/cross coupling impedance between phase A and phase B of this line configuration.
 
-Table: 05-line table 3 { #tbl:05-line-3 }
+Table: line table 3 { #tbl:05-line-3 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| z11 | complex | Ohm/mile | I |  |
-| z12 | complex | Ohm/mile | I |  |
-| z13 | complex | Ohm/mile | I |  |
-| z21 | complex | Ohm/mile | I |  |
-| z22 | complex | Ohm/mile | I |  |
-| z23 | complex | Ohm/mile | I |  |
-| z31 | complex | Ohm/mile | I |  |
-| z32 | complex | Ohm/mile | I |  |
-| z33 | complex | Ohm/mile | I |  |
-| c11 | double | nF/mile | I |  |
-| c12 | double | nF/mile | I |  |
-| c13 | double | nF/mile | I |  |
-| c21 | double | nF/mile | I |  |
-| c22 | double | nF/mile | I |  |
-| c23 | double | nF/mile | I |  |
-| c31 | double | nF/mile | I |  |
-| c32 | double | nF/mile | I |  |
-| c33 | double | nF/mile | I |  |
+| **z11** | complex | Ohm/mile | I |  |
+| **z12** | complex | Ohm/mile | I |  |
+| **z13** | complex | Ohm/mile | I |  |
+| **z21** | complex | Ohm/mile | I |  |
+| **z22** | complex | Ohm/mile | I |  |
+| **z23** | complex | Ohm/mile | I |  |
+| **z31** | complex | Ohm/mile | I |  |
+| **z32** | complex | Ohm/mile | I |  |
+| **z33** | complex | Ohm/mile | I |  |
+| **c11** | double | nF/mile | I |  |
+| **c12** | double | nF/mile | I |  |
+| **c13** | double | nF/mile | I |  |
+| **c21** | double | nF/mile | I |  |
+| **c22** | double | nF/mile | I |  |
+| **c23** | double | nF/mile | I |  |
+| **c31** | double | nF/mile | I |  |
+| **c32** | double | nF/mile | I |  |
+| **c33** | double | nF/mile | I |  |
 
 #### Ampere Rating Properties
 
-Table: 05-line table 4 { #tbl:05-line-4 }
+Table: line table 4 { #tbl:05-line-4 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| rating.summer.continuous | double | A | I | Amp rating in summer, continuous |
-| rating.summer.emergency | double | A | I | Amp rating in summer, short term |
-| rating.winter.continuous | double | A | I | Amp rating in winter, continuous |
-| rating.winter.emergency | double | A | I | Amp rating in winter, short term |
+| **rating.summer.continuous** | double | A | I | Amp rating in summer, continuous |
+| **rating.summer.emergency** | double | A | I | Amp rating in summer, short term |
+| **rating.winter.continuous** | double | A | I | Amp rating in winter, continuous |
+| **rating.winter.emergency** | double | A | I | Amp rating in winter, short term |
 
 
 
@@ -192,20 +192,20 @@ The line spacing object describe how the individual conductors of a distribution
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-Table: 05-line table 5 { #tbl:05-line-5 }
+Table: line table 5 { #tbl:05-line-5 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| distance_AB | double | ft | I | Distance between conductors of phase A and phase B. |
-| distance_BC | double | ft | I | Distance between conductors of phase B and phase C. |
-| distance_AC | double | ft | I | Distance between conductors of phase C and phase A. |
-| distance_AN | double | ft | I | Distance between conductors of phase A and the neutral phase. |
-| distance_BN | double | ft | I | Distance between conductors of phase B and the neutral phase. |
-| distance_CN | double | ft | I | Distance between conductors of phase C and the neutral phase. |
-| distance_AE | double | ft | I | Distance between conductor of phase A and the earth (ground). |
-| distance_BE | double | ft | I | Distance between conductor of phase B and the earth (ground). |
-| distance_CE | double | ft | I | Distance between conductor of phase C and the earth (ground). |
-| distance_NE | double | ft | I | Distance between conductor of the neutral phase (phase N) and the earth (ground). |
+| **distance_AB** | double | ft | I | Distance between conductors of phase A and phase B. |
+| **distance_BC** | double | ft | I | Distance between conductors of phase B and phase C. |
+| **distance_AC** | double | ft | I | Distance between conductors of phase C and phase A. |
+| **distance_AN** | double | ft | I | Distance between conductors of phase A and the neutral phase. |
+| **distance_BN** | double | ft | I | Distance between conductors of phase B and the neutral phase. |
+| **distance_CN** | double | ft | I | Distance between conductors of phase C and the neutral phase. |
+| **distance_AE** | double | ft | I | Distance between conductor of phase A and the earth (ground). |
+| **distance_BE** | double | ft | I | Distance between conductor of phase B and the earth (ground). |
+| **distance_CE** | double | ft | I | Distance between conductor of phase C and the earth (ground). |
+| **distance_NE** | double | ft | I | Distance between conductor of the neutral phase (phase N) and the earth (ground). |
 
 ### Line Spacing State of Development
 
@@ -254,17 +254,17 @@ For overhead lines, the `line_configuration` object must specify the overhead li
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-Table: 05-line table 6 { #tbl:05-line-6 }
+Table: line table 6 { #tbl:05-line-6 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| geometric_mean_radius | double | ft | I | The GMR of the wire. |
-| resistance | double | Ohm/mile | I | The resistance of the particular conductor, incorporating size and material effects. |
-| diameter | double | in | I | Diameter of the conductor - used for capacitance calculations. |
-| rating.summer.continuous | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| rating.summer.emergency | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **TODO - Status - This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| rating.winter.continuous | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| rating.winter.emergency | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **geometric_mean_radius** | double | ft | I | The GMR of the wire. |
+| **resistance** | double | Ohm/mile | I | The resistance of the particular conductor, incorporating size and material effects. |
+| **diameter** | double | in | I | Diameter of the conductor - used for capacitance calculations. |
+| **rating.summer.continuous** | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **rating.summer.emergency** | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **TODO - Status - This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **rating.winter.continuous** | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **rating.winter.emergency** | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
 
 ### Overhead Line Conductor State of Development
 
@@ -320,27 +320,27 @@ Underground lines often contain concentric shielding layers around the central c
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-Table: 05-line table 7 { #tbl:05-line-7 }
+Table: line table 7 { #tbl:05-line-7 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| outer_diameter | double | in | I | Diameter of the outside of the cable, including jacketing and shielding. |
-| conductor_gmr | double | ft | I | Geometric mean radius of the conductor at the center of the concentric cable. |
-| conductor_diameter | double | in | I | Diameter of the conductor at the center of the concentric cable. |
-| conductor_resistance | double | Ohm/mile | I | Resistance of the conductor at the center of the concentric cable. |
-| neutral_gmr | double | ft | I | Geometric mean radius of the concentric neutral of the cable. |
-| neutral_diameter | double | in | I | Diameter of the concentric neutral of the cable. |
-| neutral_resistance | double | Ohm/mile | I | Resistance of the concentric neutral of the cable. |
-| neutral_strands | int16 | N/A | I | Number of strands composing the concentric neutral conductor. |
-| shield_thickness | double | in | I | The thickness of Tape shield in inches |
-| shield_diameter | double | in | I | The outside diameter of Tape shield in inches |
-| insulation_relative_permitivitty | double | unit | I | Permitivitty of insulation, relative to air |
-| shield_gmr | double | ft | I | Geometric mean radius of the shielding of the cable. |
-| shield_resistance | double | Ohm/mile | I | Resistance of the cable shielding. |
-| rating.summer.continuous | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| rating.summer.emergency | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| rating.winter.continuous | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| rating.winter.emergency | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **outer_diameter** | double | in | I | Diameter of the outside of the cable, including jacketing and shielding. |
+| **conductor_gmr** | double | ft | I | Geometric mean radius of the conductor at the center of the concentric cable. |
+| **conductor_diameter** | double | in | I | Diameter of the conductor at the center of the concentric cable. |
+| **conductor_resistance** | double | Ohm/mile | I | Resistance of the conductor at the center of the concentric cable. |
+| **neutral_gmr** | double | ft | I | Geometric mean radius of the concentric neutral of the cable. |
+| **neutral_diameter** | double | in | I | Diameter of the concentric neutral of the cable. |
+| **neutral_resistance** | double | Ohm/mile | I | Resistance of the concentric neutral of the cable. |
+| **neutral_strands** | int16 | N/A | I | Number of strands composing the concentric neutral conductor. |
+| **shield_thickness** | double | in | I | The thickness of Tape shield in inches |
+| **shield_diameter** | double | in | I | The outside diameter of Tape shield in inches |
+| **insulation_relative_permitivitty** | double | unit | I | Permitivitty of insulation, relative to air |
+| **shield_gmr** | double | ft | I | Geometric mean radius of the shielding of the cable. |
+| **shield_resistance** | double | Ohm/mile | I | Resistance of the cable shielding. |
+| **rating.summer.continuous** | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **rating.summer.emergency** | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **rating.winter.continuous** | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **rating.winter.emergency** | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
 
 ### Underground Line Conductor State of Development
 
