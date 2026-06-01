@@ -48,7 +48,7 @@ Table: performance_motor table 1 { #tbl:45-performance-motor-1 }
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
-Table: performance_motor table 2 { #tbl:45-performance-motor-2 }
+	Table: performance_motor table 2 { #tbl:45-performance-motor-2 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |

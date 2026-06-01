@@ -109,7 +109,7 @@ Table: motor table 5 { #tbl:37-motor-5 }
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
-Table: motor table 6 { #tbl:37-motor-6 }
+	Table: motor table 6 { #tbl:37-motor-6 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |

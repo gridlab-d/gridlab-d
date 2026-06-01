@@ -133,7 +133,7 @@ Table: node table 6 { #tbl:03-node-6 }
 	#### Internal Properties
 	These properties are published with `PA_HIDDEN` and are intended for internal or developer use.
 
-Table: node table 7 { #tbl:03-node-7 }
+	Table: node table 7 { #tbl:03-node-7 }
 
 	| Property Name | Type | Unit | I/O | Description |
 	| --- | --- | --- | --- | --- |
