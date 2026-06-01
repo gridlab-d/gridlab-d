@@ -331,7 +331,6 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
                                 PT_double, "fan_current_fraction[pu]", PADDR(fan_current_fraction), PT_DESCRIPTION, "Current component of fan ZIP load",
                                 PT_double, "fan_power_factor[pu]", PADDR(fan_power_factor), PT_DESCRIPTION, "Power factor of the fan load",
                                 PT_double, "fan_heatgain_fraction[pu]", PADDR(fan_heatgain_fraction), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for fan heatgain fraction in pu",
-
                                 PT_double, "heating_demand[kW]", PADDR(heating_demand), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the current power draw to run the heating system",
                                 PT_double, "cooling_demand[kW]", PADDR(cooling_demand), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "the current power draw to run the cooling system",
                                 PT_double, "heating_COP[pu]", PADDR(heating_COP), PT_DESCRIPTION, "system heating performance coefficient",
@@ -1426,77 +1425,33 @@ void house_e::set_window_Rvalue()
         Rwindows = 2.0;
     }
 }
-
-int house_e::shared_init(OBJECT *parent)
-{
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
-			char objname[256];
-			gl_verbose("house::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-	// These variables need intialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	heat_start = false;
-	air_density = 0.0735;		// density of air [lb/cf]
-	air_heat_capacity = 0.2402;	// heat capacity of air @ 80F [BTU/lb/F]
-
-	// Map triplex circuit variables if not already mapped
-	bool is_triplex_parent = parent != nullptr &&
-		(gl_object_isa(parent, "triplex_meter", "powerflow") ||
-		gl_object_isa(parent, "triplex_node", "powerflow") ||
-		gl_object_isa(parent, "triplex_load", "powerflow"));
-
-	if (is_triplex_parent) {
-		if (pCircuit_V[0] == nullptr) {
-			pCircuit_V[0] = map_complex_value(parent, "voltage_12");
-			pCircuit_V[1] = map_complex_value(parent, "voltage_1N");
-			pCircuit_V[2] = map_complex_value(parent, "voltage_2N");
-		}
-		if (pLine_I[0] == nullptr) {
-			pLine_I[0] = map_complex_value(parent, "residential_nominal_current_1");
-			pLine_I[1] = map_complex_value(parent, "residential_nominal_current_2");
-			pLine_I[2] = map_complex_value(parent, "residential_nominal_current_12");
-		}
-		if (pShunt[0] == nullptr) {
-			pShunt[0] = map_complex_value(parent, "shunt_1");
-			pShunt[1] = map_complex_value(parent, "shunt_2");
-			pShunt[2] = map_complex_value(parent, "shunt_12");
-		}
-		if (pPower[0] == nullptr) {
-			pPower[0] = map_complex_value(parent, "power_1");
-			pPower[1] = map_complex_value(parent, "power_2");
-			pPower[2] = map_complex_value(parent, "power_12");
-		}
-	}
-	return 1;
-}
-
-
-
 /** Map circuit variables to meter.  Initalize house_e and HVAC model properties,
 and internal gain variables.
 **/
 
 int house_e::init(OBJECT *parent)
 {
+    OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+    if (parent != nullptr)
+    {
+        if ((parent->flags & OF_INIT) != OF_INIT)
+        {
+            char objname[256];
+            gl_verbose("house::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+            return 2; // defer
+        }
+    }
     gld_property *temp_gld_property;
     unsigned int test_rlock = 0;
     bool temp_bool_val;
+    obj->flags |= OF_SKIPSAFE;
 
-    // Initialize non-published variables (also performs parent deferment check)
-    int rv = shared_init(parent);
-    if (rv != 1)
-        return rv;
-
-    OBJECT *hdr = object_header(this);
-    hdr->flags |= OF_SKIPSAFE;
-
-    // find parent meter, if not defined, use a default meter (using static variable 'default_meter')
-    OBJECT *obj = object_header(this);
+    heat_start = false;
 
     if (parent != nullptr && (gl_object_isa(parent, "triplex_meter", "powerflow") || gl_object_isa(obj->parent, "triplex_node", "powerflow") || gl_object_isa(parent, "triplex_load", "powerflow"))) // for single-phase houses
     {
@@ -1519,11 +1474,27 @@ int house_e::init(OBJECT *parent)
         temp_bool_val = true;
         temp_gld_property->setp<bool>(temp_bool_val, test_rlock);
 
-		//Remove the temp property
-		delete temp_gld_property;
+        // Remove the temp property
+        delete temp_gld_property;
 
-		//Map the status
-		pMeterStatus = new gld_property(parent,"service_status");
+        pCircuit_V[0] = map_complex_value(parent, "voltage_12");
+        pCircuit_V[1] = map_complex_value(parent, "voltage_1N");
+        pCircuit_V[2] = map_complex_value(parent, "voltage_2N");
+
+        pLine_I[0] = map_complex_value(parent, "residential_nominal_current_1");
+        pLine_I[1] = map_complex_value(parent, "residential_nominal_current_2");
+        pLine_I[2] = map_complex_value(parent, "residential_nominal_current_12");
+
+        pShunt[0] = map_complex_value(parent, "shunt_1");
+        pShunt[1] = map_complex_value(parent, "shunt_2");
+        pShunt[2] = map_complex_value(parent, "shunt_12");
+
+        pPower[0] = map_complex_value(parent, "power_1");
+        pPower[1] = map_complex_value(parent, "power_2");
+        pPower[2] = map_complex_value(parent, "power_12");
+
+        // Map the status
+        pMeterStatus = new gld_property(parent, "service_status");
 
         // Make sure it worked
         if ((pMeterStatus->is_valid() != true) || (pMeterStatus->is_enumeration() != true))
@@ -1764,7 +1735,8 @@ int house_e::init(OBJECT *parent)
             gl_warning("house_e:%d %s; using static voltages", obj->id, parent == nullptr ? "has no parent triplex_meter defined" : "parent is not a triplex_meter");
         }
 
-        // Set the default voltage to the global - others are already "mapped", so we just leave them be
+        // Set the default voltage to the global - others are already "mapped",
+        // so we just leave them be
         value_Circuit_V[0] = gld::complex(2.0 * default_line_voltage, 0.0); // Assumes a triplex "L1-L2" connection"
         value_Circuit_V[1] = gld::complex(default_line_voltage, 0.0);
         value_Circuit_V[2] = gld::complex(default_line_voltage, 0.0);
@@ -1918,6 +1890,9 @@ int house_e::init(OBJECT *parent)
         set_window_Rvalue();
     if (Rdoors <= 0)
         Rdoors = 5.0;
+
+    air_density = 0.0735;       // density of air [lb/cf]
+    air_heat_capacity = 0.2402; // heat capacity of air @ 80F [BTU/lb/F]
 
     // house_e properties for HVAC
     if (volume == 0)
@@ -3925,7 +3900,7 @@ TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
     for (eu = implicit_enduse_list; eu != nullptr; eu = eu->next)
     {
         TIMESTAMP t = 0;
-        t = gl_enduse_sync(&(eu->load), t1);
+        t = gl_enduse_sync(&(eu->load), t1, PC_BOTTOMUP);
         if (t < t2)
             t2 = t;
     }
@@ -4473,14 +4448,14 @@ EXPORT int create_house(OBJECT **obj, OBJECT *parent)
         {
             house_e *my = object_data<house_e>(*obj);
             ;
-            gl_set_parent(*obj, parent);
+            // gl_set_parent(*obj,parent);
             my->create();
             return 1;
         }
         else
             return 0;
     }
-    CREATE_CATCHALL(house);
+    CREATE_CATCHALL(house_e);
 }
 
 EXPORT int init_house(OBJECT *obj)
@@ -4498,7 +4473,7 @@ EXPORT int init_house(OBJECT *obj)
             return my->init(obj->parent);
         }
     }
-    INIT_CATCHALL(house);
+    INIT_CATCHALL(house_e);
 }
 
 EXPORT int isa_house(OBJECT *obj, char *classname)
@@ -4513,9 +4488,8 @@ EXPORT int isa_house(OBJECT *obj, char *classname)
     }
 }
 
-EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_house_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-
     try
     {
         house_e *my = object_data<house_e>(obj);
@@ -4527,7 +4501,6 @@ EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
         case PC_PRETOPDOWN:
             t1 = my->presync(obj->clock, t0);
             break;
-
         case PC_BOTTOMUP:
             t1 = my->sync(obj->clock, t0);
             obj->clock = t0;
@@ -4542,10 +4515,27 @@ EXPORT TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
         }
         return t1;
     }
-    SYNC_CATCHALL(house);
+    SYNC_CATCHALL(house_e);
 }
 
-EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_house(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_house_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_house(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_house_impl(obj, t0, pass);
+}
+#endif
+
+EXPORT TIMESTAMP plc_house_impl(OBJECT *obj, TIMESTAMP t0)
 {
     // this will be disabled if a PLC object is attached to the waterheater
     if (obj->clock <= ROUNDOFF)
@@ -4554,6 +4544,22 @@ EXPORT TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)
     house_e *my = object_data<house_e>(obj);
     return my->sync_thermostat(obj->clock, t0);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP plc_house(OBJECT *obj, TIMESTAMP t0)
+{
+    return plc_house_impl(obj, t0);
+}
+#else
+extern "C" MODULE_API TIMESTAMP plc_house(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    va_end(args);
+    return plc_house_impl(obj, t0);
+}
+#endif
 
 // Deltamode exposed functions
 EXPORT SIMULATIONMODE interupdate_house_e(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)

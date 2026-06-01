@@ -4,55 +4,53 @@
 #ifndef _jsondump_H
 #define _jsondump_H
 
-#include "powerflow.h"
-#include "power_metrics.h"
-#include "line.h"
-#include "fuse.h"
-#include "recloser.h"
-#include "sectionalizer.h"
-#include "regulator.h"
 #include "capacitor.h"
-#include "switch_object.h"
+#include "fuse.h"
+#include "line.h"
 #include "line_configuration.h"
-#include "triplex_line_configuration.h"
+#include "power_metrics.h"
+#include "powerflow.h"
+#include "recloser.h"
+#include "regulator.h"
+#include "sectionalizer.h"
+#include "switch_object.h"
 #include "transformer.h"
-
+#include "triplex_line_configuration.h"
 
 class jsondump : public gld_object
 {
 public:
-	char32 group;
-	char256 filename_dump_system;
-	char256 filename_dump_reliability;
-	bool write_system;
-	bool write_reliability;
-	bool write_per_unit;
-	double system_VA_base;
-	TIMESTAMP runtime;
-	int32 runcount;
-	double min_volt_value;
-	double max_volt_value;
+    char32 group;
+    char256 filename_dump_system;
+    char256 filename_dump_reliability;
+    bool write_system;
+    bool write_reliability;
+    bool write_per_unit;
+    double system_VA_base;
+    TIMESTAMP runtime;
+    int32 runcount;
+    double min_volt_value;
+    double max_volt_value;
 
 private:
-	double get_double_value(OBJECT *obj, const char *name);
-	gld::complex get_complex_value(OBJECT *obj, const char *name);
-	gld::set get_set_value(OBJECT *obj, const char *name);
-	enumeration get_enum_value(OBJECT *obj, const char *name);
-	OBJECT *get_object_value(OBJECT *obj, const char *name);
+    double get_double_value(OBJECT *obj, const char *name);
+    gld::complex get_complex_value(OBJECT *obj, const char *name);
+    gld::set get_set_value(OBJECT *obj, const char *name);
+    enumeration get_enum_value(OBJECT *obj, const char *name);
+    OBJECT *get_object_value(OBJECT *obj, const char *name);
 
 public:
-	static CLASS *oclass;
+    static CLASS *oclass;
 
 public:
-	jsondump(MODULE *mod);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP commit(TIMESTAMP t);
-	STATUS finalize();
-	int isa(char *classname);
-	STATUS dump_system(void);
-	STATUS dump_reliability(void);
+    jsondump(MODULE *mod);
+    int create(void);
+    int init(OBJECT *parent);
+    TIMESTAMP commit(TIMESTAMP t);
+    STATUS finalize();
+    int isa(char *classname);
+    STATUS dump_system(void);
+    STATUS dump_reliability(void);
 };
 
 #endif // _jsondump_H
-

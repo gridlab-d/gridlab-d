@@ -56,6 +56,11 @@
 #include <mutex>
 #include <shared_mutex>
 #include <string>
+#include <string_view>
+#include <cstring>
+
+#include <exception> // std::exception
+#include <stdarg.h>  // va_list
 
 /* permanently disable use of CPPUNIT */
 #ifndef _NO_CPPUNIT
@@ -110,9 +115,18 @@
 #define EXPORT CDECL
 #endif
 
-#include <cstdarg>
+#if defined(_WIN32)
+#define MODULE_API __declspec(dllexport) // always exporting from this module
+#else
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#define MODULE_API __attribute__((visibility("default")))
+#else
+#define MODULE_API
+#endif
+#endif
+
 #include <atomic>
-// #include <execinfo.h>
+#include <cstdarg>
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <execinfo.h>
@@ -180,6 +194,12 @@ CDECL EXTERN CALLBACKS *callback INIT(NULL);
 #define gl_version_patch (*callback->version.patch)
 #define gl_version_build (*callback->version.build)
 #define gl_version_branch (*callback->version.branch)
+
+#ifdef __cplusplus
+extern "C" int object_isa(OBJECT *obj, const char *type);
+#else
+int object_isa(OBJECT *obj, const char *type);
+#endif
 
 /******************************************************************************
  * Variable publishing
@@ -523,25 +543,121 @@ inline int gl_module_depends(char *name,			   /**< module name */
 
 	@see object_isa()
  **/
+// #ifdef __cplusplus
+// inline bool gl_object_isa(OBJECT *obj, /**< object to test */
+//                           const char *type,
+//                           const char *modname = NULL) /**< type to test */
+// {
+//   bool rv = (*callback->object_isa)(obj, type) != 0;
+//   bool mv =
+//       modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
+//   return (rv && mv);
+// }
+
+// inline bool gl_object_isa(OBJECT *obj, /**< object to test */
+//                           char *type, char *modname = NULL) /**< type to test */
+// {
+//   bool rv = (*callback->object_isa)(obj, type) != 0;
+//   bool mv =
+//       modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
+//   return (rv && mv);
+// }
+// #else
+// #define gl_object_isa (*callback->object_isa)
+// #endif
+
 #ifdef __cplusplus
-inline bool gl_object_isa(OBJECT *obj, /**< object to test */
-						  const char *type,
-						  const char *modname = NULL) /**< type to test */
+
+// Strip directory components from a module path (e.g., "/usr/lib/powerflow.dylib" -> "powerflow.dylib")
+constexpr std::string_view gl_basename(std::string_view s)
 {
-	bool rv = (*callback->object_isa)(obj, type) != 0;
-	bool mv = modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
-	return (rv && mv);
+  // Find last '/' or '\'
+  const auto pos_slash = s.find_last_of('/');
+  const auto pos_bslash = s.find_last_of('\\');
+  const auto pos = (pos_slash == std::string_view::npos && pos_bslash == std::string_view::npos)
+                       ? std::string_view::npos
+                       : std::max(pos_slash, pos_bslash);
+  return (pos == std::string_view::npos) ? s : s.substr(pos + 1);
 }
 
-inline bool gl_object_isa(OBJECT *obj, /**< object to test */
-						  char *type,
-						  char *modname = NULL) /**< type to test */
+// Strip common dynamic library suffixes (.dylib/.so/.dll)
+constexpr std::string_view gl_strip_lib_suffix(std::string_view s)
 {
-	bool rv = (*callback->object_isa)(obj, type) != 0;
-	bool mv = modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
-	return (rv && mv);
+  constexpr std::string_view suf_dylib{".dylib"};
+  constexpr std::string_view suf_so{".so"};
+  constexpr std::string_view suf_dll{".dll"};
+
+  if (s.size() >= suf_dylib.size() && s.substr(s.size() - suf_dylib.size()) == suf_dylib)
+  {
+    return s.substr(0, s.size() - suf_dylib.size());
+  }
+  if (s.size() >= suf_so.size() && s.substr(s.size() - suf_so.size()) == suf_so)
+  {
+    return s.substr(0, s.size() - suf_so.size());
+  }
+  if (s.size() >= suf_dll.size() && s.substr(s.size() - suf_dll.size()) == suf_dll)
+  {
+    return s.substr(0, s.size() - suf_dll.size());
+  }
+  return s;
 }
+
+// Normalize a module identifier for robust comparison across platforms:
+//   - strips directory,
+//   - strips library suffix,
+//   - returns the "core" module name (e.g., "powerflow")
+constexpr std::string_view gl_normalize_module_name(std::string_view s)
+{
+  return gl_strip_lib_suffix(gl_basename(s));
+}
+
+// Safe wrapper to turn a possibly-null C string into a string_view
+constexpr std::string_view sv_or_empty(const char *s)
+{
+  return s ? std::string_view{s} : std::string_view{};
+}
+
+// --------- Portable gl_object_isa (no lambdas) ---------
+
+inline bool gl_object_isa(OBJECT *obj, const char *type, const char *modname = nullptr)
+{
+  if (!obj || !type || *type == '\0')
+    return false;
+
+  bool is_type = false;
+
+  // Prefer the per-class ISA first (it works in your LLDB probe)
+  if (obj->oclass && obj->oclass->isa)
+    is_type = (obj->oclass->isa(obj, const_cast<char *>(type)) != 0);
+
+  // If that didn’t match, try the core callback ancestry search
+  if (!is_type && callback && callback->object_isa)
+    is_type = ((*callback->object_isa)(obj, type) != 0);
+
+  if (!is_type)
+    return false;
+
+  // Optional module constraint – normalize and compare
+  if (modname && *modname)
+  {
+    const MODULE *runtime_mod = (obj->oclass ? obj->oclass->module : nullptr);
+    const std::string_view lhs = gl_normalize_module_name(sv_or_empty(runtime_mod && runtime_mod->name ? runtime_mod->name : nullptr));
+    const std::string_view rhs = gl_normalize_module_name(sv_or_empty(modname));
+    return lhs == rhs;
+  }
+  return true;
+}
+
+// Legacy overload to preserve older call sites that pass char*
+inline bool gl_object_isa(OBJECT *obj, char *type, char *modname = nullptr)
+{
+  return gl_object_isa(obj,
+                       const_cast<const char *>(type),
+                       const_cast<const char *>(modname));
+}
+
 #else
+// C fallback keeps macro behavior for pure-C translation units
 #define gl_object_isa (*callback->object_isa)
 #endif
 
@@ -1202,9 +1318,9 @@ inline int gl_enduse_create(enduse *e)
 }
 /** Synchronize an enduse
  **/
-inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
+inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1, PASSCONFIG pass = PC_BOTTOMUP)
 {
-	return callback->enduse.sync(e, PC_BOTTOMUP, t1);
+  return callback->enduse.sync(e, t1, pass);
 }
 /** Create a loadshape
  **/
@@ -1366,8 +1482,6 @@ inline size_t nextpow2(size_t x)
 ///
 /// Catchall for create
 ///
-// #define CREATE_CATCHALL(C) catch (char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const char *msg) { gl_error("create_" #C ": %s", msg); return 0; } catch (const std::exception& ex) { gl_error("create_" #C ": unhandled exception - %s", ex.what()); return 0; }
-
 #define CREATE_CATCHALL(C)                                              \
 	catch (char *msg)                                                   \
 	{                                                                   \
@@ -1487,39 +1601,6 @@ inline void gl_write(void *local,	 /** local memory for data */
 }
 #endif
 /**@}*/
-
-// locking functions
-#ifdef __cplusplus
-// #define READLOCK(X) gld_core::rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
-// #define WRITELOCK(X) gld_core::wlock(X); /**< Locks an item for writing (blocks all operations) */
-// #define READUNLOCK() gld_core::runlock(); /**< Unlocks an read lock */
-// #define WRITEUNLOCK(X) gld_core::wunlock(X); /**< Unlocks a write lock */
-namespace gld_core
-{
-	// inline std::shared_lock<std::shared_mutex> rlock(unsigned int* lock) { return callback->lock.read(lock); }
-	// inline void wlock(unsigned int* lock) { callback->lock.write(lock); }
-	// inline void runlock() { callback->unlock.read(); }
-	// inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
-}
-// TODO: locking templates
-// template <class T>
-// void rlock(T object) {gld_core::rlock(&object.lock);}
-
-#else
-#define READLOCK(X) rlock(X);	   /**< Locks an item for reading (allows other reads but blocks write) */
-#define WRITELOCK(X) wlock(X);	   /**< Locks an item for writing (blocks all operations) */
-#define READUNLOCK(X) runlock(X);  /**< Unlocks an read lock */
-#define WRITEUNLOCK(X) wunlock(X); /**< Unlocks a write lock */
-#endif
-
-// #define READLOCK_OBJECT(X) READLOCK(&((X)->lock)) /**< Locks an object for reading */
-// #define WRITELOCK_OBJECT(X) WRITELOCK(&((X)->lock)) /**< Locks an object for writing */
-// #define READUNLOCK_OBJECT() READUNLOCK() /**< Unlocks an object */
-// #define WRITEUNLOCK_OBJECT(X) WRITEUNLOCK(&((X)->lock)) /**< Unlocks an object */
-// #define LOCK_OBJECT(X) WRITELOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
-// #define UNLOCK_OBJECT(X) WRITEUNLOCK_OBJECT(X); /**< @todo this is deprecated and should not be used anymore */
-//
-// #define LOCKED(X,C) {WRITELOCK_OBJECT(X);(C);WRITEUNLOCK_OBJECT(X);} /**< @todo this is deprecated and should not be used anymore */
 
 static unsigned long _nan[] = {
 	0xffffffff,
@@ -1997,29 +2078,6 @@ public: // special functions
 	};
 };
 
-/// Read lock container
-// class gld_rlock {
-// private: OBJECT *my;
-//	   std::shared_lock<std::shared_mutex> lock;
-//	/// Constructor
-// public: inline gld_rlock(OBJECT *obj) : my(obj) {
-//	lock = gld_core::rlock(&my->lock);
-// };
-//	/// Destructor
-// public: inline ~gld_rlock(void) {
-//	//gld_core::runlock(&my->lock);
-//	lock.unlock();
-// };
-// };
-/// Write lock container
-// class gld_wlock {
-// private: OBJECT *my;
-//		 /// Constructor
-// public: inline gld_wlock(OBJECT *obj) : my(obj) {gld_core::wlock(&my->lock);};
-//		/// Destructor
-// public: inline ~gld_wlock(void) {gld_core::wunlock(&my->lock);};
-// };
-
 class gld_class;
 /// Module container
 class gld_module
@@ -2306,60 +2364,6 @@ public: // iterators
 	};
 };
 
-// object data declaration/accessors
-/// Define an atomic property
-// #define GL_ATOMIC(T,X) protected: T X; public: \
-//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-//	inline T get_##X(void) { return X; }; \
-//	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
-//	inline T get_##X(gld_rlock&) { return X; }; \
-//	inline T get_##X(gld_wlock&) { return X; }; \
-//	inline void set_##X(T p) { X=p; }; \
-//	inline void set_##X(T p, gld_wlock&) { X=p; }; \
-//	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
-//	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
-//
-///// Define a structured property
-// #define GL_STRUCT(T,X) protected: T X; public: \
-//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-//	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
-//	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
-//	inline T get_##X(gld_rlock&) { return X; }; \
-//	inline T get_##X(gld_wlock&) { return X; }; \
-//	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
-//	inline void set_##X(T p, gld_wlock&) { X=p; }; \
-//	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
-//	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
-//
-///// Define a string property
-// #define GL_STRING(T,X) 	protected: T X; public: \
-//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-//	inline char* get_##X(void) { gld_rlock _lock(my()); return X.get_string(); }; \
-//	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
-//	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
-//	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
-//	inline char get_##X(size_t n) { gld_rlock _lock(my()); return (char)X; }; \
-//	inline char get_##X(size_t n, gld_rlock&) { return (char)X; }; \
-//	inline char get_##X(size_t n, gld_wlock&) { return (char)X; }; \
-//	inline void set_##X(char *p) { gld_wlock _lock(my()); strncpy(X,p,sizeof(X)); }; \
-//	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
-//	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
-//	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; };  \
-//
-///// Define an array property
-// #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
-//	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
-//	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
-//	inline T* get_##X(void) { gld_rlock _lock(my()); return X; }; \
-//	inline T* get_##X(gld_rlock&) { return X; }; \
-//	inline T* get_##X(gld_wlock&) { return X; }; \
-//	inline T get_##X(size_t n) { gld_rlock _lock(my()); return X[n]; }; \
-//	inline T get_##X(size_t n, gld_rlock&) { return X[n]; }; \
-//	inline T get_##X(size_t n, gld_wlock&) { return X[n]; }; \
-//	inline void set_##X(T* p) { gld_wlock _lock(my()); memcpy(X,p,sizeof(X)); }; \
-//	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
-//	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
-//	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
 
 /// Define a bitflag property
 #define GL_BITFLAGS(T, X)                                                                              \
@@ -2571,21 +2575,6 @@ protected: // header write accessors (no locking)
 	inline void set_flags_bits(unsigned long bits) { my()->flags |= bits; };
 	inline void unset_flags_bits(unsigned long bits) { my()->flags &= ~bits; };
 
-protected: // locking (self)
-		   /*inline void rlock(void) {
-			   gld_core::rlock(&my()->lock);
-		   };
-		   inline void runlock(void) {
-			   gld_core::runlock(&my()->lock);
-		   };*/
-		   // inline void wlock(void) { gld_core::wlock(&my()->lock); };
-		   // inline void wunlock(void) { gld_core::wunlock(&my()->lock); };
-protected: // locking (others)
-		   /*inline void rlock(OBJECT *obj) { gld_core::rlock(&obj->lock); };
-		   inline void runlock(OBJECT *obj) { gld_core::runlock(&obj->lock); };*/
-		   // inline void wlock(OBJECT *obj) { gld_core::wlock(&obj->lock); };
-		   // inline void wunlock(OBJECT *obj) { gld_core::wunlock(&obj->lock); };
-
 protected: // special functions
 	inline bool operator==(gld_object *o) { return o != NULL && my() == o->my(); };
 	inline bool operator==(OBJECT *o) { return o != NULL && my() == o; };
@@ -2595,16 +2584,21 @@ public: // member lookup functions
 	inline FUNCTIONADDR get_function(const char *name) { return (*callback->function.get)(my()->oclass->name, name); };
 
 public: // external accessors
-		// template <class T> inline void getp(PROPERTY &prop, T &value) {
-		//	//rlock();
-		//	wlock();
-		//	value=*(T*)(get_addr(my(),&prop));
-		//	wunlock();
-		//};
-		// template <class T> inline void setp(PROPERTY &prop, T &value) { wlock(); *(T*)(get_addr(my(),&prop)   /*GETADDR(my(), &prop)*/) = value; wunlock(); };
-		/*template <class T> inline void getp(PROPERTY& prop, T& value, gld_rlock&) { value = *(T*)(get_addr(my(), &prop)); };*/
-		// template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) { value=*(T*)(get_addr(my(),&prop)); };
-		// template <class T> inline void setp(PROPERTY &prop, T &value, gld_wlock&) { *(T*)(get_addr(my(),&prop))=value; };
+        // template <class T> inline void getp(PROPERTY &prop, T &value) {
+        //	//rlock();
+        //	wlock();
+        //	value=*(T*)(get_addr(my(),&prop));
+        //	wunlock();
+        //};
+        // template <class T> inline void setp(PROPERTY &prop, T &value) {
+        // wlock(); *(T*)(get_addr(my(),&prop)   /*GETADDR(my(), &prop)*/) =
+        // value; wunlock(); };
+  /*template <class T> inline void getp(PROPERTY& prop, T& value, gld_rlock&) {
+   * value = *(T*)(get_addr(my(), &prop)); };*/
+  // template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) {
+  // value=*(T*)(get_addr(my(),&prop)); }; template <class T> inline void
+  // setp(PROPERTY &prop, T &value, gld_wlock&) {
+  // *(T*)(get_addr(my(),&prop))=value; };
 
 public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->object.set_dependent(my(), obj); };
@@ -2956,31 +2950,21 @@ public: // special operations
 	template <class T>
 	inline void getp(T &value)
 	{
-		// auto v = gld_core::rlock(&obj->lock);
-		// replace gld_rlock with SharedMutexManager
 		auto &v = SharedMutexManager::get_mutex(&obj->lock);
 		std::shared_lock<std::shared_mutex> lock(v);
-
 		value = *(T *)get_addr();
-		// gld_core::runlock(&obj->lock);
 	};
 	template <class T>
 	inline void setp(T &value)
 	{
-		// gld_core::wlock(&obj->lock);
-		// replace wlock with SharedMutexManager
 		auto &v = SharedMutexManager::get_mutex(&obj->lock);
 		std::unique_lock<std::shared_mutex> lock(v);
-
 		*(T *)get_addr() = value;
-		// gld_core::wunlock(&obj->lock);
 	};
 	// template <class T> inline void getp(T& value, gld_rlock&) { value = *(T*)get_addr(); };
 	template <class T>
 	inline void getp(T &value, unsigned int &gld_rlock)
 	{
-		// auto v = gld_core::rlock(&gld_rlock);
-		// replace gld_rlock with SharedMutexManager
 		auto &v = SharedMutexManager::get_mutex(&gld_rlock);
 		std::shared_lock<std::shared_mutex> lock(v);
 		value = *(T *)get_addr();
@@ -2991,22 +2975,17 @@ public: // special operations
 	{
 		auto &v = SharedMutexManager::get_mutex(&wl);
 		std::unique_lock<std::shared_mutex> lock(v);
-
 		*(T *)get_addr() = value;
 	};
 	inline void setp(enumeration value)
 	{
-		// gld_core::wlock(&obj->lock);
 		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
 		*(enumeration *)get_addr() = value;
-		// gld_core::wunlock(&obj->lock);
 	};
 	inline void setp(gld::set value)
 	{
-		// gld_core::wlock(&obj->lock);
 		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
 		*(gld::set *)get_addr() = value;
-		// gld_core::wunlock(&obj->lock);
 	};
 	inline gld_keyword *find_keyword(unsigned long value) { return get_first_keyword()->find(value); };
 	inline gld_keyword *find_keyword(const char *name) { return get_first_keyword()->find(name); };
@@ -3422,7 +3401,6 @@ CDECL int dllkill() { return do_kill(NULL); }
 			if (*obj != NULL)                           \
 			{                                           \
 				C *my = object_data<C>(*obj);           \
-				gl_set_parent(*obj, parent);            \
 				return my->create();                    \
 			}                                           \
 			else                                        \
@@ -3461,9 +3439,10 @@ CDECL int dllkill() { return do_kill(NULL); }
 /// Implement class commit export
 #define EXPORT_COMMIT(X) EXPORT_COMMIT_C(X, X)
 
+/*
 #define EXPORT_NOTIFY_C(X, C)                                                   \
 	EXPORT int notify_##X(OBJECT *obj, int notice, PROPERTY *prop, char *value) \
-	{ /*C *my = OBJECTDATA(obj,C);*/                                            \
+	{ //C *my = OBJECTDATA(obj,C);                                              \
 		C *my = object_data<C>(obj);                                            \
 		try                                                                     \
 		{                                                                       \
@@ -3485,39 +3464,185 @@ CDECL int dllkill() { return do_kill(NULL); }
 		T_CATCHALL(X, commit);                                                  \
 		return 1;                                                               \
 	}
+*/
+
+#define EXPORT_NOTIFY_C(X, C)                      \
+    EXPORT int64 notify_##X(void *obj, ...)        \
+    {                                              \
+        va_list args;                              \
+        va_start(args, obj);                       \
+        int notice = va_arg(args, int);            \
+        PROPERTY *prop = va_arg(args, PROPERTY *); \
+        char *value = va_arg(args, char *);        \
+        va_end(args);                              \
+        C *my = object_data<C>((OBJECT *)obj);     \
+        if (!my)                                   \
+            return 0;                              \
+        switch (notice)                            \
+        {                                          \
+        case NM_POSTUPDATE:                        \
+            return my->postnotify(prop, value);    \
+        case NM_PREUPDATE:                         \
+            return my->prenotify(prop, value);     \
+        default:                                   \
+            return 0;                              \
+        }                                          \
+    }
 /// Implement class notify export
 #define EXPORT_NOTIFY(X) EXPORT_NOTIFY_C(X, X)
 
-#define EXPORT_SYNC_C(X, C)                                                                                   \
-	EXPORT TIMESTAMP sync_##X(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)                                     \
-	{                                                                                                         \
-		try                                                                                                   \
-		{                                                                                                     \
-			TIMESTAMP t1 = TS_NEVER; /*C *p=OBJECTDATA(obj,C);*/                                              \
-			C *p = object_data<C>(obj);                                                                       \
-			switch (pass)                                                                                     \
-			{                                                                                                 \
-			case PC_PRETOPDOWN:                                                                               \
-				t1 = p->presync(t0);                                                                          \
-				break;                                                                                        \
-			case PC_BOTTOMUP:                                                                                 \
-				t1 = p->sync(t0);                                                                             \
-				break;                                                                                        \
-			case PC_POSTTOPDOWN:                                                                              \
-				t1 = p->postsync(t0);                                                                         \
-				break;                                                                                        \
-			default:                                                                                          \
-				throw "invalid pass request";                                                                 \
-				break;                                                                                        \
-			}                                                                                                 \
-			if ((obj->oclass->passconfig & (PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN) & (~pass)) <= pass) \
-				obj->clock = t0;                                                                              \
-			return t1;                                                                                        \
-		}                                                                                                     \
-		SYNC_CATCHALL(X);                                                                                     \
-	}
-/// Implement class sync export
-#define EXPORT_SYNC(X) EXPORT_SYNC_C(X, X)
+// #define EXPORT_SYNC_C(X, C) \
+// 	EXPORT TIMESTAMP sync_##X(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) \
+// 	{ \
+// 		try \
+// 		{ \
+// 			TIMESTAMP t1 = TS_NEVER; /*C *p=OBJECTDATA(obj,C);*/ \
+// 			C *p = object_data<C>(obj); \
+// 			switch (pass) \
+// 			{ \
+// 			case PC_PRETOPDOWN: \
+// 				t1 = p->presync(t0); \
+// 				break; \
+// 			case PC_BOTTOMUP: \
+// 				t1 = p->sync(t0); \
+// 				break; \
+// 			case PC_POSTTOPDOWN: \
+// 				t1 = p->postsync(t0); \
+// 				break; \
+// 			default: \
+// 				throw "invalid pass request"; \
+// 				break; \
+// 			} \
+// 			if ((obj->oclass->passconfig & (PC_PRETOPDOWN |
+// PC_BOTTOMUP | PC_POSTTOPDOWN) & (~pass)) <= pass) \
+// 				obj->clock = t0; \
+// 			return t1; \
+// 		} \
+// 		SYNC_CATCHALL(X); \
+// 	}
+
+#pragma once
+#include <exception>
+#include <stdarg.h>
+
+// Let callers override the sentinel constants, but default sensibly.
+#ifndef SYNC_NEVER_TS
+#define SYNC_NEVER_TS TS_NEVER
+#endif
+
+#ifndef SYNC_INVALID_TS
+#define SYNC_INVALID_TS ((TIMESTAMP) - 1) // matches your ((long long)-1)
+#endif
+
+// ------------------------------
+// Core impl generator (mimics your expansion)
+// ------------------------------
+#define EXPORT_SYNC_IMPL_C(NAME, CLASS)                                        \
+  static TIMESTAMP sync_##NAME##_impl(OBJECT *object, TIMESTAMP t0,            \
+                                      PASSCONFIG pass)                         \
+  {                                                                            \
+    try                                                                        \
+    {                                                                          \
+      TIMESTAMP t1 = SYNC_NEVER_TS;                                            \
+      CLASS *p = object_data<CLASS>(object);                                   \
+      switch (pass)                                                            \
+      {                                                                        \
+      case PC_PRETOPDOWN:                                                      \
+        t1 = p->presync(t0);                                                   \
+        break;                                                                 \
+      case PC_BOTTOMUP:                                                        \
+        t1 = p->sync(t0);                                                      \
+        break;                                                                 \
+      case PC_POSTTOPDOWN:                                                     \
+        t1 = p->postsync(t0);                                                  \
+        break;                                                                 \
+      default:                                                                 \
+        throw "invalid pass request";                                          \
+      }                                                                        \
+      /* Keep the original clock update expression to match your expansion */  \
+      if ((object->oclass->passconfig &                                        \
+           (PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN) & (~pass)) <= pass)  \
+        object->clock = t0;                                                    \
+      return t1;                                                               \
+    }                                                                          \
+    catch (char *msg)                                                          \
+    {                                                                          \
+      (*callback->output_error)("sync_%s(obj=%d;%s): %s", #NAME, object->id,   \
+                                object->name ? object->name : "unnamed", msg); \
+      return SYNC_INVALID_TS;                                                  \
+    }                                                                          \
+    catch (const char *msg)                                                    \
+    {                                                                          \
+      (*callback->output_error)("sync_%s(obj=%d;%s): %s", #NAME, object->id,   \
+                                object->name ? object->name : "unnamed", msg); \
+      return SYNC_INVALID_TS;                                                  \
+    }                                                                          \
+    catch (const std::exception &ex)                                           \
+    {                                                                          \
+      (*callback->output_error)(                                               \
+          "sync_%s(obj=%d;%s): unhandled exception - %s", #NAME, object->id,   \
+          object->name ? object->name : "unnamed", ex.what());                 \
+      return SYNC_INVALID_TS;                                                  \
+    }                                                                          \
+  }
+
+// ------------------------------
+// Exported symbol generator (typed on non-Apple; varargs shim on Apple)
+// ------------------------------
+#ifndef __APPLE__
+
+#define EXPORT_SYNC_C(NAME, CLASS)                                          \
+  extern "C" MODULE_API TIMESTAMP sync_##NAME(OBJECT *object, TIMESTAMP t0, \
+                                              PASSCONFIG pass)              \
+  {                                                                         \
+    return sync_##NAME##_impl(object, t0, pass);                            \
+  }
+
+#else // __APPLE__
+
+/* On macOS, variadic arguments undergo default promotions:
+ * - Enums are passed as 'int'. Read PASSCONFIG as 'int' and cast.
+ * - TIMESTAMP is typically a 64-bit integral type; read with that exact type.
+ */
+#define EXPORT_SYNC_C(NAME, CLASS)                                     \
+  extern "C" MODULE_API TIMESTAMP sync_##NAME(void *obj, ...)          \
+  {                                                                    \
+    va_list args;                                                      \
+    va_start(args, obj);                                               \
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);                            \
+    int pass_i = va_arg(args, int); /* enum promotion */               \
+    va_end(args);                                                      \
+                                                                       \
+    PASSCONFIG pass = static_cast<PASSCONFIG>(pass_i);                 \
+    OBJECT *object = static_cast<OBJECT *>(obj);                       \
+                                                                       \
+    if (!callback)                                                     \
+    {                                                                  \
+      gl_error("callback is null in sync_%s", #NAME);                  \
+      return SYNC_INVALID_TS;                                          \
+    }                                                                  \
+    if (!callback->time.local_datetime)                                \
+    {                                                                  \
+      gl_error("CRITICAL: local_datetime callback is null in pass %d", \
+               pass_i);                                                \
+      return SYNC_INVALID_TS;                                          \
+    }                                                                  \
+    return sync_##NAME##_impl(object, t0, pass);                       \
+  }
+
+#endif // __APPLE__
+
+// ------------------------------
+// Convenience wrappers
+// ------------------------------
+
+// Emit BOTH: impl + export with distinct NAME and CLASS
+#define EXPORT_SYNC2(NAME, CLASS) \
+  EXPORT_SYNC_IMPL_C(NAME, CLASS) \
+  EXPORT_SYNC_C(NAME, CLASS)
+
+// Emit BOTH when CLASS == NAME
+#define EXPORT_SYNC(NAME) EXPORT_SYNC2(NAME, NAME)
 
 #define EXPORT_ISA_C(X, C)                                                                         \
 	EXPORT int isa_##X(OBJECT *obj, char *name)                                                    \

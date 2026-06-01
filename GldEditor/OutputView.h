@@ -3,43 +3,41 @@
 
 #pragma once
 
-class COutputView : public CTreeView
-{
+class COutputView : public CTreeView {
 protected: // create from serialization only
-	COutputView();
-	DECLARE_DYNCREATE(COutputView)
+  COutputView();
+  DECLARE_DYNCREATE(COutputView)
 
-// Attributes
+  // Attributes
 public:
-	CGldEditorDoc* GetDocument() const;
+  CGldEditorDoc *GetDocument() const;
 
-// Operations
+  // Operations
 public:
+  // Overrides
+public:
+  virtual BOOL PreCreateWindow(CREATESTRUCT &cs);
 
-// Overrides
-public:
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
-	virtual void OnInitialUpdate(); // called first time after construct
-	virtual void OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint);
+  virtual void OnInitialUpdate(); // called first time after construct
+  virtual void OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint);
 
-// Implementation
+  // Implementation
 public:
-	virtual ~COutputView();
+  virtual ~COutputView();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+  virtual void AssertValid() const;
+  virtual void Dump(CDumpContext &dc) const;
 #endif
 
 protected:
-
-// Generated message map functions
+  // Generated message map functions
 protected:
-	DECLARE_MESSAGE_MAP()
+  DECLARE_MESSAGE_MAP()
 };
 
-#ifndef _DEBUG  // debug version in OutputView.cpp
-inline CGldEditorDoc* COutputView::GetDocument() const
-   { return reinterpret_cast<CGldEditorDoc*>(m_pDocument); }
+#ifndef _DEBUG // debug version in OutputView.cpp
+inline CGldEditorDoc *COutputView::GetDocument() const {
+  return reinterpret_cast<CGldEditorDoc *>(m_pDocument);
+}
 #endif
-

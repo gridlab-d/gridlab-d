@@ -1,8 +1,8 @@
 /* double_assert
 
-   Very simple test that compares double values to any corresponding double value.  If the test
-   fails at any time, it t.rows() a 'zero' to the commit function and breaks the simulator out with
-   a failure code.
+   Very simple test that compares double values to any corresponding double
+   value.  If the test fails at any time, it t.rows() a 'zero' to the commit
+   function and breaks the simulator out with a failure code.
 */
 
 #include <cerrno>
@@ -27,8 +27,10 @@ double_assert::double_assert(MODULE *module)
 {
     if (oclass == nullptr)
     {
-        // register to receive notice for first top down. bottom up, and second top down synchronizations
-        oclass = gl_register_class(module, "double_assert", sizeof(double_assert), PC_AUTOLOCK | PC_OBSERVER);
+        // register to receive notice for first top down. bottom up, and second top
+        // down synchronizations
+        oclass = gl_register_class(module, "double_assert", sizeof(double_assert),
+                                   PC_AUTOLOCK | PC_OBSERVER);
         if (oclass == nullptr)
             throw "unable to register class double_assert";
         else
@@ -84,11 +86,10 @@ int double_assert::create(void)
     if (defaults->target[0] != '\0')
         target.copy_from(defaults->target);
 
-    gl_output("double_assert defaults: status=%d value=%g within=%g within_mode=%d once=%d target='%s' once_value=%g",
-              static_cast<int>(status),
-              value, within,
-              static_cast<int>(within_mode),
-              static_cast<int>(once),
+    gl_output("double_assert defaults: status=%d value=%g within=%g "
+              "within_mode=%d once=%d target='%s' once_value=%g",
+              static_cast<int>(status), value, within,
+              static_cast<int>(within_mode), static_cast<int>(once),
               target.get_string(), once_value);
 
     return 1; /* return 1 on success, 0 on failure */
@@ -100,8 +101,8 @@ int double_assert::init(OBJECT *parent)
     if (within <= 0.0)
         throw msg;
     /*  TROUBLESHOOT
-    Within is the range in which the check is being performed.  Please check to see that you have
-    specified a value for "within" and it is positive.
+    Within is the range in which the check is being performed.  Please check to
+    see that you have specified a value for "within" and it is positive.
     */
     return 1;
 }
@@ -139,12 +140,14 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
     gld_property target_prop(get_parent(), get_target().c_str());
     if (!target_prop.is_valid() || target_prop.get_type() != PT_double)
     {
-        gl_error("Specified target %s for %s is not valid.", get_target(), get_parent()->get_name());
+        gl_error("Specified target %s for %s is not valid.", get_target().c_str(),
+                 get_parent()->get_name());
         /*  TROUBLESHOOT
-        Check to make sure the target you are specifying is a published variable of type double for the object
-        that you are pointing to.  Refer to the documentation of the command flag --modhelp, or
-        check the wiki page to determine which variables can be published within the object you
-        are pointing to with the assert function.
+        Check to make sure the target you are specifying is a published variable of
+        type double for the object that you are pointing to.  Refer to the
+        documentation of the command flag --modhelp, or check the wiki page to
+        determine which variables can be published within the object you are
+        pointing to with the assert function.
         */
         return TS_INVALID; // Changed from 0 to TS_INVALID
     }
@@ -178,7 +181,8 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
             // Log expected failures for error tests
             if (is_error_test)
             {
-                gl_verbose("Expected failure in error test object %s", get_parent()->get_name());
+                gl_verbose("Expected failure in error test object %s",
+                           get_parent()->get_name());
             }
             return TS_INVALID; // Changed from 0 to TS_INVALID
         }
@@ -195,7 +199,8 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
             // Log expected failures for error tests
             if (is_error_test)
             {
-                gl_verbose("Expected failure in error test object %s", get_parent()->get_name());
+                gl_verbose("Expected failure in error test object %s",
+                           get_parent()->get_name());
             }
 
             return TS_INVALID; // Changed from 0 to TS_INVALID
@@ -227,7 +232,10 @@ int double_assert::postnotify(PROPERTY *prop, char *value)
 }
 
 // EXPORT for object-level call (as opposed to module-level)
-EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0,
+                                           unsigned int64 delta_time,
+                                           unsigned long dt,
+                                           unsigned int iteration_count_val)
 {
     char buff[128];
     char dateformat[16] = "";
@@ -264,7 +272,8 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
     {
         range = da->get_value() * da->get_within();
 
-        // if ( range<0.001 ) //minimum bounds removed since many deltamode items are small
+        // if ( range<0.001 ) //minimum bounds removed since many deltamode items
+        // are small
         //{	// minimum bounds
         //	range = 0.001;
         // }
@@ -277,20 +286,24 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
     // Iteration checker - assert only valid on the first timestep
     if (iteration_count_val == 0)
     {
-        // Skip first timestep of any delta iteration -- nature of delta means it really isn't checking the right one
+        // Skip first timestep of any delta iteration -- nature of delta means it
+        // really isn't checking the right one
         if (delta_time >= dt)
         {
             // Get value
-            x = (double *)gl_get_double_by_name(obj->parent, da->get_target().c_str());
+            x = (double *)gl_get_double_by_name(obj->parent,
+                                                da->get_target().c_str());
 
             if (x == nullptr)
             {
-                gl_error("Specified target %s for %s is not valid.", da->get_target(), gl_name(obj->parent, buff, 64));
+                gl_error("Specified target %s for %s is not valid.",
+                         da->get_target().c_str(), gl_name(obj->parent, buff, 64));
                 /*  TROUBLESHOOT
-                Check to make sure the target you are specifying is a published variable for the object
-                that you are pointing to.  Refer to the documentation of the command flag --modhelp, or
-                check the wiki page to determine which variables can be published within the object you
-                are pointing to with the assert function.
+                Check to make sure the target you are specifying is a published variable
+                for the object that you are pointing to.  Refer to the documentation of
+                the command flag --modhelp, or check the wiki page to determine which
+                variables can be published within the object you are pointing to with
+                the assert function.
                 */
                 return SM_ERROR;
             }
@@ -301,12 +314,17 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
                 {
                     // Calculate time
                     if (delta_time >= dt) // After first iteration
-                        del_clock = (double)t0 + (double)(delta_time - dt) / (double)DT_SECOND;
+                        del_clock =
+                            (double)t0 + (double)(delta_time - dt) / (double)DT_SECOND;
                     else // First second different, don't back out
                         del_clock = (double)t0 + (double)(delta_time) / (double)DT_SECOND;
 
-                    del_clock_int = (TIMESTAMP)del_clock;                                     /* Whole seconds - update from global clock because we could be in delta for over 1 second */
-                    del_microseconds = (int)((del_clock - (int)(del_clock)) * 1000000 + 0.5); /* microseconds roll-over - biased upward (by 0.5) */
+                    del_clock_int = (TIMESTAMP)
+                        del_clock; /* Whole seconds - update from global clock because we
+                                      could be in delta for over 1 second */
+                    del_microseconds =
+                        (int)((del_clock - (int)(del_clock)) * 1000000 +
+                              0.5); /* microseconds roll-over - biased upward (by 0.5) */
 
                     // Convert out
                     gl_localtime(del_clock_int, &delta_dt_val);
@@ -316,16 +334,32 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
 
                     // Output date appropriately
                     if (strcmp(dateformat, "ISO") == 0)
-                        sprintf(datebuff, "ERROR    [%04d-%02d-%02d %02d:%02d:%02d.%.06d %s] : ", delta_dt_val.year, delta_dt_val.month, delta_dt_val.day, delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second, del_microseconds, delta_dt_val.tz);
+                        sprintf(datebuff,
+                                "ERROR    [%04d-%02d-%02d %02d:%02d:%02d.%.06d %s] : ",
+                                delta_dt_val.year, delta_dt_val.month, delta_dt_val.day,
+                                delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second,
+                                del_microseconds, delta_dt_val.tz);
                     else if (strcmp(dateformat, "US") == 0)
-                        sprintf(datebuff, "ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ", delta_dt_val.month, delta_dt_val.day, delta_dt_val.year, delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second, del_microseconds, delta_dt_val.tz);
+                        sprintf(datebuff,
+                                "ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",
+                                delta_dt_val.month, delta_dt_val.day, delta_dt_val.year,
+                                delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second,
+                                del_microseconds, delta_dt_val.tz);
                     else if (strcmp(dateformat, "EURO") == 0)
-                        sprintf(datebuff, "ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ", delta_dt_val.day, delta_dt_val.month, delta_dt_val.year, delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second, del_microseconds, delta_dt_val.tz);
+                        sprintf(datebuff,
+                                "ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",
+                                delta_dt_val.day, delta_dt_val.month, delta_dt_val.year,
+                                delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second,
+                                del_microseconds, delta_dt_val.tz);
                     else
                         sprintf(datebuff, "ERROR    %.09lf : ", del_clock);
 
                     // Actual error part
-                    sprintf(error_output_buff, "Assert failed on %s - %s (%g) not within %f of given value %g", gl_name(obj->parent, buff, 64), da->get_target().c_str(), *x, da->get_within(), da->get_value());
+                    sprintf(
+                        error_output_buff,
+                        "Assert failed on %s - %s (%g) not within %f of given value %g",
+                        gl_name(obj->parent, buff, 64), da->get_target().c_str(), *x,
+                        da->get_within(), da->get_value());
 
                     // Send it out
                     gl_output("%s%s", datebuff, error_output_buff);
@@ -342,12 +376,17 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
                 {
                     // Calculate time
                     if (delta_time >= dt) // After first iteration
-                        del_clock = (double)t0 + (double)(delta_time - dt) / (double)DT_SECOND;
+                        del_clock =
+                            (double)t0 + (double)(delta_time - dt) / (double)DT_SECOND;
                     else // First second different, don't back out
                         del_clock = (double)t0 + (double)(delta_time) / (double)DT_SECOND;
 
-                    del_clock_int = (TIMESTAMP)del_clock;                                     /* Whole seconds - update from global clock because we could be in delta for over 1 second */
-                    del_microseconds = (int)((del_clock - (int)(del_clock)) * 1000000 + 0.5); /* microseconds roll-over - biased upward (by 0.5) */
+                    del_clock_int = (TIMESTAMP)
+                        del_clock; /* Whole seconds - update from global clock because we
+                                      could be in delta for over 1 second */
+                    del_microseconds =
+                        (int)((del_clock - (int)(del_clock)) * 1000000 +
+                              0.5); /* microseconds roll-over - biased upward (by 0.5) */
 
                     // Convert out
                     gl_localtime(del_clock_int, &delta_dt_val);
@@ -357,16 +396,32 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
 
                     // Output date appropriately
                     if (strcmp(dateformat, "ISO") == 0)
-                        sprintf(datebuff, "ERROR    [%04d-%02d-%02d %02d:%02d:%02d.%.06d %s] : ", delta_dt_val.year, delta_dt_val.month, delta_dt_val.day, delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second, del_microseconds, delta_dt_val.tz);
+                        sprintf(datebuff,
+                                "ERROR    [%04d-%02d-%02d %02d:%02d:%02d.%.06d %s] : ",
+                                delta_dt_val.year, delta_dt_val.month, delta_dt_val.day,
+                                delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second,
+                                del_microseconds, delta_dt_val.tz);
                     else if (strcmp(dateformat, "US") == 0)
-                        sprintf(datebuff, "ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ", delta_dt_val.month, delta_dt_val.day, delta_dt_val.year, delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second, del_microseconds, delta_dt_val.tz);
+                        sprintf(datebuff,
+                                "ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",
+                                delta_dt_val.month, delta_dt_val.day, delta_dt_val.year,
+                                delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second,
+                                del_microseconds, delta_dt_val.tz);
                     else if (strcmp(dateformat, "EURO") == 0)
-                        sprintf(datebuff, "ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ", delta_dt_val.day, delta_dt_val.month, delta_dt_val.year, delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second, del_microseconds, delta_dt_val.tz);
+                        sprintf(datebuff,
+                                "ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",
+                                delta_dt_val.day, delta_dt_val.month, delta_dt_val.year,
+                                delta_dt_val.hour, delta_dt_val.minute, delta_dt_val.second,
+                                del_microseconds, delta_dt_val.tz);
                     else
                         sprintf(datebuff, "ERROR    %.09lf : ", del_clock);
 
                     // Actual error part
-                    sprintf(error_output_buff, "Assert failed on %s - %s (%g) not within %f of given value %g", gl_name(obj->parent, buff, 64), da->get_target().c_str(), *x, da->get_within(), da->get_value());
+                    sprintf(
+                        error_output_buff,
+                        "Assert failed on %s - %s (%g) not within %f of given value %g",
+                        gl_name(obj->parent, buff, 64), da->get_target().c_str(), *x,
+                        da->get_within(), da->get_value());
 
                     // Send it out
                     gl_output("%s%s", datebuff, error_output_buff);
@@ -378,7 +433,8 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
             }
             else
             {
-                gl_verbose("Assert test is not being run on %s", gl_name(obj->parent, buff, 64));
+                gl_verbose("Assert test is not being run on %s",
+                           gl_name(obj->parent, buff, 64));
                 return SM_EVENT;
             }
         }

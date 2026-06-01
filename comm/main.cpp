@@ -9,4 +9,3 @@
 #include <stdlib.h>
 
 #include "gridlabd.h"
-

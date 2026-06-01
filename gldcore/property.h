@@ -1,15 +1,15 @@
 #ifndef _PROPERTY_H
 #define _PROPERTY_H
 
+#include <Eigen/Dense>
+#include <errno.h>
+#include <iostream>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <string>
-#include <errno.h>
 #include <time.h>
-#include <iostream>
-#include <Eigen/Dense>
 
 #ifdef HAVE_CONFIG_H
 
@@ -17,8 +17,8 @@
 
 #endif
 
-#include "platform.h"
 #include "gld_complex.h"
+#include "platform.h"
 #include "unit.h"
 
 // also in object.h
@@ -28,7 +28,8 @@ typedef struct s_class_list CLASS;
 #ifndef FADDR
 #define FADDR
 
-typedef int64 (*FUNCTIONADDR)(void *, ...); /** the entry point of a module function */
+typedef int64 (*FUNCTIONADDR)(void *,
+                              ...); /** the entry point of a module function */
 #endif
 
 #ifdef HAVE_STDINT_H
@@ -102,7 +103,10 @@ public:
 
     inline char *copy_to(char *s) { return s ? strncpy(s, buffer, size) : NULL; };
 
-    inline char *copy_from(const char *s) { return s ? strncpy(buffer, s, size) : NULL; };
+    inline char *copy_from(const char *s)
+    {
+        return s ? strncpy(buffer, s, size) : NULL;
+    };
 
     operator char *() { return buffer; };
 
@@ -151,7 +155,10 @@ public:
         return len;
     };
 
-    inline size_t vformat(char *fmt, va_list ptr) { return vsnprintf(buffer, size, fmt, ptr); };
+    inline size_t vformat(char *fmt, va_list ptr)
+    {
+        return vsnprintf(buffer, size, fmt, ptr);
+    };
 
     template <size_t S>
     friend std::ostream &operator<<(std::ostream &os, const charbuf<S> &buffer);
@@ -228,11 +235,14 @@ typedef gld::complex triplex[3];
 //        va_end(ptr);
 //    };
 //
-//    inline void set_flag(const size_t r, size_t c, const unsigned char b) { f[r * m + c] |= b; };
+//    inline void set_flag(const size_t r, size_t c, const unsigned char b) {
+//    f[r * m + c] |= b; };
 //
-//    inline void clr_flag(const size_t r, size_t c, const unsigned char b) { f[r * m + c] &= ~b; };
+//    inline void clr_flag(const size_t r, size_t c, const unsigned char b) {
+//    f[r * m + c] &= ~b; };
 //
-//    inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const { return (f[r * m + c] & b) == b; };
+//    inline bool tst_flag(const size_t r, size_t c, const unsigned char b)
+//    const { return (f[r * m + c] & b) == b; };
 //
 //    double &my(const size_t r, const size_t c) {
 //        if (x[r][c] == NULL) x[r][c] = new double;
@@ -241,9 +251,11 @@ typedef gld::complex triplex[3];
 // public:
 //    inline double_vector operator[](const size_t n) { return double_vector(x[n]); }
 //
-//    inline double_vector operator[](const size_t n) const { return double_vector(x[n]); }
+//    inline double_vector operator[](const size_t n) const { return
+//    double_vector(x[n]); }
 //
-//    double_array(const size_t.rows() = 0, const size_t cols = 0, double **data = NULL) {
+//    double_array(const size_t.rows() = 0, const size_t cols = 0, double **data
+//    = NULL) {
 //        refs = new unsigned int;
 //        *refs = 0;
 //        n =.rows();
@@ -295,7 +307,8 @@ typedef gld::complex triplex[3];
 //            for (auto r = 0; r < n; r++) {
 //                if (n > 0 && x[r] != nullptr) {
 //                    for (auto c = 0; c < m; c++) {
-//                        if (m > 0 && x[r][c] != nullptr && tst_flag(r, c, BYREF))
+//                        if (m > 0 && x[r][c] != nullptr && tst_flag(r, c,
+//                        BYREF))
 //                            free(x[r][c]);
 //                    }
 //                    free(x[r]);
@@ -348,18 +361,17 @@ typedef gld::complex triplex[3];
 //    inline void set_cols(const size_t i) { m = i; };
 //
 //    void set_max(const size_t size) {
-//        if (size <= max_val) exception(".set_max(%u): cannot shrink double_array", size);
-//        size_t r;
-//        auto ***z = (double ***) malloc(sizeof(double **) * size);
+//        if (size <= max_val) exception(".set_max(%u): cannot shrink
+//        double_array", size); size_t r; auto ***z = (double ***)
+//        malloc(sizeof(double **) * size);
 //        // create new.rows()
 //        for (r = 0; r < max_val; r++) {
 //            if (x[r] != NULL) {
 //                auto **y = (double **) malloc(sizeof(double *) * size);
-//                if (y == NULL) exception(".set_max(%u): unable to expand double_array", size);
-//                memcpy(y, x[r], sizeof(double *) * max_val);
-//                memset(y + max_val, 0, sizeof(double *) * (size - max_val));
-//                free(x[r]);
-//                z[r] = y;
+//                if (y == NULL) exception(".set_max(%u): unable to expand
+//                double_array", size); memcpy(y, x[r], sizeof(double *) *
+//                max_val); memset(y + max_val, 0, sizeof(double *) * (size -
+//                max_val)); free(x[r]); z[r] = y;
 //            } else
 //                z[r] = NULL;
 //        }
@@ -420,7 +432,8 @@ typedef gld::complex triplex[3];
 //
 //    inline void check_valid(const size_t c) const { check_valid(0, c); };
 //
-//    bool is_valid(const size_t r, const size_t c) const { return r < n && c < m; };
+//    bool is_valid(const size_t r, const size_t c) const { return r < n && c <
+//    m; };
 //
 //    inline bool is_valid(const size_t c) const { return is_valid(0, c); };
 //
@@ -493,11 +506,13 @@ typedef gld::complex triplex[3];
 //        n = t;
 //    };
 //
-//    inline double *get_addr(const size_t r, const size_t c) { return x[r][c]; };
+//    inline double *get_addr(const size_t r, const size_t c) { return x[r][c];
+//    };
 //
 //    inline double *get_addr(const size_t c) { return get_addr(0, c); };
 //
-//    double get_at(const size_t r, const size_t c) { return is_nan(r, c) ? QNAN : *(x[r][c]); };
+//    double get_at(const size_t r, const size_t c) { return is_nan(r, c) ? QNAN
+//    : *(x[r][c]); };
 //
 //    inline double get_at(const size_t c) { return get_at(0, c); };
 //
@@ -538,10 +553,9 @@ typedef gld::complex triplex[3];
 //    void dump(size_t r1 = 0, size_t r2 = -1, size_t c1 = 0, size_t c2 = -1) {
 //        if (r2 == -1) r2 = n - 1;
 //        if (c2 == -1) c2 = m - 1;
-//        if (r2 < r1 || c2 < c1) exception(".dump(%u,%u,%u,%u): invalid (r,c)", r1, r2, c1, c2);
-//        size_t r, c;
-//        fprintf(stderr, "double_array %s = {\n", name ? name : "unnamed");
-//        for (r = r1; r <= n; r++) {
+//        if (r2 < r1 || c2 < c1) exception(".dump(%u,%u,%u,%u): invalid (r,c)",
+//        r1, r2, c1, c2); size_t r, c; fprintf(stderr, "double_array %s = {\n",
+//        name ? name : "unnamed"); for (r = r1; r <= n; r++) {
 //            for (c = c1; c <= m; c++)
 //                fprintf(stderr, " %8g", my(r, c));
 //            fprintf(stderr, "\n");
@@ -558,7 +572,8 @@ typedef gld::complex triplex[3];
 //        return *this;
 //    };
 //
-//    double_array &operator=(const double_array &y) // TODO: fix self-assignment to be C++-correct
+//    double_array &operator=(const double_array &y) // TODO: fix
+//    self-assignment to be C++-correct
 //    {
 //        size_t r, c;
 //        grow_to(y);
@@ -743,9 +758,9 @@ typedef gld::complex triplex[3];
 //    size_t n, m;
 //    size_t max_val; /** current allocation size max_val x max_val */
 //    unsigned int *refs; /** reference count **/
-//    gld::complex ***x; /** pointer to 2D array of pointers to complex values */
-//    unsigned char *f; /** pointer to array of flags: bit0=byref, */
-//    const char *name;
+//    gld::complex ***x; /** pointer to 2D array of pointers to complex values
+//    */ unsigned char *f; /** pointer to array of flags: bit0=byref, */ const
+//    char *name;
 //
 ////#ifndef __cplusplus
 ////} complex_array;
@@ -764,11 +779,14 @@ typedef gld::complex triplex[3];
 //        va_end(ptr);
 //    };
 //
-//    inline void set_flag(const size_t r, size_t c, const unsigned char b) { f[r * m + c] |= b; };
+//    inline void set_flag(const size_t r, size_t c, const unsigned char b) {
+//    f[r * m + c] |= b; };
 //
-//    inline void clr_flag(const size_t r, size_t c, const unsigned char b) { f[r * m + c] &= ~b; };
+//    inline void clr_flag(const size_t r, size_t c, const unsigned char b) {
+//    f[r * m + c] &= ~b; };
 //
-//    inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const { return (f[r * m + c] & b) == b; };
+//    inline bool tst_flag(const size_t r, size_t c, const unsigned char b)
+//    const { return (f[r * m + c] & b) == b; };
 //
 //    gld::complex &my(const size_t r, const size_t c) {
 //        if (x[r][c] == nullptr) x[r][c] = new gld::complex;
@@ -777,9 +795,11 @@ typedef gld::complex triplex[3];
 // public:
 //    inline complex_vector operator[](const size_t n) { return complex_vector(x[n]); }
 //
-//    inline const complex_vector operator[](const size_t n) const { return complex_vector(x[n]); }
+//    inline const complex_vector operator[](const size_t n) const { return
+//    complex_vector(x[n]); }
 //
-//    complex_array(const size_t.rows() = 0, const size_t cols = 0, gld::complex **data = NULL) {
+//    complex_array(const size_t.rows() = 0, const size_t cols = 0, gld::complex
+//    **data = NULL) {
 //        refs = new unsigned int;
 //        *refs = 0;
 //        n =.rows();
@@ -816,7 +836,8 @@ typedef gld::complex triplex[3];
 //                for (size_t r = 0; r < n; r++) {
 //                    if (x[r] != nullptr) {
 //                        for (size_t c = 0; c < m; c++) {
-//                            if (x[r][c] != nullptr) { // && tst_flag(r, c, BYREF))
+//                            if (x[r][c] != nullptr) { // && tst_flag(r, c,
+//                            BYREF))
 //                                delete x[r][c];
 //                                x[r][c] = nullptr;
 //                            }
@@ -855,18 +876,18 @@ typedef gld::complex triplex[3];
 //    inline void set_cols(const size_t i) { m = i; };
 //
 //    void set_max(const size_t size) {
-//        if (size <= max_val) exception(".set_max(%u): cannot shrink complex_array", size);
-//        size_t r;
-//        auto ***z = (gld::complex ***) malloc(sizeof(gld::complex **) * size);
+//        if (size <= max_val) exception(".set_max(%u): cannot shrink
+//        complex_array", size); size_t r; auto ***z = (gld::complex ***)
+//        malloc(sizeof(gld::complex **) * size);
 //        // create new.rows()
 //        for (r = 0; r < max_val; r++) {
 //            if (x[r] != NULL) {
-//                auto **y = (gld::complex **) malloc(sizeof(gld::complex *) * size);
-//                if (y == NULL) exception(".set_max(%u): unable to expand complex_array", size);
-//                memcpy(y, x[r], sizeof(gld::complex *) * max_val);
-//                memset(y + max_val, 0, sizeof(gld::complex *) * (size - max_val));
-//                free(x[r]);
-//                z[r] = y;
+//                auto **y = (gld::complex **) malloc(sizeof(gld::complex *) *
+//                size); if (y == NULL) exception(".set_max(%u): unable to
+//                expand complex_array", size); memcpy(y, x[r],
+//                sizeof(gld::complex *) * max_val); memset(y + max_val, 0,
+//                sizeof(gld::complex *) * (size - max_val)); free(x[r]); z[r] =
+//                y;
 //            } else
 //                z[r] = NULL;
 //        }
@@ -892,8 +913,8 @@ typedef gld::complex triplex[3];
 //        // add.rows()
 //        while (n < r) {
 //            if (x[n] == NULL) {
-//                x[n] = (gld::complex **) malloc(sizeof(gld::complex *) * max_val);
-//                memset(x[n], 0, sizeof(gld::complex *) * max_val);
+//                x[n] = (gld::complex **) malloc(sizeof(gld::complex *) *
+//                max_val); memset(x[n], 0, sizeof(gld::complex *) * max_val);
 //            }
 //            n++;
 //        }
@@ -902,8 +923,8 @@ typedef gld::complex triplex[3];
 //        if (m < c) {
 //            size_t i;
 //            for (i = 0; i < n; i++) {
-//                auto **y = (gld::complex **) malloc(sizeof(gld::complex *) * c);
-//                if (x[i] != NULL) {
+//                auto **y = (gld::complex **) malloc(sizeof(gld::complex *) *
+//                c); if (x[i] != NULL) {
 //                    memcpy(y, x[i], sizeof(gld::complex **) * m);
 //                    free(x[i]);
 //                }
@@ -925,13 +946,15 @@ typedef gld::complex triplex[3];
 //
 //    inline void check_valid(const size_t c) const { check_valid(0, c); };
 //
-//    bool is_valid(const size_t r, const size_t c) const { return r < n && c < m; };
+//    bool is_valid(const size_t r, const size_t c) const { return r < n && c <
+//    m; };
 //
 //    inline bool is_valid(const size_t c) const { return is_valid(0, c); };
 //
 //    bool is_nan(const size_t r, const size_t c) const {
 //        check_valid(r, c);
-//        return !(x[r][c] != NULL && isfinite(x[r][c]->Re()) && isfinite(x[r][c]->Im()));
+//        return !(x[r][c] != NULL && isfinite(x[r][c]->Re()) &&
+//        isfinite(x[r][c]->Im()));
 //    };
 //
 //    inline bool is_nan(const size_t c) const { return is_nan(0, c); };
@@ -998,21 +1021,26 @@ typedef gld::complex triplex[3];
 //        n = t;
 //    };
 //
-//    inline gld::complex *get_addr(const size_t r, const size_t c) { return x[r][c]; };
+//    inline gld::complex *get_addr(const size_t r, const size_t c) { return
+//    x[r][c]; };
 //
 //    inline gld::complex *get_addr(const size_t c) { return get_addr(0, c); };
 //
-//    gld::complex get_at(const size_t r, const size_t c) { return is_nan(r, c) ? QNAN : *(x[r][c]); };
+//    gld::complex get_at(const size_t r, const size_t c) { return is_nan(r, c)
+//    ? QNAN : *(x[r][c]); };
 //
 //    inline gld::complex get_at(const size_t c) { return get_at(0, c); };
 //
-//    inline gld::complex &get(const size_t r, const size_t c) { return *x[r][c]; };
+//    inline gld::complex &get(const size_t r, const size_t c) { return
+//    *x[r][c]; };
 //
-//    inline gld::complex &get(const size_t r, const size_t c) const { return *x[r][c]; };
+//    inline gld::complex &get(const size_t r, const size_t c) const { return
+//    *x[r][c]; };
 //
 //    inline gld::complex &get(const size_t c) { return get(0, c); };
 //
-//    inline void set_at(const size_t c, const gld::complex v) { set_at(0, c, v); };
+//    inline void set_at(const size_t c, const gld::complex v) { set_at(0, c,
+//    v); };
 //
 //    void set_at(const size_t r, const size_t c, const gld::complex v) {
 //        check_valid(r, c);
@@ -1045,10 +1073,9 @@ typedef gld::complex triplex[3];
 //    void dump(size_t r1 = 0, size_t r2 = -1, size_t c1 = 0, size_t c2 = -1) {
 //        if (r2 == -1) r2 = n - 1;
 //        if (c2 == -1) c2 = m - 1;
-//        if (r2 < r1 || c2 < c1) exception(".dump(%u,%u,%u,%u): invalid (r,c)", r1, r2, c1, c2);
-//        size_t r, c;
-//        fprintf(stderr, "complex_array %s = {\n", name ? name : "unnamed");
-//        for (r = r1; r <= n; r++) {
+//        if (r2 < r1 || c2 < c1) exception(".dump(%u,%u,%u,%u): invalid (r,c)",
+//        r1, r2, c1, c2); size_t r, c; fprintf(stderr, "complex_array %s =
+//        {\n", name ? name : "unnamed"); for (r = r1; r <= n; r++) {
 //            for (c = c1; c <= m; c++)
 //                fprintf(stderr, " %8g%+8gi", my(r, c).Re(), my(r, c).Im());
 //            fprintf(stderr, "\n");
@@ -1309,7 +1336,8 @@ typedef void *PROPERTYADDR;    /**< the offset of a property from the end of the
 typedef char PROPERTYNAME[64]; /**< the name of a property */
 typedef char FUNCTIONNAME[64]; /**< the name of a function (not used) */
 
-/* property access rights (R/W apply to modules only, core always has all rights) */
+/* property access rights (R/W apply to modules only, core always has all
+ * rights) */
 #define PA_N 0x00 /**< no access permitted */
 #define PA_R 0x01 /**< read access--modules can read the property */
 #define PA_W 0x02 /**< write access--modules can write the property */
@@ -1332,7 +1360,9 @@ typedef struct s_keyword
     struct s_keyword *next;
 } KEYWORD;
 
-typedef int (*METHODCALL)(void *obj, char *string, int size); /**< the function that read and writes a string */
+typedef int (*METHODCALL)(
+    void *obj, char *string,
+    int size); /**< the function that read and writes a string */
 
 typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC 0x0001               /**< property has a recalc trigger (only works if recalc_<class> is exported) */
@@ -1359,6 +1389,7 @@ typedef struct s_property_map
     FUNCTIONADDR notify;
     METHODCALL method; /**< method call, addr must be 0 */
     bool notify_override;
+    std::string raw;
 } PROPERTY; /**< property definition item */
 
 typedef struct s_property_struct
@@ -1414,7 +1445,8 @@ int property_check(void);
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 
-PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, std::string_view, void *, DELEGATEDTYPE *);
+PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, std::string_view, void *,
+                          DELEGATEDTYPE *);
 
 uint32 property_size(PROPERTY *);
 
@@ -1424,7 +1456,8 @@ size_t property_minimum_buffersize(PROPERTY *);
 
 int property_create(PROPERTY *, void *);
 
-bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, void *a, void *b, const char *part);
+bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x,
+                            void *a, void *b, const char *part);
 
 PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 
@@ -1448,7 +1481,10 @@ double property_get_part(struct s_object_list *obj, PROPERTY *prop, const char *
 // gld::complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);
 // double complex_array_get_part(void *x, const char *name);
 
-inline PROPERTYTYPE &operator++(PROPERTYTYPE &d) { return d = PROPERTYTYPE(d + 1); }
+inline PROPERTYTYPE &operator++(PROPERTYTYPE &d)
+{
+    return d = PROPERTYTYPE(d + 1);
+}
 
 #endif //_PROPERTY_H
 

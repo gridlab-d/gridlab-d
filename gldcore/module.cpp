@@ -1,7 +1,7 @@
 /** $Id: module.c 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file module.cpp
-	@addtogroup modules Runtime modules
+		Copyright (C) 2008 Battelle Memorial Institute
+		@file module.cpp
+		@addtogroup modules Runtime modules
 
  @{
  **/
@@ -19,14 +19,14 @@
 
 #if defined WIN32
 #include <io.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #else
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <dirent.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #endif
 #include <cmath>
 #include <mutex>
@@ -41,8 +41,8 @@
 #if defined(_WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
-#include <winsock2.h>
 #include <windows.h>
+#include <winsock2.h>
 #ifndef DLEXT
 #define DLEXT ".dll"
 #endif
@@ -72,21 +72,20 @@
 
 #include <cerrno>
 
-#include "platform.h"
-#include "globals.h"
-#include "output.h"
-#include "module.h"
+#include "exception.h"
+#include "exec.h"
 #include "find.h"
 #include "gldrandom.h"
-#include "test_callbacks.h"
-#include "exception.h"
-#include "unit.h"
+#include "globals.h"
 #include "interpolate.h"
-#include "lock.h"
+#include "module.h"
+#include "output.h"
+#include "platform.h"
 #include "schedule.h"
-#include "exec.h"
 #include "stream.h"
+#include "test_callbacks.h"
 #include "transform.h"
+#include "unit.h"
 
 #include "console.h"
 
@@ -104,7 +103,8 @@
 #define F_OK 0 // Define F_OK to represent file existence checks
 #endif
 
-int get_exe_path(char *buf, int len, void *mod)
+int get_exe_path(char *buf, int len,
+				 void *mod)
 { /* void for GetModuleFileName, a windows func */
 	int rv = 0, i = 0;
 	if (buf == nullptr)
@@ -151,9 +151,9 @@ void dlload_error(const char *filename)
 	LPTSTR error;
 	LPTSTR end;
 	DWORD result = FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		nullptr, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR)&error, 0, nullptr);
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr,
+		GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&error,
+		0, nullptr);
 	if (!result)
 		error = (LPTSTR)TEXT("[FormatMessage failed]");
 	else
@@ -165,7 +165,8 @@ void dlload_error(const char *filename)
 #else
 	const char *error = "unknown error";
 #endif
-	output_debug("%s: %s (LD_LIBRARY_PATH=%s)", filename, error, getenv("LD_LIBRARY_PATH"));
+	output_debug("%s: %s (LD_LIBRARY_PATH=%s)", filename, error,
+				 getenv("LD_LIBRARY_PATH"));
 #if defined WIN32 && !defined __MINGW32__
 	if (result)
 		LocalFree(error);
@@ -178,23 +179,19 @@ static unsigned int malloc_lock = 0;
 void *module_malloc(size_t size)
 {
 	void *ptr;
-	// wlock(&malloc_lock);
-	// replace the above with SharedMutexManager
-	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&malloc_lock));
+	std::unique_lock<std::shared_mutex> lock(
+		SharedMutexManager::get_mutex(&malloc_lock));
 	ptr = (void *)malloc(size);
-	// wunlock(&malloc_lock);
 	return ptr;
 }
 void module_free(void **pptr)
 {
-	// wlock(&malloc_lock);
-	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&malloc_lock));
+	std::unique_lock<std::shared_mutex> lock(
+		SharedMutexManager::get_mutex(&malloc_lock));
 	if (pptr && *pptr)
 	{
 		free(*pptr);
 		*pptr = nullptr;
-
-		// wunlock(&malloc_lock);
 	}
 }
 
@@ -302,10 +299,6 @@ s_callbacks::s_callbacks() throw()
 	global.setvar = global_setvar;
 	global.getvar = global_getvar;
 	global.find = global_find;
-	// lock.read = rlock;
-	// lock.write = wlock;
-	// unlock.read = runlock;
-	// unlock.write = wunlock;
 	file.find_file = find_file;
 	objvar.bool_var = object_get_bool;
 	objvar.complex_var = object_get_complex;
@@ -403,11 +396,11 @@ const char *mutexName = "Global\\GridLABD_ModuleLoad_Mutex"; // "Global\" prefix
 #endif
 
 /** Load a runtime module
-	@return a pointer to the MODULE structure
-	\p nullptr on failure, errno set to:
-	- \p ENOEXEC to indicate init() not defined in module
-	- \p EINVAL to indicate call to init failed
-	- \p ENOENT to indicate class not defined by module
+		@return a pointer to the MODULE structure
+		\p nullptr on failure, errno set to:
+		- \p ENOEXEC to indicate init() not defined in module
+		- \p EINVAL to indicate call to init failed
+		- \p ENOENT to indicate class not defined by module
  **/
 typedef MODULE *(*LOADER)(const char *, int, char *[]);
 MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
@@ -423,7 +416,8 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	// 	abort();
 	// }
 
-	// fprintf(stderr, "Module '%s' loaded successfully. Registering classes...\n", mod->name);
+	// fprintf(stderr, "Module '%s' loaded successfully. Registering
+	// classes...\n", mod->name);
 
 	char buffer[FILENAME_MAX + 1];
 	char *fmod;
@@ -458,25 +452,29 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 
 	if (mod != nullptr)
 	{
-		output_verbose("%s(%d): module '%s' already loaded", __FILE__, __LINE__, file);
+		output_verbose("%s(%d): module '%s' already loaded", __FILE__, __LINE__,
+					   file);
 		return mod;
 	}
 	else
 	{
-		output_verbose("%s(%d): module '%s' not yet loaded", __FILE__, __LINE__, file);
+		output_verbose("%s(%d): module '%s' not yet loaded", __FILE__, __LINE__,
+					   file);
 	}
 
 // --- ACQUIRE MUTEX BEFORE DYNAMIC LOADING ---
 #ifdef _WIN32
-	// Create or open the named mutex. If it exists, OpenMutex returns a handle. If not, CreateMutex creates it.
-	HANDLE hMutex = CreateMutexA(
-		nullptr,	// default security attributes
-		FALSE,		// initially not owned
-		mutexName); // name of mutex
+	// Create or open the named mutex. If it exists, OpenMutex returns a handle.
+	// If not, CreateMutex creates it.
+	HANDLE hMutex = CreateMutexA(nullptr,	 // default security attributes
+								 FALSE,		 // initially not owned
+								 mutexName); // name of mutex
 
 	if (hMutex == nullptr)
 	{
-		output_error("module_load: Failed to create/open module load mutex (error %d)", GetLastError());
+		output_error(
+			"module_load: Failed to create/open module load mutex (error %d)",
+			GetLastError());
 		return nullptr; // Fatal error
 	}
 
@@ -484,7 +482,8 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	DWORD waitResult = WaitForSingleObject(hMutex, INFINITE); // Wait indefinitely
 	if (waitResult != WAIT_OBJECT_0)
 	{
-		output_error("module_load: Failed to acquire module load mutex (error %d)", GetLastError());
+		output_error("module_load: Failed to acquire module load mutex (error %d)",
+					 GetLastError());
 		CloseHandle(hMutex);
 		return nullptr; // Fatal error
 	}
@@ -500,7 +499,9 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		{
 			if (!ReleaseMutex(hMutex))
 			{
-				output_error("module_load: Failed to release module load mutex (error %lu)", GetLastError());
+				output_error(
+					"module_load: Failed to release module load mutex (error %lu)",
+					GetLastError());
 			}
 			CloseHandle(hMutex);
 		}
@@ -519,15 +520,21 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		if (parent_mod == nullptr)
 			parent_mod = module_load(fmod, 0, nullptr);
 		previous = class_get_last_class();
-		if (parent_mod != nullptr && parent_mod->subload != nullptr)
-		{ /* if we've defined a subload routine and already loaded the parent module*/
+		if (parent_mod != nullptr &&
+			parent_mod->subload !=
+				nullptr)
+		{ /* if we've defined a subload routine and already loaded
+			 the parent module*/
 			MODULE *child_mod;
 			if (module_find(fmod) == nullptr)
 				module_load(fmod, 0, nullptr);
-			child_mod = parent_mod->subload(modname, &mod, (previous ? &(previous->next) : &previous), argc, argv);
+			child_mod = parent_mod->subload(
+				modname, &mod, (previous ? &(previous->next) : &previous), argc,
+				argv);
 			if (child_mod == nullptr)
 			{ /* failure */
-				output_error("module_load(file='%s::%s'): subload failed", fmod, modname);
+				output_error("module_load(file='%s::%s'): subload failed", fmod,
+							 modname);
 				/* TROUBLESHOOT
 				   A module is unable to load a submodule require for operation.
 				   Check that the indicated submodule is installed and try again.
@@ -548,12 +555,13 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			{
 				const char *name;
 				LOADER loader;
-			} fmap[] = {
-				{"matlab", nullptr},
-				{"java", load_java_module},
-				{"python", load_python_module},
-				{nullptr, nullptr} /* DO NOT DELETE THIS TERMINATOR ENTRY */
-			},
+			} fmap[] =
+				{
+					{"matlab", nullptr},
+					{"java", load_java_module},
+					{"python", load_python_module},
+					{nullptr, nullptr} /* DO NOT DELETE THIS TERMINATOR ENTRY */
+				},
 			  *p;
 			for (p = fmap; p->name != nullptr; p++)
 			{
@@ -563,7 +571,8 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 					isforeign = true;
 					if (p->loader != nullptr)
 						/* use external loader */
-						return release_and_return(p->loader(modname, argc, argv)); // Release and return
+						return release_and_return(
+							p->loader(modname, argc, argv)); // Release and return
 
 					/* use a module with command args */
 					argv = args;
@@ -585,19 +594,24 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod = (MODULE *)malloc(sizeof(MODULE));
 	if (mod == nullptr)
 	{
-		output_verbose("%s(%d): module '%s' memory allocation failed", __FILE__, __LINE__, file);
+		output_verbose("%s(%d): module '%s' memory allocation failed", __FILE__,
+					   __LINE__, file);
 		errno = ENOMEM;
 		return release_and_return(nullptr); // Release and retur
 	}
 	else
-		output_verbose("%s(%d): module '%s' memory allocated", __FILE__, __LINE__, file);
+		output_verbose("%s(%d): module '%s' memory allocated", __FILE__, __LINE__,
+					   file);
 
 	/* locate the module */
 	snprintf(pathname, sizeof(pathname), "%s" DLEXT, file);
 
-	if (find_file(pathname, nullptr, X_OK | R_OK, tpath, sizeof(tpath)) == nullptr)
+	if (find_file(pathname, nullptr, X_OK | R_OK, tpath, sizeof(tpath)) ==
+		nullptr)
 	{
-		output_verbose("unable to locate %s in GLPATH, using library loader instead", pathname);
+		output_verbose(
+			"unable to locate %s in GLPATH, using library loader instead",
+			pathname);
 		strncpy(tpath, pathname, sizeof(tpath));
 	}
 	else
@@ -626,23 +640,26 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	if (hLib == nullptr)
 	{
 #if defined(_WIN32) && !defined(__MINGW32__)
-		if (GetLastError() == 193) /* invalid exe format -- happens when wrong version of MinGW is used */
+		if (GetLastError() == 193) /* invalid exe format -- happens when wrong
+									  version of MinGW is used */
 		{
 			output_error("module '%s' load failed - invalid DLL format", file);
 			/* TROUBLESHOOT
-			   GridLAB-D and MinGW are not compatible.  Most likely the 32-bit version of
-			   MinGW is installed on a 64-bit machine running the 64-bit version of GridLAB-D.
-			   Try installing MinGW64 instead.
+			   GridLAB-D and MinGW are not compatible.  Most likely the 32-bit version
+			   of MinGW is installed on a 64-bit machine running the 64-bit version of
+			   GridLAB-D. Try installing MinGW64 instead.
 			 */
 			errno = ENOEXEC;
 		}
 		else
 		{
-			output_error("%s(%d): module '%s' load failed - %s (error code %d)", __FILE__, __LINE__, file, strerror(errno), GetLastError());
+			output_error("%s(%d): module '%s' load failed - %s (error code %d)",
+						 __FILE__, __LINE__, file, strerror(errno), GetLastError());
 			errno = ENOENT;
 		}
 #else
-		output_error("%s(%d): module '%s' load failed - %s", __FILE__, __LINE__, file, dlerror());
+		output_error("%s(%d): module '%s' load failed - %s", __FILE__, __LINE__,
+					 file, dlerror());
 		output_debug("%s(%d): path to module is '%s'", __FILE__, __LINE__, tpath);
 #endif
 		dlload_error(pathname);
@@ -660,7 +677,8 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	init = (LIBINIT)DLSYM(hLib, "init");
 	if (init == nullptr)
 	{
-		output_error("%s(%d): module '%s' does not export init()", __FILE__, __LINE__, file);
+		output_error("%s(%d): module '%s' does not export init()", __FILE__,
+					 __LINE__, file);
 		dlload_error(pathname);
 		errno = ENOEXEC;
 		free(mod);
@@ -669,7 +687,8 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	}
 	else
 	{
-		output_verbose("%s(%d): module '%s' exports init()", __FILE__, __LINE__, file);
+		output_verbose("%s(%d): module '%s' exports init()", __FILE__, __LINE__,
+					   file);
 	}
 
 	/* connect the module's exported data & functions */
@@ -681,19 +700,29 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	mod->import_file = (int (*)(const char *))DLSYM(hLib, "import_file");
 	mod->export_file = (int (*)(const char *))DLSYM(hLib, "export_file");
 	mod->setvar = (int (*)(const char *, char *))DLSYM(hLib, "setvar");
-	mod->getvar = (void *(*)(const char *, char *, unsigned int))DLSYM(hLib, "getvar");
+	mod->getvar =
+		(void *(*)(const char *, char *, unsigned int))DLSYM(hLib, "getvar");
 	mod->check = (int (*)())DLSYM(hLib, "check");
 	/* deltamode */
-	mod->deltadesired = (unsigned long (*)(DELTAMODEFLAGS *))DLSYM(hLib, "deltamode_desired");
-	mod->preupdate = (unsigned long (*)(void *, int64, unsigned int64))DLSYM(hLib, "preupdate");
-	mod->interupdate = (SIMULATIONMODE (*)(void *, int64, unsigned int64, unsigned long, unsigned int))DLSYM(hLib, "interupdate");
-	mod->deltaClockUpdate = (SIMULATIONMODE (*)(void *, double, unsigned long, SIMULATIONMODE))DLSYM(hLib, "deltaClockUpdate");
-	mod->postupdate = (STATUS (*)(void *, int64, unsigned int64))DLSYM(hLib, "postupdate");
+	mod->deltadesired =
+		(unsigned long (*)(DELTAMODEFLAGS *))DLSYM(hLib, "deltamode_desired");
+	mod->preupdate = (unsigned long (*)(void *, int64, unsigned int64))DLSYM(
+		hLib, "preupdate");
+	mod->interupdate =
+		(SIMULATIONMODE (*)(void *, int64, unsigned int64, unsigned long,
+							unsigned int))DLSYM(hLib, "interupdate");
+	mod->deltaClockUpdate =
+		(SIMULATIONMODE (*)(void *, double, unsigned long, SIMULATIONMODE))DLSYM(
+			hLib, "deltaClockUpdate");
+	mod->postupdate =
+		(STATUS (*)(void *, int64, unsigned int64))DLSYM(hLib, "postupdate");
 	/* clock  update */
 	mod->clockupdate = (TIMESTAMP (*)(TIMESTAMP *))DLSYM(hLib, "clock_update");
 	mod->cmdargs = (int (*)(int, char **))DLSYM(hLib, "cmdargs");
-	mod->kmldump = (int (*)(int (*)(const char *, ...), OBJECT *))DLSYM(hLib, "kmldump");
-	mod->subload = (MODULE * (*)(char *, MODULE **, CLASS **, int, char **)) DLSYM(hLib, "subload");
+	mod->kmldump =
+		(int (*)(int (*)(const char *, ...), OBJECT *))DLSYM(hLib, "kmldump");
+	mod->subload = (MODULE * (*)(char *, MODULE **, CLASS **, int, char **))
+		DLSYM(hLib, "subload");
 	mod->test = (void (*)(int, char *[]))DLSYM(hLib, "test");
 	mod->stream = (STREAMCALL)DLSYM(hLib, "stream");
 	mod->globals = nullptr;
@@ -704,7 +733,8 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	/* check the module version before trying to initialize */
 	if (mod->major != REV_MAJOR || mod->minor != REV_MINOR)
 	{
-		output_error("Module version %d.%d mismatch from core version %d.%d", mod->major, mod->minor, REV_MAJOR, REV_MINOR);
+		output_error("Module version %d.%d mismatch from core version %d.%d",
+					 mod->major, mod->minor, REV_MAJOR, REV_MINOR);
 		return release_and_return(nullptr); // Release and retur
 	}
 
@@ -740,18 +770,22 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		int i;
 		for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
 		{
-			snprintf(fname, sizeof(fname), "%s_%s", map[i].name, isforeign ? fmod : c->name);
-			if ((*(map[i].func) = (FUNCTIONADDR)DLSYM(hLib, fname)) == nullptr && !map[i].optional)
+			snprintf(fname, sizeof(fname), "%s_%s", map[i].name,
+					 isforeign ? fmod : c->name);
+			if ((*(map[i].func) = (FUNCTIONADDR)DLSYM(hLib, fname)) == nullptr &&
+				!map[i].optional)
 			{
 				output_fatal("intrinsic %s is not defined in class %s", fname, file);
 				/*	TROUBLESHOOT
-					A required intrinsic function was not found.  Please review and modify the class definition.
+						A required intrinsic function was not found.  Please review and
+				   modify the class definition.
 				 */
 				errno = EINVAL;
 				return release_and_return(nullptr); // Release and retur
 			}
 			else if (!map[i].optional)
-				output_verbose("%s(%d): module '%s' intrinsic %s found", __FILE__, __LINE__, file, fname);
+				output_verbose("%s(%d): module '%s' intrinsic %s found", __FILE__,
+							   __LINE__, file, fname);
 		}
 	}
 
@@ -773,11 +807,13 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	if (mod->stream != nullptr)
 		stream_register(mod->stream);
 
-	return release_and_return(last_module); // Release and return at successful exit
+	return release_and_return(
+		last_module); // Release and return at successful exit
 }
 
 #ifdef _WIN32
-#include <winnt.h>
+// #include <winnt.h>
+#include <windows.h>
 static bool _checkimg(const char *fname)
 {
 	FILE *fh = fopen(fname, "r");
@@ -895,7 +931,8 @@ void module_list(void)
 	_module_list(global_execdir);
 	if (glpath != nullptr)
 	{
-		char *glPath = static_cast<char *>(malloc(sizeof(char) * (unsigned)strlen(glpath)));
+		char *glPath =
+			static_cast<char *>(malloc(sizeof(char) * (unsigned)strlen(glpath)));
 		strncpy(glPath, glpath, (unsigned)strlen(glpath));
 		tokPath = strtok_r(glPath, pathDelim, &tokPathPtr);
 		while (tokPath != nullptr)
@@ -908,7 +945,8 @@ void module_list(void)
 	}
 	if (gridlabd != nullptr)
 	{
-		char *gridLabD = static_cast<char *>(malloc(sizeof(char) * (unsigned)strlen(gridlabd)));
+		char *gridLabD =
+			static_cast<char *>(malloc(sizeof(char) * (unsigned)strlen(gridlabd)));
 		strncpy(gridLabD, gridlabd, (unsigned)strlen(gridlabd));
 		tokPath = strtok_r(gridLabD, pathDelim, &tokPathPtr);
 		while (tokPath != nullptr)
@@ -926,14 +964,16 @@ int module_setvar(MODULE *mod, const char *varname, char *value)
 	return global_setvar(modvarname, value) == SUCCESS;
 }
 
-void *module_getvar(MODULE *mod, const char *varname, char *value, unsigned int size)
+void *module_getvar(MODULE *mod, const char *varname, char *value,
+					unsigned int size)
 {
 	char modvarname[2048];
 	sprintf(modvarname, "%s::%s", mod->name, varname);
 	return global_getvar(modvarname, value, size);
 }
 
-void *module_getvar_old(MODULE *mod, const char *varname, char *value, unsigned int size)
+void *module_getvar_old(MODULE *mod, const char *varname, char *value,
+						unsigned int size)
 {
 	if (mod->getvar != nullptr)
 	{
@@ -973,7 +1013,8 @@ int module_saveall(FILE *fp)
 	CLASS *oclass = nullptr;
 	char varname[1024];
 	char buffer[1024];
-	count += fprintf(fp, "\n////////////////////////////////////////////////////////\n");
+	count += fprintf(
+		fp, "\n////////////////////////////////////////////////////////\n");
 	count += fprintf(fp, "// modules\n");
 	for (mod = first_module; mod != nullptr; mod = mod->next)
 	{
@@ -982,7 +1023,8 @@ int module_saveall(FILE *fp)
 
 		count += fprintf(fp, "module %s {\n", mod->name);
 		if (mod->major > 0 || mod->minor > 0)
-			count += fprintf(fp, "\tmajor %d;\n\tminor %d;\n", mod->major, mod->minor);
+			count +=
+				fprintf(fp, "\tmajor %d;\n\tminor %d;\n", mod->major, mod->minor);
 		for (oclass = mod->oclass; oclass != nullptr; oclass = oclass->next)
 		{
 			if (oclass->module == mod)
@@ -1017,7 +1059,8 @@ int module_saveall_xml(FILE *fp)
 		count += fprintf(fp, "\t<module type=\"%s\" ", mod->name);
 		if (mod->major > 0)
 		{
-			count += fprintf(fp, "major=\"%d\" minor=\"%d\">\n", mod->major, mod->minor);
+			count +=
+				fprintf(fp, "major=\"%d\" minor=\"%d\">\n", mod->major, mod->minor);
 		}
 		else
 		{
@@ -1028,7 +1071,13 @@ int module_saveall_xml(FILE *fp)
 		{
 			if (strncmp(tname, gvptr->prop->name, tlen) == 0)
 			{
-				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", gvptr->prop->name + tlen, class_property_to_string(gvptr->prop, (void *)gvptr->prop->addr, buffer.get_string(), 1024) > 0 ? buffer.get_string() : "...", gvptr->prop->name + tlen);
+				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", gvptr->prop->name + tlen,
+								 class_property_to_string(gvptr->prop,
+														  (void *)gvptr->prop->addr,
+														  buffer.get_string(), 1024) > 0
+									 ? buffer.get_string()
+									 : "...",
+								 gvptr->prop->name + tlen);
 			} // else we have a module::prop name
 			gvptr = global_getnext(gvptr);
 		}
@@ -1070,7 +1119,8 @@ int module_saveobj_xml(FILE *fp, MODULE *mod)
 		}
 		if ((oclass == nullptr) || (obj->oclass != oclass))
 			oclass = obj->oclass;
-		count += fprintf(fp, "\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n", obj->oclass->name, obj->id, oname.get_string());
+		count += fprintf(fp, "\t\t<object type=\"%s\" id=\"%i\" name=\"%s\">\n",
+						 obj->oclass->name, obj->id, oname.get_string());
 
 		/* dump internal properties */
 		if (obj->parent != nullptr)
@@ -1090,21 +1140,36 @@ int module_saveobj_xml(FILE *fp, MODULE *mod)
 			count += fprintf(fp, "\t\t\t<parent>root</parent>\n");
 		}
 		count += fprintf(fp, "\t\t\t<rank>%d</rank>\n", obj->rank);
-		count += fprintf(fp, "\t\t\t<clock>%lld\n", obj->clock); // TODO: Review if obj->clock is needed to be printed?
-		count += fprintf(fp, "\t\t\t\t <timestamp>%s</timestamp>\n", convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) > 0 ? buffer : "(invalid)");
+		count += fprintf(
+			fp, "\t\t\t<clock>%lld\n",
+			obj->clock); // TODO: Review if obj->clock is needed to be printed?
+		count +=
+			fprintf(fp, "\t\t\t\t <timestamp>%s</timestamp>\n",
+					convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) > 0
+						? buffer
+						: "(invalid)");
 		count += fprintf(fp, "\t\t\t</clock>\n");
 		/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... -dc */
 		if (!isnan(obj->latitude))
-			count += fprintf(fp, "\t\t\t<latitude>%s</latitude>\n", convert_from_latitude(obj->latitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+			count +=
+				fprintf(fp, "\t\t\t<latitude>%s</latitude>\n",
+						convert_from_latitude(obj->latitude, buffer, sizeof(buffer))
+							? buffer
+							: "(invalid)");
 		else
 			count += fprintf(fp, "\t\t\t<latitude>NONE</latitude>\n");
 		if (!isnan(obj->longitude))
-			count += fprintf(fp, "\t\t\t<longitude>%s</longitude>\n", convert_from_longitude(obj->longitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+			count +=
+				fprintf(fp, "\t\t\t<longitude>%s</longitude>\n",
+						convert_from_longitude(obj->longitude, buffer, sizeof(buffer))
+							? buffer
+							: "(invalid)");
 		else
 			count += fprintf(fp, "\t\t\t<longitude>NONE</longitude>\n");
 
 		/* dump properties */
-		for (prop = oclass->pmap; prop != nullptr && prop->oclass == oclass; prop = prop->next)
+		for (prop = oclass->pmap; prop != nullptr && prop->oclass == oclass;
+			 prop = prop->next)
 		{
 			char *value = nullptr;
 			if ((prop->access != PA_PUBLIC) && (prop->access != PA_REFERENCE))
@@ -1112,18 +1177,21 @@ int module_saveobj_xml(FILE *fp, MODULE *mod)
 			value = object_property_to_string(obj, prop->name, buffer, 1023);
 			if (value != nullptr)
 			{
-				count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
+				count +=
+					fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
 			}
 		}
 		pclass = oclass->parent;
 		while (pclass != nullptr)
 		{ /* inherited properties */
-			for (prop = pclass->pmap; prop != nullptr && prop->oclass == pclass; prop = prop->next)
+			for (prop = pclass->pmap; prop != nullptr && prop->oclass == pclass;
+				 prop = prop->next)
 			{
 				char *value = object_property_to_string(obj, prop->name, buffer, 1023);
 				if (value != nullptr)
 				{
-					count += fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
+					count +=
+						fprintf(fp, "\t\t\t<%s>%s</%s>\n", prop->name, value, prop->name);
 				}
 			}
 			pclass = pclass->parent;
@@ -1133,10 +1201,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod)
 	return count;
 }
 
-MODULE *module_get_first(void)
-{
-	return first_module;
-}
+MODULE *module_get_first(void) { return first_module; }
 
 int module_saveall_xml_old(FILE *fp);
 
@@ -1161,7 +1226,8 @@ int module_saveall_xml_old(FILE *fp)
 			if (oclass->module == mod)
 			{
 				count += fprintf(fp, "\t\t\t\t<class> \n");
-				count += fprintf(fp, "\t\t\t\t\t<classname>%s</classname>\n", oclass->name);
+				count +=
+					fprintf(fp, "\t\t\t\t\t<classname>%s</classname>\n", oclass->name);
 				count += fprintf(fp, "\t\t\t\t\t<module name=\"%s\" />\n", mod->name);
 				count += fprintf(fp, "\t\t\t\t</class>\n");
 			}
@@ -1171,7 +1237,9 @@ int module_saveall_xml_old(FILE *fp)
 		while (module_getvar(mod, varname, nullptr, 0))
 		{
 			char32 value;
-			if (module_getvar(mod, varname, value, sizeof(value)))
+			if (module_getvar(
+					mod, varname, value,
+					sizeof(value)))
 			{ /* TODO: support other types (ticket #46) */
 				count += fprintf(fp, "\t\t\t\t<property> \n");
 				count += fprintf(fp, "\t\t\t\t\t <type>double</type>\n"); // TODO: Is varname.get_string() to be printed? Currently hardcoded as double.
@@ -1316,7 +1384,8 @@ int module_cmdargs(int argc, char **argv)
 	return 0;
 }
 
-int module_depends(const char *name, unsigned char major, unsigned char minor, unsigned short build)
+int module_depends(const char *name, unsigned char major, unsigned char minor,
+				   unsigned short build)
 {
 	MODULE *mod;
 	for (mod = first_module; mod != nullptr; mod = mod->next)
@@ -1333,10 +1402,7 @@ int module_depends(const char *name, unsigned char major, unsigned char minor, u
 	return module_load(name, 0, nullptr) != nullptr;
 }
 
-MODULE *module_get_next(MODULE *module)
-{
-	return module->next;
-}
+MODULE *module_get_next(MODULE *module) { return module->next; }
 
 void module_termall(void)
 {
@@ -1352,19 +1418,19 @@ void module_termall(void)
  * EXTERNAL COMPILER SUPPORT
  ***************************************************************************/
 
-#include <sys/stat.h>
 #include <cctype>
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #ifdef X64
 #define CC "gcc"
 #define CCFLAGS "-DWIN32 -DX64"
 #define LDFLAGS "" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" */
-#else			   // !X64
+#else  // !X64
 #define CC "gcc"
 #define CCFLAGS "-DWIN32"
 #define LDFLAGS "" /* "--export-all-symbols,--add-stdcall,--add-stdcall-alias,--subsystem,windows,--enable-runtime-pseudo-reloc,-no-undefined" */
-#endif			   // X64
+#endif // X64
 #define fstat _fstat
 #define stat _stat
 #else // !WIN32
@@ -1384,7 +1450,8 @@ static int cc_clean = 0;
 static int cc_keepwork = 0;
 
 /** Get file modify time
-	@return modification time in seconds of epoch, 0 on missing file or fstat failure
+		@return modification time in seconds of epoch, 0 on missing file or
+ fstat failure
  **/
 static time_t file_modtime(char *file) /**< file name to query */
 {
@@ -1399,7 +1466,7 @@ static time_t file_modtime(char *file) /**< file name to query */
 }
 
 /** Execute a command using formatted strings
-	@return command return code
+		@return command return code
  **/
 static int execf(const char *format, /**< format string  */
 				 ...)				 /**< parameters  */
@@ -1420,7 +1487,7 @@ static int execf(const char *format, /**< format string  */
 }
 
 /** Compile C source code into a dynamic link library
-	@return 0 on success
+		@return 0 on success
  **/
 int module_compile(const char *name,   /**< name of library */
 				   const char *code,   /**< listing of source code */
@@ -1433,8 +1500,10 @@ int module_compile(const char *name,   /**< name of library */
 	char ofile[1024];
 	char afile[1024];
 	char *cc = const_cast<char *>(getenv("CC") ? getenv("CC") : CC);
-	char *ccflags = const_cast<char *>(getenv("CCFLAGS") ? getenv("CCFLAGS") : CCFLAGS);
-	char *ldflags = const_cast<char *>(getenv("LDFLAGS") ? getenv("LDFLAGS") : LDFLAGS);
+	char *ccflags =
+		const_cast<char *>(getenv("CCFLAGS") ? getenv("CCFLAGS") : CCFLAGS);
+	char *ldflags =
+		const_cast<char *>(getenv("LDFLAGS") ? getenv("LDFLAGS") : LDFLAGS);
 	int rc;
 	size_t codesize = strlen(code), len;
 	FILE *fp;
@@ -1486,7 +1555,8 @@ int module_compile(const char *name,   /**< name of library */
 	}
 
 	/* store prefix code */
-	fprintf(fp, "/* automatically generated code\nSource: %s(%d)\n */\n%s\n", source, line, prefix ? prefix : "");
+	fprintf(fp, "/* automatically generated code\nSource: %s(%d)\n */\n%s\n",
+			source, line, prefix ? prefix : "");
 
 	/* store file/line reference */
 	if (source != nullptr)
@@ -1495,7 +1565,8 @@ int module_compile(const char *name,   /**< name of library */
 	/* write C source code */
 	if ((len = fwrite(code, 1, codesize, fp)) < codesize)
 	{
-		output_error("unable to write code to '%s' (%d of %d bytes written)", cfile, len, codesize);
+		output_error("unable to write code to '%s' (%d of %d bytes written)", cfile,
+					 len, codesize);
 		return -1;
 	}
 
@@ -1532,10 +1603,13 @@ int module_compile(const char *name,   /**< name of library */
 		return rc;
 
 #else
-	if ((rc = execf("%s %s %s -c \"%s\" -o \"%s\" ", cc, mopt, ccflags, cfile, ofile)) != 0)
+	if ((rc = execf("%s %s %s -c \"%s\" -o \"%s\" ", cc, mopt, ccflags, cfile,
+					ofile)) != 0)
 		return rc;
 	/* create needed DLL files on windows */
-	if ((rc = execf("%s %s %s%s -shared \"%s\" -o \"%s\"", cc, mopt, ((ldflags[0] == 0) ? "" : "-Wl,"), ldflags, ofile, afile)) != 0)
+	if ((rc = execf("%s %s %s%s -shared \"%s\" -o \"%s\"", cc, mopt,
+					((ldflags[0] == 0) ? "" : "-Wl,"), ldflags, ofile, afile)) !=
+		0)
 		return rc;
 #endif
 
@@ -1578,7 +1652,8 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 	{
 		int ordinal;
 		char function[1024];
-		EXTERNALFUNCTION *item = static_cast<EXTERNALFUNCTION *>(malloc(sizeof(EXTERNALFUNCTION)));
+		EXTERNALFUNCTION *item =
+			static_cast<EXTERNALFUNCTION *>(malloc(sizeof(EXTERNALFUNCTION)));
 		if (item == nullptr)
 		{
 			output_error("add_external_function(char *fn='%s',lib='%s',...): memory allocation failed", fctname, libname);
@@ -1611,9 +1686,11 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 			strcpy(item->fname, fctname);
 		}
 		if (item->call)
-			output_debug("external function '%s' added from library '%s' (lib=%8x)", item->fname, libname, (int64)lib);
+			output_debug("external function '%s' added from library '%s' (lib=%8x)",
+						 item->fname, libname, (int64)lib);
 		else
-			output_warning("external function '%s' not found in library '%s'", fctname, libname);
+			output_warning("external function '%s' not found in library '%s'",
+						   fctname, libname);
 		return 1;
 	}
 	else
@@ -1657,12 +1734,14 @@ int module_load_function_list(char *libname, char *fnclist)
 		if (!result)
 			error = TEXT(const_cast<char *>("[FormatMessage failed]"));
 		else
-			for (end = error + strlen(error) - 1; end >= error && isspace(*end); end--)
+			for (end = error + strlen(error) - 1; end >= error && isspace(*end);
+				 end--)
 				*end = 0;
 #else
 		char *error = dlerror();
 #endif
-		output_error("unable to load external library '%s': %s (errno=%d)", libpath, error, errno);
+		output_error("unable to load external library '%s': %s (errno=%d)", libpath,
+					 error, errno);
 		return 0;
 	}
 	output_debug("loaded external function library '%s' ok", libname);
@@ -1706,7 +1785,8 @@ const char *module_find_transform_function(TRANSFORMFUNCTION function)
 	EXTERNALFUNCTION *item;
 	for (item = external_function_list; item != nullptr; item = item->next)
 	{
-		if (strcmp(static_cast<const char *>(item->call), reinterpret_cast<const char *>(function)) == 0)
+		if (strcmp(static_cast<const char *>(item->call),
+				   reinterpret_cast<const char *>(function)) == 0)
 			return item->fname;
 	}
 	errno = ENOENT;
@@ -1779,18 +1859,35 @@ void module_profiles(void)
 			for (r = 0; r < n_ranks; r++)
 			{
 				struct s_rankdata *rank = &rankdata[r];
-				rank->total = rank->n_presync == 0 ? 0 : (double)rank->t_presync / (double)global_ms_per_second / (double)rank->n_presync * (double)(rank->n_presync / n + rank->n_presync % n);
-				rank->total += rank->n_sync == 0 ? 0 : (double)rank->t_sync / (double)global_ms_per_second / (double)rank->n_sync * (double)(rank->n_sync / n + rank->n_sync % n);
-				rank->total += rank->n_postsync == 0 ? 0 : (double)rank->t_postsync / (double)global_ms_per_second / (double)rank->n_postsync * (double)(rank->n_postsync / n + rank->n_postsync % n);
+				rank->total =
+					rank->n_presync == 0
+						? 0
+						: (double)rank->t_presync / (double)global_ms_per_second /
+							  (double)rank->n_presync *
+							  (double)(rank->n_presync / n + rank->n_presync % n);
+				rank->total += rank->n_sync == 0
+								   ? 0
+								   : (double)rank->t_sync /
+										 (double)global_ms_per_second /
+										 (double)rank->n_sync *
+										 (double)(rank->n_sync / n + rank->n_sync % n);
+				rank->total +=
+					rank->n_postsync == 0
+						? 0
+						: (double)rank->t_postsync / (double)global_ms_per_second /
+							  (double)rank->n_postsync *
+							  (double)(rank->n_postsync / n + rank->n_postsync % n);
 				total += rank->total;
 			}
 			if (n == 1)
 			{
 				total1 = total;
-				output_profile("%2d thread model time    %.1f s (actual time)", n, total);
+				output_profile("%2d thread model time    %.1f s (actual time)", n,
+							   total);
 			}
 			else
-				output_profile("%2d thread model time    %.1f s (%+.0f%% est.)", n, total, (total - total1) / total1 * 100);
+				output_profile("%2d thread model time    %.1f s (%+.0f%% est.)", n,
+							   total, (total - total1) / total1 * 100);
 		}
 		output_profile("");
 	}
@@ -1823,8 +1920,8 @@ extern int kill(pid_t, int); /* defined in kill.c */
 #include <csignal>
 #ifdef MACOSX
 #include <mach/mach_init.h>
-#include <mach/thread_policy.h>
 #include <mach/thread_act.h>
+#include <mach/thread_policy.h>
 
 struct thread_affinity_policy policy;
 #else /* linux */
@@ -1860,7 +1957,8 @@ typedef struct
 static MYPROCINFO *my_proc = nullptr; /* processors assigned to this process */
 #define PROCERR ((unsigned short)-1)
 
-static unsigned int show_progress = 1; /* flag to toggle progress/runtime display */
+static unsigned int show_progress =
+	1; /* flag to toggle progress/runtime display */
 
 unsigned short sched_get_cpuid(unsigned short n)
 {
@@ -1873,24 +1971,13 @@ pid_t sched_get_procid()
 	unsigned short cpuid = sched_get_cpuid(0);
 	if (PROCERR == cpuid)
 	{
-		output_warning("proc_map %x, myproc not assigned", process_map, sched_get_cpuid(0));
+		output_warning("proc_map %x, myproc not assigned", process_map,
+					   sched_get_cpuid(0));
 		return 0;
 	}
 	output_debug("proc_map %x, myproc %ui", process_map, sched_get_cpuid(0));
 	return process_map[cpuid].pid;
 }
-
-// void sched_lock(unsigned short proc)
-//{
-//	if ( process_map )
-//		wlock(&process_map[proc].lock);
-// }
-//
-// void sched_unlock(unsigned short proc)
-//{
-//	if ( process_map )
-//		wunlock(&process_map[proc].lock);
-// }
 
 /** update the process info **/
 void sched_update(TIMESTAMP clock, enumeration status)
@@ -1901,14 +1988,12 @@ void sched_update(TIMESTAMP clock, enumeration status)
 	for (t = 0; t < my_proc->n_procs; t++)
 	{
 		int n = my_proc->list[t];
-		// sched_lock(n);
-		// replace the above with SharedMutexManager
-		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
+		std::unique_lock<std::shared_mutex> lock(
+			SharedMutexManager::get_mutex(&process_map[n].lock));
 		process_map[n].status = status;
 		process_map[n].progress = clock;
 		process_map[n].starttime = global_starttime;
 		process_map[n].stoptime = global_stoptime;
-		// sched_unlock(n);
 	}
 }
 int sched_isdefunct(pid_t pid)
@@ -1930,10 +2015,9 @@ void sched_finish(void)
 	for (t = 0; t < my_proc->n_procs; t++)
 	{
 		int n = my_proc->list[t];
-		// sched_lock(n);
-		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
+		std::unique_lock<std::shared_mutex> lock(
+			SharedMutexManager::get_mutex(&process_map[n].lock));
 		process_map[n].status = MLS_DONE;
-		// sched_unlock(n);
 	}
 }
 
@@ -1949,7 +2033,8 @@ void sched_clear(void)
 			if (sched_isdefunct(process_map[n].pid))
 			{
 				// sched_lock(n);
-				std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
+				std::unique_lock<std::shared_mutex> lock(
+					SharedMutexManager::get_mutex(&process_map[n].lock));
 				process_map[n].pid = 0;
 				// sched_unlock(n);
 			}
@@ -1964,8 +2049,10 @@ void sched_pkill(pid_t pid)
 	}
 }
 
-static char HEADING_R[] = "PROC PID   RUNTIME    STATE   CLOCK                   MODEL";
-static char HEADING_P[] = "PROC PID   PROGRESS   STATE   CLOCK                   MODEL";
+static char HEADING_R[] =
+	"PROC PID   RUNTIME    STATE   CLOCK                   MODEL";
+static char HEADING_P[] =
+	"PROC PID   PROGRESS   STATE   CLOCK                   MODEL";
 int sched_getinfo(int n, char *buf, size_t sz)
 {
 	const char *status;
@@ -2007,7 +2094,8 @@ int sched_getinfo(int n, char *buf, size_t sz)
 	{
 		for (n = 0; n < width; n++)
 		{
-			if (n > 0 && n < HEADING_SZ - 1 && HEADING[n] == ' ' && HEADING[n + 1] != ' ')
+			if (n > 0 && n < HEADING_SZ - 1 && HEADING[n] == ' ' &&
+				HEADING[n + 1] != ' ')
 				buf[n] = ' ';
 			else
 				buf[n] = '-';
@@ -2027,7 +2115,8 @@ int sched_getinfo(int n, char *buf, size_t sz)
 		return -1;
 
 	// sched_lock(n);
-	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
+	std::unique_lock<std::shared_mutex> lock(
+		SharedMutexManager::get_mutex(&process_map[n].lock));
 	ptime = (time_t)process_map[n].progress;
 	tm = gmtime(&ptime);
 	switch (process_map[n].status)
@@ -2061,7 +2150,8 @@ int sched_getinfo(int n, char *buf, size_t sz)
 		is_defunct = sched_isdefunct(process_map[n].pid);
 		// sched_lock(n);
 		lock.lock();
-		if (process_map[n].start > 0 && process_map[n].status != MLS_DONE && !is_defunct)
+		if (process_map[n].start > 0 && process_map[n].status != MLS_DONE &&
+			!is_defunct)
 		{
 			if (!show_progress)
 			{
@@ -2083,7 +2173,9 @@ int sched_getinfo(int n, char *buf, size_t sz)
 			}
 			else if (process_map[n].stoptime != TS_NEVER)
 			{
-				sprintf(t, "%.0f%%", 100.0 * (process_map[n].progress - process_map[n].starttime) / (process_map[n].stoptime - process_map[n].starttime));
+				sprintf(t, "%.0f%%",
+						100.0 * (process_map[n].progress - process_map[n].starttime) /
+							(process_map[n].stoptime - process_map[n].starttime));
 			}
 		}
 
@@ -2095,7 +2187,8 @@ int sched_getinfo(int n, char *buf, size_t sz)
 		strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S UTC", tm);
 
 		/* truncate path if match with cwd */
-		if (strnicmp_portable(global_workdir, modelname, strlen(global_workdir)) == 0)
+		if (strnicmp_portable(global_workdir, modelname, strlen(global_workdir)) ==
+			0)
 		{
 			modelname += strlen(global_workdir);
 			if (modelname[0] == '/' || modelname[0] == '\\')
@@ -2116,7 +2209,9 @@ int sched_getinfo(int n, char *buf, size_t sz)
 		}
 
 		/* print info */
-		sz = sprintf(buf, "%4d %5d %10s %-7s %-23s %s", n, process_map[n].pid, t, status, process_map[n].progress == TS_ZERO ? "INIT" : ts, name);
+		sz =
+			sprintf(buf, "%4d %5d %10s %-7s %-23s %s", n, process_map[n].pid, t,
+					status, process_map[n].progress == TS_ZERO ? "INIT" : ts, name);
 	}
 	else
 		sz = sprintf(buf, "%4d   -", n);
@@ -2125,7 +2220,8 @@ int sched_getinfo(int n, char *buf, size_t sz)
 	return (int)sz;
 }
 
-void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous listing */
+void sched_print(
+	int flags) /* flag=0 for single listing, flag=1 for continuous listing */
 {
 	char line[1024];
 	int width = 80, namesize;
@@ -2203,7 +2299,8 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	if (n_threads == 0)
 		n_threads = n_procs;
 	my_proc = static_cast<MYPROCINFO *>(malloc(sizeof(MYPROCINFO)));
-	my_proc->list = static_cast<unsigned short *>(malloc(sizeof(unsigned short) * n_threads));
+	my_proc->list =
+		static_cast<unsigned short *>(malloc(sizeof(unsigned short) * n_threads));
 	my_proc->n_procs = n_threads;
 	for (t = 0; t < (int)n_threads; t++)
 	{
@@ -2211,7 +2308,8 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		for (n = 0; n < n_procs; n++)
 		{
 			// sched_lock(n);
-			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&process_map[n].lock));
+			std::unique_lock<std::shared_mutex> lock(
+				SharedMutexManager::get_mutex(&process_map[n].lock));
 			if (process_map[n].pid == 0)
 				break;
 			// sched_unlock(n);
@@ -2223,7 +2321,8 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		}
 		my_proc->list[t] = n;
 		process_map[n].pid = pid;
-		strncpy(process_map[n].model, global_modelname, sizeof(process_map[n].model) - 1);
+		strncpy(process_map[n].model, global_modelname,
+				sizeof(process_map[n].model) - 1);
 		process_map[n].start = time(nullptr);
 		// sched_unlock(n);
 
@@ -2241,10 +2340,12 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	}
 #ifdef _WIN32
 	// TODO set mp affinity
-	if (global_threadcount == 1 && SetProcessAffinityMask(hProc, (DWORD_PTR)(1 << cpu)) == 0)
+	if (global_threadcount == 1 &&
+		SetProcessAffinityMask(hProc, (DWORD_PTR)(1 << cpu)) == 0)
 	{
 		unsigned long err = GetLastError();
-		output_error("unable to set current process affinity mask, err code %d", err);
+		output_error("unable to set current process affinity mask, err code %d",
+					 err);
 	}
 	CloseHandle(hProc);
 #elif defined MACOSX
@@ -2252,15 +2353,28 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	if (global_threadcount == 1)
 	{
 		policy.affinity_tag = cpu;
-		if (thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, reinterpret_cast<thread_policy_t>(&policy), THREAD_AFFINITY_POLICY_COUNT) != KERN_SUCCESS)
-			output_warning("unable to set thread policy: %s", strerror(errno));
+		// if (thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY,
+		// reinterpret_cast<thread_policy_t>(&policy), THREAD_AFFINITY_POLICY_COUNT)
+		// != KERN_SUCCESS) 	output_warning("unable to set thread policy: %s",
+		// strerror(errno));
+
+		kern_return_t ret =
+			thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY,
+							  reinterpret_cast<thread_policy_t>(&policy),
+							  THREAD_AFFINITY_POLICY_COUNT);
+		if (ret != KERN_SUCCESS && ret != KERN_INVALID_ARGUMENT &&
+			ret != KERN_FAILURE && ret != KERN_NOT_SUPPORTED)
+			output_warning("unable to set thread policy: %s (kern_return_t=%d)",
+						   strerror(errno), ret);
 	}
 #elif defined DYN_PROC_AFFINITY
 	if (sched_setaffinity(pid, CPU_ALLOC_SIZE(n_procs), cpuset))
-		output_warning("unable to set current process affinity mask: %s", strerror(errno));
+		output_warning("unable to set current process affinity mask: %s",
+					   strerror(errno));
 #elif defined HAVE_SCHED_SETAFFINITY
 	if (sched_setaffinity(pid, sizeof(cpu_set_t), cpuset))
-		output_warning("unable to set current process affinity mask: %s", strerror(errno));
+		output_warning("unable to set current process affinity mask: %s",
+					   strerror(errno));
 #endif
 	return my_proc;
 Error:
@@ -2278,9 +2392,9 @@ Error:
 
 /** Initialize the processor scheduling system
 
-	This function sets up the processor scheduling system
-	that is responsible to keep thread from migrating once
-	they are committed to a particular processor.
+		This function sets up the processor scheduling system
+		that is responsible to keep thread from migrating once
+		they are committed to a particular processor.
  **/
 #ifdef _WIN32
 void sched_init(int readonly)
@@ -2313,7 +2427,8 @@ void sched_init(int readonly)
 		/** @todo implement locking before creating the global process map */
 
 		/* create global process map */
-		hMap = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, mapsize, MAPNAME);
+		hMap = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0,
+								 mapsize, MAPNAME);
 		if (hMap == nullptr)
 		{
 			output_warning("unable to create global process map, error code %d--job not added to process map", GetLastError());
@@ -2322,7 +2437,8 @@ void sched_init(int readonly)
 	}
 
 	/* access global process map */
-	process_map = (GLDPROCINFO *)MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, mapsize);
+	process_map =
+		(GLDPROCINFO *)MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, mapsize);
 	if (process_map == nullptr)
 	{
 		output_warning("unable to access global process map, error code %d--job not added to process map", GetLastError());
@@ -2349,11 +2465,11 @@ void sched_init(int readonly)
 
 #else
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/shm.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 void sched_init(int readonly)
 {
@@ -2368,7 +2484,9 @@ void sched_init(int readonly)
 
 	/* get total number of processors */
 #ifndef DYN_PROC_AFFINITY
-	n_procs = sysconf(_SC_NPROCESSORS_ONLN) > 1024 ? 1024 : sysconf(_SC_NPROCESSORS_ONLN);
+	n_procs = sysconf(_SC_NPROCESSORS_ONLN) > 1024
+				  ? 1024
+				  : sysconf(_SC_NPROCESSORS_ONLN);
 #else
 	n_procs = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
@@ -2387,7 +2505,8 @@ void sched_init(int readonly)
 	/* check key */
 	if (shmkey == -1)
 	{
-		output_error("error generating key to global process map: %s", strerror(errno));
+		output_error("error generating key to global process map: %s",
+					 strerror(errno));
 		return;
 	}
 	else
@@ -2404,8 +2523,8 @@ void sched_init(int readonly)
 			output_error("access to global process map %s is denied", mfile);
 			break;
 		/* TROUBLESHOOT
-		   Access to the process map is denied.  Consult with the system administrator
-		   to obtain access to the process map.
+		   Access to the process map is denied.  Consult with the system
+		   administrator to obtain access to the process map.
 		 */
 		case EEXIST:
 			output_error("global process map already exists");
@@ -2430,11 +2549,13 @@ void sched_init(int readonly)
 		   consult your system's manuals to learn how to reserve more shared memory.
 		 */
 		case ENOSPC:
-			output_error("shared memory limit exceeded (need %.1fkB)", mapsize / 1000.0);
+			output_error("shared memory limit exceeded (need %.1fkB)",
+						 mapsize / 1000.0);
 			break;
 		/* TROUBLESHOOT
 		   The process map is too big for the limits on shared memory.
-		   Consult your system's manuals to learn how to increase the size of shared memory.
+		   Consult your system's manuals to learn how to increase the size of shared
+		   memory.
 		 */
 		default:
 			output_error("unknown shmget error");
@@ -2545,7 +2666,8 @@ ARGS *get_args(char *line)
 				state = P_TEXT;
 			break;
 		default:
-			output_fatal("get_args(char *line='%s'): unknown parser state '%d'", line, state);
+			output_fatal("get_args(char *line='%s'): unknown parser state '%d'", line,
+						 state);
 			break;
 		}
 	}
@@ -2614,7 +2736,9 @@ void sched_continuous(void)
 			int n;
 			char line[1024];
 			clear();
-			mvprintw(0, 0, "GridLAB-D Process Control - Version %d.%d.%d-%d (%s)", REV_MAJOR, REV_MINOR, REV_PATCH, version_build(), version_branch());
+			mvprintw(0, 0, "GridLAB-D Process Control - Version %d.%d.%d-%d (%s)",
+					 REV_MAJOR, REV_MINOR, REV_PATCH, version_build(),
+					 version_branch());
 			sched_getinfo(-1, line, sizeof(line));
 			mvprintw(2, 0, "%s", line);
 			sched_getinfo(-2, line, sizeof(line));
@@ -2710,7 +2834,8 @@ void sched_controller(void)
 	{
 		ARGS *args;
 		sched_stop = 0;
-		while (printf("\ngridlabd>> "), fgets(command, sizeof(command), stdin) == nullptr)
+		while (printf("\ngridlabd>> "),
+			   fgets(command, sizeof(command), stdin) == nullptr)
 			;
 		args = get_args(command);
 		if (args->n == 0)

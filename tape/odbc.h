@@ -6,12 +6,12 @@
 #define _ODBC_H
 
 int odbc_open_player(struct player *my, char *fname, char *flags);
-char *odbc_read_player(struct player *my,char *buffer,unsigned int size);
+char *odbc_read_player(struct player *my, char *buffer, unsigned int size);
 int odbc_rewind_player(struct player *my);
 void odbc_close_player(struct player *my);
 
 int odbc_open_shaper(struct shaper *my, char *fname, char *flags);
-char *odbc_read_shaper(struct shaper *my,char *buffer,unsigned int size);
+char *odbc_read_shaper(struct shaper *my, char *buffer, unsigned int size);
 int odbc_rewind_shaper(struct shaper *my);
 void odbc_close_shaper(struct shaper *my);
 

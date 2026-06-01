@@ -1,7 +1,7 @@
 /**
  * $Id: sync_ctrl.h
  * Copyright (C) 2020 Battelle Memorial Institute
-**/
+ **/
 
 #ifndef GLD_GENERATORS_SYNC_CTRL_H_
 #define GLD_GENERATORS_SYNC_CTRL_H_
@@ -9,12 +9,14 @@
 #include "generators.h"
 
 EXPORT int isa_sync_ctrl(OBJECT *obj, char *classname);
-EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *, unsigned int64, unsigned long, unsigned int);
+EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *, unsigned int64,
+                                            unsigned long, unsigned int);
 
 class pid_ctrl;
 class sync_ctrl : public gld_object
 {
-    unsigned int  rlock = 0;
+    unsigned int rlock = 0;
+
 public:
     static CLASS *oclass;
 
@@ -24,26 +26,30 @@ public:
 
     int create(void);
     int init(OBJECT * = nullptr);
-	int shared_init(OBJECT *parent);
 
     TIMESTAMP presync(TIMESTAMP, TIMESTAMP);
     TIMESTAMP sync(TIMESTAMP, TIMESTAMP);
     TIMESTAMP postsync(TIMESTAMP, TIMESTAMP);
 
-    SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long, unsigned int);
+    SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long,
+                                               unsigned int);
 
-private: //Member Funcs: Utilities
+private: // Member Funcs: Utilities
     /* Get property pointer */
     template <class T>
-    gld_property *get_prop_ptr(T *, const char *, bool (gld_property::*)(), bool (gld_property::*)());
+    gld_property *get_prop_ptr(T *, const char *, bool (gld_property::*)(),
+                               bool (gld_property::*)());
 
     /* Get property value */
     template <class T, class T1>
-    T get_prop_value(T1 *, const char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
+    T get_prop_value(T1 *, const char *, bool (gld_property::*)(),
+                     bool (gld_property::*)(), T (gld_property::*)());
     template <class T, class T1>
-    T *get_prop_value(T1 *, const char *, bool (gld_property::*)(), bool (gld_property::*)(), T *(gld_property::*)());
+    T *get_prop_value(T1 *, const char *, bool (gld_property::*)(),
+                      bool (gld_property::*)(), T *(gld_property::*)());
     template <class T>
-    T get_prop_value(const char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
+    T get_prop_value(const char *, bool (gld_property::*)(),
+                     bool (gld_property::*)(), T (gld_property::*)());
     template <class T>
     T get_prop_value(gld_property *, T (gld_property::*)(), bool = true);
     template <class T>
@@ -53,10 +59,12 @@ private: //Member Funcs: Utilities
     template <class T>
     void set_prop(gld_property *, T);
 
-    template <class T> // This one was created to avoid modifying gridlabd.h (note that func get_bool() was not implemented in the gridlabd.h, but had been added later on)
+    template <class T> // This one was created to avoid modifying gridlabd.h (note
+                       // that func get_bool() was not implemented in the
+                       // gridlabd.h, but had been added later on)
     void get_prop(gld_property *, T);
 
-private: //Member Funcs: Init, Sanity Check, and Reset
+private: // Member Funcs: Init, Sanity Check, and Reset
     /* Mainly used in create() */
     void init_vars();
     void init_pub_prop();
@@ -74,7 +82,7 @@ private: //Member Funcs: Init, Sanity Check, and Reset
     /* For reset */
     void reset_timer();
 
-private: //Deltamode
+private: // Deltamode
     /* inter_deltaupdate_sync_ctrl */
     void dm_update_measurements();
 
@@ -86,22 +94,24 @@ private: //Deltamode
 
     void cgu_ctrl(double);
 
-    void dm_data_sanity_check(); //Parameter/data sanity check
+    void dm_data_sanity_check(); // Parameter/data sanity check
 
-    void dm_reset_after_disarmed(); //Reset once sync_ctrl is disarmed
-    void dm_reset_controllers();    //Reset both controllers
+    void dm_reset_after_disarmed(); // Reset once sync_ctrl is disarmed
+    void dm_reset_controllers();    // Reset both controllers
 
-private: //Published (Hidden) Properties
+private: // Published (Hidden) Properties
     /* Signals & flags for controllers */
-    bool sct_volt_cv_arm_flag; //True - apply the volt controlled variable, False - do not set the related property
+    bool sct_volt_cv_arm_flag; // True - apply the volt controlled variable, False
+                               // - do not set the related property
     double cgu_volt_set_mpv;
     double cgu_volt_set_cv;
 
-    bool sct_freq_cv_arm_flag; //True - apply the freq controlled variable, False - do not set the related property
+    bool sct_freq_cv_arm_flag; // True - apply the freq controlled variable, False
+                               // - do not set the related property
     double cgu_freq_set_mpv;
     double cgu_freq_set_cv;
 
-private: //Published (Public) Properties
+private: // Published (Public) Properties
     //==Flag
     bool sct_armed_flag;
 
@@ -129,13 +139,13 @@ private: //Published (Public) Properties
     double pi_volt_mag_ub_pu;
     double pi_volt_mag_lb_pu;
 
-private: //Variables
+private: // Variables
     //==Flags & Status
     enum class SCT_MODE_ENUM
     {
         MODE_A,
         MODE_B
-    } mode_status; //Indicates whether in mode A or mode B.
+    } mode_status; // Indicates whether in mode A or mode B.
 
     enum SWT_STATUS_ENUM
     {
@@ -143,12 +153,23 @@ private: //Variables
         CLOSED = 1
     } swt_status;
 
-    bool sck_armed_status;    //Action functionality status of the specified sync_check object of this sync_ctrl object. Valid states are: True - This sync_check object is functional, False - This sync_check object is disabled.
-    bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
+    bool sck_armed_status;    // Action functionality status of the specified
+                              // sync_check object of this sync_ctrl object. Valid
+                              // states are: True - This sync_check object is
+                              // functional, False - This sync_check object is
+                              // disabled.
+    bool deltamode_inclusive; // Boolean for deltamode calls - pulled from object
+                              // flags
 
     //==Time
-    double timer_mode_A_sec; //The total period (initialized as 0) during which both metrics have been satisfied continuously when this sync_ctrl object is in mode A and PI controllers are working
-    double timer_mode_B_sec; //The total period (initialized as 0) during which the both metrics have been satisfied continuously when this sync_ctrl object is in mode B and monitoring.
+    double timer_mode_A_sec; // The total period (initialized as 0) during which
+                             // both metrics have been satisfied continuously when
+                             // this sync_ctrl object is in mode A and PI
+                             // controllers are working
+    double
+        timer_mode_B_sec; // The total period (initialized as 0) during which the
+                          // both metrics have been satisfied continuously when
+                          // this sync_ctrl object is in mode B and monitoring.
 
     //==System Info
     double sys_nom_freq_hz;
@@ -157,7 +178,7 @@ private: //Variables
     pid_ctrl *pi_ctrl_cgu_volt_set;
     pid_ctrl *pi_ctrl_cgu_freq_set;
 
-    bool pi_ctrl_cgu_volt_set_fsu_flag; //fsu: first step update
+    bool pi_ctrl_cgu_volt_set_fsu_flag; // fsu: first step update
     bool pi_ctrl_cgu_freq_set_fsu_flag;
 
     //==Obj & Prop
@@ -229,15 +250,18 @@ public:
         dt: time interval
         cv_max: upper bound of the control variable
         cv_min: lower bound of the control variable
-        cv_init: initial value of the control variable (e.g., when error starts with 0)
+        cv_init: initial value of the control variable (e.g., when error starts
+       with 0)
     */
-    pid_ctrl(double kp, double ki, double kd, double dt = 0, double cv_max = 1, double cv_min = 0, double cv_init = 0);
+    pid_ctrl(double kp, double ki, double kd, double dt = 0, double cv_max = 1,
+             double cv_min = 0, double cv_init = 0);
     ~pid_ctrl();
 
-    //Update the cv_init
+    // Update the cv_init
     void set_cv_init(double);
 
-    //Returns the control variable, with respect to the setpoint and measured process value as inputs
+    // Returns the control variable, with respect to the setpoint and measured
+    // process value as inputs
     double step_update(double setpoint, double mpv, double cur_dt = 0);
 };
 

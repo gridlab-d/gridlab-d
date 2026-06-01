@@ -95,10 +95,33 @@
 #include <thread>
 #include <vector>
 
+#include <chrono>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <string>
+
 #ifdef _WIN32
-#include <direct.h>
-#include <winbase.h>
+// Reduce header bloat and avoid legacy winsock.h from windows.h
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+// Prevent <windows.h> from defining min/max macros that break std::min/max
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+// Winsock2 must precede windows.h
 #include <winsock2.h>
+#include <ws2tcpip.h> // if you use modern TCP/IP helpers
+
+// Umbrella Windows header — brings in windef.h, winnt.h, etc.
+#include <windows.h>
+
+// CRT utils on Windows
+#include <direct.h>
 #else
 #include <algorithm>
 #include <arpa/inet.h>
@@ -135,7 +158,6 @@
 #include "linkage.h"
 #include "loadshape.h"
 #include "local.h"
-#include "lock.h"
 #include "module.h"
 #include "object.h"
 #include "output.h"
@@ -1402,14 +1424,11 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array, int def_ct)
                 break;
             case 1:
             {
-                // wlock(&obj->lock);
-                // replace the above with SharedMutexManager
                 std::unique_lock<std::shared_mutex> write_lock(
                     SharedMutexManager::get_mutex(&obj->lock));
 
                 obj->flags |= OF_INIT;
                 obj->flags -= OF_DEFERRED;
-                // wunlock(&obj->lock);
                 write_lock.unlock();
                 break;
             }
@@ -1516,12 +1535,9 @@ static int init_by_deferral()
             break;
         case 1:
         {
-            // wlock(&obj->lock);
-            // replace the above with SharedMutexManager
             std::unique_lock<std::shared_mutex> write_lock(
                 SharedMutexManager::get_mutex(&obj->lock));
             obj->flags |= OF_INIT;
-            // wunlock(&obj->lock);
             write_lock.unlock();
             break;
         }
@@ -1529,12 +1545,9 @@ static int init_by_deferral()
         {
             def_array[def_ct] = obj;
             ++def_ct;
-            // wlock(&obj->lock);
-            // replace the above with SharedMutexManager
             std::unique_lock<std::shared_mutex> write_lock2(
                 SharedMutexManager::get_mutex(&obj->lock));
             obj->flags |= OF_DEFERRED;
-            // wunlock(&obj->lock);
             write_lock2.unlock();
             break;
         }
@@ -3733,16 +3746,11 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
     // Create local variables for internal use (use provided values or defaults)
     int64 local_passes = (passes != nullptr) ? *passes : 0;
     int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
-    FILE *prep_dbg = fopen("/tmp/env_check.log", "a");
-    fprintf(prep_dbg, "About to call run_preparation()\n");
-    fclose(prep_dbg);
+    output_verbose("About to call run_preparation()");
 
     if (run_preparation() == FAILED)
     {
-        FILE *prep_fail = fopen("/tmp/env_check.log", "a");
-        fprintf(prep_fail, "run_preparation() returned FAILED\n");
-        fclose(prep_fail);
-
+        output_error("run_preparation() returned FAILED");
         return FAILED;
     }
 
@@ -3832,9 +3840,8 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
 
     /* terminate links */
     STATUS final_status = exec_sync_getstatus(sync_data_nullptr);
-    FILE *status_dbg = fopen("/tmp/env_check.log", "a");
-    fprintf(status_dbg, "exec_start returning status=%d\n", final_status);
-    fclose(status_dbg);
+    output_verbose("exec_start returning status=%d\n", final_status);
+
     // delete threadpool;
     return final_status;
 }

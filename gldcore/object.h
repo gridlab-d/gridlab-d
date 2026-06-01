@@ -26,6 +26,16 @@
 #include "transform.h"
 #include "enduse.h"
 
+#if defined(_WIN32)
+#define MODULE_API __declspec(dllexport) // always exporting from this module
+#else
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#define MODULE_API __attribute__((visibility("default")))
+#else
+#define MODULE_API
+#endif
+#endif
+
 /* this must match property_type list in object.c */
 typedef int OBJECTRANK;            /**< Object rank number */
 typedef unsigned short OBJECTSIZE; /** Object data size */
@@ -348,7 +358,7 @@ public:
     struct
     {
         int (*create)(struct s_enduse *e);
-        TIMESTAMP (*sync)(struct s_enduse *e, PASSCONFIG pass, TIMESTAMP t1);
+        TIMESTAMP (*sync)(struct s_enduse *e, TIMESTAMP t1, PASSCONFIG pass);
     } enduse;
     struct
     {
@@ -421,44 +431,49 @@ extern "C"
 {
 #endif
 
-	OBJECT *object_create_single(CLASS *oclass);
-	OBJECT *object_create_array(CLASS *oclass, unsigned int n_objects);
-	OBJECT *object_create_foreign(OBJECT *obj);
-	OBJECT *object_remove_by_id(OBJECTNUM id);
-	int object_init(OBJECT *obj);
-	STATUS object_precommit(OBJECT *obj, TIMESTAMP t1);
-	TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2);
-	STATUS object_finalize(OBJECT *obj);
-	int object_set_dependent(OBJECT *obj, OBJECT *dependent);
-	int object_set_parent(OBJECT *obj, OBJECT *parent);
-	unsigned int object_get_child_count(OBJECT *obj);
-	void *object_get_addr(OBJECT *obj, const char *name);
-	PROPERTY *object_get_property(OBJECT *obj, const PROPERTYNAME name, PROPERTYSTRUCT *part);
-	const PROPERTY *object_prop_in_class(OBJECT *obj, const PROPERTY *prop);
-	int object_set_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value);
+    OBJECT *object_create_single(CLASS *oclass);
+    OBJECT *object_create_array(CLASS *oclass, unsigned int n_objects);
+    OBJECT *object_create_foreign(OBJECT *obj);
+    OBJECT *object_remove_by_id(OBJECTNUM id);
+    int object_init(OBJECT *obj);
+    STATUS object_precommit(OBJECT *obj, TIMESTAMP t1);
+    TIMESTAMP object_commit(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2);
+    STATUS object_finalize(OBJECT *obj);
+    int object_set_dependent(OBJECT *obj, OBJECT *dependent);
+    int object_set_parent(OBJECT *obj, OBJECT *parent);
+    unsigned int object_get_child_count(OBJECT *obj);
+    void *object_get_addr(OBJECT *obj, const char *name);
+    PROPERTY *object_get_property(OBJECT *obj, const PROPERTYNAME name, PROPERTYSTRUCT *part);
+    const PROPERTY *object_prop_in_class(OBJECT *obj, const PROPERTY *prop);
+    int object_set_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value);
     void object_set_raw_value_by_name(OBJECT *obj, const PROPERTYNAME name, const char *value);
     int object_get_raw_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size);
-	void object_store_checkpoint_property(OBJECT *obj, const char *name, const char *value);
-	STATUS object_restore_checkpoint_properties(OBJECT *obj);
-	int object_set_value_by_addr(OBJECT *obj, void *addr, char *value, PROPERTY *prop);
-	int object_set_int16_by_name(OBJECT *obj, const PROPERTYNAME name, int16 value);
-	int object_set_int32_by_name(OBJECT *obj, const PROPERTYNAME name, int32 value);
-	int object_set_int64_by_name(OBJECT *obj, const PROPERTYNAME name, int64 value);
-	int object_set_double_by_name(OBJECT *obj, const PROPERTYNAME name, double value);
-	int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, gld::complex value);
-	int object_get_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size);
-	int object_get_value_by_addr(OBJECT *obj, void *addr, char *value, int size, PROPERTY *prop);
-	int object_set_value_by_type(PROPERTYTYPE, void *addr, char *value);
-	OBJECT *object_get_reference(OBJECT *obj, char *name);
-	int object_isa(OBJECT *obj, const char *type);
-	OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name);
-	OBJECT *object_find_name(const char *name);
-	int object_build_name(OBJECT *obj, char *buffer, int len);
-	int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp);
+    void object_store_checkpoint_property(OBJECT *obj, const char *name, const char *value);
+    STATUS object_restore_checkpoint_properties(OBJECT *obj);
+    int object_set_value_by_addr(OBJECT *obj, void *addr, char *value, PROPERTY *prop);
+    int object_set_int16_by_name(OBJECT *obj, const PROPERTYNAME name, int16 value);
+    int object_set_int32_by_name(OBJECT *obj, const PROPERTYNAME name, int32 value);
+    int object_set_int64_by_name(OBJECT *obj, const PROPERTYNAME name, int64 value);
+    int object_set_double_by_name(OBJECT *obj, const PROPERTYNAME name, double value);
+    int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, gld::complex value);
+    int object_get_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size);
+    int object_get_value_by_addr(OBJECT *obj, void *addr, char *value, int size, PROPERTY *prop);
+    int object_set_value_by_type(PROPERTYTYPE, void *addr, char *value);
+    OBJECT *object_get_reference(OBJECT *obj, char *name);
+    int object_isa(OBJECT *obj, const char *type);
+    OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name);
+    OBJECT *object_find_name(const char *name);
+    int object_build_name(OBJECT *obj, char *buffer, int len);
+    int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp);
 
     int object_get_oflags(KEYWORD **extflags);
 
-    TIMESTAMP object_sync(OBJECT *obj, TIMESTAMP to, PASSCONFIG pass);
+#ifndef __APPLE__
+    MODULE_API TIMESTAMP object_sync(OBJECT *obj, TIMESTAMP to, PASSCONFIG pass);
+#else
+MODULE_API TIMESTAMP object_sync(OBJECT *obj, ...);
+#endif
+
     OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop);
     OBJECT **object_get_object_by_name(OBJECT *obj, const char *name);
     enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop);

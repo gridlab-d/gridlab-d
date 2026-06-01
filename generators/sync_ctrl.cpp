@@ -1,14 +1,14 @@
-/** 
+/**
  * $Id: sync_ctrl.cpp
- * Implements sychronization control functionality for the sychronization check function.
- * Copyright (C) 2020 Battelle Memorial Institute
-**/
+ * Implements sychronization control functionality for the sychronization check
+ * function. Copyright (C) 2020 Battelle Memorial Institute
+ **/
 
 #include "sync_ctrl.h"
 
-#include <iostream>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <iostream>
 
 using namespace std;
 
@@ -34,53 +34,118 @@ sync_ctrl::sync_ctrl(MODULE *mod)
 {
     if (oclass == nullptr)
     {
-        oclass = gl_register_class(mod, "sync_ctrl", sizeof(sync_ctrl), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_AUTOLOCK);
+        oclass = gl_register_class(mod, "sync_ctrl", sizeof(sync_ctrl),
+                                   PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN |
+                                       PC_AUTOLOCK);
         if (oclass == nullptr)
             GL_THROW("unable to register object class implemented by %s", __FILE__);
-		else
-			oclass->trl = TRL_DEMONSTRATED;
+        else
+            oclass->trl = TRL_DEMONSTRATED;
 
-        if (gl_publish_variable(oclass,
-                                //==Flag
-                                PT_bool, "armed", PADDR(sct_armed_flag), PT_DESCRIPTION, "Flag to arm the synchronization control functionality.",
-                                //==Object
-                                PT_object, "sync_check_object", PADDR(sck_obj_ptr), PT_DESCRIPTION, "The object reference/name of the sync_check object, which works with this sync_ctrl object.",
-                                PT_object, "controlled_generation_unit", PADDR(cgu_obj_ptr), PT_DESCRIPTION, "The object reference/name of the controlled generation unit (i.e., a diesel_dg/inverter_dyn object), which serves as the actuator of the PI controllers of this sync_ctrl object.",
-                                //==Tolerance
-                                PT_double, "frequency_tolerance_ub_hz[Hz]", PADDR(sct_freq_tol_ub_hz), PT_DESCRIPTION, "The user-specified tolerance in Hz for checking the upper bound of the frequency metric.",
-                                PT_double, "frequency_tolerance_lb_hz[Hz]", PADDR(sct_freq_tol_lb_hz), PT_DESCRIPTION, "The user-specified tolerance in Hz for checking the lower bound of the frequency metric.",
-                                PT_double, "voltage_magnitude_tolerance_pu[pu]", PADDR(sct_volt_mag_tol_pu), PT_DESCRIPTION, "The user-specified tolerance in per unit for the difference in voltage magnitudes for checking the voltage metric.",
-                                //==Time
-                                PT_double, "controlling_period[s]", PADDR(pp_t_ctrl_sec), PT_DESCRIPTION, "The user-defined period when both metrics are satisfied and this sync_ctrl object works in mode A.",
-                                PT_double, "monitoring_period[s]", PADDR(pp_t_mon_sec), PT_DESCRIPTION, "The user-defined period when this sync_ctrl object keeps on monitoring in mode B, if both metrics are not violated and the switch object is not closed.",
-                                //==Controller
-                                PT_double, "pi_freq_kp", PADDR(pi_freq_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the frequency setting.",
-                                PT_double, "pi_freq_ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
-                                PT_double, "pi_freq_ub_pu[pu]", PADDR(pi_freq_ub_pu), PT_DESCRIPTION, "The upper bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
-                                PT_double, "pi_freq_lb_pu[pu]", PADDR(pi_freq_lb_pu), PT_DESCRIPTION, "The lower bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
-                                PT_double, "pi_volt_mag_kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the voltage magnitude setting.",
-                                PT_double, "pi_volt_mag_ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
-                                PT_double, "pi_volt_mag_ub_pu[pu]", PADDR(pi_volt_mag_ub_pu), PT_DESCRIPTION, "The upper bound of the output (i.e., the control variable 'Vset') of the PI controller that adjusts the voltage magnitude difference in per unit.",
-                                PT_double, "pi_volt_mag_lb_pu[pu]", PADDR(pi_volt_mag_lb_pu), PT_DESCRIPTION, "The lower bound of the output (i.e., the control variable 'Vset') of the PI controller that adjusts the voltage magnitude difference in per unit",
-                                //==Hidden ones for checking variables and debugging controls
-                                PT_bool, "sct_volt_cv_arm_flag", PADDR(sct_volt_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "True - apply the volt controlled variable, False - do not set the related property.",
-                                PT_double, "cgu_volt_set_mpv", PADDR(cgu_volt_set_mpv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal) of the PI controller that adjusts the voltage magnitude difference.",
-                                PT_double, "cgu_volt_set_cv", PADDR(cgu_volt_set_cv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The output of the PI controller that adjusts the voltage magnitude difference (i.e., the control variable, which is denoted as u(t) in usual).",
-                                PT_bool, "sct_freq_cv_arm_flag", PADDR(sct_freq_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "True - apply the freq controlled variable, False - do not set the related property.",
-                                PT_double, "cgu_freq_set_mpv", PADDR(cgu_freq_set_mpv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal) of the PI controller that adjusts the frequency difference.",
-                                PT_double, "cgu_freq_set_cv", PADDR(cgu_freq_set_cv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The output of the PI controller that adjusts the frequency difference (i.e., the control variable, which is denoted as u(t) in usual).",
-                                PT_enumeration, "mode_status", PADDR(mode_status), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The current working mode status.",
-                                nullptr) < 1)
+        if (gl_publish_variable(
+                oclass,
+                //==Flag
+                PT_bool, "armed", PADDR(sct_armed_flag), PT_DESCRIPTION,
+                "Flag to arm the synchronization control functionality.",
+                //==Object
+                PT_object, "sync_check_object", PADDR(sck_obj_ptr), PT_DESCRIPTION,
+                "The object reference/name of the sync_check object, which works "
+                "with this sync_ctrl object.",
+                PT_object, "controlled_generation_unit", PADDR(cgu_obj_ptr),
+                PT_DESCRIPTION,
+                "The object reference/name of the controlled generation unit "
+                "(i.e., a diesel_dg/inverter_dyn object), which serves as the "
+                "actuator of the PI controllers of this sync_ctrl object.",
+                //==Tolerance
+                PT_double, "frequency_tolerance_ub_hz[Hz]",
+                PADDR(sct_freq_tol_ub_hz), PT_DESCRIPTION,
+                "The user-specified tolerance in Hz for checking the upper bound "
+                "of the frequency metric.",
+                PT_double, "frequency_tolerance_lb_hz[Hz]",
+                PADDR(sct_freq_tol_lb_hz), PT_DESCRIPTION,
+                "The user-specified tolerance in Hz for checking the lower bound "
+                "of the frequency metric.",
+                PT_double, "voltage_magnitude_tolerance_pu[pu]",
+                PADDR(sct_volt_mag_tol_pu), PT_DESCRIPTION,
+                "The user-specified tolerance in per unit for the difference in "
+                "voltage magnitudes for checking the voltage metric.",
+                //==Time
+                PT_double, "controlling_period[s]", PADDR(pp_t_ctrl_sec),
+                PT_DESCRIPTION,
+                "The user-defined period when both metrics are satisfied and this "
+                "sync_ctrl object works in mode A.",
+                PT_double, "monitoring_period[s]", PADDR(pp_t_mon_sec),
+                PT_DESCRIPTION,
+                "The user-defined period when this sync_ctrl object keeps on "
+                "monitoring in mode B, if both metrics are not violated and the "
+                "switch object is not closed.",
+                //==Controller
+                PT_double, "pi_freq_kp", PADDR(pi_freq_kp), PT_DESCRIPTION,
+                "The user-defined proportional gain constant of the PI controller "
+                "for adjusting the frequency setting.",
+                PT_double, "pi_freq_ki", PADDR(pi_freq_ki), PT_DESCRIPTION,
+                "The user-defined integral gain constant of the PI controller for "
+                "adjusting the frequency setting.",
+                PT_double, "pi_freq_ub_pu[pu]", PADDR(pi_freq_ub_pu),
+                PT_DESCRIPTION,
+                "The upper bound of the output (i.e., the control variable "
+                "'Pset'/'fset') of the PI controller that adjusts the frequency "
+                "difference in per unit.",
+                PT_double, "pi_freq_lb_pu[pu]", PADDR(pi_freq_lb_pu),
+                PT_DESCRIPTION,
+                "The lower bound of the output (i.e., the control variable "
+                "'Pset'/'fset') of the PI controller that adjusts the frequency "
+                "difference in per unit.",
+                PT_double, "pi_volt_mag_kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION,
+                "The user-defined proportional gain constant of the PI controller "
+                "for adjusting the voltage magnitude setting.",
+                PT_double, "pi_volt_mag_ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION,
+                "The user-defined integral gain constant of the PI controller for "
+                "adjusting the voltage magnitude setting.",
+                PT_double, "pi_volt_mag_ub_pu[pu]", PADDR(pi_volt_mag_ub_pu),
+                PT_DESCRIPTION,
+                "The upper bound of the output (i.e., the control variable 'Vset') "
+                "of the PI controller that adjusts the voltage magnitude "
+                "difference in per unit.",
+                PT_double, "pi_volt_mag_lb_pu[pu]", PADDR(pi_volt_mag_lb_pu),
+                PT_DESCRIPTION,
+                "The lower bound of the output (i.e., the control variable 'Vset') "
+                "of the PI controller that adjusts the voltage magnitude "
+                "difference in per unit",
+                //==Hidden ones for checking variables and debugging controls
+                PT_bool, "sct_volt_cv_arm_flag", PADDR(sct_volt_cv_arm_flag),
+                PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION,
+                "True - apply the volt controlled variable, False - do not set the "
+                "related property.",
+                PT_double, "cgu_volt_set_mpv", PADDR(cgu_volt_set_mpv), PT_ACCESS,
+                PA_HIDDEN, PT_DESCRIPTION,
+                "The measured process variable (i.e., the feedback signal) of the "
+                "PI controller that adjusts the voltage magnitude difference.",
+                PT_double, "cgu_volt_set_cv", PADDR(cgu_volt_set_cv), PT_ACCESS,
+                PA_HIDDEN, PT_DESCRIPTION,
+                "The output of the PI controller that adjusts the voltage "
+                "magnitude difference (i.e., the control variable, which is "
+                "denoted as u(t) in usual).",
+                PT_bool, "sct_freq_cv_arm_flag", PADDR(sct_freq_cv_arm_flag),
+                PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION,
+                "True - apply the freq controlled variable, False - do not set the "
+                "related property.",
+                PT_double, "cgu_freq_set_mpv", PADDR(cgu_freq_set_mpv), PT_ACCESS,
+                PA_HIDDEN, PT_DESCRIPTION,
+                "The measured process variable (i.e., the feedback signal) of the "
+                "PI controller that adjusts the frequency difference.",
+                PT_double, "cgu_freq_set_cv", PADDR(cgu_freq_set_cv), PT_ACCESS,
+                PA_HIDDEN, PT_DESCRIPTION,
+                "The output of the PI controller that adjusts the frequency "
+                "difference (i.e., the control variable, which is denoted as u(t) "
+                "in usual).",
+                PT_enumeration, "mode_status", PADDR(mode_status), PT_ACCESS,
+                PA_HIDDEN, PT_DESCRIPTION, "The current working mode status.",
+                nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
-        if (gl_publish_function(oclass, "interupdate_controller_object", (FUNCTIONADDR)interupdate_sync_ctrl) == nullptr)
+        if (gl_publish_function(oclass, "interupdate_controller_object",
+                                (FUNCTIONADDR)interupdate_sync_ctrl) == nullptr)
             GL_THROW("Unable to publish sync_ctrl deltamode function");
     }
 }
@@ -99,29 +164,18 @@ int sync_ctrl::create(void)
     return 1;
 }
 
-int sync_ctrl::shared_init(OBJECT *parent)
-{
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
-			char objname[256];
-			gl_verbose("sync_ctrl::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
-	// These variables need intialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-
-    return 1;
-}
-
 int sync_ctrl::init(OBJECT *parent)
 {
-   	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
 
+    if (parent != nullptr)
+    {
+        if ((parent->flags & OF_INIT) != OF_INIT)
+        {
+            char objname[256];
+            gl_verbose("sync_ctrl::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+            return 2; // defer
+        }
+    }
     init_data_sanity_check();
     init_deltamode_check();
 
@@ -134,24 +188,26 @@ int sync_ctrl::init(OBJECT *parent)
 
 TIMESTAMP sync_ctrl::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-    return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+    return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure
+                      */
 }
 
-TIMESTAMP sync_ctrl::sync(TIMESTAMP t0, TIMESTAMP t1)
-{
-    return TS_NEVER;
-}
+TIMESTAMP sync_ctrl::sync(TIMESTAMP t0, TIMESTAMP t1) { return TS_NEVER; }
 
 TIMESTAMP sync_ctrl::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-    return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+    return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure
+                      */
 }
 
 // Deltamode call
 // Module-level call
-SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+SIMULATIONMODE
+sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
+                                       unsigned long dt,
+                                       unsigned int iteration_count_val)
 {
-    if ((sct_armed_flag) && (iteration_count_val == 1)) //Corrector pass
+    if ((sct_armed_flag) && (iteration_count_val == 1)) // Corrector pass
     {
         dm_update_measurements();
         // dm_data_sanity_check();
@@ -165,7 +221,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
         {
             if (mode_status == SCT_MODE_ENUM::MODE_A)
             {
-                //In Mode A
+                // In Mode A
                 if (sct_metrics_check_mode_A(dt))
                 {
                     mode_transition(SCT_MODE_ENUM::MODE_B, true);
@@ -174,7 +230,8 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
                 {
                     if (sck_armed_flag)
                     {
-                        set_prop(prop_sck_armed_ptr, false); //disarm sync_check if it is armed
+                        set_prop(prop_sck_armed_ptr,
+                                 false); // disarm sync_check if it is armed
                     }
 
                     cgu_ctrl((double)dt / (double)DT_SECOND);
@@ -182,7 +239,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
             }
             else
             {
-                //In Mode B
+                // In Mode B
                 if (sct_metrics_check_mode_B())
                 {
                     if (~sck_armed_flag)
@@ -212,24 +269,33 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
 
 void sync_ctrl::dm_update_measurements()
 {
-    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration, false));
-    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false);
+    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(
+        prop_swt_status_ptr, &gld_property::get_enumeration, false));
+    sck_armed_flag =
+        get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false);
 
-    if (swt_status == SWT_STATUS_ENUM::OPEN) // If the switch is closed, there is no need to update other measured/calculated properties
+    if (swt_status ==
+        SWT_STATUS_ENUM::OPEN) // If the switch is closed, there is no need to
+                               // update other measured/calculated properties
     {
-        sck_freq_diff_hz = get_prop_value<double>(prop_sck_freq_diff_hz_ptr, &gld_property::get_double, false);
+        sck_freq_diff_hz = get_prop_value<double>(prop_sck_freq_diff_hz_ptr,
+                                                  &gld_property::get_double, false);
 
-        sck_volt_A_mag_diff_pu = get_prop_value<double>(prop_sck_volt_A_mag_diff_pu_ptr, &gld_property::get_double, false);
-        sck_volt_B_mag_diff_pu = get_prop_value<double>(prop_sck_volt_B_mag_diff_pu_ptr, &gld_property::get_double, false);
-        sck_volt_C_mag_diff_pu = get_prop_value<double>(prop_sck_volt_C_mag_diff_pu_ptr, &gld_property::get_double, false);
+        sck_volt_A_mag_diff_pu = get_prop_value<double>(
+            prop_sck_volt_A_mag_diff_pu_ptr, &gld_property::get_double, false);
+        sck_volt_B_mag_diff_pu = get_prop_value<double>(
+            prop_sck_volt_B_mag_diff_pu_ptr, &gld_property::get_double, false);
+        sck_volt_C_mag_diff_pu = get_prop_value<double>(
+            prop_sck_volt_C_mag_diff_pu_ptr, &gld_property::get_double, false);
     }
 }
 
 bool sync_ctrl::sct_metrics_check_mode_A(unsigned long dt)
 {
-    bool freq_diff_flag = ((sck_freq_diff_hz - sct_freq_tol_lb_hz) * (sck_freq_diff_hz - sct_freq_tol_ub_hz) <= 0);
-    if (freq_diff_flag &&
-        (abs(sck_volt_A_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
+    bool freq_diff_flag = ((sck_freq_diff_hz - sct_freq_tol_lb_hz) *
+                               (sck_freq_diff_hz - sct_freq_tol_ub_hz) <=
+                           0);
+    if (freq_diff_flag && (abs(sck_volt_A_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
         (abs(sck_volt_B_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
         (abs(sck_volt_C_mag_diff_pu) <= sct_volt_mag_tol_pu))
     {
@@ -254,9 +320,10 @@ bool sync_ctrl::sct_metrics_check_mode_A(unsigned long dt)
 
 bool sync_ctrl::sct_metrics_check_mode_B()
 {
-    bool freq_diff_flag = ((sck_freq_diff_hz - sct_freq_tol_lb_hz) * (sck_freq_diff_hz - sct_freq_tol_ub_hz) <= 0);
-    if (freq_diff_flag &&
-        (abs(sck_volt_A_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
+    bool freq_diff_flag = ((sck_freq_diff_hz - sct_freq_tol_lb_hz) *
+                               (sck_freq_diff_hz - sct_freq_tol_ub_hz) <=
+                           0);
+    if (freq_diff_flag && (abs(sck_volt_A_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
         (abs(sck_volt_B_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
         (abs(sck_volt_C_mag_diff_pu) <= sct_volt_mag_tol_pu))
         return true;
@@ -270,11 +337,13 @@ void sync_ctrl::mode_transition(SCT_MODE_ENUM sct_mode, bool sck_armed_flag)
     if (mode_status == sct_mode)
     {
         OBJECT *obj = object_header(this);
-        gl_warning("%s:%d %s - Invalid mode transition (target mode is the same to the current mode)!",
+        gl_warning("%s:%d %s - Invalid mode transition (target mode is the same to "
+                   "the current mode)!",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"));
     }
 
-    //==Reset Controller (when it leaves Mode A, i.e., from Mode A to Mode B when we have two modes only)
+    //==Reset Controller (when it leaves Mode A, i.e., from Mode A to Mode B when
+    // we have two modes only)
     if (mode_status == SCT_MODE_ENUM::MODE_A)
     {
         dm_reset_controllers();
@@ -297,7 +366,8 @@ void sync_ctrl::cgu_ctrl(double dm_dt_sec)
         //--init CV
         if (pi_ctrl_cgu_freq_set_fsu_flag)
         {
-            double cur_freq_set = get_prop_value(prop_cgu_freq_set_ptr, &gld_property::get_double, false);
+            double cur_freq_set = get_prop_value(prop_cgu_freq_set_ptr,
+                                                 &gld_property::get_double, false);
             if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
             {
                 cur_freq_set /= sys_nom_freq_hz;
@@ -310,7 +380,8 @@ void sync_ctrl::cgu_ctrl(double dm_dt_sec)
         cgu_freq_set_mpv = sck_freq_diff_hz / sys_nom_freq_hz;
         cgu_freq_set_cv = pi_ctrl_cgu_freq_set->step_update(
             (sct_freq_tol_ub_hz + sct_freq_tol_lb_hz) / 2 / sys_nom_freq_hz,
-            cgu_freq_set_mpv, dm_dt_sec); //@TODO: the setpoint may be defined by the user via a published property
+            cgu_freq_set_mpv, dm_dt_sec); //@TODO: the setpoint may be defined by
+                                          // the user via a published property
         if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
         {
             cgu_freq_set_cv *= sys_nom_freq_hz;
@@ -320,18 +391,24 @@ void sync_ctrl::cgu_ctrl(double dm_dt_sec)
         if (sct_freq_cv_arm_flag)
             set_prop(prop_cgu_freq_set_ptr, cgu_freq_set_cv);
 
-        //==PI controller for getting the one of volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, and volt_mag_diff_ph_c_pu that has the largest absolute value
+        //==PI controller for getting the one of volt_mag_diff_ph_a_pu,
+        // volt_mag_diff_ph_b_pu, and volt_mag_diff_ph_c_pu that has the largest
+        // absolute value
         //--init CV
         if (pi_ctrl_cgu_volt_set_fsu_flag)
         {
-            double cur_volt_set = get_prop_value(prop_cgu_volt_set_ptr, &gld_property::get_double, false);
+            double cur_volt_set = get_prop_value(prop_cgu_volt_set_ptr,
+                                                 &gld_property::get_double, false);
             pi_ctrl_cgu_volt_set->set_cv_init(cur_volt_set);
             pi_ctrl_cgu_volt_set_fsu_flag = false;
         }
 
         //--step update
-        cgu_volt_set_mpv = max({sck_volt_A_mag_diff_pu, sck_volt_B_mag_diff_pu, sck_volt_C_mag_diff_pu}, comp_func_dbl);
-        cgu_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dm_dt_sec);
+        cgu_volt_set_mpv = max({sck_volt_A_mag_diff_pu, sck_volt_B_mag_diff_pu,
+                                sck_volt_C_mag_diff_pu},
+                               comp_func_dbl);
+        cgu_volt_set_cv =
+            pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dm_dt_sec);
 
         //--apply/send cv
         if (sct_volt_cv_arm_flag)
@@ -358,13 +435,19 @@ void sync_ctrl::reset_timer()
 void sync_ctrl::dm_reset_controllers()
 {
     delete pi_ctrl_cgu_volt_set;
-    pi_ctrl_cgu_volt_set = nullptr; //avoid segamentation fault caused by the double delete in unexpected mode transitions
+    pi_ctrl_cgu_volt_set =
+        nullptr; // avoid segamentation fault caused by the double delete in
+                 // unexpected mode transitions
 
     delete pi_ctrl_cgu_freq_set;
-    pi_ctrl_cgu_freq_set = nullptr; //avoid segamentation fault caused by the double delete in unexpected mode transitions
+    pi_ctrl_cgu_freq_set =
+        nullptr; // avoid segamentation fault caused by the double delete in
+                 // unexpected mode transitions
 
     init_controllers();
-    init_hidden_prop_controllers(FLAG_VAL); // FLAG_VAL is the flag value that indicates the update of these hidden properties is stopped
+    init_hidden_prop_controllers(
+        FLAG_VAL); // FLAG_VAL is the flag value that indicates the update of
+                   // these hidden properties is stopped
 }
 
 void sync_ctrl::dm_reset_after_disarmed()
@@ -373,7 +456,7 @@ void sync_ctrl::dm_reset_after_disarmed()
     dm_reset_controllers();
 
     init_hidden_prop(FLAG_VAL);
-    mode_status = SCT_MODE_ENUM::MODE_A; //Back to Mode_A as the starting mode
+    mode_status = SCT_MODE_ENUM::MODE_A; // Back to Mode_A as the starting mode
 }
 
 /* parameter/data sanity check */
@@ -381,19 +464,20 @@ void sync_ctrl::dm_data_sanity_check()
 {
     OBJECT *obj = object_header(this);
 
-    double sck_metrics_period_sec = get_prop_value<double, OBJECT>(sck_obj_ptr, "metrics_period",
-                                                                   &gld_property::is_valid,
-                                                                   &gld_property::is_double,
-                                                                   &gld_property::get_double);
+    double sck_metrics_period_sec = get_prop_value<double, OBJECT>(
+        sck_obj_ptr, "metrics_period", &gld_property::is_valid,
+        &gld_property::is_double, &gld_property::get_double);
     if (sck_metrics_period_sec >= pp_t_mon_sec)
     {
-        gl_warning("%s:%d %s - The 'monitoring_period' is smaller or equal to the 'metrics_period' of %s.",
+        gl_warning("%s:%d %s - The 'monitoring_period' is smaller or equal to the "
+                   "'metrics_period' of %s.",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    sck_obj_ptr->name);
         /*  TROUBLESHOOT
-		The sck_metrics_period_sec should be smaller than the pp_t_mon_sec!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        The sck_metrics_period_sec should be smaller than the pp_t_mon_sec!
+        If the warning persists and the object does, please submit your code and a
+        bug report via the issue tracker.
+        */
     }
 }
 
@@ -402,12 +486,12 @@ void sync_ctrl::dm_data_sanity_check()
 //////////////////////////////////////////////////////////////////////////
 
 /**
-* REQUIRED: allocate and initialize an object.
-*
-* @param obj a pointer to a pointer of the last object in the list
-* @param parent a pointer to the parent of this object
-* @return 1 for a successfully created object, 0 for error
-*/
+ * REQUIRED: allocate and initialize an object.
+ *
+ * @param obj a pointer to a pointer of the last object in the list
+ * @param parent a pointer to the parent of this object
+ * @return 1 for a successfully created object, 0 for error
+ */
 EXPORT int create_sync_ctrl(OBJECT **obj, OBJECT *parent)
 {
     try
@@ -416,24 +500,24 @@ EXPORT int create_sync_ctrl(OBJECT **obj, OBJECT *parent)
         if (*obj != nullptr)
         {
             sync_ctrl *my = object_data<sync_ctrl>(*obj);
-            gl_set_parent(*obj, parent);
+            // gl_set_parent(*obj, parent);
             return my->create();
         }
         else
             return 0;
     }
-    //CREATE_CATCHALL(sync_ctrl);
-    catch (char* msg)
+    // CREATE_CATCHALL(sync_ctrl);
+    catch (char *msg)
     {
         gl_error("create_sync_ctrl: %s", msg);
         return 0;
     }
-    catch (const char* msg)
+    catch (const char *msg)
     {
         gl_error("create_sync_ctrl: %s", msg);
         return 0;
     }
-    catch (const std::exception& ex)
+    catch (const std::exception &ex)
     {
         gl_error("create_sync_ctrl: unhandled exception - %s", ex.what());
         return 0;
@@ -444,23 +528,24 @@ EXPORT int init_sync_ctrl(OBJECT *obj)
 {
     try
     {
-        sync_ctrl *my = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
+        sync_ctrl *my = object_data<sync_ctrl>(obj);
         return my->init(obj->parent);
     }
     INIT_CATCHALL(sync_ctrl);
 }
 
 /**
-* Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
-*
-* @param obj the object we are sync'ing
-* @param t0 this objects current timestamp
-* @param pass the current pass for this sync call
-* @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
-*/
-EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+ * Sync is called when the clock needs to advance on the bottom-up pass
+ * (PC_BOTTOMUP)
+ *
+ * @param obj the object we are sync'ing
+ * @param t0 this objects current timestamp
+ * @param pass the current pass for this sync call
+ * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
+ */
+static TIMESTAMP sync_sync_ctrl_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-    sync_ctrl *pObj = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
+    sync_ctrl *pObj = object_data<sync_ctrl>(obj);
     TIMESTAMP t1 = TS_INVALID;
 
     try
@@ -487,24 +572,47 @@ EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
     return t1;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_sync_ctrl_impl(obj, t0, pass);
+}
+#else
+// variadic
+extern "C" MODULE_API TIMESTAMP sync_sync_ctrl(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_sync_ctrl_impl(obj, t0, pass);
+}
+#endif
+
 EXPORT int isa_sync_ctrl(OBJECT *obj, char *classname)
 {
     return /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj)->isa(classname);
 }
 
 // Deltamode export
-EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj,
+                                            unsigned int64 delta_time,
+                                            unsigned long dt,
+                                            unsigned int iteration_count_val)
 {
     sync_ctrl *my = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
     SIMULATIONMODE status = SM_ERROR;
     try
     {
-        status = my->inter_deltaupdate_sync_ctrl(delta_time, dt, iteration_count_val);
+        status =
+            my->inter_deltaupdate_sync_ctrl(delta_time, dt, iteration_count_val);
         return status;
     }
     catch (char *msg)
     {
-        gl_error("interupdate_sync_ctrl(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
+        gl_error("interupdate_sync_ctrl(obj=%d;%s): %s", obj->id,
+                 obj->name ? obj->name : "unnamed", msg);
         return status;
     }
 }
@@ -522,11 +630,11 @@ void sync_ctrl::init_vars() // Init local variables with default settings
 
     //==System Info
     //--get the nominal frequency of the power system
-    sys_nom_freq_hz = get_prop_value<double>("powerflow::nominal_frequency",
-                                             &gld_property::is_valid,
-                                             &gld_property::is_double,
-                                             &gld_property::get_double);
-    // std::cout << "Nominal Frequency = " << sys_nom_freq_hz << " (Hz)" << std::endl; // For verifying
+    sys_nom_freq_hz = get_prop_value<double>(
+        "powerflow::nominal_frequency", &gld_property::is_valid,
+        &gld_property::is_double, &gld_property::get_double);
+    // std::cout << "Nominal Frequency = " << sys_nom_freq_hz << " (Hz)" <<
+    // std::endl; // For verifying
 
     //==Controller
     pi_ctrl_cgu_volt_set = nullptr;
@@ -555,49 +663,62 @@ void sync_ctrl::init_vars() // Init local variables with default settings
 template <class T>
 void sync_ctrl::set_prop(gld_property *prop_ptr, T prop_value)
 {
-    
+
     prop_ptr->setp<T>(prop_value, rlock);
 }
 /* Get */
 template <class T>
 void sync_ctrl::get_prop(gld_property *prop_ptr, T prop_value)
 {
-    //gld_wlock *rlock = nullptr;
-    //replace the above with SharedMutexManager
-	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&rlock));
+    std::unique_lock<std::shared_mutex> lock(
+        SharedMutexManager::get_mutex(&rlock));
     prop_ptr->getp<T>(prop_value, rlock);
 }
 
 /* Get Prop Value*/
 template <class T, class T1>
-T sync_ctrl::get_prop_value(T1 *obj_ptr, const char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
+T sync_ctrl::get_prop_value(T1 *obj_ptr, const char *prop_name_char_ptr,
+                            bool (gld_property::*fp_is_valid)(),
+                            bool (gld_property::*fp_is_type)(),
+                            T (gld_property::*fp_get_type)())
 {
     // Get the property pointer
-    gld_property *prop_ptr = get_prop_ptr<T1>(obj_ptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
+    gld_property *prop_ptr =
+        get_prop_ptr<T1>(obj_ptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
 
     return get_prop_value(prop_ptr, fp_get_type);
 }
 
 template <class T, class T1>
-T *sync_ctrl::get_prop_value(T1 *obj_ptr, const char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T *(gld_property::*fp_get_type)())
+T *sync_ctrl::get_prop_value(T1 *obj_ptr, const char *prop_name_char_ptr,
+                             bool (gld_property::*fp_is_valid)(),
+                             bool (gld_property::*fp_is_type)(),
+                             T *(gld_property::*fp_get_type)())
 {
     // Get the property pointer
-    gld_property *prop_ptr = get_prop_ptr<T1>(obj_ptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
+    gld_property *prop_ptr =
+        get_prop_ptr<T1>(obj_ptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
 
     return get_prop_value(prop_ptr, fp_get_type);
 }
 
 template <class T>
-T sync_ctrl::get_prop_value(const char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
+T sync_ctrl::get_prop_value(const char *prop_name_char_ptr,
+                            bool (gld_property::*fp_is_valid)(),
+                            bool (gld_property::*fp_is_type)(),
+                            T (gld_property::*fp_get_type)())
 {
     // Get the property pointer
-    gld_property *prop_ptr = get_prop_ptr<const char>(nullptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
+    gld_property *prop_ptr = get_prop_ptr<const char>(nullptr, prop_name_char_ptr,
+                                                      fp_is_valid, fp_is_type);
 
     return get_prop_value(prop_ptr, fp_get_type);
 }
 
 template <class T>
-T sync_ctrl::get_prop_value(gld_property *prop_ptr, T (gld_property::*fp_get_type)(), bool del_prop_ptr_flag /*= true*/)
+T sync_ctrl::get_prop_value(gld_property *prop_ptr,
+                            T (gld_property::*fp_get_type)(),
+                            bool del_prop_ptr_flag /*= true*/)
 {
     // Get the property value
     T prop_val = (prop_ptr->*fp_get_type)();
@@ -611,7 +732,9 @@ T sync_ctrl::get_prop_value(gld_property *prop_ptr, T (gld_property::*fp_get_typ
 }
 
 template <class T>
-T *sync_ctrl::get_prop_value(gld_property *prop_ptr, T *(gld_property::*fp_get_type)(), bool del_prop_ptr_flag /*= true*/)
+T *sync_ctrl::get_prop_value(gld_property *prop_ptr,
+                             T *(gld_property::*fp_get_type)(),
+                             bool del_prop_ptr_flag /*= true*/)
 {
     // Get the property value
     T *prop_val = (prop_ptr->*fp_get_type)();
@@ -625,7 +748,10 @@ T *sync_ctrl::get_prop_value(gld_property *prop_ptr, T *(gld_property::*fp_get_t
 }
 
 template <class T>
-gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, const char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)())
+gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr,
+                                      const char *prop_name_char_ptr,
+                                      bool (gld_property::*fp_is_valid)(),
+                                      bool (gld_property::*fp_is_type)())
 {
     OBJECT *obj = object_header(this);
 
@@ -640,22 +766,24 @@ gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, const char *prop_name_char_ptr
     // Check the validity and type of the property pointer
     if (!(temp_prop_ptr->*fp_is_valid)() || !(temp_prop_ptr->*fp_is_type)())
     {
-        GL_THROW("%s:%d %s failed to map the property: '%s'",
-                 STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"), prop_name_char_ptr);
+        GL_THROW("%s:%d %s failed to map the property: '%s'", STR(sync_ctrl),
+                 obj->id, (obj->name ? obj->name : "Unnamed"), prop_name_char_ptr);
         /*  TROUBLESHOOT
-		While attempting to map the property named via variable 'prop_name_char_ptr', an error occurred. Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        While attempting to map the property named via variable
+        'prop_name_char_ptr', an error occurred. Please try again. If the error
+        persists, please submit your GLM and a bug report to the ticketing system.
+        */
     }
 
     return temp_prop_ptr;
 }
 
 //==Init & Check Member Funcs
-void sync_ctrl::init_pub_prop() // Init published properties with default settings
+void sync_ctrl::init_pub_prop() // Init published properties with default
+                                // settings
 {
     //==Flag
-    sct_armed_flag = false; //Start as disabled
+    sct_armed_flag = false; // Start as disabled
 
     //==Object
     sck_obj_ptr = nullptr;
@@ -717,47 +845,56 @@ void sync_ctrl::init_data_sanity_check()
     //--sync_check object
     if (sck_obj_ptr == nullptr)
     {
-        GL_THROW("%s:%d %s the %s property must be specified!",
-                 STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                 STR(sck_obj_ptr));
+        GL_THROW("%s:%d %s the %s property must be specified!", STR(sync_ctrl),
+                 obj->id, (obj->name ? obj->name : "Unnamed"), STR(sck_obj_ptr));
         /*  TROUBLESHOOT
-		The sck_obj_ptr property is not specified! Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        The sck_obj_ptr property is not specified! Please try again.
+        If the error persists, please submit your GLM and a bug report to the
+        ticketing system.
+        */
     }
-    else if (!gl_object_isa(sck_obj_ptr, "sync_check", "powerflow")) //Check if the sck_obj_ptr is pointing to a sync_check object
+    else if (!gl_object_isa(sck_obj_ptr, "sync_check",
+                            "powerflow")) // Check if the sck_obj_ptr is
+                                          // pointing to a sync_check object
     {
-        GL_THROW("%s:%d %s the %s property must be set as the name of a sync_check object!",
+        GL_THROW("%s:%d %s the %s property must be set as the name of a sync_check "
+                 "object!",
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                  STR(sck_obj_ptr));
         /*  TROUBLESHOOT
-		The sck_obj_ptr property must be set as the name of a sync_check object. Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        The sck_obj_ptr property must be set as the name of a sync_check object.
+        Please try again. If the error persists, please submit your GLM and a bug
+        report to the ticketing system.
+        */
     }
 
     //--controlled generation unit
     if (cgu_obj_ptr == nullptr)
     {
-        GL_THROW("%s:%d %s the %s property must be specified!",
-                 STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                 STR(cgu_obj_ptr));
+        GL_THROW("%s:%d %s the %s property must be specified!", STR(sync_ctrl),
+                 obj->id, (obj->name ? obj->name : "Unnamed"), STR(cgu_obj_ptr));
         /*  TROUBLESHOOT
-		The cgu_obj_ptr property is not specified! Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        The cgu_obj_ptr property is not specified! Please try again.
+        If the error persists, please submit your GLM and a bug report to the
+        ticketing system.
+        */
     }
-    // @NOTE: the gl_object_isa is implemented in an "interesting" way that leads the isa() to return int (implicit bool to int conversion) instead of bool
+    // @NOTE: the gl_object_isa is implemented in an "interesting" way that leads
+    // the isa() to return int (implicit bool to int conversion) instead of bool
     else if (!gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators") &&
-             (!gl_object_isa(cgu_obj_ptr, "diesel_dg", "generators"))) //Check if the sck_obj_ptr is pointing to a sync_check object
+             (!gl_object_isa(cgu_obj_ptr, "diesel_dg",
+                             "generators"))) // Check if the sck_obj_ptr is
+                                             // pointing to a sync_check object
     {
-        GL_THROW("%s:%d %s the %s property must be set as the name of a DG or Inverter object!",
+        GL_THROW("%s:%d %s the %s property must be set as the name of a DG or "
+                 "Inverter object!",
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                  STR(cgu_obj_ptr));
         /*  TROUBLESHOOT
-		The cgu_obj_ptr property must be set as the name of a DG or Inverter object. Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
+        The cgu_obj_ptr property must be set as the name of a DG or Inverter object.
+        Please try again. If the error persists, please submit your GLM and a bug
+        report to the ticketing system.
+        */
     }
 
     //==Tolerance
@@ -766,28 +903,32 @@ void sync_ctrl::init_data_sanity_check()
     {
         sct_freq_tol_lb_hz /= 2;
 
-        gl_warning("%s:%d %s - %s was set the same to the %s. The %s is halved as %f [Hz].",
+        gl_warning("%s:%d %s - %s was set the same to the %s. The %s is halved as "
+                   "%f [Hz].",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(sct_freq_tol_lb_hz), STR(sct_freq_tol_ub_hz),
                    STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz);
         // TROUBLESHOOT
-        // The sct_freq_tol_lb_hz was set was set the same to the sct_freq_tol_ub_hz!
-        // The %sct_freq_tol_lb_hz is halved.
-        // If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+        // The sct_freq_tol_lb_hz was set was set the same to the
+        // sct_freq_tol_ub_hz! The %sct_freq_tol_lb_hz is halved. If the warning
+        // persists and the object does, please submit your code and a bug report
+        // via the issue tracker.
     }
 
     /* Voltage magnitude tolerance */
     if (sct_volt_mag_tol_pu <= 0)
     {
-        sct_volt_mag_tol_pu = 1e-2; //Default it to 0.01 pu
+        sct_volt_mag_tol_pu = 1e-2; // Default it to 0.01 pu
 
-        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [pu].",
+        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to "
+                   "%f [pu].",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(sct_volt_mag_tol_pu), sct_volt_mag_tol_pu);
         /*  TROUBLESHOOT
-		The sct_volt_mag_tol_pu was not set as a positive value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        The sct_volt_mag_tol_pu was not set as a positive value!
+        If the warning persists and the object does, please submit your code and a
+        bug report via the issue tracker.
+        */
     }
 
     //==Time
@@ -795,26 +936,30 @@ void sync_ctrl::init_data_sanity_check()
     {
         pp_t_ctrl_sec = 1;
 
-        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [sec].",
+        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to "
+                   "%f [sec].",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(pp_t_ctrl_sec), pp_t_ctrl_sec);
         /*  TROUBLESHOOT
-		The pp_t_ctrl_sec was not set as a positive value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        The pp_t_ctrl_sec was not set as a positive value!
+        If the warning persists and the object does, please submit your code and a
+        bug report via the issue tracker.
+        */
     }
 
     if (pp_t_mon_sec <= 0)
     {
         pp_t_mon_sec = 10;
         // That word 'now' is used to avoid being considerd as a repeat.
-        gl_warning("%s:%d %s - %s was not set as a positive value, now it is reset to %f [sec].",
+        gl_warning("%s:%d %s - %s was not set as a positive value, now it is reset "
+                   "to %f [sec].",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(pp_t_mon_sec), pp_t_mon_sec);
         /*  TROUBLESHOOT
-		The pp_t_mon_sec was not set as a positive value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        The pp_t_mon_sec was not set as a positive value!
+        If the warning persists and the object does, please submit your code and a
+        bug report via the issue tracker.
+        */
     }
 
     //==Controller
@@ -836,37 +981,48 @@ void sync_ctrl::init_deltamode_check()
     {
         if (deltamode_inclusive)
         {
-            gl_warning("%s:%d %s - Deltamode is enabled for this '%s' object, but not the '%s' module!",
-                       obj->oclass->name, obj->id, (obj->name ? obj->name : "Unnamed"),
-                       obj->oclass->name, obj->oclass->module->name);
+            gl_warning("%s:%d %s - Deltamode is enabled for this '%s' object, but "
+                       "not the '%s' module!",
+                       obj->oclass->name, obj->id,
+                       (obj->name ? obj->name : "Unnamed"), obj->oclass->name,
+                       obj->oclass->module->name);
             /*  TROUBLESHOOT
-			Deltamode is enabled for this 'sync_ctrl' object, but not the 'generators' module!
-			If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-			*/
+            Deltamode is enabled for this 'sync_ctrl' object, but not the 'generators'
+            module! If the warning persists and the object does, please submit your
+            code and a bug report via the issue tracker.
+            */
         }
         else
         {
-            gl_warning("%s:%d %s - Deltamode is enabled for the '%s' module, but not this '%s' object!",
-                       obj->oclass->name, obj->id, (obj->name ? obj->name : "Unnamed"),
-                       obj->oclass->module->name, obj->oclass->name);
+            gl_warning("%s:%d %s - Deltamode is enabled for the '%s' module, but not "
+                       "this '%s' object!",
+                       obj->oclass->name, obj->id,
+                       (obj->name ? obj->name : "Unnamed"), obj->oclass->module->name,
+                       obj->oclass->name);
             /*  TROUBLESHOOT
-			Deltamode is enabled for the 'generators' module, but not this 'sync_ctrl' object!
-			If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-			*/
+            Deltamode is enabled for the 'generators' module, but not this 'sync_ctrl'
+            object! If the warning persists and the object does, please submit your
+            code and a bug report via the issue tracker.
+            */
         }
     }
-    else if (deltamode_inclusive) // Both the 'generators' module and 'sync_ctrl' object are enabled for the deltamode
+    else if (deltamode_inclusive) // Both the 'generators' module and
+                                  // 'sync_ctrl' object are enabled for the
+                                  // deltamode
     {
-        //Add us to the list
-        fxn_return_status = add_gen_delta_obj(obj,false);
+        // Add us to the list
+        fxn_return_status = add_gen_delta_obj(obj, false);
 
-        //Check it
+        // Check it
         if (fxn_return_status == FAILED)
         {
-            GL_THROW("sync_ctrl:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+            GL_THROW("sync_ctrl:%s - failed to add object to generator deltamode "
+                     "object list",
+                     obj->name ? obj->name : "unnamed");
             /*  TROUBLESHOOT
-            The sync_ctrl object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
-            persists, please submit an issue via GitHub.
+            The sync_ctrl object encountered an issue while trying to add itself to
+            the generator deltamode object list.  If the error persists, please submit
+            an issue via GitHub.
             */
         }
     }
@@ -874,55 +1030,60 @@ void sync_ctrl::init_deltamode_check()
 
 void sync_ctrl::init_nom_values()
 {
-    swt_nom_volt_v = get_prop_value<double, OBJECT>(sck_obj_ptr, "nominal_volt_v",
-                                                    &gld_property::is_valid,
-                                                    &gld_property::is_double,
-                                                    &gld_property::get_double);
+    swt_nom_volt_v = get_prop_value<double, OBJECT>(
+        sck_obj_ptr, "nominal_volt_v", &gld_property::is_valid,
+        &gld_property::is_double, &gld_property::get_double);
 }
 
 void sync_ctrl::init_sensors()
 {
     //==Switch (i.e., the parent of the sync_check object)
     obj_swt_ptr = sck_obj_ptr->parent;
-    prop_swt_status_ptr = get_prop_ptr(obj_swt_ptr, "status",
-                                       &gld_property::is_valid,
-                                       &gld_property::is_enumeration);
-    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration, false));
+    prop_swt_status_ptr =
+        get_prop_ptr(obj_swt_ptr, "status", &gld_property::is_valid,
+                     &gld_property::is_enumeration);
+    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(
+        prop_swt_status_ptr, &gld_property::get_enumeration, false));
 
     //==Sync_check
-    prop_sck_armed_ptr = get_prop_ptr(sck_obj_ptr, "armed",
-                                      &gld_property::is_valid,
-                                      &gld_property::is_bool);
-    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false); //i.e., get_prop(prop_sck_armed_ptr, sck_armed_flag);
+    prop_sck_armed_ptr = get_prop_ptr(
+        sck_obj_ptr, "armed", &gld_property::is_valid, &gld_property::is_bool);
+    sck_armed_flag = get_prop_value<bool>(
+        prop_sck_armed_ptr, &gld_property::get_bool,
+        false); // i.e., get_prop(prop_sck_armed_ptr, sck_armed_flag);
 
-    prop_sck_freq_diff_hz_ptr = get_prop_ptr(sck_obj_ptr, "freq_diff_noabs_hz",
-                                             &gld_property::is_valid,
-                                             &gld_property::is_double);
-    sck_freq_diff_hz = get_prop_value<double>(prop_sck_freq_diff_hz_ptr, &gld_property::get_double, false);
+    prop_sck_freq_diff_hz_ptr =
+        get_prop_ptr(sck_obj_ptr, "freq_diff_noabs_hz", &gld_property::is_valid,
+                     &gld_property::is_double);
+    sck_freq_diff_hz = get_prop_value<double>(prop_sck_freq_diff_hz_ptr,
+                                              &gld_property::get_double, false);
 
-    prop_sck_volt_A_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_A_mag_diff_noabs_pu",
-                                                   &gld_property::is_valid,
-                                                   &gld_property::is_double);
-    sck_volt_A_mag_diff_pu = get_prop_value<double>(prop_sck_volt_A_mag_diff_pu_ptr, &gld_property::get_double, false);
+    prop_sck_volt_A_mag_diff_pu_ptr =
+        get_prop_ptr(sck_obj_ptr, "volt_A_mag_diff_noabs_pu",
+                     &gld_property::is_valid, &gld_property::is_double);
+    sck_volt_A_mag_diff_pu = get_prop_value<double>(
+        prop_sck_volt_A_mag_diff_pu_ptr, &gld_property::get_double, false);
 
-    prop_sck_volt_B_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_B_mag_diff_noabs_pu",
-                                                   &gld_property::is_valid,
-                                                   &gld_property::is_double);
-    sck_volt_B_mag_diff_pu = get_prop_value<double>(prop_sck_volt_B_mag_diff_pu_ptr, &gld_property::get_double, false);
+    prop_sck_volt_B_mag_diff_pu_ptr =
+        get_prop_ptr(sck_obj_ptr, "volt_B_mag_diff_noabs_pu",
+                     &gld_property::is_valid, &gld_property::is_double);
+    sck_volt_B_mag_diff_pu = get_prop_value<double>(
+        prop_sck_volt_B_mag_diff_pu_ptr, &gld_property::get_double, false);
 
-    prop_sck_volt_C_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_C_mag_diff_noabs_pu",
-                                                   &gld_property::is_valid,
-                                                   &gld_property::is_double);
-    sck_volt_C_mag_diff_pu = get_prop_value<double>(prop_sck_volt_C_mag_diff_pu_ptr, &gld_property::get_double, false);
+    prop_sck_volt_C_mag_diff_pu_ptr =
+        get_prop_ptr(sck_obj_ptr, "volt_C_mag_diff_noabs_pu",
+                     &gld_property::is_valid, &gld_property::is_double);
+    sck_volt_C_mag_diff_pu = get_prop_value<double>(
+        prop_sck_volt_C_mag_diff_pu_ptr, &gld_property::get_double, false);
 
     //==CGU (controlled generation unit)
     //--p_f_droop
-    prop_cgu_P_f_droop_setting_mode_ptr = get_prop_ptr(cgu_obj_ptr, "P_f_droop_setting_mode",
-                                                       &gld_property::is_valid,
-                                                       &gld_property::is_enumeration);
+    prop_cgu_P_f_droop_setting_mode_ptr =
+        get_prop_ptr(cgu_obj_ptr, "P_f_droop_setting_mode",
+                     &gld_property::is_valid, &gld_property::is_enumeration);
     cgu_P_f_droop_setting_mode = static_cast<PF_DROOP_MODE>(
         get_prop_value<enumeration>(prop_cgu_P_f_droop_setting_mode_ptr,
-                                        &gld_property::get_enumeration, false));
+                                    &gld_property::get_enumeration, false));
 
     //--DG or INV
     if (gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators"))
@@ -966,21 +1127,21 @@ void sync_ctrl::init_sensors()
     }
 
     //--properties for the controlled variables
-    prop_cgu_volt_set_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_volt_set_name_cc_ptr,
-                                         &gld_property::is_valid,
-                                         &gld_property::is_double);
+    prop_cgu_volt_set_ptr =
+        get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_volt_set_name_cc_ptr,
+                     &gld_property::is_valid, &gld_property::is_double);
 
-    prop_cgu_freq_set_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_freq_set_name_cc_ptr,
-                                         &gld_property::is_valid,
-                                         &gld_property::is_double);
+    prop_cgu_freq_set_ptr =
+        get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_freq_set_name_cc_ptr,
+                     &gld_property::is_valid, &gld_property::is_double);
 }
 
 void sync_ctrl::init_controllers()
 {
-    pi_ctrl_cgu_volt_set = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
-                                        0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
-    pi_ctrl_cgu_freq_set = new pid_ctrl(pi_freq_kp, pi_freq_kp, 0,
-                                        0, pi_freq_ub_pu, pi_freq_lb_pu);
+    pi_ctrl_cgu_volt_set = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0, 0,
+                                        pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
+    pi_ctrl_cgu_freq_set =
+        new pid_ctrl(pi_freq_kp, pi_freq_kp, 0, 0, pi_freq_ub_pu, pi_freq_lb_pu);
 
     pi_ctrl_cgu_volt_set_fsu_flag = true;
     pi_ctrl_cgu_freq_set_fsu_flag = true;
@@ -989,29 +1150,14 @@ void sync_ctrl::init_controllers()
 /* ================================================
 PID Controller
 ================================================ */
-pid_ctrl::pid_ctrl(double kp, double ki, double kd,
-                   double dt, double cv_max, double cv_min,
-                   double cv_init)
-    : kp(kp),
-      ki(ki),
-      kd(kd),
-      dt(dt),
-      cv_max(cv_max),
-      cv_min(cv_min),
-      cv_init(cv_init),
-      pre_ev(0),
-      integral(0)
-{
-}
+pid_ctrl::pid_ctrl(double kp, double ki, double kd, double dt, double cv_max,
+                   double cv_min, double cv_init)
+    : kp(kp), ki(ki), kd(kd), dt(dt), cv_max(cv_max), cv_min(cv_min),
+      cv_init(cv_init), pre_ev(0), integral(0) {}
 
-pid_ctrl::~pid_ctrl()
-{
-}
+pid_ctrl::~pid_ctrl() {}
 
-void pid_ctrl::set_cv_init(double init_val)
-{
-    cv_init = init_val;
-}
+void pid_ctrl::set_cv_init(double init_val) { cv_init = init_val; }
 
 double pid_ctrl::step_update(double setpoint, double mpv, double cur_dt)
 {
@@ -1024,7 +1170,8 @@ double pid_ctrl::step_update(double setpoint, double mpv, double cur_dt)
     else
     {
         // Post an error message & terminate
-        GL_THROW("The time step is not specified as positive in both the init and step update processes.");
+        GL_THROW("The time step is not specified as positive in both the init and "
+                 "step update processes.");
     }
 
     //== Calculation
@@ -1038,7 +1185,8 @@ double pid_ctrl::step_update(double setpoint, double mpv, double cur_dt)
     double derivative = (ev - pre_ev) / step_dt; // Current derivative
     double d_term = kd * derivative;             // Derivative term
 
-    double pid_ctrl_cv = p_term + i_term + d_term + cv_init; // Control variable, i.e., the output
+    double pid_ctrl_cv =
+        p_term + i_term + d_term + cv_init; // Control variable, i.e., the output
 
     //== Bounds
     if (pid_ctrl_cv > cv_max)

@@ -457,7 +457,7 @@ STATUS loader::loadClock()
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
         if (tsval == TS_INVALID)
         {
-            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. starttime "
+            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
                              "provided: %s.",
                              this->filename.string().c_str(), ts.c_str());
             return FAILED;
@@ -474,7 +474,7 @@ STATUS loader::loadClock()
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
         if (tsval == TS_INVALID)
         {
-            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
+            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. starttime "
                              "provided: %s.",
                              this->filename.string().c_str(), ts.c_str());
             return FAILED;
@@ -725,7 +725,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             else if (obj == nullptr || obj == &nameObj)
             {
                 output_error("loader::loadObject() parsing file, %s: create failed name object %s:%d\n%s",
-                             this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4));
+                             this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4).c_str());
                 rv = FAILED;
                 break;
             }
@@ -736,7 +736,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             if (obj == nullptr)
             {
                 output_error("loader::loadObject() parsing file, %s: create failed for object %s:%d\n%s",
-                             this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4));
+                             this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4).c_str());
                 rv = FAILED;
                 break;
             }
@@ -745,7 +745,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
         if (id != -1 && this->parse.load_set_index(obj, (OBJECTNUM)id) == FAILED)
         {
             output_error("loader::loadObject() parsing file, %s: create failed for object %s:%d\n%s",
-                         this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4));
+                         this->filename.string().c_str(), className.c_str(), id, objInstance.dump(4).c_str());
             rv = FAILED;
             break;
         }
@@ -1000,7 +1000,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: property %s of %s could not be set to "
                                  "%g",
-                                 this->filename.string().c_str(), propName, this->parse.format_object(obj), dval);
+                                 this->filename.string().c_str(), propName.c_str(), this->parse.format_object(obj), dval);
                 status = FAILED;
             }
         }
@@ -1018,7 +1018,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
             {
                 output_error_raw("loader::objectProperties() parsing file, %s: property %s of %s could not be set to "
                                  "%g",
-                                 this->filename.string().c_str(), propName, this->parse.format_object(obj), dval);
+                                 this->filename.string().c_str(), propName.c_str(), this->parse.format_object(obj), dval);
                 status = FAILED;
             }
         }
@@ -1073,12 +1073,7 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 }
             }
         }
-        else if (prop != nullptr &&
-                 (((prop->ptype >= PT_double && prop->ptype <= PT_int64) ||
-                   (prop->ptype >= PT_bool && prop->ptype <= PT_timestamp) ||
-                   (prop->ptype >= PT_float && prop->ptype <= PT_enduse) ||
-                   prop->ptype == PT_enumeration || prop->ptype == PT_set) &&
-                  this->parse.linear_transform(propValue, &xstype, &source, &scale, &bias, obj) > 0))
+        else if (prop != nullptr && (((prop->ptype >= PT_double && prop->ptype <= PT_int64) || (prop->ptype >= PT_bool && prop->ptype <= PT_timestamp) || (prop->ptype >= PT_float && prop->ptype <= PT_enduse) || prop->ptype == PT_enumeration || prop->ptype == PT_set) && this->parse.linear_transform(propValue, &xstype, &source, &scale, &bias, obj) > 0))
         {
             void *target = (void *)((char *)(obj + 1) + (int64)prop->addr);
             /* add the transform list */
@@ -1289,7 +1284,7 @@ double loader::loadLatitude(char *buffer)
         }
         return obj->latitude;
     }
-    else if (isnan(v) && (strcmp(buffer, "") != 0 || stricmp(buffer, "none") != 0))
+    else if (isnan(v) && (strcmp(buffer, "") != 0 || strcasecmp(buffer, "none") != 0))
     {
         output_error_raw("loader::loadLatitude() parsing file, %s: %s is not a valid latitude",
                          this->filename.string().c_str(), buffer);
@@ -1316,7 +1311,7 @@ double loader::loadLongitude(char *buffer)
         }
         return obj->longitude;
     }
-    else if (isnan(v) && (strcmp(buffer, "") != 0 || stricmp(buffer, "none") != 0))
+    else if (isnan(v) && (strcmp(buffer, "") != 0 || strcasecmp(buffer, "none") != 0))
     {
         output_error_raw("loader::loadLongitude() parsing file, %s: %s is not a valid longitude",
                          this->filename.string().c_str(), buffer);

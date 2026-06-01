@@ -1,8 +1,8 @@
 /** $Id: list.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file list.h
-	@addtogroup list
-	@ingroup core
+        Copyright (C) 2008 Battelle Memorial Institute
+        @file list.h
+        @addtogroup list
+        @ingroup core
 @{
  **/
 
@@ -10,15 +10,15 @@
 #define _LIST_H
 
 typedef struct s_listitem {
-	void *data;
-	struct s_listitem *prev;
-	struct s_listitem *next;
+  void *data;
+  struct s_listitem *prev;
+  struct s_listitem *next;
 } LISTITEM;
 
 typedef struct s_list {
-	unsigned int size;
-	LISTITEM *first;
-	LISTITEM *last;
+  unsigned int size;
+  LISTITEM *first;
+  LISTITEM *last;
 } GLLIST;
 
 GLLIST *list_create(void);

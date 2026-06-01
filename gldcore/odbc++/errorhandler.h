@@ -23,113 +23,104 @@
 #define __ODBCXX_ERRORHANDLER_H
 
 #include <odbc++/setup.h>
-#include <odbc++/types.h>
 #include <odbc++/threads.h>
+#include <odbc++/types.h>
 
 namespace odbc {
 
-  /** Base class for everything that might contain warnings */
-  class ODBCXX_EXPORT ErrorHandler {
-    friend class DriverManager;
-    friend class DataStreamBuf;
-    friend class DataStream;
-  private:
-    // private data
-    struct PD;
-    PD* pd_;
+/** Base class for everything that might contain warnings */
+class ODBCXX_EXPORT ErrorHandler {
+  friend class DriverManager;
+  friend class DataStreamBuf;
+  friend class DataStream;
 
-    WarningList* warnings_;
-    bool collectWarnings_;
+private:
+  // private data
+  struct PD;
+  PD *pd_;
 
-    //the maxumum number of warnings to contain at a time
-    enum {
-      MAX_WARNINGS=128
-    };
+  WarningList *warnings_;
+  bool collectWarnings_;
 
-  protected:
-    void _postWarning(SQLWarning* w);
+  // the maxumum number of warnings to contain at a time
+  enum { MAX_WARNINGS = 128 };
 
+protected:
+  void _postWarning(SQLWarning *w);
 
 #if ODBCVER < 0x0300
-    void _checkErrorODBC2(SQLHENV henv,
-			  SQLHDBC hdbc,
-			  SQLHSTMT hstmt,
-			  SQLRETURN r,
-			  const ODBCXX_STRING& what);
+  void _checkErrorODBC2(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt, SQLRETURN r,
+                        const ODBCXX_STRING &what);
 #else
 
-    void _checkErrorODBC3(SQLINTEGER handleType,
-			  SQLHANDLE h,
-			  SQLRETURN r, const ODBCXX_STRING& what);
-#endif //ODBCVER < 0x0300
+  void _checkErrorODBC3(SQLINTEGER handleType, SQLHANDLE h, SQLRETURN r,
+                        const ODBCXX_STRING &what);
+#endif // ODBCVER < 0x0300
 
-    void _checkStmtError(SQLHSTMT hstmt,
-			 SQLRETURN r, const ODBCXX_CHAR_TYPE* what=ODBCXX_STRING_CONST("")) {
+  void _checkStmtError(SQLHSTMT hstmt, SQLRETURN r,
+                       const ODBCXX_CHAR_TYPE *what = ODBCXX_STRING_CONST("")) {
 
-      if(r==SQL_SUCCESS_WITH_INFO || r==SQL_ERROR) {
+    if (r == SQL_SUCCESS_WITH_INFO || r == SQL_ERROR) {
 #if ODBCVER < 0x0300
 
-	this->_checkErrorODBC2(SQL_NULL_HENV, SQL_NULL_HDBC, hstmt,
-			       r,ODBCXX_STRING_C(what));
+      this->_checkErrorODBC2(SQL_NULL_HENV, SQL_NULL_HDBC, hstmt, r,
+                             ODBCXX_STRING_C(what));
 #else
-	
-	this->_checkErrorODBC3(SQL_HANDLE_STMT,hstmt,r,ODBCXX_STRING_C(what));
-	
-#endif
-      }
-    }
 
-    void _checkConError(SQLHDBC hdbc,
-                        SQLRETURN r,
-                        const ODBCXX_CHAR_TYPE* what=ODBCXX_STRING_CONST("")) {
-      if(r==SQL_SUCCESS_WITH_INFO || r==SQL_ERROR) {
-#if ODBCVER < 0x0300
-	
-	this->_checkErrorODBC2(SQL_NULL_HENV, hdbc, SQL_NULL_HSTMT, r,
-			       ODBCXX_STRING_C(what));
-	
-#else
-	
-	this->_checkErrorODBC3(SQL_HANDLE_DBC, hdbc, r, ODBCXX_STRING_C(what));
+      this->_checkErrorODBC3(SQL_HANDLE_STMT, hstmt, r, ODBCXX_STRING_C(what));
 
 #endif
-      }
     }
+  }
 
-    void _checkEnvError(SQLHENV henv,
-                        SQLRETURN r,
-                        const ODBCXX_CHAR_TYPE* what=ODBCXX_STRING_CONST("")) {
-      if(r==SQL_SUCCESS_WITH_INFO || r==SQL_ERROR) {
+  void _checkConError(SQLHDBC hdbc, SQLRETURN r,
+                      const ODBCXX_CHAR_TYPE *what = ODBCXX_STRING_CONST("")) {
+    if (r == SQL_SUCCESS_WITH_INFO || r == SQL_ERROR) {
 #if ODBCVER < 0x0300
-	
-	this->_checkErrorODBC2(henv,SQL_NULL_HDBC,SQL_NULL_HSTMT,r,
-			       ODBCXX_STRING_C(what));
-	
+
+      this->_checkErrorODBC2(SQL_NULL_HENV, hdbc, SQL_NULL_HSTMT, r,
+                             ODBCXX_STRING_C(what));
+
 #else
-	
-	this->_checkErrorODBC3(SQL_HANDLE_ENV,henv,r,ODBCXX_STRING_C(what));
-	
+
+      this->_checkErrorODBC3(SQL_HANDLE_DBC, hdbc, r, ODBCXX_STRING_C(what));
+
 #endif
-      }
     }
+  }
 
-    /** Constructor */
-    ErrorHandler(bool collectWarnings =true);
+  void _checkEnvError(SQLHENV henv, SQLRETURN r,
+                      const ODBCXX_CHAR_TYPE *what = ODBCXX_STRING_CONST("")) {
+    if (r == SQL_SUCCESS_WITH_INFO || r == SQL_ERROR) {
+#if ODBCVER < 0x0300
 
-  public:
-    /** Clears all the warnings stored in this object */
-    void clearWarnings();
+      this->_checkErrorODBC2(henv, SQL_NULL_HDBC, SQL_NULL_HSTMT, r,
+                             ODBCXX_STRING_C(what));
 
-    /** Fetches all the warnings in this object.
-     * The caller is responsive for deleteing the
-     * returned object.
-     */
-    WarningList* getWarnings();
+#else
 
-    /** Destructor */
-    virtual ~ErrorHandler();
-  };
+      this->_checkErrorODBC3(SQL_HANDLE_ENV, henv, r, ODBCXX_STRING_C(what));
 
+#endif
+    }
+  }
+
+  /** Constructor */
+  ErrorHandler(bool collectWarnings = true);
+
+public:
+  /** Clears all the warnings stored in this object */
+  void clearWarnings();
+
+  /** Fetches all the warnings in this object.
+   * The caller is responsive for deleteing the
+   * returned object.
+   */
+  WarningList *getWarnings();
+
+  /** Destructor */
+  virtual ~ErrorHandler();
+};
 
 } // namespace odbc
 

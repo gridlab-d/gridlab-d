@@ -26,7 +26,6 @@
 #include "output.h"
 #include "validate.h"
 #include "exec.h"
-#include "lock.h"
 #include "cpp_threadpool.h"
 #include "object.h"
 
@@ -49,8 +48,6 @@ typedef struct
 static const char *GetLastErrorMsg(void)
 {
 	static unsigned int lock = 0;
-	// wlock(&lock);
-	// replace the above with SharedMutexManager
 	std::unique_lock<std::shared_mutex> wlock(SharedMutexManager::get_mutex(&lock));
 	static TCHAR szBuf[256];
 	LPVOID lpMsgBuf;
@@ -73,7 +70,6 @@ static const char *GetLastErrorMsg(void)
 	sprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw);
 
 	LocalFree(lpMsgBuf);
-	// wunlock(&lock);
 	return szBuf;
 }
 static DIR *opendir(const char *dirname)
@@ -249,11 +245,11 @@ static bool run_job(char *file, double *elapsed_time = nullptr)
 	int64 dt = exec_clock();
 	unsigned int code = vsystem("%s %s %s ",
 #ifdef _WIN32
-								_pgmptr,
+	_pgmptr,
 #else
-								global_gl_executable.c_str(),
+	global_gl_executable.c_str(),
 #endif
-								job_cmdargs, name);
+	job_cmdargs, name);
 	dt = exec_clock() - dt;
 	double t = (double)dt / (double)global_ms_per_second;
 	if (elapsed_time != nullptr)
@@ -280,23 +276,17 @@ static void pushjob(char *dir)
 	output_debug("adding %s to job list", dir);
 	JOBLIST *item = (JOBLIST *)malloc(sizeof(JOBLIST));
 	strncpy(item->name, dir, sizeof(item->name) - 1);
-	// wlock(&joblock);
-	// replace the above with SharedMutexManager
 	std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&joblock));
 	item->next = jobstack;
 	jobstack = item;
-	// wunlock(&joblock);
 }
 /* popped item must be freed after no longer needed */
 static JOBLIST *popjob(void)
 {
-	// auto v = rlock(&joblock);
-	// replace the above with SharedMutexManager
 	std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&joblock));
 	JOBLIST *item = jobstack;
 	if (jobstack)
 		jobstack = jobstack->next;
-	// runlock();
 	lock.unlock();
 	output_debug("pulling %s from job list", item->name);
 	return item;
@@ -376,20 +366,6 @@ extern "C" int job(int argc, char *argv[])
 		exit(XC_RUNERR);
 	}
 
-	/*unsigned int n_procs = global_threadcount;
-	if ( n_procs==0 ) n_procs = processor_count();
-	pthread_t *pid = new pthread_t[n_procs];
-	output_debug("starting job with cmdargs '%s' using %d threads", job_cmdargs, n_procs);
-	for ( i=0 ; i<fmin(count,n_procs) ; i++ )
-		pthread_create(&pid[i],nullptr,run_job_proc,(void*)i);
-	void *rc;
-	output_debug("begin waiting process");
-	for ( i=0 ; i<fmin(count,n_procs) ; i++ )
-	{
-		pthread_join(pid[i],&rc);
-		output_debug("process %d done", i);
-	}
-	delete [] pid;*/
 
 	unsigned int n_procs = global_threadcount;
 	if (n_procs == 0)

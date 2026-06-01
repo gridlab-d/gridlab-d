@@ -14,11 +14,12 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "version.h"
-#include "output.h"
+#define _MAIN_C 1
 #include "globals.h"
+
 #include "module.h"
-#include "lock.h"
+#include "output.h"
+#include "version.h"
 
 static GLOBALVAR *global_varlist = nullptr, *lastvar = nullptr;
 
@@ -634,7 +635,7 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 		int retval;
 		if (var == nullptr)
 		{
-			if (global_strictnames && !global_checkpoint_loaded)
+			if (global_strictnames)
 			{
 				output_error("strict naming prevents implicit creation of %s", name);
 				/* TROUBLESHOOT
@@ -658,11 +659,8 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 				return FAILED;
 			}
 		}
-		// wlock(&globalvar_lock);
-		// replace the above with SharedMutexManager
 		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&globalvar_lock));
 		retval = class_string_to_property(var->prop, (void *)var->prop->addr, value);
-		// wunlock(&globalvar_lock);
 		lock.unlock();
 		if (retval == 0)
 		{
@@ -1220,11 +1218,8 @@ void *global_remote_read(void *local,	 /** local memory for data (must be correc
 		/* multithread */
 		else
 		{
-			// auto v = rlock(&var->lock);
-			// replace the above with SharedMutexManager
 			std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&var->lock));
 			memcpy(local, addr, size);
-			// runlock();
 			return local;
 		}
 	}
@@ -1254,11 +1249,8 @@ void global_remote_write(void *local,	 /** local memory for data */
 		/* multithread */
 		else
 		{
-			// wlock(&var->lock);
-			// replace the above with SharedMutexManager
 			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&var->lock));
 			memcpy(addr, local, size);
-			// wunlock(&var->lock);
 		}
 	}
 	else

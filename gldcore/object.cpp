@@ -38,7 +38,6 @@
 #include "output.h"
 #include "globals.h"
 #include "module.h"
-#include "lock.h"
 #include "cpp_threadpool.h"
 #include "exec.h"
 #include "platform.h"
@@ -382,20 +381,16 @@ char *object_get_unit(OBJECT *obj, const char *name)
          */
     }
 
-    // auto v = rlock(&unitlock);
     std::shared_lock<std::shared_mutex> v(SharedMutexManager::get_mutex(&unitlock));
     if (dimless == nullptr)
     {
-        // runlock(&unitlock);
         v.unlock();
-        // wlock(&unitlock);
         std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&unitlock));
         dimless = unit_find("1");
-        // wunlock(&unitlock);
+        lock.unlock();
     }
     else
         v.unlock();
-    // runlock(&unitlock);
 
     if (prop->unit != nullptr)
     {
@@ -1266,10 +1261,10 @@ STATUS object_restore_checkpoint_properties(OBJECT *obj)
 }
 
 // Add this at the top of your file or in an appropriate header
-#ifdef _WIN32
-// Windows-specific includes and definitions
-#define strcasecmp _stricmp
-#endif
+// #ifdef _WIN32
+// // Windows-specific includes and definitions
+// #define strcasecmp _stricmp
+// #endif
 
 /** Set a property value by reference to its name
     @return the number of characters written to the buffer
@@ -1882,23 +1877,18 @@ TIMESTAMP _object_sync(OBJECT *obj,     /**< the object to synchronize */
     {
         if (autolock)
         {
-            // wlock(&obj->lock);
             std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
             plc_time = oclass->plc(obj, ts);
         }
         else
             plc_time = oclass->plc(obj, ts);
-
-        // if (autolock) wunlock(&obj->lock);
     }
 
     /* call sync */
     if (autolock)
     {
-        // wlock(&obj->lock);
         std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&obj->lock));
         sync_time = (*obj->oclass->sync)(obj, ts, pass);
-        // if (autolock) wunlock(&obj->lock);
     }
     else
     {
@@ -1930,9 +1920,9 @@ TIMESTAMP _object_sync(OBJECT *obj,     /**< the object to synchronize */
 
     @return  the time of the next event for this object.
  */
-TIMESTAMP object_sync(OBJECT *obj,     /**< the object to synchronize */
-                      TIMESTAMP ts,    /**< the desire clock to sync to */
-                      PASSCONFIG pass) /**< the pass configuration */
+static TIMESTAMP object_sync_impl(OBJECT *obj,     /**< the object to synchronize */
+                                  TIMESTAMP ts,    /**< the desire clock to sync to */
+                                  PASSCONFIG pass) /**< the pass configuration */
 {
     clock_t t = (clock_t)exec_clock();
     TIMESTAMP t2 = TS_NEVER;
@@ -1976,6 +1966,30 @@ TIMESTAMP object_sync(OBJECT *obj,     /**< the object to synchronize */
     return t2;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API
+    TIMESTAMP object_sync(OBJECT *obj,     /**< the object to synchronize */
+                          TIMESTAMP ts,    /**< the desire clock to sync to */
+                          PASSCONFIG pass) /**< the pass configuration */
+{
+    return object_sync_impl(obj, /**< the object to synchronize */
+                            ts,  /**< the desire clock to sync to */
+                            pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP object_sync(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP ts = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return object_sync_impl(obj, /**< the object to synchronize */
+                            ts,  /**< the desire clock to sync to */
+                            pass);
+}
+#endif
+
 TIMESTAMP object_heartbeat(OBJECT *obj)
 {
     clock_t t = (clock_t)exec_clock();
@@ -2014,10 +2028,7 @@ int object_init(OBJECT *obj) /**< the object to initialize */
     }
     object_profile(obj, OPI_INIT, t);
     if (global_debug_output > 0)
-    {
         output_debug("object %s:%d init -> %s", obj->oclass->name, obj->id, rv ? "ok" : "failed");
-    }
-
     return rv;
 }
 
@@ -2044,10 +2055,7 @@ STATUS object_precommit(OBJECT *obj, TIMESTAMP t1)
     }
     object_profile(obj, OPI_PRECOMMIT, t);
     if (global_debug_output > 0)
-    {
         output_debug("object %s:%d precommit -> %s", obj->oclass->name, obj->id, rv ? "ok" : "failed");
-    }
-
     return rv;
 }
 
@@ -2105,21 +2113,13 @@ int object_isa(OBJECT *obj, /**< the object to test */
                const char *type)
 { /**< the type of test */
     if (obj == 0)
-    {
         return 0;
-    }
     if (strcmp(obj->oclass->name, type) == 0)
-    {
         return 1;
-    }
     else if (obj->oclass->isa)
-    {
         return (int)obj->oclass->isa(obj, type);
-    }
     else
-    {
         return 0;
-    }
 }
 
 /** Dump an object to a buffer
@@ -3333,11 +3333,8 @@ void *object_remote_read(void *local,    /**< local memory for data (must be cor
         /* multithread */
         else
         {
-            // auto v = rlock(&obj->lock);
-            // replace with SharedMutexManager
-            std::shared_lock<std::shared_mutex> runlock(SharedMutexManager::get_mutex(&obj->lock));
+            std::unique_lock<std::shared_mutex> runlock(SharedMutexManager::get_mutex(&obj->lock));
             memcpy(local, addr, size);
-            // runlock();
             runlock.unlock();
             return local;
         }
