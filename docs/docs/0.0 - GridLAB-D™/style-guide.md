@@ -54,13 +54,13 @@ and
 
 ![Distribution system switching capacitors [local path reference]](../../images/Dist_syst_switching_capacitors.png){ #fig:local-reference-ex }
 
-Tables are introduced by preceeding them with the keyword ```Table:``` followed by the table caption and anchor for referencing.
+Tables are introduced by preceeding them with the keyword ```Table:``` followed by the table caption and anchor for referencing. Note that paramaters and variable names in the first column of a table are **bold** rather than in `back-ticks` for ease of reading.
 
 Table: Table example { #tbl:table-ex }
 
 |Parameter Name|Unit|Type|Description|
 |---|---|---|---|
-|```voltage```|V|float|Terminal voltage|
+|**voltage**|V|float|Terminal voltage|
 
 !!! note 
 
