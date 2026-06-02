@@ -26,8 +26,6 @@ private:
     double default_current_array;
     double default_power_array;
 
-    double prev_time;
-
 public:
     // Example published/keeper values - can be changed
     double ES_DC_Voltage;   // unit V
@@ -50,6 +48,7 @@ public:
     double I_ES_pu;  // ES output current, per unit
     double R_ES_pu;  // ES internal resitance, per unit
     double P_ES_pu;  // ES ouptut active power, per unit
+    double prev_time;
 
     /* required implementations */
     energy_storage(MODULE *module);

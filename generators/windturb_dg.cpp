@@ -1355,7 +1355,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
         }
 
         // Force a reiteration on the first run.  Current convergence check should get it, but just to be safe
-        t2 = t0;
+        t2 = t1;
 
         // Deflag us
         NR_first_run = false;

@@ -81,6 +81,7 @@ public:
     double all_inverter_S_rated;
     double all_battery_S_rated;
     double all_solar_S_rated;
+    TIMESTAMP prev_time;
 
 public:
     /* required implementations */

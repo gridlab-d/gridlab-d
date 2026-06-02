@@ -233,6 +233,7 @@ int battery::create(void)
     parent_is_triplex = false;
     parent_is_inverter = false;
     climate_object_found = false; // Use default data, by default
+    prev_time = 0;
 
     /* TODO: set the context-free initial value of properties */
     return 1; /* return 1 on success, 0 on failure */
@@ -781,8 +782,8 @@ int battery::init(OBJECT *parent)
         {
             enableDelta = true;
         }
-    }
-
+    };
+    prev_time = gl_globalclock;
     return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -852,7 +853,7 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
     if (use_internal_battery_model)
     {
         double dt;
-        if (t0 != 0)
+        if (prev_time < t1)
         {
 
             // Update the reserve value

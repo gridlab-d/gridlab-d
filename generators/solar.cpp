@@ -1230,13 +1230,13 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
     {
         // Approach taken from NREL SAM documentation for flat plate efficiency model - unclear on its origins
         // Cycle temperature differences through if using flat efficiency model
-        if (prevTime != t0)
+        if (prevTime != t1)
         {
             prevTemp = currTemp; // Current becomes previous
 
             currTemp = FAHR_TO_CELS(Tamb); // Convert current temperature back to metric
 
-            prevTime = t0; // Record current timestep
+            prevTime = t1; // Record current timestep
         }
 
         // Get the "ambient" temperature of the array - by SAM algorithm, taken as

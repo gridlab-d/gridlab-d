@@ -64,6 +64,7 @@ central_dg_control::central_dg_control(MODULE *module)
                 PT_double, "peak_S[W]", PADDR(S_peak),
                 PT_double, "pf_low[unit]", PADDR(pf_low),
                 PT_double, "pf_high[unit]", PADDR(pf_high),
+                PT_timestamp, "prev_time", PADDR(prev_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_time",
                 nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -397,6 +398,7 @@ int central_dg_control::init(OBJECT *parent)
 
     P_disp_3p = 0.0;
     Q_disp_3p = 0.0;
+    prev_time = 0;
     return 1;
 }
 
@@ -411,7 +413,7 @@ TIMESTAMP central_dg_control::presync(TIMESTAMP t0, TIMESTAMP t1)
     // initial values are given, they must be reassigned. This is done at each
     // time step here in presync before any controller action
     //(in sync) may change these values.
-    if (t0 != t1)
+    if (prev_time != t1)
     {
         for (i = 0; i < inverter_count; i++)
         {
@@ -431,8 +433,9 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
     // without any central control and then reiterate
     gld::complex temp_complex_array[3];
 
-    if (t0 != t1)
+    if (prev_time != t1)
     {
+        prev_time = t1;
         return t1;
     }
     int i;
@@ -695,6 +698,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
                 }
 
                 // Reiterate to make sure it worked and also check lower control modes.
+                prev_time = t1;
                 return t1;
                 break;
             // Control mode to keep real power below peak value.
@@ -714,6 +718,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
                     }
                     // Reiterate to make sure it worked and also check lower control
                     // modes.
+                    prev_time = t1;
                     return t1;
                 }
                 break;
@@ -721,7 +726,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
         }
         i--;
     }
-
+    prev_time = t1;
     return TS_NEVER;
 }
 

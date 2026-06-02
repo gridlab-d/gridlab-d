@@ -2299,7 +2299,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
     {
         if (pf_reg == INCLUDED)
         {
-            if (t1 != t0)
+            if (t1 != prev_time)
             {
                 // See if the "new" timestamp allows us to change
                 if (t1 >= pf_reg_next_update_time)
@@ -2338,7 +2338,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
         }
         else if (pf_reg == INCLUDED_ALT)
         {
-            if (t1 != t0)
+            if (t1 != prev_time)
             {
                 // See if the "new" timestamp allows us to change
                 if (t1 >= pf_reg_next_update_time)
@@ -2416,7 +2416,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
         if (four_quadrant_control_mode == FQM_LOAD_FOLLOWING)
         {
-            if (t1 != t0)
+            if (t1 != prev_time)
             {
                 // See if the "new" timestamp allows us to change
                 if (t1 >= next_update_time)
@@ -2531,7 +2531,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
         } // End VOLT_VAR or VOLT_WATT
         else if (four_quadrant_control_mode == FQM_GROUP_LF)
         {
-            if (t1 != t0)
+            if (t1 != prev_time)
             {
                 // See if the "new" timestamp allows us to change
                 if (t1 >= next_update_time)
@@ -2591,7 +2591,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
         if (deltamode_inclusive && enable_subsecond_models && (inverter_dyn_mode == PI_CONTROLLER))
         {
             // Only execute at the first time step of simulation, or the first ieration of the next time steps
-            if ((t1 == start_time) || (t1 != t0))
+            if ((t1 == start_time) || (t1 != prev_time))
             {
                 last_I_In = I_In;
 
