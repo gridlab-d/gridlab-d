@@ -1,4 +1,4 @@
-﻿## Powerflow Object
+## Powerflow Object
 
 Along with all of the properties inherited from either **node** or **link**, all objects within the **powerflow** module inherit two basic properties. These two properties are the phases of the object and the nominal voltage for that area of the system. These are expressed in the `phases` and `nominal_voltage` parameters of **powerflow** objects. 
 
@@ -54,12 +54,12 @@ The other common property is nominal voltage, which is passed into the objects u
 
 The I/O column indicates whether a property is user-settable input (I), simulation-computed output (O), or both (IO).
 
-Table: 02-powerflow_object table 1 { #tbl:02-powerflow-object-1 }
+Table: powerflow_object table 1 { #tbl:02-powerflow-object-1 }
 
 | Property Name | Type | Unit | I/O | Description |
 | --- | --- | --- | --- | --- |
-| phases | set | N/A | I | Valid values: `G`, `S`, `N`, `D`, `C`, `B`, `A`. |
-| nominal_voltage | double | V | I |  |
-| inrush_integration_method | enumeration | N/A | I | Integration method for in-rush Valid values: `NONE`, `TRAPEZOIDAL`, `BACKWARD_EULER`. |
-| condition | set | N/A | IO | Valid values: `OPEN`, `CONTACT`, `NORMAL`, `SN`, `S2`, `S1`, `G`, `N`, `C`, `B`, `A`. |
-| solution | enumeration | N/A | IO | Valid values: `NORMAL`, `OUTAGE`. |
+| **phases** | set | N/A | I | Valid values: `G`, `S`, `N`, `D`, `C`, `B`, `A`. |
+| **nominal_voltage** | double | V | I |  |
+| **inrush_integration_method** | enumeration | N/A | I | Integration method for in-rush Valid values: `NONE`, `TRAPEZOIDAL`, `BACKWARD_EULER`. |
+| **condition** | set | N/A | IO | Valid values: `OPEN`, `CONTACT`, `NORMAL`, `SN`, `S2`, `S1`, `G`, `N`, `C`, `B`, `A`. |
+| **solution** | enumeration | N/A | IO | Valid values: `NORMAL`, `OUTAGE`. |

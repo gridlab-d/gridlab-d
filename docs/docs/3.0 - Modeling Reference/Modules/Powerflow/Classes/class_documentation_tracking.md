@@ -12,7 +12,7 @@ Table: class_documentation_tracking table 1 { #tbl:class-documentation-tracking-
 | 20-triplex_meter.md              |     65 |     100% |                | done            | done                                                                           |
 | 21-triplex_load.md               |     57 |     100% |                | done            | done                                                                           |
 | 30-parametric_load.md            |     52 |     100% |                | done            | done                                                                           |
-| 47-series_compensator.md         |     50 |      50% | intro + sample |                 |                                                                                |
+| 47-series_compensator.md         |     50 |      50% | intro          |                 | done                                                                           |
 | 04-link.md                       |     48 |     100% |                | done            | done                                                                           |
 | 16-transformer_configuration.md  |     39 |     100% |                |                 |                                                                                |
 | 45-performance_motor.md          |     33 |      75% | sample         | done            |                                                                                |
