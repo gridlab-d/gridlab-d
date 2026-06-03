@@ -6,7 +6,7 @@ GridLAB-D™ has a performance profiler built into the core that allows users to
 
 The key measurements of the core performance analysis shown in Table 1 and the performance metrics are shown in Table 2. 
 
-##### Table 1 - Core performance measurements  
+Table: Core performance measurements { #tbl:core-performance-measurements }
 
 $N_{objects}$ | The total number of objects in the model.   
 ---|---  
@@ -19,7 +19,7 @@ $N_{step}$ | The total number of timesteps completed. The step count is incremen
 $N_{lock}$ | The total number of locks requested. The lock count is incremented each time a lock is requested.   
 $N_{spin}$ | The total number of lock spins completed. The lock spin is incremented each time a lock is requested but denied.   
 
-##### Table 2 - Core performance metrics  
+Table: Core performance metrics { #tbl:core-performance-metrics }
 
 Total objects | $N_{objects}$  
 ---|---  

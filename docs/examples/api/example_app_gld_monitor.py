@@ -8,7 +8,7 @@ will allow me to display data coming from a simulation that I launch. The data
 is gathered at each time-step of the simulation and I want to update a 
 time-series graph with that data."
 
-Revised by Trevor Hardy to incorporate GridLAB-D.
+Revised by Trevor Hardy to incorporate GridLAB-D™.
 
 trevor.hardy@pnnl.gov
 """
@@ -68,10 +68,10 @@ class GLD:
 
     def parse_gld_time(self, time_str):
         """
-        Parses a GridLAB-D time string and converts it to a datetime object.
+        Parses a GridLAB-D™ time string and converts it to a datetime object.
 
         Args:
-            time_str (str): A time string retrieved from GridLAB-D, formatted as '%Y-%m-%d %H:%M:%S'.
+            time_str (str): A time string retrieved from GridLAB-D™, formatted as '%Y-%m-%d %H:%M:%S'.
 
         Returns:
             datetime: A Python datetime object.

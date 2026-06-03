@@ -2,7 +2,7 @@
 """
 Created on 4 July 2024
 
-Simple EV charge management demonstration where GridLAB-D models the EVs and
+Simple EV charge management demonstration where GridLAB-D™ models the EVs and
 this Python script implements a simple charge management algorithm to 
 regulate the total charging power in the power system.
 
@@ -13,7 +13,7 @@ Co-simulation data exchange diagram:
 
                  
                      -------  EV SOCs  ----- >
-GridLAB-D EV models                            Charge manager 
+GridLAB-D™ EV models                            Charge manager 
                      <--- charging powers ----
 
 Install PyHELICS by

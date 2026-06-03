@@ -1,6 +1,6 @@
 
 """
-Run multiple GridLAB-D models in parallel and compute daily energy usage.
+Run multiple GridLAB-D™ models in parallel and compute daily energy usage.
 
 This script launches one process per model folder using Python multiprocessing,
 collects measured_real_power from object network_node at 300-second intervals,
@@ -34,7 +34,7 @@ class RunResult:
 
 
 def _parse_real_power_watts(raw_value: str | float | int) -> float:
-	"""Convert GridLAB-D measured_real_power value into watts."""
+	"""Convert GridLAB-D™ measured_real_power value into watts."""
 	if isinstance(raw_value, (int, float)):
 		return float(raw_value)
 

@@ -22,7 +22,7 @@ Referenced file names should be in quotes and italics, like:
 
 Keep this format even when linking files, for example:
 
-"Navigate to the respository to check out ["*sample_file.glm*"](path) as an example."
+"Navigate to the respository to check out *sample_file.glm* as an example."
 
 Remember that both an asterix and an underscore will italicize text, and both may be used in this documentation.
 
@@ -54,13 +54,13 @@ and
 
 ![Distribution system switching capacitors [local path reference]](../../images/Dist_syst_switching_capacitors.png){ #fig:local-reference-ex }
 
-Tables are introduced by preceeding them with the keyword ```Table:``` followed by the table caption and anchor for referencing.
+Tables are introduced by preceeding them with the keyword ```Table:``` followed by the table caption and anchor for referencing. Note that paramaters and variable names in the first column of a table are **bold** rather than in `back-ticks` for ease of reading.
 
 Table: Table example { #tbl:table-ex }
 
 |Parameter Name|Unit|Type|Description|
 |---|---|---|---|
-|```voltage```|V|float|Terminal voltage|
+|**voltage**|V|float|Terminal voltage|
 
 !!! note 
 
@@ -169,7 +169,7 @@ Note that you can double click a word or variable to highlight the entire text, 
 
 [Link](http://a.com)
 
-![Image](https://avatars.githubusercontent.com/u/21207639?s=200&v=4)
+![Image](https://avatars.githubusercontent.com/u/21207639?s=200&v=4){ #fig:GLD-Icon }
 
 ### Bulleted Lists
 
@@ -330,10 +330,10 @@ To build latest commit to be hosted publicly. Push your latest commit before bui
 
   * Navigate to our [docs](https://app.readthedocs.org/projects/gridlab-d/): `https://app.readthedocs.org/projects/gridlab-d/`
 
-![readthedocs](../../images/readthedocs.png)
+![readthedocs](../../images/readthedocs.png){ #fig:ReadTheDocs }
 
   * Click `docs`, then `Builds` and then click `Rebuild`:
 
-![build](../../images/build_docs.png)
+![build](../../images/build_docs.png){ #fig:BLD }
 
   * Once complete, click `View docs`

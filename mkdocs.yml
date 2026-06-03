@@ -4,7 +4,7 @@ theme:
   highlightjs: true
   display_version: false
   style_external_links: true
-  logo: images/logo.png
+  logo: images/GridLAB-D_WhiteVersion.png
   user_color_mode_toggle:  true
   icon:
     admonition:
@@ -82,15 +82,15 @@ nav:
     - Troubleshooting: docs/2.0 - New Users/2.3 - Troubleshooting.md
     - Tutorial:
       - GridLAB-D™ Overview: docs/2.0 - New Users/Tutorial/2.2.1 - Overview.md
-      - Basic Distribution System Modeling: docs/2.0 - New Users/Tutorial/2.5.1 - Basic Distribution System Modeling.md
-      - What is a GridLAB-D™ Model?: docs/2.0 - New Users/Tutorial/2.5.2 - GLM Models.md
-      - Modules: docs/2.0 - New Users/Tutorial/2.5.3 - Modules.md
-      - Simulation Time: docs/2.0 - New Users/Tutorial/2.5.3.1 - SimulationTime.md
-      - Recorders and Players: docs/2.0 - New Users/Tutorial/2.5.4 - Recorders and Players.md
-      - Built-in Schedules and Loadshapes: docs/2.0 - New Users/Tutorial/2.5.5 - Schedules and Loadshapes.md
-      - Distributed Generation: docs/2.0 - New Users/Tutorial/2.5.6 - Distributed_Generation.md
-      - Advanced Distribution Models: docs/2.0 - New Users/Tutorial/2.5.7 - Advanced_Distribution_Models.md
-      - Built-In Distribution Models: docs/2.0 - New Users/Tutorial/2.5.8 - Built-In Distribution Models.md
+      - Built-In Distribution Models: docs/2.0 - New Users/Tutorial/2.2.10 - Built-In Distribution Models.md
+      - Basic Distribution System Modeling: docs/2.0 - New Users/Tutorial/2.2.2 - Basic Distribution System Modeling.md
+      - What is a GridLAB-D™ Model?: docs/2.0 - New Users/Tutorial/2.2.3 - GLM Models.md
+      - Modules: docs/2.0 - New Users/Tutorial/2.2.4 - Modules.md
+      - Simulation Time: docs/2.0 - New Users/Tutorial/2.2.5 - SimulationTime.md
+      - Recorders and Players: docs/2.0 - New Users/Tutorial/2.2.6 - Recorders and Players.md
+      - Built-in Schedules and Loadshapes: docs/2.0 - New Users/Tutorial/2.2.7 - Schedules and Loadshapes.md
+      - Distributed Generation: docs/2.0 - New Users/Tutorial/2.2.8 - Distributed_Generation.md
+      - Advanced Distribution Models: docs/2.0 - New Users/Tutorial/2.2.9 - Advanced_Distribution_Models.md
   - 3.0 - Modeling Reference:
     - Loads:
       - Loadshape: docs/3.0 - Modeling Reference/Loads/1.0 - Loadshape.md
@@ -108,11 +108,6 @@ nav:
           - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/01_Introduction.md
           - GridLAB-D™ QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/02_QSTS_Inverter.md
           - GridLAB-D™ Dynamic Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/03_Dynamic_Inverter.md
-          - GridLAB-D™ QSTS Inverter Model - DELTAMODE (Legacy): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/022_QSTS_Inverter_DELTAMODE_LEGACY.md
-          - Updated Comparison Report: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Comparison_Report_Inverter_WiKi_VS_source.md
-          - Inverter_WiKi_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_WiKi_table.md
-          - GridLAB-D Published Variables: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_publish_variable.md
-          - Inverter_source_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_source_table.md
           - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_inverter_dyn.md
           - Sec control: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sec_control.md
           - Sync Ctrl: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sync_ctrl.md
@@ -125,35 +120,25 @@ nav:
         - Reliability User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/4.0 - Reliability_User_Guide.md
         - Newton-Raphson Distribution Powerflow Solver: docs/3.0 - Modeling Reference/Modules/Powerflow/5.0 - Newton-Raphson_Distribution_Powerflow_Solver.md
         - Classes:
-          - Powerflow Classes: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/00-index.md
+          - 00-index: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/00-index.md
           - 02-powerflow_object: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/02-powerflow_object.md
           - 03-node: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/03-node.md
           - 04-link: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/04-link.md
           - 05-line: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/05-line.md
-          - 06-line_configuration: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/06-line_configuration.md
-          - 07-line_spacing: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/07-line_spacing.md
-          - 08-overhead_line: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/08-overhead_line.md
-          - 09-overhead_line_conductor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/09-overhead_line_conductor.md
-          - 10-underground_line: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/10-underground_line.md
-          - 11-underground_line_conductor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/11-underground_line_conductor.md
           - 12-triplex_line: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/12-triplex_line.md
-          - 13-triplex_line_configuration: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/13-triplex_line_configuration.md
-          - 14-triplex_conductor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/14-triplex_conductor.md
           - 15-transformer: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/15-transformer.md
-          - 16-transformer_configuration: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/16-transformer_configuration.md
           - 17-load: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/17-load.md
           - 18-meter: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/18-meter.md
           - 19-triplex_node: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/19-triplex_node.md
           - 20-triplex_meter: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/20-triplex_meter.md
           - 21-triplex_load: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/21-triplex_load.md
           - 22-regulator: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/22-regulator.md
-          - 23-regulator_configuration: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/23-regulator_configuration.md
           - 24-capacitor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/24-capacitor.md
           - 25-fuse: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/25-fuse.md
           - 26-switch: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/26-switch.md
           - 27-recloser: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/27-recloser.md
           - 29-substation: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/29-substation.md
-          - 30-parametric_load: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/30-parametric_load.md
+          - 30-pqload: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/30-pqload.md
           - 31-volt_var_control: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/31-volt_var_control.md
           - 32-volt_dump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/32-volt_dump.md
           - 33-current_dump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/33-current_dump.md
@@ -165,14 +150,14 @@ nav:
           - 39-series_reactor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/39-series_reactor.md
           - 40-sectionalizer: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/40-sectionalizer.md
           - 41-power_metrics: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/41-power_metrics.md
-          - Related Concepts:: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/42-emissions.md
-          - 43 - visualization_tools: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/43 - visualization_tools.md
+          - 42-emissions: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/42-emissions.md
           - 44-jsondump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/44-jsondump.md
           - 45-performance_motor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/45-performance_motor.md
           - 46-load_tracker: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/46-load_tracker.md
           - 47-series_compensator: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/47-series_compensator.md
           - 48-sync_check: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/48-sync_check.md
           - 49-vfd: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/49-vfd.md
+          - class_documentation_tracking: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/class_documentation_tracking.md
         - Introduction:
           - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/Introduction/00 - Powerflow_Introduction.md
         - Motor:
@@ -182,17 +167,20 @@ nav:
         - Series compensator: docs/3.0 - Modeling Reference/Modules/Powerflow/Series_compensator.md
         - Switch: docs/3.0 - Modeling Reference/Modules/Powerflow/Switch_object.md
         - Theory:
-          - 01 - Algorithm_Selection: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/01 - Algorithm_Selection.md
-          - Component Modeling: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/02 - Node_Load_Meter_Theory.md
-          - 03 - Lines_and_Transformers_Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/03 - Lines_and_Transformers_Theory.md
-          - 04 - Controls_and_Devices_Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/04 - Controls_and_Devices_Theory.md
-          - References: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/99 - References.md
+          - 01-Algorithm_Selection: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/01-Algorithm_Selection.md
+          - Component Modeling: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/02-Node_Load_Meter_Theory.md
+          - 03-Lines_and_Transformers_Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/03-Lines_and_Transformers_Theory.md
+          - 04-Controls_and_Devices_Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/04-Controls_and_Devices_Theory.md
+          - References: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/99-References.md
       - Residential:
         - Introduction: docs/3.0 - Modeling Reference/Modules/Residential/1.0 - Introduction.md
         - house: docs/3.0 - Modeling Reference/Modules/Residential/2.0 - house-e.md
         - Equivalent Thermal Parameter Model: docs/3.0 - Modeling Reference/Modules/Residential/ETP_closed_form_solution.md
         - evcharger_det: docs/3.0 - Modeling Reference/Modules/Residential/Evcharger_det.md
+        - Lights: docs/3.0 - Modeling Reference/Modules/Residential/Lights.md
         - End Use Loads: docs/3.0 - Modeling Reference/Modules/Residential/Loads.md
+        - Occupant Load: docs/3.0 - Modeling Reference/Modules/Residential/Occupantload.md
+        - Plug Load: docs/3.0 - Modeling Reference/Modules/Residential/Plugload.md
         - Thermal Energy Storage Model: docs/3.0 - Modeling Reference/Modules/Residential/Thermal_Energy_Storage_model_guide.md
         - Waterheater: docs/3.0 - Modeling Reference/Modules/Residential/Waterheater.md
         - ZIPload: docs/3.0 - Modeling Reference/Modules/Residential/ZIPload.md
@@ -237,65 +225,51 @@ nav:
         - Integrated T+D Powerflow: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.3 - Integrated T+D Powerflow.md
         - Integration with the HELICS Co-Simulation Platform: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.4 - GridLAB-D HELICS Integration.md
         - Integration with a Postgres Database: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.5 - Integration with Postgres Databases.md
-        - Integration with a EnergyPlus Model: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.6 - Integration with EnergyPlus.md
+        - EnergyPlus Integration: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.6 - Integration with EnergyPlus.md
   - 4.0 Developing Reference:
-    - 4.0 - Feature Development:
-      - Checkpointing: docs/4.0 Developing Reference/4.0 - Feature Development/Checkpointing.md
-      - Docker Containerization/Build Process: docs/4.0 Developing Reference/4.0 - Feature Development/Docker Containerization.md
-      - JSON Loader: docs/4.0 Developing Reference/4.0 - Feature Development/JSON Loader.md
-      - Multithreaded Random Number Generation: docs/4.0 Developing Reference/4.0 - Feature Development/Multithreaded_Random_Number_Generation.md
-      - Multithreading: docs/4.0 Developing Reference/4.0 - Feature Development/Multithreading.md
-      - Miscelaneous Features and Updates: docs/4.0 Developing Reference/4.0 - Feature Development/Stretch Goals.md
-    - 4.1 - Introduction - TBD: docs/4.0 Developing Reference/4.1 - Introduction.md
-    - 4.2 - Building from Source:
-      - 4.2 - Building GridLAB-D™ from Source: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.1 - Building_from_Source.md
-      - Setting-Up WSL for Windows: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.3 - Setting-Up_WSL_for_Windows.md
-      - Setting-Up the VS Code IDE: docs/4.0 Developing Reference/4.2 - Building from Source/4.2.4 - Setting-Up_VS_Code.md
-    - 4.3 - Software Architecture and Design:
-      - Introduction - TBD: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.0 - Introduction.md
-      - gldcore: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.1 - gldcore.md
-      - Powerflow External LU Solver Interface: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.10 - Powerflow_External_LU_Solver_Interface.md
-      - GridLAB-D™ Modules: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.2 - Modules.md
-      - GridLAB-D™ Objects: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.3 - Objects.md
-      - Object Synchronization Process: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.4 - Object Synchronization Process.md
-      - Clock Operation: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.5 - Time Management.md
-      - GridLAB-D™ Parallelization: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.6 - Parallelization.md
-      - GridLAB-D™ Loader: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.7 - Loader.md
-      - GridLAB-D™ Data Transforms: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.8 - Transforms.md
-      - libgld: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/4.3.9 - libgld.md
-      - Initialization: docs/4.0 Developing Reference/4.3 - Software Architecture and Design/Spec_Initialization.md
-    - 4.4 - Development Fundamentals:
-      - Programming conventions: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.1 - Programming_conventions.md
-      - Creating a module - v1: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.2 - Creating_a_module.md
-      - Creating a class: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.3 - Creating_a_class.md
-      - Creating a solver: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.4 - Creating_a_solver.md
-      - GridLAB-D™ Device Modeling: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.5 - GridLAB-D Device Modeling.md
-      - Integrated Testing: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.6 - Integrated_Testing.md
-      - Issue Tracking: docs/4.0 Developing Reference/4.4 - Development Fundamentals/4.4.7 - Issue Tracking.md
-    - 4.5 - Testing and Debugging:
-      - Command options: docs/4.0 Developing Reference/4.5 - Testing and Debugging/4.6.1 - Command_line_arguments.md
-      - Performance Profiling: docs/4.0 Developing Reference/4.5 - Testing and Debugging/4.6.2 - performance-profiling.md
-      - Assert: docs/4.0 Developing Reference/4.5 - Testing and Debugging/Assert.md
-      - Testing and Validation: docs/4.0 Developing Reference/4.5 - Testing and Debugging/Testing_and_Validation.md
-      - Runtime/gl_* Output  Functions: docs/4.0 Developing Reference/4.5 - Testing and Debugging/runtime-functions.md
-    - 4.6 - Style Guide: docs/4.0 Developing Reference/4.6 - Style_guide.md
-    - 4.7 - GridLAB-D Release Process: docs/4.0 Developing Reference/4.7 - Release_Process.md
+    - Introduction: docs/4.0 Developing Reference/4.1 - Introduction.md
+    - Style Guide: docs/4.0 Developing Reference/4.6 - Style_guide.md
+    - GridLAB-D™ Release Process: docs/4.0 Developing Reference/4.7 - Release_Process.md
+    - Building from Source:
+      - Building GridLAB-D™ from Source: docs/4.0 Developing Reference/Building from Source/4.2.1 - Building_from_Source.md
+      - Setting-Up the VS Code IDE: docs/4.0 Developing Reference/Building from Source/4.2.2 - Setting-Up_VS_Code.md
+      - Setting-Up WSL for Windows: docs/4.0 Developing Reference/Building from Source/4.2.3 - Setting-Up_WSL_for_Windows.md
+    - Development Fundamentals:
+      - Programming conventions: docs/4.0 Developing Reference/Development Fundamentals/4.3.1 - Programming_conventions.md
+      - Creating a module: docs/4.0 Developing Reference/Development Fundamentals/4.3.2 - Creating_a_module.md
+      - Creating a class: docs/4.0 Developing Reference/Development Fundamentals/4.3.3 - Creating_a_class.md
+      - Creating a solver: docs/4.0 Developing Reference/Development Fundamentals/4.3.4 - Creating_a_solver.md
+      - Device Modeling: docs/4.0 Developing Reference/Development Fundamentals/4.3.5 - GridLAB-D Device Modeling.md
+      - Integrated Testing: docs/4.0 Developing Reference/Development Fundamentals/4.3.6 - Integrated_Testing.md
+      - Issue Tracking: docs/4.0 Developing Reference/Development Fundamentals/4.3.7 - Issue Tracking.md
+    - Software Architecture and Design:
+      - Introduction: docs/4.0 Developing Reference/Software Architecture and Design/4.4.0 - Introduction.md
+      - gldcore: docs/4.0 Developing Reference/Software Architecture and Design/4.4.1 - gldcore.md
+      - Checkpointing: docs/4.0 Developing Reference/Software Architecture and Design/4.4.10 - Checkpointing.md
+      - Docker Containerization/Build Process: docs/4.0 Developing Reference/Software Architecture and Design/4.4.11 - Docker Containerization.md
+      - JSON Loader: docs/4.0 Developing Reference/Software Architecture and Design/4.4.12 - JSON Loader.md
+      - Multithreaded Random Number Generation: docs/4.0 Developing Reference/Software Architecture and Design/4.4.13 - Multithreaded_Random_Number_Generation.md
+      - Multithreading: docs/4.0 Developing Reference/Software Architecture and Design/4.4.13a - Multithreading.md
+      - Initialization: docs/4.0 Developing Reference/Software Architecture and Design/4.4.14 - Spec_Initialization.md
+      - Miscelaneous Features and Updates: docs/4.0 Developing Reference/Software Architecture and Design/4.4.15 - Stretch Goals.md
+      - Modules: docs/4.0 Developing Reference/Software Architecture and Design/4.4.2 - Modules.md
+      - Objects: docs/4.0 Developing Reference/Software Architecture and Design/4.4.3 - Objects.md
+      - Object Synchronization Process: docs/4.0 Developing Reference/Software Architecture and Design/4.4.4 - Object Synchronization Process.md
+      - Clock Operation: docs/4.0 Developing Reference/Software Architecture and Design/4.4.5 - Time Management.md
+      - GridLAB-D™ Parallelization: docs/4.0 Developing Reference/Software Architecture and Design/4.4.6 - Parallelization.md
+      - Loader: docs/4.0 Developing Reference/Software Architecture and Design/4.4.7 - Loader.md
+      - GridLAB-D™ Data Transforms: docs/4.0 Developing Reference/Software Architecture and Design/4.4.8 - Transforms.md
+      - Powerflow External LU Solver Interface: docs/4.0 Developing Reference/Software Architecture and Design/4.4.9 - Powerflow_External_LU_Solver_Interface.md
+    - Testing and Debugging:
+      - Assert: docs/4.0 Developing Reference/Testing and Debugging/4.5.1 - Assert.md
+      - Runtime/gl_* Output  Functions: docs/4.0 Developing Reference/Testing and Debugging/4.5.2 - runtime-functions.md
+      - Testing and Validation: docs/4.0 Developing Reference/Testing and Debugging/4.5.3 - Testing_and_Validation.md
+      - Performance Profiling: docs/4.0 Developing Reference/Testing and Debugging/4.5.5 - performance-profiling.md
+      - Command options: docs/4.0 Developing Reference/Testing and Debugging/4.5.6 - Command_line_arguments.md
+      - Transient Mode: docs/4.0 Developing Reference/Testing and Debugging/4.5.7 - Transient mode.md
   - 5.0 Examples:
     - Placeholder: docs/5.0 Examples/placeholder.md
   - 6.0 References:
-    - Base Python API: docs/6.0 References/python_api.md
-    - ReadMeConfig:
-          - authentication: reference/ReadMeConfig/authentication.md
-          - getting-started: reference/ReadMeConfig/getting-started.md
-          - my-requests: reference/ReadMeConfig/my-requests.md
-        # - Doxygen: 
-        #     - Groups: gridlabd/group__index.md
-        #     - Structs: gridlabd/structs__index.md
-        #     - Files: gridlabd/files.md
-        #     - Classes: gridlabd/classes.md
-        #     - Hierarchy: gridlabd/hierarchy.md
-        #     - Modules: gridlabd/modules.md
-        #     - Pages: gridlabd/pages.md
     - Unimplemented:
       - Introduction: docs/6.0 References/Unimplemented/1.0 - Introduction.md
       - Aggregate Demand Response Model: docs/6.0 References/Unimplemented/Aggregate_demand_response_model.md
@@ -313,7 +287,6 @@ nav:
       - End Use Loads:
         - Residential End Uses: docs/6.0 References/Unimplemented/End Use Loads/1.0 - Residential_End_Use.md
         - Hybrid Electric Vehicle Chargers: docs/6.0 References/Unimplemented/End Use Loads/Hybrid_Electric_Vehicle_Chargers.md
-        - Lights: docs/6.0 References/Unimplemented/End Use Loads/Lights.md
         - Microwave: docs/6.0 References/Unimplemented/End Use Loads/Microwave.md
         - Range: docs/6.0 References/Unimplemented/End Use Loads/Range.md
         - Refrigerator: docs/6.0 References/Unimplemented/End Use Loads/Refrigerator.md
@@ -356,3 +329,4 @@ nav:
       - Python API:
         - 10.0 - User-Facing Class: docs/6.0 References/Unimplemented/Python API/10.0 - User-Facing Class.md
       - Transmission: docs/6.0 References/Unimplemented/Transmission.md
+    - Base Python API: docs/6.0 References/python_api.md

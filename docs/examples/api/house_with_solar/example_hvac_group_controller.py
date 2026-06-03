@@ -1,7 +1,7 @@
 """
 Created on 04/27/2026
 
-This example shows how to integrate a custom controller with GridLAB-D.
+This example shows how to integrate a custom controller with GridLAB-D™.
 
 For this example, a frivous controller is implemented that regulates the 
 number of HVAC units that are on at any given time. The controller has a 
@@ -94,7 +94,7 @@ script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
 
-# Instanate GridLAB-D and load model
+# Instanate GridLAB-D™ and load model
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))

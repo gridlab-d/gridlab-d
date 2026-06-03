@@ -17,6 +17,8 @@ When building from source: HELICS is a third party library that can be downloade
 
 The following environment variables must have the location to the HELICS library and its third party libraries, ZeroMQ and boost. 
 
+Table: Environment Variables { #tbl:table-env-helics }
+
 OS  | Environment Variable   
 ---|---  
 Windows  | PATH   
@@ -39,7 +41,7 @@ A minimalist **helics_msg** could be created with
     }
     
 
-### **helics_msg** Parameters
+Table: helics_msg Parameters { #tbl:table-helics-params }
 
 Property Name  | Type  | Unit  | Description   
 ---|---|---|---  

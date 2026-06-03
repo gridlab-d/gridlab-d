@@ -1,7 +1,7 @@
-# GridLAB-D Example Suite
+# GridLAB-D™ Example Suite
 
 ## Existing Examples
-This folder contains the existing suite of examples (gleaned from various sources) that are candidates for inclusion in a final documentation examples. These show off various features of GridLAB-D and, in the case of those pulled from the old tutorial on the wiki, create a progression from basics to more advanced features.
+This folder contains the existing suite of examples (gleaned from various sources) that are candidates for inclusion in a final documentation examples. These show off various features of GridLAB-D™ and, in the case of those pulled from the old tutorial on the wiki, create a progression from basics to more advanced features.
 
 Each of these examples has its own folder which contains the .glm, any supporting files, and a "README" with metadata about the example including its purpose. It is expected that all of these examples are in a functioning state though this may or may not have been confirmed recently.
 
@@ -49,10 +49,10 @@ GLD has the ability to provide comprehensive representations of the powerflow mo
 - Using impedance dumps to look for modeling errors (very high or low impedance values)
 
 ### API Use
-The new API will allow for a broad new paradigm for using GridLAB-D and showing off the capabilities is, in my (Trevor's) opinion will revolutionize the use of GridLAB-D. The more of these kinds of things we can show, the bigger the vision for GLD we can cast and the more likely it is to be used more broadly.
+The new API will allow for a broad new paradigm for using GridLAB-D™ and showing off the capabilities is, in my (Trevor's) opinion will revolutionize the use of GridLAB-D™. The more of these kinds of things we can show, the bigger the vision for GLD we can cast and the more likely it is to be used more broadly.
 
 - Basic use 
-    - Loading and running a model (just like using GridLAB-D today)
+    - Loading and running a model (just like using GridLAB-D™ today)
     - Model modification prior to running
     - Accessing warning and error messages when loading and running a model.
 - Runtime operations

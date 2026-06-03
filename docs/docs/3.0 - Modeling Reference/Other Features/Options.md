@@ -29,7 +29,7 @@ A good example of usage of the escape character can be found in the [core mainlo
     The escape character does not work while parsing macros, directives, names, blocks, etc. In these cases the \ is left in place and allowed to pass through to the loader. 
 
     MS Windows
-        Although the convention in Windows originally is that directory names in paths be delimited using a \, Windows supports / delimiters. Consequently, the convention in GridLAB-D is to use exclusively / for paths. If you must use \ in a path value, then you must escape it by using \\\\.
+        Although the convention in Windows originally is that directory names in paths be delimited using a \, Windows supports / delimiters. Consequently, the convention in GridLAB-D™ is to use exclusively / for paths. If you must use \ in a path value, then you must escape it by using \\\\.
 
 
 ##  Macros
@@ -44,8 +44,8 @@ Macro | Description
 **#endif** | is used to conditionally process a block of text in the .glm only if the variable used is defined. For `#ifdef` and `#ifndef` (conditionally execute a block of GLM code only if the variable used is *not* defined.) the expression is simply the name of a global variable. <br/> `#ifdef variable` <br/> `// conditional block` <br/> `#endif`
 **#if** |  is used to conditionally execute a block of GLM code only if the test succeeds. Each `#if` macro must have a correspond `#endif` macro matching it in the same GLM file.  When `#if` is used, the expression is a conditional test in the form of name op value where the operator op is one of `<`, `>`, `&lt=`, `>=`, `==`, or `!=`. <br/> `#if test` <br/> `// conditional block` <br/> `#endif`
 **#print** | name is used to display the value of the global variable `name` at the moment it is encountered by the loader.
-**#ifexist** | macro is is used to conditionally execute a block of GLM code only if the specified file can be found in the GridLAB-D search path specified by GLPATH. <br/> `#ifexist filename` <br/> `// conditional block` <br/> `#endif`
-**#include** | macro is used to include another file during the parser load. The include path determines where the compiler will find the include files needed to compile runtime classes. <br/> `#set include=path` <br/> `#include "filename"` <br/> `#include using(name=value[,...]) "filename"` <br/> `#include <filename>` <br/> `#include [url]` <br/> There are three recognized types of `#include` macro directives. The first is used to include a regular GLM or CONF file. The second is used to include a C or C++ header. The third is to include an external URL (e.g., http://...). <br/> When the variant `using(name =value)` is used, then the global variable name is set to value before the include file is loaded. This option disables strict global variable naming (strictnames and enables multiple include files `allow_reinclude`). Multiple global variables may be set using comma delimiters. <br/> - **GLM or CONF**: The first file of the specified name found in the GridLAB-D search path, `GLPATH`, will be loaded at the point at which the #include macro is found, after which the rest of the GLM file is loaded. <br/> - **C or C++ Source**: The exact filename given will be added to the include statements written to the C++ source code before it is compiled. The header include statement will be added in the order in which they are found in the GLM file, including the `class` statements. <br/> - **URL**: The URL is downloaded from the internet and stored in a local cache file using the URL as a name template with only valid characters showing. The file is not downloaded again once it is successfully copied and is always stored in the current directory.
+**#ifexist** | macro is is used to conditionally execute a block of GLM code only if the specified file can be found in the GridLAB-D™ search path specified by GLPATH. <br/> `#ifexist filename` <br/> `// conditional block` <br/> `#endif`
+**#include** | macro is used to include another file during the parser load. The include path determines where the compiler will find the include files needed to compile runtime classes. <br/> `#set include=path` <br/> `#include "filename"` <br/> `#include using(name=value[,...]) "filename"` <br/> `#include <filename>` <br/> `#include [url]` <br/> There are three recognized types of `#include` macro directives. The first is used to include a regular GLM or CONF file. The second is used to include a C or C++ header. The third is to include an external URL (e.g., http://...). <br/> When the variant `using(name =value)` is used, then the global variable name is set to value before the include file is loaded. This option disables strict global variable naming (strictnames and enables multiple include files `allow_reinclude`). Multiple global variables may be set using comma delimiters. <br/> - **GLM or CONF**: The first file of the specified name found in the GridLAB-D™ search path, `GLPATH`, will be loaded at the point at which the #include macro is found, after which the rest of the GLM file is loaded. <br/> - **C or C++ Source**: The exact filename given will be added to the include statements written to the C++ source code before it is compiled. The header include statement will be added in the order in which they are found in the GLM file, including the `class` statements. <br/> - **URL**: The URL is downloaded from the internet and stored in a local cache file using the URL as a name template with only valid characters showing. The file is not downloaded again once it is successfully copied and is always stored in the current directory.
 **#setenv PATH=path** | macro is used to set an environment variable
 **#binpath** | macro sets the path for binary searches (compiler PATH environment) **DEPRECATED** 
 **#libpath** | macro sets the path for library searches (compiler GLPATH environment) **DEPRECATED** 
@@ -57,7 +57,7 @@ Macro | Description
 **#start** | command makes an operating system call and continues processing the GLM file
 **#set allow_reinclude** | allows an include file to be included more than once
 
-Normally, GridLAB-D does not allow an include file to included more than once. However, when parameter include files are used, the ability to use an include file more than once is usually desired. The `allow_reinclude` global variable disables the restriction. 
+Normally, GridLAB-D™ does not allow an include file to included more than once. However, when parameter include files are used, the ability to use an include file more than once is usually desired. The `allow_reinclude` global variable disables the restriction. 
 
 In file `main.glm`:
     
@@ -76,7 +76,7 @@ In file `option.glm`
 
 ### Autoglobals
 
-Automatic globals have no value associated with them but they otherwise appear to be defined. The autoglobals are typical defined when GridLAB-D executable is compiled and can be used to determine which options were compiled into the current executable. 
+Automatic globals have no value associated with them but they otherwise appear to be defined. The autoglobals are typical defined when GridLAB-D™ executable is compiled and can be used to determine which options were compiled into the current executable. 
 
 Autoglobal | Description | Syntax
 -- | -- | --
@@ -105,7 +105,7 @@ The default C++ runtime class compiler options are as follows:
 Option | Description
 -- | --
 `-w` | No warning messages generated during compilation of classes.
-`-I/usr/local/share/gridlabd` | GridLAB-D data folder. On cygwin systems this automatically converted to `-Ic:/mingw/msys/1.0/local/share/gridlabd`.
+`-I/usr/local/share/gridlabd` | GridLAB-D™ data folder. On cygwin systems this automatically converted to `-Ic:/mingw/msys/1.0/local/share/gridlabd`.
 `-O0` | No optimization
 
 If **CXXFLAGS** is set to anything (including an empty string), compiler warnings are enabled. If you wish to keep warnings suppressed you should include the -w option in addition to the other options you include.

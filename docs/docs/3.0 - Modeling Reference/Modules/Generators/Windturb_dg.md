@@ -25,6 +25,8 @@ This model remains in the experimental level of development
 
 Note that if a field exists in the C++ class but is not published, it is not user-configurable from GLM.
 
+Table: Windturb_DG Parameters { #tbl:table-wind }
+
 Property Name | Type | Unit | Description | Default
 ---|---|---|---|---
 **Gen_status** | enumeration | N/A | Online/offline state. Values: OFFLINE, ONLINE | ONLINE

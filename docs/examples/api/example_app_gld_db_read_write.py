@@ -3,7 +3,7 @@
 Created on 04/25/2026
 
 This example shows the use of a database (Postgres in this case) to read and
-write data during a GridLAB-D simulation. For this example, thermostat 
+write data during a GridLAB-D™ simulation. For this example, thermostat 
 setpoints are read from the database and applied to a select number of houses
 at the appropriate simulation time. Additionally, indoor air temperature data 
 is written to the database at each time step. After the completion of the 
@@ -11,7 +11,7 @@ simulation, a graph is made of the indoor air temperature for each house.
 
 The thermostat setpoint schedule is generated in the script and loaded into
 the database fresh each time the script is run. More generally, it more likely
-that the data needed to be played into the GridLAB-D model would be generated
+that the data needed to be played into the GridLAB-D™ model would be generated
 externally and stored in the database ahead of time.
 
 This example doesn't describe how to set up Postgres; there are many ways to 
@@ -75,10 +75,10 @@ def test_postgres_connection(db_host, db_name, db_user, db_password):
 
 def change_start_stop_time(gld):
     """
-    Change the start and stop time of the GridLAB-D simulation.
+    Change the start and stop time of the GridLAB-D™ simulation.
     In this case, we're hard-coding it to stop one day after the start time.
     
-    gld (gridlabd.GridLABD): The GridLAB-D simulation object.
+    gld (gridlabd.GridLABD): The GridLAB-D™ simulation object.
 
     Returns:
     tuple: A tuple containing the new start and stop times as datetime objects.
@@ -242,7 +242,7 @@ def apply_setpoints_for_sim_time(gld, db, sim_time):
     Apply any scheduled setpoint updates for the current simulation time.
 
     Parameters:
-    gld (gridlabd.GridLabD): Active GridLAB-D instance.
+    gld (gridlabd.GridLabD): Active GridLAB-D™ instance.
     db: Active psycopg database connection.
     sim_time (datetime): Current simulation timestamp.
     """
@@ -296,7 +296,7 @@ def write_output_data_for_sim_time(gld, db, sim_time):
     Write indoor air temperature output rows for the current time step.
 
     Parameters:
-    gld (gridlabd.GridLabD): Active GridLAB-D instance.
+    gld (gridlabd.GridLabD): Active GridLAB-D™ instance.
     db: Active psycopg database connection.
     sim_time (datetime): Current simulation timestamp.
     """
@@ -356,7 +356,7 @@ def plot_output_data(db):
 
     plt.xlabel("Timestamp")
     plt.ylabel("Indoor Air Temperature")
-    plt.title("GridLAB-D Indoor Air Temperature by House")
+    plt.title("GridLAB-D™ Indoor Air Temperature by House")
     plt.legend()
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -370,7 +370,7 @@ def plot_output_data(db):
 
 def main():
     """
-    Run the full GridLAB-D and Postgres read/write workflow.
+    Run the full GridLAB-D™ and Postgres read/write workflow.
 
     This function initializes the model, prepares database tables, executes
     the simulation loop, writes output data, and plots the results.
@@ -380,7 +380,7 @@ def main():
     script_dir = os.path.dirname(script_path)
     os.chdir(script_dir)
 
-    # Instantiate GridLAB-D and load model.
+    # Instantiate GridLAB-D™ and load model.
     gld = gridlabd.GridLabD()
     model_path = Path("house_with_solar")
     gld.set_working_directory(str(model_path))

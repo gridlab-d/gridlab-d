@@ -21,6 +21,8 @@ Prior to the 4.1 release of GridLAB-D™ the **fncs_msg** object must be custom 
 
 Prior to the 4.1 release of GridLAB-D™ the OS environment must be properly set up to run the FNCS library from GridLAB-D™ if FNCS was installed to a custom location and not the system default. The following environment variables must have the location to the FNCS library and it's third party libraries, ZeroMQ and CZMQ. 
 
+Table: Environment Variables { #tbl:table-env }
+
 OS  | Environment Variable   
 ---|---  
 Windows  | PATH   
@@ -54,7 +56,8 @@ Which is the same a specifying
     }
     
 
-### **fncs_msg** Parameters
+
+Table: fncs_msg Parameters { #tbl:table-fncs }
 
 Property Name  | Type  | Unit  | Description   
 ---|---|---|---  

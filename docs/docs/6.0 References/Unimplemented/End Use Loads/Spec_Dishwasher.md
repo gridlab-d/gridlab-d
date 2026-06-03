@@ -14,27 +14,26 @@ The purpose of this document is to describe the specifications of the dishwasher
   * The dishwasher model was designed as a multi-state machine model. These states are defined by the level of their electricity consumption.
   * Eight different time intervals are considered in this model, and these intervals determine the transition times between the states.
 
-![Dishwasher representative cycle](../../../../images/300px-Dishwasher_states.png)
+![Dishwasher representative cycle](../../../../images/300px-Dishwasher_states.png){ #fig:dishwasher-representative-cycle }
 
-##### Figure 1. Dishwasher representative cycle
 
-The dishwasher model developed in GridLAB-D is a multi-state load model and it is shown in Figure 1. The states in the dishwasher model are defined by the level of their electricity consumption and they are: State 1 (off), State 2 (Control only), State 3 (Motor only), State 4 (Motor and coil) and State 5 (Heated dry). 
+The dishwasher model developed in GridLAB-D™ is a multi-state load model and it is shown in Figure 1. The states in the dishwasher model are defined by the level of their electricity consumption and they are: State 1 (off), State 2 (Control only), State 3 (Motor only), State 4 (Motor and coil) and State 5 (Heated dry). 
 
 Each state in the model is governed by a ZIP model with transitions between states determined by internal state transition rules. The multi-state dishwasher model is shown Figure 2. 
 
-![Dishwasher multi-state model](../../../../images/300px-Dishwasher_multi-state_model.png)
+![Dishwasher multi-state model](../../../../images/300px-Dishwasher_multi-state_model.png){ #fig:dishwasher-multi-state-model }
 
-##### Figure 2. Dishwasher multi-state model
 
-##### Figure 3 shows the time intervals considered in the multi-state model of the dishwasher. These time intervals determine the transition times between the states. There are eight different time intervals are considered in this model and they are not fixed. It means user do have an option to change the time intervals between states. If user does not specify any inputs, the default values will be used. The default values are estimated based on the energy consumption profile of the dishwasher [1]. 
 
-![ Dishwasher time intervals](../../../../images/300px-Dishwasher_time_intervals.png)
+Table [](#fig:dish) shows the time intervals considered in the multi-state model of the dishwasher. These time intervals determine the transition times between the states. There are eight different time intervals are considered in this model and they are not fixed. It means user do have an option to change the time intervals between states. If user does not specify any inputs, the default values will be used. The default values are estimated based on the energy consumption profile of the dishwasher [1].
 
-##### Figure 3. Dishwasher time intervals
 
-##### Table 1 below gives the logic for allowable state transitions shown in the multi-state dishwasher model. 
+[Dishwasher Time Intervals](../../../../images/300px-Dishwasher_time_intervals.png){ #fig:dish }
 
-##### Table 1: Transition Rules  From State | To State | Transition Rule   
+
+Table: Logic for Allowable State Transitions { #tbl:table-dish }
+
+From State | To State | Transition Rule 
 ---|---|---  
 Off | Control only | Allowed when number of loads accumulated (queue) greater than 1.   
 Control only | Off | Transition from ` Control only ` to `Off` will happen only after `Time_interval_8` elapses after the end of heated dry.   
@@ -101,7 +100,10 @@ The dishwasher model shall use the residential end use interface for all output.
 # S2
 
 Inputs (R2)
-##### Table 2: Dishwasher inputs  Variable | Type | Units | Value (default) | Allowable values | Definition   
+
+Table: Dishwasher inputs   { #tbl:dishwasher-inputs-variable-type-units-value-default-allowable-values-definition }
+
+Variable | Type | Units | Value (default) | Allowable values | Definition
 ---|---|---|---|---|---  
 energy_baseline | double | kWh | 0.9 | Value > 0 | The amount of energy need for a dishwasher cycle   
 control_power | double | W | 10 | Value > 0 | The power required to drive control panel equipment   
@@ -127,7 +129,9 @@ duration_control only_after heated dry | double | sec | 550 | Value > 0 | Contro
 
 Outputs ([R3])
 
-##### Table 3: Dishwasher outputs  Variable | Type | Units | Definition   
+Table: Dishwasher outputs   { #tbl:dishwasher-outputs-variable-type-units-definition }
+
+Variable | Type | Units | Definition
 ---|---|---|---  
 total_power | double | kW | Total power required during the dishwasher cycle   
 energy_used | double | kWh | Energy consumption during a dishwasher cycle.   
@@ -146,16 +150,17 @@ Let $D$ denotes the demand in cycles per day of a dishwasher. Note that dependin
 
 For a dishwasher, and each simulation time step $kT$, $k = 1, 2, 3,...,$ where $T$ is the simulation sampling time interval, we define a variable $queue(k)$ as follows 
 
-##### Table 4: Equations  Equation | Number   
+Table: Equations { #tbl:equations-equation-number }
+
+Equation | Number
 ---|---  
 $\begin{align} queue(k) &= queue (k-1) + D (E_k/E_{tot})), k = 1,2,3, ...\end{align}$ | 1.1   
 $\begin{align} queue(0) &= q _0\end{align}$ | 1.2   
   
 where $E_k$ denotes the energy consumed by the dishwasher over the $k^{th}$ time step as specified by ELCAP(integral of an ELCAP curve such as the one shown in Figure 4 between $(k-1)T$ )$kT$) and $E_{tot}$ denotes the total energy consumed by the appliance over the course of a day as specified by ELCAP. The ratio $Ek/E_{tot}$ gives a measure of the percentage of daily appliance consumption over the $k^{th}$ time step, and a plot of $E_k/E_{tot}$ as a function of $kT$ gives the normalized ELCAP dishwasher load shape. The difference Equation (1.1) is initialized to a random number $q_o$ (1.2). 
 
-![ELCAP Dishwasher Load Shape](../../../../images/300px-ELCAP_Dishwasher_Load_Shape.png)
+![ELCAP Dishwasher Load Shape](../../../../images/300px-ELCAP_Dishwasher_Load_Shape.png){ #fig:elcap-dishwasher-load-shape }
 
-##### Figure 4. ELCAP Dishwasher Load Shape
 
 Note that there is an interesting physical interpretation of $queue(k)$. Basically, dishwasher is placed in its 'queue', and waiting its turn to be turned on. And after each simulation time step of duration $T$, $queue(k)$ is incremented by an amount that is proportional to its daily demand. In other words, each appliance’s ‘queue’ is being built up or accumulated. And the rate at which the ‘queue’ is accumulated depends on the normalized load shape $Ek/E_{tot}$. Thus higher value of $Ek/E_{tot}$ would result in a higher rate at which an dishwasher’s ‘queue’ is accumulated, and the following logic is utilized to determine when to turn on a particular appliance 
 
@@ -184,7 +189,7 @@ queue(k+1) &= queue(k) - \displaystyle{}\delta\end{align}$. This is calculated i
 
   * 1\. Source: IEEE power & energy magazine; May/June 2010.
   * 2\. K. P. Schneider and J. C. Fuller, “Detailed end use models for distribution system analysis,” in Proc. 2010 IEEE PES General Meeting, pp. 1-7.
-  * 3\. J. C. Fuller, B. Vyakaranam, N. Prakash Kumar, S.M. Leistritz, and GB Parker, “Modeling of GE Appliances in GridLAB-D: Peak Demand Reduction,” PNNL-XXXXX, Pacific Northwest National Laboratory, Richland, WA, 2012.
+  * 3\. J. C. Fuller, B. Vyakaranam, N. Prakash Kumar, S.M. Leistritz, and GB Parker, “Modeling of GE Appliances in GridLAB-D™: Peak Demand Reduction,” PNNL-XXXXX, Pacific Northwest National Laboratory, Richland, WA, 2012.
   * 4\. Pratt, R.G., et al., 1989. “Description of Electric Energy Use in Single-Family Residences in the Pacific Northwest," end use Load and Consumer Assessment Program (ELCAP),” Pacific Northwest Laboratory, DOE/BP-13795-21, Richland, WA, April 1989
 
 ## Related Concepts:

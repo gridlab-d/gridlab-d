@@ -1,4 +1,4 @@
 - Model name: players.glm
 - Model source: [GLD Tutorial Chapter 4](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%204%20-%20Recorders%20and%20Players/Players/players.glm)
 - Supporting narrative source: [GLD Tutorial Chapter 4](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_4_-_Data_Input_and_Output)
-- Example purpose: Demonstrates the use of a player file for getting static data into GridLAB-D.
+- Example purpose: Demonstrates the use of a player file for getting static data into GridLAB-D™.
