@@ -261,10 +261,10 @@ Table: line table 6 { #tbl:05-line-6 }
 | **geometric_mean_radius** | double | ft | I | The GMR of the wire. |
 | **resistance** | double | Ohm/mile | I | The resistance of the particular conductor, incorporating size and material effects. |
 | **diameter** | double | in | I | Diameter of the conductor - used for capacitance calculations. |
-| **rating.summer.continuous** | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| **rating.summer.emergency** | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **TODO - Status - This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| **rating.winter.continuous** | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| **rating.winter.emergency** | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **rating.summer.continuous** | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| **rating.summer.emergency** | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **TODO - Status - This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| **rating.winter.continuous** | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| **rating.winter.emergency** | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
 
 ### Overhead Line Conductor State of Development
 
@@ -273,7 +273,7 @@ Overhead Line Conductor is considered a highly developed and validated model.
 
 ## Underground Line
 
-Underground lines represent burial distribution cables in a powerflow system. In terms of GridLAB-Dâ„¢ implementation, they are nearly identical to the `overhead_line` objects. A typical `underground_line` object would be written as 
+Underground lines represent burial distribution cables in a powerflow system. In terms of GridLAB-D™ implementation, they are nearly identical to the `overhead_line` objects. A typical `underground_line` object would be written as 
     
     
     object underground_line {
@@ -337,10 +337,10 @@ Table: line table 7 { #tbl:05-line-7 }
 | **insulation_relative_permitivitty** | double | unit | I | Permitivitty of insulation, relative to air |
 | **shield_gmr** | double | ft | I | Geometric mean radius of the shielding of the cable. |
 | **shield_resistance** | double | Ohm/mile | I | Resistance of the cable shielding. |
-| **rating.summer.continuous** | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| **rating.summer.emergency** | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| **rating.winter.continuous** | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
-| **rating.winter.emergency** | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **rating.summer.continuous** | double | A | I | The continuous rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| **rating.summer.emergency** | double | A | I | The emergency (short time) rating for the conductor during summer month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| **rating.winter.continuous** | double | A | I | The continuous rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
+| **rating.winter.emergency** | double | A | I | The emergency (short time) rating for the conductor during winter month usage. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
 
 ### Underground Line Conductor State of Development
 

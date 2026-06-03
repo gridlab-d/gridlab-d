@@ -79,9 +79,9 @@ Points to the page "Command Line Options"
 
 It maybe even more useful to have a link go to a *specific header* within a file. To do that, just add the `#Header` immediately following the `.md` part of the link. If there are spaces within the file name, you must use `-` in their place.
 
-For example, to point specifically to Global Variables section of the previous file:
+For example, to point specifically to Modhelp section of the previous file:
 
-[Global Variables](../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md#Global-Variables)
+[Global Variables](../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md#ModHelp)
 
 ## Writing Style
 

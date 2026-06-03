@@ -64,7 +64,7 @@ Table: triplex_line table 1 { #tbl:12-triplex-line-1 }
 | **conductor_N** | object | N/A | I | `triplex_conductor` object that represents the physical wire of the neutral phase. |
 | **insulation_thickness** | double | in | I | Thickness of the insulation around the phase 1 and phase 2 conductors |
 | **diameter** | double | in | I | Diameter of the conductor |
-| **spacing** | object | N/A | I | `line_spacing` object with information on the physical layout of the conductors. **This parameter is unused at this point. Future versions of GridLAB-Dâ„¢ may implement this functionality** |
+| **spacing** | object | N/A | I | `line_spacing` object with information on the physical layout of the conductors. **This parameter is unused at this point. Future versions of GridLAB-D™ may implement this functionality** |
 | **z11** | complex | Ohm/mile | I | Phase 1 self-impedance, used for direct entry of impedance values |
 | **z12** | complex | Ohm/mile | I | Phase 1-2 induced impedance, used for direct entry of impedance values |
 | **z21** | complex | Ohm/mile | I | Phase 2-1 induced impedance, used for direct entry of impedance values |

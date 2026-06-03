@@ -30,7 +30,7 @@ The following section describes the functional areas in detail, including the sp
 
 ## Parameters and Functionality
 
-For a comprehensive list of the inverter's parameters and variables, as listed in the source code, including their units, types, descriptions, and any special notes on their usage or activation conditions, please refer to [](#tbl:inverter-parameters) at the end of this document. The table is organized by functional category, with parameters grouped according to their role in the model (e.g., control mode selection, power rating, efficiency modeling, etc.) for ease of reference.
+For a comprehensive list of the inverter's parameters and variables, as listed in the source code, including their units, types, descriptions, and any special notes on their usage or activation conditions, please refer to [](#tbl:params) at the end of this document. The table is organized by functional category, with parameters grouped according to their role in the model (e.g., control mode selection, power rating, efficiency modeling, etc.) for ease of reference.
 
 ### 1. Model Selection: Four-Quadrant
 

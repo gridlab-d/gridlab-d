@@ -41,7 +41,7 @@ Table: triplex_node table 1 { #tbl:19-triplex-node-1 }
 | --- | --- | --- | --- | --- |
 | **bustype** | enumeration | N/A | I | The type of bus the node represents. The different bus distinctions are only valid for the Gauss-Seidel and Newton-Raphson solver methods. The Forward-Back Sweep method (Kersting's method) does not presently incorporate anything other than the `PQ` bus. Valid choices are <br/> - `PQ` for a constant power bus (default) <br/> - `PV` for a voltage-controlled (magnitude) bus <br/> - `SWING` for the infinite bus of a system. |
 | **busflags** | set | N/A | I | A flag to indicate if the current bus has a source or not. Mainly used for `PV` implementations. The only valid entries are `HASSOURCE` to indicate it is a supported bus, or an empty value indicating it is not. |
-| **reference_bus** | object | N/A | I | A reference node elsewhere in the system that the **triplex_node** will use to obtain frequency information if necessary (unimplemented in GridLAB-Dâ„¢ at this point). |
+| **reference_bus** | object | N/A | I | A reference node elsewhere in the system that the **triplex_node** will use to obtain frequency information if necessary (unimplemented in GridLAB-D™ at this point). |
 | **maximum_voltage_error** | double | V | I | The maximum voltage error for convergence checks in the different powerflow solvers. If left blank, it is derived from the `nominal_voltage` parameter. |
 
 #### Voltage Properties
