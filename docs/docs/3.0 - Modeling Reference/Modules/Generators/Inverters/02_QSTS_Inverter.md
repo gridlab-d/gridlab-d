@@ -1,10 +1,16 @@
 # GridLAB-D™ QSTS Inverter Model
 
-## Overview
+<mark style="background-color: lightgreen;">TODO: Check the latest ```inverter.cpp``` in branch ```feature/1776``` for the "de-deltamoded" version.</mark>
+
+<mark style="background-color: lightgreen;">TODO: Add examples, maybe from shoutwiki as a simple one, or from the autotests.</mark>
+
+## Background and Motivation
 
 The **inverter** object in GridLAB-D™'s generators module is the central component for modeling power electronic interfaces between DC energy resources — such as photovoltaic (PV) arrays and battery storage systems (BSS) — and the AC distribution network. In the QSTS engine the network power flow solver only solves for for voltages and currents at the nodes. Therefore, the **inverter** object, implemented in ```inverter.cpp```, serves as the AC-DC boundary object through which all DER power injections are computed, and communicated to the powerflow solver.
 
 ### Design Philosophy: Multi Model Object
+
+<mark style="background-color: lightgreen;">Frank's comment: Change "multi model"</mark>>
 
 The original design of the **inverter** object implementation developed a clear architectural distinction between possible modeling regimes selected by the user through the ```inverter_type``` and ```four_quadrant_control_mode``` properties.
 
@@ -72,14 +78,10 @@ These parameters define the fundamental physical limits of the inverter and its 
 
 When ```use_multipoint_efficiency``` is set to true and a solar object is the child resource, the inverter replaces the flat ```inverter_efficiency``` scalar with a California Energy Commission (CEC) model efficiency curve. This model is parameterized by:
 
-Table: Multipoint Efficiency Model Parameters { #tbl:MEM }
-
-|Parameter|Description|
-|---------|-----------|
-|```maximum_dc_power```|DC power at which the inverter reaches rated output|
-|```maximum_dc_voltage```|DC voltage at the maximum power point|
-|```minimum_dc_power```|Minimum DC power required for the inverter to start|
-|```c_0```, ```c_1```, ```c_2```, ```c_3```|Polynomial coefficients of the efficiency curve|
+- ```maximum_dc_power```: DC power at which the inverter reaches rated output.
+- ```maximum_dc_voltage```: DC voltage at the maximum power point.
+- ```minimum_dc_power```: Minimum DC power required for the inverter to start.
+- ```c_0```, ```c_1```, ```c_2```, ```c_3```: Polynomial coefficients of the efficiency curve.
 
 Pre-configured coefficient sets are available for three manufacturers via the ```inverter_manufacturer```property: ```FRONIUS```, ```SMA```, and ```XANTREX```. Setting one of these populates the coefficients automatically.
 
@@ -105,19 +107,16 @@ Power factor regulation is an auxiliary function that can be layered on top of l
 
 These are the primary output quantities applied at the network connection node and that can be recorded in output players or recorders:
 
-|Property|Description|
-|---|---|
-|```VA_Out```|Total AC apparent power output (complex, VA). This is the aggregate across all active phases.|
-|```power_A/B/C```|Per-phase apparent power (complex, VA)|
-|```phaseA/B/C_V_Out```|Per-phase AC terminal voltage (complex, V)|
-|```phaseA/B/C_I_Out```|Per-phase AC current (grid-following)|
-|```curr_VA_out_A/B/C```|Current-timestep per-phase power (used for convergence)|
-|```prev_VA_out_A/B/C```|Previous-timestep per-phase power (used for convergence)|
-
+- ```VA_Out```: Total AC apparent power output (complex, VA). This is the aggregate across all active phases.
+- ```power_A/B/C```: Per-phase apparent power (complex, VA).
+- ```phaseA/B/C_V_Out```: Per-phase AC terminal voltage (complex, V).
+- ```phaseA/B/C_I_Out```: Per-phase AC current (grid-following).
+- ```curr_VA_out_A/B/C```: Current-timestep per-phase power (used for convergence).
+- ```prev_VA_out_A/B/C```: Previous-timestep per-phase power (used for convergence).
 
 ## Summary of Key Parameters
 
-Table: Key Parameters { #tbl:params }
+Table: Key Parameters and Variables of the GridLAB-D™ Inverter Object { #tbl:inverter-parameters }
 
 |Parameter Name|Unit|Type|Description|
 |---|---|---|---|

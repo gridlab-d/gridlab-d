@@ -106,13 +106,8 @@ nav:
         - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Energy_storage.md
         - Inverters:
           - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/01_Introduction.md
-          - GridLAB-D™ QSTS Inverter Model - DELTAMODE (Legacy): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/022_QSTS_Inverter_DELTAMODE_LEGACY.md
           - GridLAB-D™ QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/02_QSTS_Inverter.md
-          - 999_Inverter_Droop_Control_Disregard: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/999_Inverter_Droop_Control_Disregard.md
-          - Updated Comparison Report: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Comparison_Report_Inverter_WiKi_VS_source.md
-          - Inverter_WiKi_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_WiKi_table.md
-          - GridLAB-D™ Published Variables: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_publish_variable.md
-          - Inverter_source_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_source_table.md
+          - GridLAB-D™ Dynamic Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/03_Dynamic_Inverter.md
           - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_inverter_dyn.md
           - Sec control: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sec_control.md
           - Sync Ctrl: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sync_ctrl.md
