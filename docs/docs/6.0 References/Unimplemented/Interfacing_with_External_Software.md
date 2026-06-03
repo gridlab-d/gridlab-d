@@ -8,7 +8,7 @@ Though the utility of GridLAB-D™ is relatively broad (when thinking of it as s
 
 ### Building GridLAB-D™ with MATLAB
 
-To enable this interaction, GridLAB-D™ must first be compiled from source with additional options; see [Building GridLAB-D™ from Source](../../4.0%20Developing%20Reference/4.2%20-%20Building%20from%20Source/4.2.1%20-%20Building_from_Source.md). These options are enabled when running `./configure `:
+To enable this interaction, GridLAB-D™ must first be compiled from source with additional options; see [Building GridLAB-D™ from Source](../../4.0%20Developing%20Reference/Building%20from%20Source/4.2.1%20-%20Building_from_Source.md). These options are enabled when running `./configure `:
 
 ```
 ./configure --with-matlab=<path to MATLAB executable>

@@ -117,8 +117,6 @@ These are the primary output quantities applied at the network connection node a
 
 ## Summary of Key Parameters
 
-Table: Key Parameters and Variables of the GridLAB-D™ Inverter Object { #tbl:inverter-parameters }
-
 Table: Key Parameters { #tbl:params }
 
 |Parameter Name|Unit|Type|Description|

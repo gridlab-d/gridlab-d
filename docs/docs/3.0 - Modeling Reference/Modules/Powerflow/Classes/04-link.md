@@ -135,17 +135,16 @@ Table: link table 8 { #tbl:04-link-8 }
 | **inrush_integration_method_capacitance** | enumeration | N/A | I | Integration method for capacitive elements of the link. Valid values: `NONE`, `UNDEFINED`, `TRAPEZOIDAL`, `BACKWARD_EULER`. |
 | **inrush_integration_method_inductance** | enumeration | N/A | I | Integration method for inductive elements of the link. Valid values: `NONE`, `UNDEFINED`, `TRAPEZOIDAL`, `BACKWARD_EULER`. |
 
-??? note "Internal Properties"
+#### Internal Properties
 
-	#### Internal Properties
-	These properties are published with `PA_HIDDEN` and are intended for internal or developer use. They support triplex line neutral current calculations.
+These properties are published with `PA_HIDDEN` and are intended for internal or developer use. They support triplex line neutral current calculations.
 
 Table: link table 9 { #tbl:04-link-9 }
 
-	| Property Name | Type | Unit | I/O | Description |
-	| --- | --- | --- | --- | --- |
-	| triplex_neutral_1_value | complex | N/A | O | Internal triplex neutral coupling coefficient for phase 1. |
-	| triplex_neutral_2_value | complex | N/A | O | Internal triplex neutral coupling coefficient for phase 2. |
+| Property Name | Type | Unit | I/O | Description |
+| --- | --- | --- | --- | --- |
+| triplex_neutral_1_value | complex | N/A | O | Internal triplex neutral coupling coefficient for phase 1. |
+| triplex_neutral_2_value | complex | N/A | O | Internal triplex neutral coupling coefficient for phase 2. |
 
 
 

@@ -89,15 +89,16 @@ The **network** module implements the Gauss-Seidel solution method for balanced 
 The module global variables are shown in Table 1. 
 
 Table: Network module properties { #tbl:network-module-properties }
- _Property_ | _Type_ | _Default_ | _Unit_ | _Description_   
----|---|---|---|---  
-acceleration_factor  | double | 1.4 | pu | The voltage update gain factor (usually between 1.4 and 1.7)   
-convergence_limit  | double | 0.001 | V | The maximum allowable voltage change for iteration to halt   
-mvabase  | double | 1.0 | MVA | The megaVolt-Amp basis to use in calculating powers   
-kvbase  | double | 12.5 | kV | The kiloVolt basis to use calculating voltages   
-model_year  | int16 | 2000 | CE | The basis year of the model   
-model_case  | char8 | "S" | WSF | The basis of the case (e.g., winter, summer, fall)   
-model_name  | char32 | "(unnamed)" | * | The name of the model   
+
+| _Property_ | _Type_ | _Default_ | _Unit_ | _Description_ |
+| --- | --- | --- | --- | --- |
+| acceleration_factor | double | 1.4 | pu | The voltage update gain factor (usually between 1.4 and 1.7) |
+| convergence_limit | double | 0.001 | V | The maximum allowable voltage change for iteration to halt |
+| mvabase | double | 1.0 | MVA | The megaVolt-Amp basis to use in calculating powers |
+| kvbase | double | 12.5 | kV | The kiloVolt basis to use calculating voltages |
+| model_year | int16 | 2000 | CE | The basis year of the model |
+| model_case | char8 | "S" | WSF | The basis of the case (e.g., winter, summer, fall) |
+| model_name | char32 | "(unnamed)" | * | The name of the model |
   
 ## Node class
 

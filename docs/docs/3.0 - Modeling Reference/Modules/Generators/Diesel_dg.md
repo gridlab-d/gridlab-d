@@ -243,7 +243,7 @@ The **DEGOV1** governor represents a simple Woodward Diesel Governor model.
 
 Parameters specific to the **DEGOV1** model are: 
 
-Table: **DEGOV1** model parameters { #tbl:degov1-model-parameters }
+Table: DEGOV1 model parameters { #tbl:degov1-model-parameters }
 
 Property  | Type  | Unit  | Description   
 ---|---|---|---  

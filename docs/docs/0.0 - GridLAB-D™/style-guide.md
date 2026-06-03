@@ -22,7 +22,7 @@ Referenced file names should be in quotes and italics, like:
 
 Keep this format even when linking files, for example:
 
-"Navigate to the respository to check out ["*sample_file.glm*"](path) as an example."
+"Navigate to the respository to check out *sample_file.glm* as an example."
 
 Remember that both an asterix and an underscore will italicize text, and both may be used in this documentation.
 

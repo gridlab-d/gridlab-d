@@ -601,14 +601,14 @@ $$A_{wt} = n\ h\ p $$
 
 Table: Heat Loss Coefficient Equations { #tbl:HL }
 
-Equation | Explanation  
----  | -- |
-| $A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}}$ | The gross exterior wall area ($A_{wt}$)   
-| $A_g = WWR\ A_{wt}\ EWR$ | The gross window area ($A_g$). The window area is used to calculate net_exterior_wall_area, envelope_UA, solar_heatgain_factor, and house_content_heat_transfer_coeff. This is an automatically calculated value, not a variable that the user may set. <br/> The default window_area is **244.95 square feet**. <br/> It is calculated by `window_area = gross_wall_area * window_wall_ratio * exterior_wall_fraction`. <br/> Using default values: $1633\text{ft}^2 \cdot 0.15 \cdot 1 = 244.95\text{ft}^2$.
-| $A_d = n_d\ A_{1d}$ | The total door area ($A_d$), used to calculate `net_exterior_wall_area`, `envelope_UA`, and `house_content_heat_transfer`. This is an automatically calculated value, not a variable that the user may set. <br/> The default door area is 78 square feet.  <br/> It is calculated by <br/> `door_area = number_of_doors * 3.0 * (78.0/12.0)`
-| $A_w = (A_{wt}-(A_g + A_d))\ EWR$ | The net exterior wall area ($A_w$). This is used to calculate `envelope_UA` and `house_content_heat_transfer_coeff`. <br/>The default net exterior wall area is about **1310** square feet. <br/> It is calculated by <br/> 1 $\cdot 1633\text{ft}^2 - 244.95\text{ft}^2 - 78\text{ft}^2 = 1310.05\text{ft}^2$
-| $A_c = \frac{A}{n} ECR$ | The net exterior ceiling area ($A_c$). This is an automatically calculated value, not a variable that the user may set. <br/> The default exterior ceiling area is **2500 sqft**. <br/>It is calculated by <br/> `exterior_ceiling_area = floor_area * exterior_ceiling_fraction / number_of_stories`
-| $A_f = \frac{A}{n} EFR$ | The net exterior floor area ($A_f$). This is an automatically calculated value, not a variable that the user may set. <br/>The default exterior floor area is **2500 sqft**. <br/>It is calcualted by <br/> `exterior_floor_area = floor_area * exterior_floor_fraction / number_of_stories`
+| Equation | Explanation |
+| --- | --- |
+| $A_{wt} = 2 n h (1 + R) \sqrt{\frac{A}{nR}}$ | The gross exterior wall area ($A_{wt}$). |
+| $A_g = WWR\ A_{wt}\ EWR$ | The gross window area ($A_g$). The window area is used to calculate net_exterior_wall_area, envelope_UA, solar_heatgain_factor, and house_content_heat_transfer_coeff. This is an automatically calculated value, not a variable that the user may set. <br/> The default window_area is **244.95 square feet**. <br/> It is calculated by `window_area = gross_wall_area * window_wall_ratio * exterior_wall_fraction`. <br/> Using default values: $1633\text{ft}^2 \cdot 0.15 \cdot 1 = 244.95\text{ft}^2$. |
+| $A_d = n_d\ A_{1d}$ | The total door area ($A_d$), used to calculate `net_exterior_wall_area`, `envelope_UA`, and `house_content_heat_transfer`. This is an automatically calculated value, not a variable that the user may set. <br/> The default door area is 78 square feet. <br/> It is calculated by <br/> `door_area = number_of_doors * 3.0 * (78.0/12.0)`. |
+| $A_w = (A_{wt}-(A_g + A_d))\ EWR$ | The net exterior wall area ($A_w$). This is used to calculate `envelope_UA` and `house_content_heat_transfer_coeff`. <br/> The default net exterior wall area is about **1310** square feet. <br/> It is calculated by <br/> $1 \cdot 1633\text{ft}^2 - 244.95\text{ft}^2 - 78\text{ft}^2 = 1310.05\text{ft}^2$. |
+| $A_c = \frac{A}{n} ECR$ | The net exterior ceiling area ($A_c$). This is an automatically calculated value, not a variable that the user may set. <br/> The default exterior ceiling area is **2500 sqft**. <br/> It is calculated by <br/> `exterior_ceiling_area = floor_area * exterior_ceiling_fraction / number_of_stories`. |
+| $A_f = \frac{A}{n} EFR$ | The net exterior floor area ($A_f$). This is an automatically calculated value, not a variable that the user may set. <br/> The default exterior floor area is **2500 sqft**. <br/> It is calculated by <br/> `exterior_floor_area = floor_area * exterior_floor_fraction / number_of_stories`. |
   
 The total heat loss coefficient (conductance), $U_A$, for the house (the last term is for air infiltration); the defaults produce $U_A$ = 522.1 Btu/°F.hr 
 

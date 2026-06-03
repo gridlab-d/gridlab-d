@@ -12,7 +12,7 @@ In real-world scenarios, the full-spectrum dynamics of distribution systems with
 
 Figure 1 shows the structure of the IBR gray-box model. It is used to represent the behind-the-meter (BTM) dynamics, and it consists of two sections: an optimization-based model and a data-driven section. The optimization-based model section is used to estimate the parameters for a given control IBR control structure and generate the estimated output of a selected IBR. The estimated output current from the first section and the voltage at the point of the interconnection (POI) serve as an augmented input for the data-driven section, which includes an offline-trained neural network. Finally, the gray-box model of the IBR is represented as a Norton equivalent circuit, with the current output from the data-driven section fed back into the external power network. 
 
-![The structure of the IBR gray-box model](../../../../../images/300px-GrayBoxModel.png){ #fig:the-structure-of-the-ibr-gray-box-model }
+![The structure of the IBR gray-box model](../../../../images/300px-GrayBoxModel.png){ #fig:the-structure-of-the-ibr-gray-box-model }
 
  
 
