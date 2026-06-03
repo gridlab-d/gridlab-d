@@ -57,7 +57,7 @@
       - Reliability User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/4.0 - Reliability_User_Guide.md
       - Newton-Raphson Distribution Powerflow Solver: docs/3.0 - Modeling Reference/Modules/Powerflow/5.0 - Newton-Raphson_Distribution_Powerflow_Solver.md
       - Classes:
-        - Powerflow Classes: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/00-index.md
+        - 00-index: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/00-index.md
         - 02-powerflow_object: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/02-powerflow_object.md
         - 03-node: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/03-node.md
         - 04-link: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/04-link.md
@@ -87,14 +87,14 @@
         - 39-series_reactor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/39-series_reactor.md
         - 40-sectionalizer: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/40-sectionalizer.md
         - 41-power_metrics: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/41-power_metrics.md
-        - Related Concepts:: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/42-emissions.md
-        - 43 - visualization_tools: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/43 - visualization_tools.md
+        - 42-emissions: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/42-emissions.md
         - 44-jsondump: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/44-jsondump.md
         - 45-performance_motor: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/45-performance_motor.md
         - 46-load_tracker: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/46-load_tracker.md
         - 47-series_compensator: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/47-series_compensator.md
         - 48-sync_check: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/48-sync_check.md
         - 49-vfd: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/49-vfd.md
+        - class_documentation_tracking: docs/3.0 - Modeling Reference/Modules/Powerflow/Classes/class_documentation_tracking.md
       - Introduction:
         - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/Introduction/00 - Powerflow_Introduction.md
       - Motor:
@@ -104,11 +104,11 @@
       - Series compensator: docs/3.0 - Modeling Reference/Modules/Powerflow/Series_compensator.md
       - Switch: docs/3.0 - Modeling Reference/Modules/Powerflow/Switch_object.md
       - Theory:
-        - 01 - Algorithm_Selection: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/01 - Algorithm_Selection.md
-        - Component Modeling: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/02 - Node_Load_Meter_Theory.md
-        - 03 - Lines_and_Transformers_Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/03 - Lines_and_Transformers_Theory.md
-        - 04 - Controls_and_Devices_Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/04 - Controls_and_Devices_Theory.md
-        - References: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/99 - References.md
+        - 01-Algorithm_Selection: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/01-Algorithm_Selection.md
+        - Component Modeling: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/02-Node_Load_Meter_Theory.md
+        - 03-Lines_and_Transformers_Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/03-Lines_and_Transformers_Theory.md
+        - 04-Controls_and_Devices_Theory: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/04-Controls_and_Devices_Theory.md
+        - References: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/99-References.md
     - Residential:
       - Introduction: docs/3.0 - Modeling Reference/Modules/Residential/1.0 - Introduction.md
       - house: docs/3.0 - Modeling Reference/Modules/Residential/2.0 - house-e.md
