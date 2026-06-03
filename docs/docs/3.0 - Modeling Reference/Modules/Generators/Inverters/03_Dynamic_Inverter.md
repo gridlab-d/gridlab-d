@@ -202,10 +202,6 @@ For the `GRID_FOLLOWING` control mode, two sub-modes are available via parameter
 
 The PLL is the sensing subsystem that tracks the grid's voltage angle so the inverter can synchronize its current injection. In `inverter_dyn`, the PLL output (angle and frequency) drives the dq-frame current control to achieve synchronization with the grid, as detailed in [1]. The key PLL parameters — proportional `kpPLL` and integral `kiPLL` gains — control how quickly the inverter responds to grid angle changes to bring the grid voltage on q-axis to zero.
 
-<mark  style="background-color: red;">
-In `inverter_dyn.cpp`, `kiPLL` is listed as *proportional* instead ofß *integral*.
-</mark>
-
 #### Inner Current Control
 
 In full `GRID_FOLLOWING` mode (not `GFL_CURRENT_SOURCE`), the model includes an **inner current control loop** that outputs the internal voltages $e_{di}$ and $e_{qi}$ for each phase. `kpc` and `kic` are the proportional and integral gains of the current control loop, respectively, while `F_current` represents the feed forward term gain (<mark style="background-color: light green";>$k$ in the diagram in [](#fig:inverter_dyn_glf_current_control) ????</mark>). In the rotating dq reference frame:
@@ -472,13 +468,13 @@ Table: Key Parameters and Variables of the GridLAB-D™ Dynamic Inverter (`inver
 |**voltage_convergence_criterion**|V|double|Max voltage update for grid-forming inverters to return to QSTS|
 |**current_convergence_criterion**|A|double|Max current magnitude update for grid-following inverters to return to QSTS, or initialize|
 |**kpPLL**||double|DELTAMODE: Proportional gain of the PLL.|
-|**kiPLL**||double|DELTAMODE: Proportional gain of the PLL.|
+|**kiPLL**||double|DELTAMODE: Integral gain of the PLL.|
 |**Tp**||double|DELTAMODE: time constant of low pass filter, P calculation.|
 |**Tq**||double|DELTAMODE: time constant of low pass filter, Q calculation.|
 |**Tv**||double|DELTAMODE: time constant of low pass filter, V calculation.|
 |**Vset**|pu|double|DELTAMODE: voltage set point in grid-forming inverter, usually 1 pu.|
-|**kpv**||double|DELTAMODE: proportional gain and integral gain of voltage loop.|
-|**kiv**||double|DELTAMODE: proportional gain and integral gain of voltage loop.|
+|**kpv**||double|DELTAMODE: proportional gain of voltage loop.|
+|**kiv**||double|DELTAMODE: integral gain of voltage loop.|
 |**mq**|pu|double|DELTAMODE: Q-V droop gain, usually 0.05 pu.|
 |**Q_V_droop**|pu|double|DELTAMODE: Q-V droop gain, usually 0.05 pu.|
 |**E_max**||double|DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.|
@@ -489,16 +485,16 @@ Table: Key Parameters and Variables of the GridLAB-D™ Dynamic Inverter (`inver
 |**fset**|Hz|double|DELTAMODE: frequency set point in P-f droop.|
 |**mp**|rad/s/pu|double|DELTAMODE: P-f droop gain, usually 3.77 rad/s/pu.|
 |**P_f_droop**|pu|double|DELTAMODE: P-f droop gain in per unit value, usually 0.01.|
-|**kppmax**||double|DELTAMODE: proportional and integral gains for Pmax controller.|
-|**kipmax**||double|DELTAMODE: proportional and integral gains for Pmax controller.|
+|**kppmax**||double|DELTAMODE: proportional gain for Pmax controller.|
+|**kipmax**||double|DELTAMODE: integral gain for Pmax controller.|
 |**w_lim**||double|DELTAMODE: saturation limit of Pmax controller.|
 |**Pmax**|pu|double|DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.|
 |**Pmin**|pu|double|DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.|
 |**w_ref**|rad/s|double|DELTAMODE: the rated frequency, usually 376.99 rad/s.|
 |**freq**|Hz|double|DELTAMODE: the frequency obtained from the P-f droop controller.|
 |**Imax**|pu|double|DELTAMODE: the maximum current of a grid-forming inverter.|
-|**kpqmax**||double|DELTAMODE: proportional and integral gains for Qmax controller.|
-|**kiqmax**||double|DELTAMODE: proportional and integral gains for Qmax controller.|
+|**kpqmax**||double|DELTAMODE: proportional gain for Qmax controller.|
+|**kiqmax**||double|DELTAMODE: integral gain for Qmax controller.|
 |**Qmax**|pu|double|DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.|
 |**Qmin**|pu|double|DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.|
 |**VFlag**||bool|DELTAMODE: Voltage flag to choose between PI control or direct control.|
