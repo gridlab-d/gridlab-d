@@ -1090,7 +1090,7 @@ static void ss_do_object_sync(int thread, void *item)
                     sprintf(objname, "%s:%d", obj->oclass->name, obj->id);
                 else
                     strcpy(objname, obj->name);
-                fprintf(fp, "%s,%s,%d,%d,%s,%s\n", lastdate, passname,
+                fprintf(fp, "%s,%s,%d,%d,%s,%s\n", lastdate, passname.c_str(),
                         global_iteration_limit - iteration_counter, thread, objname,
                         syncdate);
             }

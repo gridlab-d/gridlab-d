@@ -597,7 +597,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 				}
 
 				// Set delay so that all switches will not be opened together
-				controlTime == delta_time + 100*dt;
+				controlTime = delta_time + 100*dt;
 			}
 		}
 	}

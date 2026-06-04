@@ -9,6 +9,14 @@
 
 #include "platform.h"
 
+#ifdef _WIN32
+    #define WIFEXITED(X) (X >= 0 && X < 128)
+    #define WEXITSTATUS(X) (X & 127)
+    #define WTERMSIG(X) (X & 127)
+    #define WIFSIGNALED(X) ((X) >= 128)
+#endif
+
+
 typedef enum {
   VO_NONE = 0x0000, ///< run no tests (just go through motions)
 

@@ -79,24 +79,6 @@
 #define HAVE_LIBCPPUNIT
 #endif
 
-// #ifdef __cplusplus
-//	#ifndef CDECL
-//		/** Defines a function as a C-type function **/
-//		#define CDECL extern "C"
-//	#endif
-// #else
-//	#define CDECL
-// #endif
-//
-// #ifdef _WIN32
-// #ifndef EXPORT
-///** Defines a function as exported to core **/
-// #define EXPORT CDECL __declspec(dllexport)
-// #endif
-// #else
-// #define EXPORT CDECL
-// #endif
-
 #ifdef __cplusplus
 #ifndef CDECL
 /** Defines a function as a C-type function **/
@@ -138,6 +120,7 @@
 #include "object.h"
 #include "find.h"
 #include "gldrandom.h"
+
 #define STREAM_MODULE
 #include "stream.h"
 #include "module.h"

@@ -8,6 +8,7 @@
  */
 
 #include "cpp_threadpool.h"
+#include <sysinfoapi.h>
 
 cpp_threadpool::cpp_threadpool(int num_threads) {
     if (num_threads == 0) {

@@ -15,9 +15,7 @@
 #include "transform.h"
 
 #ifdef _WIN32
-// #include <windows.h>
-
-#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
+//#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
 #include <windows.h>
 #include <winsock2.h>
 

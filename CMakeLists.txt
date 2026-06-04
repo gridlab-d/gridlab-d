@@ -35,8 +35,11 @@ if(MSVC OR CMAKE_GENERATOR MATCHES "Visual Studio")
     endif()
 endif()
 
+# projects() sets name and the compiler i.e. MSVC, gcc
+project(GridLAB-D)
 
 if(MSVC)
+    message(STATUS "Using system MSVC")
   # Let targets select the MSVC runtime via property (CMP0091 must be NEW)
   cmake_policy(SET CMP0091 NEW)
   # Default: dynamic runtime (/MD for Release, /MDd for Debug)
@@ -47,18 +50,19 @@ if(MSVC)
   # Ensure architecture macros are defined
     # This shouldn't be necessary normally, but helps with edge cases
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        message(STATUS "Using system _AMD64_")
         add_compile_definitions(_AMD64_ AMD64)
     else()
+        message(STATUS "Using system _X86_")
         add_compile_definitions(_X86_ _WIN32)
     endif()
     
 endif()
-project(GridLAB-D)
-
-
+#
 
 
 if(WIN32)
+    message(STATUS "Using system WIN32")
     # Avoid legacy includes and macro collisions from Windows headers
     add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX)
     # Ensure _WIN32 is defined (should be automatic, but be explicit)
@@ -173,7 +177,7 @@ if (CMAKE_USE_PTHREADS_INIT)
     option(HAVE_PTHREADS "pthreads library is present on the platform" ON)
 endif ()
 
-find_package(XercesC 3.2.0)
+find_package(XercesC)
 if (NOT XercesC_FOUND)
     message(STATUS "XercesC library could not be located on the platform. XML Loading is disabled.")
 endif ()
