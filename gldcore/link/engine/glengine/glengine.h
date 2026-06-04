@@ -26,7 +26,7 @@
 #define int64 _int64
 #endif
 #define int64_t _int64
-#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
+//#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
 #include <windows.h>
 #include <winsock2.h>
 #else

@@ -7,7 +7,7 @@
  **/
 // #define _MAIN_C
 
-#define WIN32_LEAN_AND_MEAN // <--- ADD THIS AT THE VERY TOP OF THE FILE
+//#define WIN32_LEAN_AND_MEAN // <--- ADD THIS AT THE VERY TOP OF THE FILE
 
 #include <cstdlib>
 #include <cstring>

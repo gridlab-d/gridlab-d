@@ -949,7 +949,7 @@ void waterheater::sync_energytake()
 				}
 				else
 				{
-					energy_increment_value += gl_random_normal(RNGSTATE,60,30);
+					energy_increment_value = gl_random_normal(RNGSTATE,60,30);
 				}
 				energytake =  ((tank_setpoint - Tw_temp) * tank_volume * 2.44) + energy_increment_value;
 			}
@@ -973,9 +973,7 @@ void waterheater::sync_energytake()
 		heating_element_capacity = 0;
 	}	
 	return;
-				
 }
-
 
 TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {

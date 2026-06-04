@@ -1,7 +1,6 @@
 /* $Id: link.cpp 4738 2014-07-03 00:55:39Z dchassin $
  */
 
-#include "compile.h"
 #include "gridlabd.h"
 
 #include <cstdio>
@@ -11,6 +10,7 @@
 #include "platform.h"
 #include "timestamp.h"
 #include "link.h"
+#include "compile.h"
 
 #ifdef _WIN32
     #include <io.h> // Use Windows file access headers

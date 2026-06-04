@@ -3280,7 +3280,7 @@ public:
 #ifdef DLMAIN
     EXPORT int do_kill(void *);
     #ifdef _WIN32
-        #define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
+//        #define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
         #include <winsock2.h>
         #include <windows.h>
 
@@ -3302,7 +3302,7 @@ public:
     #endif // !WIN32
 #elif defined CONSOLE
     #ifdef _WIN32
-        #define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
+//        #define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
         #include <winsock2.h>
         #include <windows.h>
     #endif
