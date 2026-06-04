@@ -94,53 +94,50 @@
 #include <set>
 #include <thread>
 #include <vector>
-
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
-
-#ifdef _WIN32
-// Reduce header bloat and avoid legacy winsock.h from windows.h
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-// Prevent <windows.h> from defining min/max macros that break std::min/max
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-
-// Winsock2 must precede windows.h
-#include <winsock2.h>
-#include <ws2tcpip.h> // if you use modern TCP/IP helpers
-
-// Umbrella Windows header — brings in windef.h, winnt.h, etc.
-#include <windows.h>
-
-// CRT utils on Windows
-#include <direct.h>
-#else
-#include <algorithm>
-#include <arpa/inet.h>
-#include <cerrno>
-#include <chrono>
-#include <cmath>
-#include <list>
-#include <netinet/in.h>
-#include <ratio>
-#include <set>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <fstream>
+#include <map>
+#include <nlohmann/json.hpp>
+#include <sstream>
+#include <string>
 #include <vector>
 
-#define SOCKET int
-#define INVALID_SOCKET (-1)
-#define closesocket close
+#include "compile.h"
+
+#ifdef _WIN32
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
+    #define WEXITSTATUS(X) (X & 127)
+
+    // if you use modern TCP/IP helpers
+    #include <ws2tcpip.h>
+    // CRT utils on Windows
+    #include <direct.h>
+#else
+    #include <algorithm>
+    #include <arpa/inet.h>
+    #include <cerrno>
+    #include <chrono>
+    #include <cmath>
+    #include <list>
+    #include <netinet/in.h>
+    #include <ratio>
+    #include <set>
+    #include <sys/socket.h>
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <unistd.h>
+    #include <vector>
+
+    #define SOCKET int
+    #define INVALID_SOCKET (-1)
+    #define closesocket close
 #endif
 
 #include "class.h"
@@ -168,20 +165,9 @@
 #include "stream.h"
 #include "test.h"
 #include "transform.h"
-#include <fstream>
-#include <map>
-#include <nlohmann/json.hpp>
-#include <sstream>
-#include <string>
-#include <vector>
-
 #include "cpp_threadpool.h"
 
 using namespace std::literals;
-
-#ifdef _WIN32
-#define WEXITSTATUS(X) (X & 127)
-#endif
 
 // Only setup threadpool for each object rank list at the first iteration;
 cpp_threadpool *threadpool;

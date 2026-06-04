@@ -1713,7 +1713,7 @@ TIMESTAMP _object_sync(OBJECT *obj,		/**< the object to synchronize */
         return TS_INVALID;
     }
 
-#if !defined(WIN32) && defined(HAVE_ALARM)
+#if !defined(_WIN32) && defined(HAVE_ALARM)
     /* setup lockup alarm */
     alarm(global_maximum_synctime);
 #endif
@@ -1766,7 +1766,7 @@ TIMESTAMP _object_sync(OBJECT *obj,		/**< the object to synchronize */
     else
         obj->valid_to = sync_time; // NOTE, this can be negative
 
-#if !defined(WIN32) && defined(HAVE_ALARM)
+#if !defined(_WIN32) && defined(HAVE_ALARM)
     /* clear lockup alarm */
     alarm(0);
 #endif

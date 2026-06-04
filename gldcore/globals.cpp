@@ -1107,7 +1107,7 @@ char *global_getvar(const char *name, char *buffer, int size)
 		{"GUID", global_guid},
 		{"NOW", global_now},
 		{"RUN", global_run},
-#if defined WIN32
+#if defined(_WIN32)
 		{"WINDOWS", global_true},
 #elif defined __APPLE__
 		{"APPLE", global_true},

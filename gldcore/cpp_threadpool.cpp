@@ -8,7 +8,9 @@
  */
 
 #include "cpp_threadpool.h"
-#include <sysinfoapi.h>
+#ifdef _WIN32
+    #include <sysinfoapi.h>
+#endif
 
 cpp_threadpool::cpp_threadpool(int num_threads) {
     if (num_threads == 0) {
@@ -144,6 +146,6 @@ int processor_count(void)
 	char *proc_count = getenv("NUMBER_OF_PROCESSORS");
 	int count = proc_count ? atoi(proc_count) : 0;
 	return count ? count : 1;
-#endif /* WIN32 */
+#endif /* _WIN32 */
 }
 #endif /* HAVE_GET_NPROCS */

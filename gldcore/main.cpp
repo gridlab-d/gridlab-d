@@ -170,7 +170,7 @@ int main(int argc,     /**< the number entries on command-line argument list \p 
     if (browser != nullptr)
         strncpy(global_browser, browser, sizeof(global_browser) - 1);
 
-    // #if defined WIN32 && _DEBUG
+    // #if defined(_WIN32) && _DEBUG
     //     atexit(pause_at_exit);
     // #endif
 

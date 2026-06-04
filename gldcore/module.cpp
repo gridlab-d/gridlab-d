@@ -6,68 +6,47 @@
  @{
  **/
 
+#include "compile.h"
+
 /* absolutely nothing must be placed before this per feature_test_macros(7) man page */
 #ifndef WIN32
-#ifndef __APPLE__
-#undef _GNU_SOURCE
-#define _GNU_SOURCE
-#include <features.h>
-#endif
+    #ifndef __APPLE__
+        #undef _GNU_SOURCE
+        #define _GNU_SOURCE
+        #include <features.h>
+    #endif
 #endif
 
 #include "version.h"
 
-#if defined WIN32
-#include <io.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#if defined(_WIN32)
+    #include <io.h>
+    #include <sys/stat.h>
+    #include <sys/types.h>
 #else
-#include <dirent.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+    #include <dirent.h>
+    #include <sys/ioctl.h>
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <unistd.h>
 #endif
+
 #include <cmath>
 #include <mutex>
 #include <shared_mutex>
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+    #include "config.h"
 #endif
 
 #include "http_client.h"
 
-#if defined(_WIN32) && !defined(__MINGW32__)
-#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
-#define _WIN32_WINNT 0x0400
-#include <windows.h>
-#include <winsock2.h>
-#ifndef DLEXT
-#define DLEXT ".dll"
-#endif
-#define DLLOAD(P) LoadLibrary(P)
-#define DLSYM(H, S) (void *)GetProcAddress((HINSTANCE)H, S)
-// #define snprintf _snprintf
-#else /* ANSI */
-#include "dlfcn.h"
-#ifndef DLEXT
-#ifdef __MINGW32__
-#define DLEXT ".dll"
-#else
-#define DLEXT ".so"
-#endif
-#endif
-#define DLLOAD(P) dlopen(P, RTLD_LAZY)
-#define DLSYM(H, S) dlsym(H, S)
-#endif
-
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_MALLOC_H)
-#include <malloc.h>
+    #include <malloc.h>
 #endif
 
 #if HAVE_SCHED_H
-#include <sched.h>
+    #include <sched.h>
 #endif
 
 #include <cerrno>
@@ -100,7 +79,7 @@
 #endif
 
 #ifndef F_OK
-#define F_OK 0 // Define F_OK to represent file existence checks
+    #define F_OK 0 // Define F_OK to represent file existence checks
 #endif
 
 int get_exe_path(char *buf, int len,
@@ -111,7 +90,7 @@ int get_exe_path(char *buf, int len,
 		return 0;
 	if (len < 1)
 		return 0;
-#if defined WIN32 && !defined __MINGW32__
+#if defined(_WIN32) && !defined(__MINGW32__)
 	rv = GetModuleFileName((HMODULE)mod, buf, len);
 	if (rv)
 	{
@@ -147,7 +126,7 @@ int module_get_path(char *buf, int len, MODULE *mod)
 void dlload_error(const char *filename)
 {
 #ifndef __MINGW32__
-#if defined WIN32
+#if defined(_WIN32)
 	LPTSTR error;
 	LPTSTR end;
 	DWORD result = FormatMessage(
@@ -167,7 +146,7 @@ void dlload_error(const char *filename)
 #endif
 	output_debug("%s: %s (LD_LIBRARY_PATH=%s)", filename, error,
 				 getenv("LD_LIBRARY_PATH"));
-#if defined WIN32 && !defined __MINGW32__
+#if defined(_WIN32) && !defined(__MINGW32__)
 	if (result)
 		LocalFree(error);
 #endif
@@ -1088,7 +1067,7 @@ int module_saveall_xml(FILE *fp)
 	return count;
 }
 
-#if defined WIN32 && !defined __MINGW32__
+#if defined(W_IN32) && !defined(__MINGW32__)
 #define isnan _isnan /* map isnan to appropriate function under Windows */
 #endif
 
@@ -2276,7 +2255,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 {
 	int t;
 
-#if defined WIN32
+#if defined(_WIN32)
 	int cpu;
 
 	/* get process info */

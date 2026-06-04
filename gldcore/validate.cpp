@@ -1,20 +1,16 @@
 // $Id: validate.cpp 4738 2014-07-03 00:55:39Z dchassin $
 // Copyright (C) 2012 Battelle Memorial Institute
 //
+#include "compile.h"
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
-#include <winsock2.h>
-#include <windows.h>
-#include <direct.h>
-#include <io.h>
+    #include <direct.h>
+    #include <io.h>
 #else
-#include <unistd.h>
-#include <dirent.h>
-#endif
-
-#ifdef __linux__
-#include <sys/types.h>
+    #include <unistd.h>
+    #include <dirent.h>
+    #include <signal.h>
+    #include <sys/wait.h>
 #endif
 
 #include <cerrno>
@@ -24,19 +20,11 @@
 #include <cstring>
 #include <format>
 #include <sys/stat.h>
-
 #include <chrono>
 #include <thread>
-
-#ifndef _WIN32
-#include <signal.h>
-#include <sys/wait.h>
-#endif
-
 #include <atomic>
 #include <mutex>
 #include <vector>
-
 #include <algorithm>
 #include <cctype> // for std::isspace
 #include <deque>

@@ -52,33 +52,10 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "compile.h"
 #include "property.h"
 #include "solver_nr.h"
 #include "node.h"
-
-// Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
-#if defined(_WIN32) && !defined(__MINGW32__)
-    #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
-    #define _WIN32_WINNT 0x0400
-    #include <winsock2.h>
-    #include <windows.h>
-    #ifndef DLEXT
-        #define DLEXT ".dll"
-    #endif
-    #define DLLOAD(P) LoadLibrary(P)
-    #define DLSYM(H, S) (void *)GetProcAddress((HINSTANCE)H, S)
-#else /* ANSI */
-    #include "dlfcn.h"
-    #ifndef DLEXT
-        #ifdef __MINGW32__
-            #define DLEXT ".dll"
-        #else
-            #define DLEXT ".so"
-        #endif
-    #endif
-    #define DLLOAD(P) dlopen(P, RTLD_LAZY)
-    #define DLSYM(H, S) dlsym(H, S)
-#endif
 
 //"Small" multiplier for restoring voltages in in-rush.  Zeros seem to make it angry
 // TODO: See if this is a "zero-catch" somewhere making it useless, or legitimate numerical stability

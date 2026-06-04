@@ -11,7 +11,6 @@
 #include "load.h"
 #include "object.h"
 #include "save.h"
-#include "kill.h"
 #include "cpp_threadpool.h"
 
 // External declarations for message capture functions in output.cpp
@@ -41,11 +40,11 @@ extern size_t output_get_message_capture_limit();
 
 
 #ifdef _WIN32
-#include <direct.h>
-#define getcwd _getcwd
+    #include <direct.h>
+    #define getcwd _getcwd
 #else
-#include <sys/wait.h>
-#include <unistd.h>
+    #include <sys/wait.h>
+    #include <unistd.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -272,7 +271,7 @@ GridLabD::GridLabD() : selected_timestep(0) {
   if (browser != nullptr)
     strncpy(global_browser, browser, sizeof(global_browser) - 1);
 
-#if defined WIN32 && _DEBUG
+#if defined(_WIN32) && _DEBUG
   atexit(pause_at_exit);
 #endif
 
