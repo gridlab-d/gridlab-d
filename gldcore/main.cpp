@@ -9,33 +9,19 @@
 
 #define WIN32_LEAN_AND_MEAN // <--- ADD THIS AT THE VERY TOP OF THE FILE
 
-// #define USE_MPI
-
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-
 #include <iostream>
 #include <thread>
 #include <chrono>
 
 #ifdef _WIN32
-#include <windows.h> // Required for GetCurrentProcessId on Windows
+    #include <windows.h> // Required for GetCurrentProcessId on Windows
+    #include <direct.h>
+    #include <process.h>
 #else
-#include <unistd.h> // Required for getpid() on non-Windows systems
-#endif
-
-#include "globals.h"
-
-#ifdef _WIN32
-
-#include <direct.h>
-#include <process.h>
-
-#else
-
-#include <unistd.h>
-
+    #include <unistd.h> // Required for getpid() on non-Windows systems
 #endif
 
 #include "globals.h"

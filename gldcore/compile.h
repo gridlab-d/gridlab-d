@@ -20,6 +20,7 @@
 #else // LINUX
     #ifndef __MINGW32__
         #include "dlfcn.h"
+        #define DLEXT ".dll"
     #endif
     #define PREFIX ""
     #ifndef DLEXT

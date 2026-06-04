@@ -1,15 +1,18 @@
 // $Id: validate.cpp 4738 2014-07-03 00:55:39Z dchassin $
 // Copyright (C) 2012 Battelle Memorial Institute
 //
-#include "compile.h"
 
 #ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
+    #include <winsock2.h>
+    #include <windows.h>
     #include <direct.h>
     #include <io.h>
 #else
     #include <unistd.h>
     #include <dirent.h>
     #include <signal.h>
+    #include <sys/types.h>
     #include <sys/wait.h>
 #endif
 
@@ -744,6 +747,7 @@ static int vsystem_posix_exec_argv_capture(
 
 // replace vsystem_posix() with an argv-based exec
 #ifndef _WIN32
+
 static int vsystem_posix_exec_argv(const std::vector<std::string> &argv)
 {
     pid_t pid = fork();
@@ -1052,7 +1056,6 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
     }
 #ifdef _WIN32
     if ((0 != mkdir(dir)) && clean)
-
 #else
     if ((0 != mkdir(dir, 0750)) && clean)
 #endif

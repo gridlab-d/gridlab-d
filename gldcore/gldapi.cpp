@@ -11,6 +11,7 @@
 #include "load.h"
 #include "object.h"
 #include "save.h"
+#include "kill.h"
 #include "cpp_threadpool.h"
 
 // External declarations for message capture functions in output.cpp

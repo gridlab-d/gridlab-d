@@ -15,13 +15,13 @@
 #include "transform.h"
 
 #ifdef _WIN32
-//#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
-#include <windows.h>
-#include <winsock2.h>
+    #define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
+    #include <winsock2.h>
+    #include <windows.h>
 
-typedef int pid_t; // or DWORD if you want to match Windows process IDs
+    typedef int pid_t; // or DWORD if you want to match Windows process IDs
 #else
-#include <sys/types.h>
+    #include <sys/types.h>
 #endif
 
 struct s_module_list {

@@ -6,8 +6,6 @@
  @{
  **/
 
-#include "compile.h"
-
 /* absolutely nothing must be placed before this per feature_test_macros(7) man page */
 #ifndef WIN32
     #ifndef __APPLE__
@@ -40,6 +38,7 @@
 #endif
 
 #include "http_client.h"
+#include "compile.h"
 
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_MALLOC_H)
     #include <malloc.h>
@@ -1067,7 +1066,7 @@ int module_saveall_xml(FILE *fp)
 	return count;
 }
 
-#if defined(W_IN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define isnan _isnan /* map isnan to appropriate function under Windows */
 #endif
 
