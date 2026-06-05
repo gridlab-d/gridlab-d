@@ -628,7 +628,11 @@ inline bool gl_object_isa(OBJECT *obj, const char *type, const char *modname = n
 
   // Prefer the per-class ISA first (it works in your LLDB probe)
   if (obj->oclass && obj->oclass->isa)
-    is_type = (obj->oclass->isa(obj, const_cast<char *>(type)) != 0);
+  {
+    using ISAADDR = int (*)(OBJECT *, char *);
+    auto isa = reinterpret_cast<ISAADDR>(obj->oclass->isa);
+    is_type = (isa(obj, const_cast<char *>(type)) != 0);
+  }
 
   // If that didn’t match, try the core callback ancestry search
   if (!is_type && callback && callback->object_isa)

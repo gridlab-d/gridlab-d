@@ -389,8 +389,8 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 78;
-     heating_setpoint 87;
+     cooling_setpoint 69;
+     heating_setpoint 65;
      object ZIPload {
            name house1_resp_R1-12-47-4_tn_39;
            // Responsive load
@@ -710,8 +710,8 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 71;
-     heating_setpoint 100;
+     cooling_setpoint 73;
+     heating_setpoint 69;
      object ZIPload {
            name house1_resp_R2-12-47-2_tn_289;
            // Responsive load
@@ -816,7 +816,7 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 67;
+     cooling_setpoint 82;
      heating_setpoint 64;
      object ZIPload {
            name house1_resp_R2-12-47-2_tn_276;
@@ -1261,8 +1261,8 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 77;
-     heating_setpoint 75;
+     cooling_setpoint 72;
+     heating_setpoint 68;
      object ZIPload {
            name house3_resp_R2-12-47-2_tn_274;
            // Responsive load
@@ -1308,13 +1308,13 @@ object house {
      object waterheater {
           schedule_skew -1761;
           heating_element_capacity 4.0 kW;
-          tank_setpoint 184.0;
+          tank_setpoint 131.8;
           temperature 132;
           thermostat_deadband 4.2;
           location INSIDE;
           tank_UA 2.9;
           demand large_4*1.03;
-          tank_volume 19;
+          tank_volume 30;
      };
 
 }
@@ -1368,5 +1368,4 @@ object inverter {
 //  file indoor_air_temperature.csv;
 //  interval 300;
 //}
-
 

@@ -1970,7 +1970,11 @@ int object_isa(OBJECT *obj, /**< the object to test */
 	if (strcmp(obj->oclass->name, type) == 0)
         return 1;
 	else if (obj->oclass->isa)
-		return (int)obj->oclass->isa(obj, type);
+	{
+		using ISAADDR = int (*)(OBJECT *, char *);
+		auto isa = reinterpret_cast<ISAADDR>(obj->oclass->isa);
+		return isa(obj, const_cast<char *>(type));
+	}
 	else
         return 0;
 }
