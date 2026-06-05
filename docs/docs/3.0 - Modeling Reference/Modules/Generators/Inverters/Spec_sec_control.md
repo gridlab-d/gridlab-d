@@ -2,13 +2,11 @@
 
 The secondary controller object has a structure illustrated in Figure 1, and is very similar to textbook examples like Figure 2. 
 
-![Secondary controller structure](../../../../../../images/300px-SecondaryControlChart.png)
+![Secondary controller structure](../../../../../images/300px-SecondaryControlChart.png){ #fig:secondary-controller-structure }
 
-##### Figure 1: Secondary controller structure
 
-![AGC Control Structure](../../../../../../images/300px-AGC_WW.png)
+![AGC Control Structure. Source: [1]](../../../../../images/300px-AGC_WW.png){ #fig:agc-control-structure-source-1 }
 
-##### Figure 2 - AGC Control Structure. Source: [1]
 
 The basic idea is that the frequency error $\Delta f$ is 
 
@@ -28,6 +26,7 @@ Inter-tie modeling is incorporated into the unit error input, as illustrated in 
 
 The logic for Microgrid B is equal and opposite to that of Microgrid A, and therefore $c_i=1$. These rules are summarized in the following table: 
 
+Table: Microgrid Rules { #tbl:table-rules }
 
 | |  | $P^{\star}_i-P_i > 0$ | $P^{\star}_i-P_i < 0 $  
 ---|---|---|---  
@@ -38,9 +37,8 @@ Link _to_ end
 (Microgrid B) | Desired | $P_{\text{err}}\downarrow$ | $P_{\text{err}}\uparrow$  
 $c_i$ | 1 | 1   
   
-![input](../../../../../../images/300px-SecondaryControlIntertie.png)
+![Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ input](../../../../../images/300px-SecondaryControlIntertie.png){ #fig:illustration-of-inter-tie-incorporation-into-the-secondary-controller-via-the-unit-error-epsilon-text-unit-input }
 
-##### Figure 3: Illustration of inter-tie incorporation into the secondary controller via the unit error, $\epsilon_{text{unit}}$ input
 
 ## Anti-Windup
 
@@ -80,6 +78,8 @@ This is the same as the Feedback PID Ouput except that the integrator output is 
 
 The following parameters are general to the secondary controller object. 
 
+Table: Global Secondary Controller Object Parameters { #tbl:table-control }
+
 Parameter | glm | units | Default | Description   
 ---|---|---|---|---  
 $i$ | `participant_input` |  |  | Set of participating objects in secondary control, see  unit specific parameters.   
@@ -101,6 +101,8 @@ anti-windup | `anti_windup` |  | `FEEDBACK_PIDOUTPUT` | Integrator anti-windup o
 ### Unit Specific Parameters
 
 The unit specific parameters are provided via the `participant_input` parameter (access via player). Properties are provided in a specific order, which is listed below in column _Pos_ (1 indexed). 
+
+Table: Unit Specific Parameters { #tbl:table-spec }
 
 Pos | Parameter | Units | Range | Default | Description   
 ---|---|---|---|---|---  
@@ -146,6 +148,8 @@ There are two possible input formats:
 The csv method is recommended in general as it is more robust, easy to read, and does not risk exceeding the allotted array buffer of 1024 characters. 
 
 The syntax is demonstrated using the following example. Initially (at ` t0 `) the secondary controller contains: 
+
+Table: CSV Syntax { #tbl:table-syntax }
 
 Name | $\alpha_i$ | $\Delta P_{\text{dn}}$ MW | $\Delta P_{\text{up}}$ MW | $P_{\text{max}}$ p.u. | $P_{\text{min}}$ p.u. | $T_i$ s   
 ---|---|---|---|---|---|---  
@@ -219,6 +223,8 @@ The following properties are implemented in the  inverter_dyn and  diesel_dg mod
 
     Any future object that should also be capable of interaction with the secondary object will likely need these properties. 
 
+Table: Generator Properties { #tbl:table-generator }
+
 Object | Parameter | glm | units | Default | Description   
 ---|---|---|---|---|---  
  diesel_dg | $P_{\text{set}}$ | `pdispatch` | p.u. | GGOV with Rselect=1: $P_{\text{ref}}/R$ | Power set point   
@@ -239,6 +245,8 @@ $$P^{\star} = P_{\text{set}} + \Delta P^{\star}$$
 ### Link Properties
 
 The following properties are implemented in the  link object to allow interaction with the secondary controller as a tie-line. 
+
+Table: Link Properties { #tbl:table-link }
 
 Parameter | glm | units | Description   
 ---|---|---|---  
@@ -352,9 +360,8 @@ Main `.glm`:
     Inv3, 0.3
     
 
-![Secondary controller setup on the IEEE 123 Bus case for illustration purposes](../../../../../../images/300px-Sec_cntrl_IEEE_123.png)
+![Secondary controller setup on the IEEE 123 Bus case for illustration purposes.](../../../../../images/300px-Sec_cntrl_IEEE_123.png){ #fig:secondary-controller-setup-on-the-ieee-123-bus-case-for-illustration-purposes }
 
-##### Figure 4: Secondary controller setup on the IEEE 123 Bus case for illustration purposes.
 
 ## References
 

@@ -1,7 +1,7 @@
 """
 Created on 03/24/2026
 
-This example shows how to read data out of GridLAB-D while the simulation is
+This example shows how to read data out of GridLAB-D™ while the simulation is
 running and writing this to an HDF5 file on disk. The data of interest is the
 indoor air temperature for each house.
 
@@ -26,6 +26,7 @@ import h5py
 import numpy as np
 import re
 import matplotlib.pyplot as plt
+import pprint
 
 step_size = 60
 
@@ -89,7 +90,7 @@ def parse_temperature_data(air_dict):
                 parsed_data[house] = None
     return parsed_data
 
-def parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_obj):
+def parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_dt):
     """
     Convert HVAC off time strings to datetime objects.
     
@@ -100,7 +101,7 @@ def parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_obj):
         hvac_load_dict (dict): Dictionary with house names as keys and HVAC
                  load values (float or parseable numeric strings)
         starttime (datetime): Simulation start time used when value is "INIT"
-        sim_time_obj (datetime): Current simulation time used when HVAC load
+        sim_time_dt (datetime): Current simulation time used when HVAC load
                  is non-zero
     
     Returns:
@@ -123,7 +124,7 @@ def parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_obj):
         try:
             load_value = hvac_load_dict.get(house)
             if load_value is not None and float(load_value) != 0.0:
-                parsed_data[house] = sim_time_obj
+                parsed_data[house] = sim_time_dt
                 continue
 
             if str(timestamp_str).strip() == "INIT":
@@ -221,7 +222,7 @@ script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
 
-# Initilize GridLAB-D and load the model
+# Initilize GridLAB-D™ and load the model
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
@@ -230,17 +231,17 @@ if load_code != 0:
     raise RuntimeError(f"Failed to load model with error code {load_code}.")
 
 # Read in current start and stop time
-starttime = datetime.fromisoformat(gld.get_starttime())
-stoptime = datetime.fromisoformat(gld.get_stoptime())
+starttime_dt = datetime.fromisoformat(gld.get_starttime())
+stoptime_dt = datetime.fromisoformat(gld.get_stoptime())
 # TODO: remove the next two lines once  Github #1733 is resolved
-starttime = starttime.replace(tzinfo=timezone(timedelta(hours=-7)))
-stoptime = stoptime.replace(tzinfo=timezone(timedelta(hours=-7)))
+starttime_dt = starttime_dt.replace(tzinfo=timezone(timedelta(hours=-7)))
+stoptime_dt = stoptime_dt.replace(tzinfo=timezone(timedelta(hours=-7)))
 
 # Calculate new simulation duration, set stop time, and confirm changes
-stop_time_obj = starttime + timedelta(days=2)
-stop_time_str = datetime.isoformat(stop_time_obj)
-gld.set_stoptime(stop_time_str)
-new_stoptime = datetime.fromisoformat(gld.get_stoptime())
+stoptime_dt = starttime_dt + timedelta(days=2)
+stoptime_str = datetime.isoformat(stoptime_dt)
+gld.set_stoptime(stoptime_str)
+stoptime_dt = datetime.fromisoformat(gld.get_stoptime())
 
 
 # Getting list of house names
@@ -255,12 +256,26 @@ small_step_count = 0
 # Run the model and collect data at each time step, adjusting step size when
 # appropriate
 status, sim_time = gld.get_time()
-sim_time_obj = datetime.fromisoformat(sim_time)
-while sim_time_obj < stop_time_obj:
+sim_time_dt = datetime.fromisoformat(sim_time)
+while sim_time_dt < stoptime_dt:
     # Set step size and advance one step
     gld.set_time_step(step_size)
     error_code, sim_time = gld.step()
-    sim_time_obj = datetime.fromisoformat(sim_time)
+    if error_code != 0:
+        raise RuntimeError(f"Simulation step failed at {sim_time} with error code {error_code}.")
+    sim_time_dt = datetime.fromisoformat(sim_time)
+
+    # Check for errors
+    messages = gld.get_messages()
+    filtered_messages = [
+        message for message in messages
+        if message.get("type") in {"ERROR"}
+    ]
+  # Only print if there are error messages to print
+    if filtered_messages:
+        pprint(filtered_messages)
+    gld.clear_messages()
+
 
     # Collect data for all houses at current time step
     air_dict = gld.get_properties_by_class("house", "air_temperature") 
@@ -270,8 +285,8 @@ while sim_time_obj < stop_time_obj:
     # TODO: remove these methods once Github # 1724 have been resolved
     air_dict = parse_temperature_data(air_dict)
     hvac_load_dict = parse_hvac_load_data(hvac_load_dict)
-    hvac_off_dict = parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime, sim_time_obj)
-    hvac_off_elapsed_dict = check_hvac_off_elapsed(hvac_off_dict, sim_time_obj, threshold_seconds=300)
+    hvac_off_dict = parse_hvac_off_data(hvac_off_dict, hvac_load_dict, starttime_dt, sim_time_dt)
+    hvac_off_elapsed_dict = check_hvac_off_elapsed(hvac_off_dict, sim_time_dt, threshold_seconds=300)
 
     # Adjust step size based on HVAC off elapsed times
     if all(hvac_off_elapsed_dict.values()):

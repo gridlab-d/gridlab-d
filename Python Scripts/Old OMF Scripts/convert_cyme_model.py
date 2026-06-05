@@ -1581,8 +1581,8 @@ def convertCymeModel(network_db, equipment_db, feeder_id, conductor_data_csv=Non
     for key in glmTree.keys():
         # if ('from' in glmTree[key].keys() and 'to' not in glmTree[key].keys()) or ('to' in glmTree[key].keys() and 'from' not in glmTree[key].keys()):
         if 'object' in glmTree[key].keys() and glmTree[key]['object'] in ['overhead_line','underground_line','regulator','transformer','switch','fuse'] and ('to' not in glmTree[key].keys() or 'from' not in glmTree[key].keys()):
-            print ('Deleting malformed link')
-            print [glmTree[key]['name'], glmTree[key]['object']]
+            print('Deleting malformed link')
+            print( [glmTree[key]['name'], glmTree[key]['object']])
             del glmTree[key]
     
     # Take care of open switches

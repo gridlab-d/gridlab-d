@@ -90,7 +90,7 @@ def main():
 	last_action = -3
 	action = 1
 	action = (action/abs(action)) * (next_choice_actions[abs(action)][abs(last_action)])
-	print (action)
+	print(action)
 		
 if __name__ ==  '__main__':
 	main();

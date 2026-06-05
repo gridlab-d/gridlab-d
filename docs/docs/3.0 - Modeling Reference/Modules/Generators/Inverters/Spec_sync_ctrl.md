@@ -6,7 +6,7 @@ The synchronization control capability in GridLAB-D™ is implemented to adjust 
 
 The inputs and outputs of the switch, sync_check, sync_ctrl, and controlled generation unit (i.e., diesel_dg/inverter_dyn) objects are shown in the following figure, together with the dataflow. 
 
-![Sync ctrl dataflow.png](../../../../../../images/700px-Sync_ctrl_dataflow.png) 
+![Sync Ctrl Dataflow](../../../../../images/700px-Sync_ctrl_dataflow.png){ #fig:SyncCtrl }
 
 # Published properties
 
@@ -57,7 +57,7 @@ One sample sync_ctrl object defined in the glm file is show as follows.
 
 ## Public properties
 
-##### Table 1 - Published Public Properties and Mapped Member Variables  
+Table: Published Public Properties and Mapped Member Variables { #tbl:published-public-properties-and-mapped-member-variables }
 
 Property  | Mapped Member Variable  | Data Type  | Unit  | Descriptions   
 ---|---|---|---|---  
@@ -85,7 +85,7 @@ pi_volt_mag_lb_pu  | pi_volt_mag_lb_pu  | Double  | pu  | The lower bound of the
   
 ## Hidden properties
 
-##### Table 1 - Published Hidden Properties and Mapped Member Variables  
+Table: Published Hidden Properties and Mapped Member Variables { #tbl:published-hidden-properties-and-mapped-member-variables }
 
 Property  | Mapped Member Variable  | Data Type  | Unit  | Descriptions   
 ---|---|---|---|---  
@@ -103,7 +103,7 @@ cgu_freq_set_cv  | cgu_freq_set_cv  | Double  | pu  | The output of the PI contr
 
 Some member variables, which are not published as properties, of the sync_ctrl class are listed in Table 3. For other member variables, which are not included in Table 3, please look at the source code and related comments. 
 
-##### Table 3 - Definitions of Some Member Variable  
+Table: Definitions of Some Member Variable { #tbl:definitions-of-some-member-variable }
 
 Member variable  | Data Type  | Unit  | Definition   
 ---|---|---|---  
@@ -128,7 +128,7 @@ TODO - Update - Review flowchart for accuracy and update
 
 The flowchart for sync_ctrl in transient mode is shown as follows. In mode A, the sync_ctrl adjusts the voltage and frequency settings of the controlled generation unit actively. In mode B, it monitors the voltage magnitudes and frequency and counts a timer, determining to switch to mode A if needed. 
 
-![Sync ctrl flowchart.png](../../../../../../images/700px-Sync_ctrl_flowchart.png) 
+![Sync Ctrl Flowchart](../../../../../images/700px-Sync_ctrl_flowchart.png){ #fig:Flowchart }
 
 ## PI Controllers
 

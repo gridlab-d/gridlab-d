@@ -16,9 +16,8 @@ As the pw_model signals that objects have requested an update, the pw_recorder o
 
 When GridLAB-D™ stops and exits, the pw_model shall close the PowerWorld model. 
 
-![Basic structure of PowerWorld/GridLAB-D™ Interactions](../../../images/300px-T_D_Integration_Figure.png)
+![Basic structure of PowerWorld/GridLAB-D™ Interactions](../../../images/300px-T_D_Integration_Figure.png){ #fig:basic-structure-of-powerworld-gridlab-d-interactions }
 
-##### Figure 1. Basic structure of PowerWorld/GridLAB-D™ Interactions
 
 A basic structure for the interactions of the network `pw_` objects, PowerWorld, and the powerflow module are shown in Figure 1. 
 
@@ -64,6 +63,9 @@ The pw_model closes the PowerWorld model, and severs the connection to SIMAuto o
 
 The pw_model class opens a model, provides a mechanism for triggering a PowerWorld recalculation, and cleans the system up at the end of the simulation. 
 
+
+Table: pw_model Class Parameters { #tbl:table-pw }
+
 Input Name  | Quantity type  | Description   
 ---|---|---  
 model_name  | string  | The file path for the PowerWorld model to run. If the path is blank, or the file cannot be opened by PowerWorld, the run will stop.   
@@ -72,7 +74,7 @@ valid_flag  | bool  | A flag set by the pw_model if the underlying PowerWorld mo
 load_list_file  | string  | The optional file path to use for writing a list of loads in the PowerWorld model. The file will contain rows of comma-separated values with the BusNum and LoadID of each load object in PowerFlow. If this file name is present, the pw_model will write the load list file, then abort processing, on the assumption that the file is not used during production runs. The file will be generated using a 'list of devices' function that looks for 'Load' objects.   
   
   
-Published Outputs: 
+Table: Published Outputs { #tbl:table-pubs }
 
 Output Name  | Quantity type  | Description   
 ---|---|---  
@@ -87,8 +89,9 @@ The GridLAB-D™ model must only have one substation attached to the pw_load obj
 The pw_load class shall defer its initialization until after its pw_model has initialized. 
 
 The bus and load IDs specified in the GridLAB-D™ object must exist in PowerWorld, or the model will fail to initialize. 
+ 
 
-Published Inputs: 
+Table: Published Inputs { #tbl:table-ins }
 
 Input Name  | Quantity type  | Description   
 ---|---|---  
@@ -102,7 +105,7 @@ load_current  | complex MegaVolt-Amperes  | The constant current load as dictate
   
 The published voltage outputs are read by the substation object that uses the pw_load as a parent. 
 
-Published Outputs: 
+Table: Published Outputs { #tbl:table-outs }
 
 Output Name  | Quantity type  | Description   
 ---|---|---  
@@ -126,6 +129,8 @@ $$\begin{bmatrix} \displaystyle V_{A}\\ & \\ \displaystyle V_{B}\\ & \\ \display
 
 Where $b$ is conditional upon which phase is chosen as the reference phase, $a$ is the complex number $1\angle120^\circ$, and all other variables are complex. The values of $b$ for each of the possible reference phases are shown below. 
 
+Table: Reference Phase { #tbl:table-refs }
+
 Reference Phase  | b   
 ---|---  
 Phase A  | 1   
@@ -136,7 +141,8 @@ The average phase load is determined by the below equation. All variables are co
 
 $$P_{load} = \frac{P_{A}+P_{B}+P_{C}}{3}$$
 
-Published Inputs: 
+
+Table: Published Inputs { #tbl:table-ins }
 
 Input Name  | Quantity type  | Description   
 ---|---|---  
@@ -146,7 +152,9 @@ transmission_level_constant_power_load  | complex Volt-Amperes  | the positive-s
 transmission_level_constant_impedance_load  | complex Ohms  | the positive-sequence constant impedance load to be posted directly to the pw_load object (powerflow solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
 transmission_level_constant_current_load  | complex Amperes  | the positive-sequence constant current load to be posted directly to the pw_load object (powerflow solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
   
-Published Outputs: 
+
+
+Table: Published Outputs { #tbl:table-outs }
 
 Output Name  | Quantity type  | Description   
 ---|---|---  
@@ -162,6 +170,8 @@ Substation's three phase voltages are determined differently dependent upon thre
 ### pw_recorder class
 
 The pw_recorder accesses and records published values from specified fields in one specified PowerWorld object. Data is read from PowerWorld whenever the model updates. Data is written only to an output file, and writes occur on specified intervals. 
+
+Table: pw_recorder Class Paramters { #tbl:table-rec }
 
 Input Name  | Quantity type  | Description   
 ---|---|---  

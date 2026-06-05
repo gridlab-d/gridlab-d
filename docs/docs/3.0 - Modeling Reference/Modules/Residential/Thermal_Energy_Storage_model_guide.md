@@ -81,7 +81,7 @@ where k is the coefficient of thermal conductivity (W/M/°C) of the material ins
 
 The Ice Bear® unit stores 460 gallons of water for 360,000 Btu thermal energy storage. The volume of water is scaled linearly with the amount of required thermal energy storage. Converting gallons to m3 (460 U.S. Gallons = 1.7413 m3) and then converting volume to surface area with the assumption that the water is stored in a cube. 
 
-##### Table 1 - Coefficient of Thermal Conductivity (k) [W/m/°C]
+Table: Coefficient of Thermal Conductivity (k) [W/m/°C] { #tbl:coefficient-of-thermal-conductivity-k-w-m-c }
 
 Material | k [W/m/°C]
 ---|---  
@@ -109,7 +109,7 @@ There are several inputs for thermal energy storage, however, none of these vari
 
 ## User Defined Inputs
 
-##### Table 2 - User Defined Variables for Thermal Storage  
+Table: User Defined Variables for Thermal Storage { #tbl:user-defined-variables-for-thermal-storage }
 
 Property Name | Type | Unit | Description   
 ---|---|---|---  
@@ -129,7 +129,7 @@ Property Name | Type | Unit | Description
   
 ## Inputs Taken From house
 
-##### Table 3 - Internal Variables for Thermal Storage  
+Table: Internal Variables for Thermal Storage { #tbl:internal-variables-for-thermal-storage }
 
 Property Name | Type | Unit | Description   
 ---|---|---|---  

@@ -102,13 +102,13 @@ def makeGLM(clock, calib_file, baseGLM, case_flag, wdir):
 		file = open(os.path.join(wdir, filename), 'w')
 		file.write(glmstring)
 		file.close()
-		print ("\t"+filename+ " is ready.")
+		print("\t"+filename+ " is ready.")
 		
 		fnames.append(filename)
 	return fnames
 
 def main():
-	print (__doc__)
-	print (makeGLM.__doc__)
+	print(__doc__)
+	print(makeGLM.__doc__)
 if __name__ ==  '__main__':
 	 main();

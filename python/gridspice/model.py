@@ -96,11 +96,11 @@ class Model:
                         blobkey = jsonModel['modelDataKey'].encode('ascii')
                     self._loadElements(blobkey)
                     self.loaded = 1
-                    print self.name + " has been loaded."
+                    print(self.name + " has been loaded.")
                 else:
                     raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
         else:
-            print self.name + " has not yet been stored in the database."
+            print(self.name + " has not yet been stored in the database.")
             
             
     def _store(self):  
@@ -119,13 +119,13 @@ class Model:
                 if (data != "null"):
                     result = int(data)
                     self.id = result
-                    print self.name + " has been stored in the database."
+                    print(self.name + " has been stored in the database.")
                 else:
-                    print "Error saving. A different version of this model already exists. Has '" + self.name + "' been loaded?"
+                    print("Error saving. A different version of this model already exists. Has '" + self.name + "' been loaded?")
             else:
                 raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
         else:
-            print "Error in the server."    
+            print("Error in the server.")
             
     def _update(self):
         dictCopy = self.__dict__.copy()
@@ -143,13 +143,13 @@ class Model:
                 if (data != "null"):
                     result = int(data)
                     self.id = result
-                    print self.name + " has been updated."
+                    print(self.name + " has been updated.")
                 else:
-                    print "Error updating."
+                    print("Error updating.")
             else:
                 raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
         else:
-            print "Error in the server."
+            print("Error in the server.")
             
     def save(self):
         """
@@ -161,7 +161,7 @@ class Model:
             else:
                 self._update()
         else:
-            print "Please load " + self.name + " before updating."
+            print("Please load " + self.name + " before updating.")
 
     def	delete(self):
         """
@@ -175,15 +175,15 @@ class Model:
                 if (data != config.INVALID_API_KEY):
                     if (data != "null"):
                         self.id = None
-                        print self.name + " has been deleted from the database."
+                        print(self.name + " has been deleted from the database.")
                     else:
-                        print "Error deleting."
+                        print("Error deleting.")
                 else:
                     raise ValueError("'" + self.APIKey + "'"  + " is not a valid API key.")
             else:
-                print "Error in the server."
+                print("Error in the server.")
         else:
-            print self.name + "has not yet been stored in the database"
+            print(self.name + "has not yet been stored in the database")
 
 
     def	add (self, elem):
@@ -195,7 +195,7 @@ class Model:
         if (self.loaded == 1):
             self.elementDict.append(elem)
         else:
-            print "Please load this model first."
+            print("Please load this model first.")
         
     def	remove(self, elem):
         """	
@@ -204,7 +204,7 @@ class Model:
         if (self.loaded == 1):
             self.elementDict.remove(elem)
         else:
-            print "Please load this model first."
+            print("Please load this model first.")
        
     def	copy(self, project):
         """

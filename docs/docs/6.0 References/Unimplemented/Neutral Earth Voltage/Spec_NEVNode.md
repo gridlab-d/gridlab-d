@@ -20,10 +20,12 @@ In order to support NEV, all node-based objects will need to define terminals in
      }
     
 
-This input would then be read to create some internal variables: `NEV_voltage`[n] array, `NEV_current`[n][n] array, `NEV_power`[n][n] array, `NEV_shunt`[n][n] array, and `NEV_Y_FULL`[2][n][n] where n is corresponds to the number of terminals of the top most parent node. `NEV_Y_FULL` is where the admittance matrices of the node, and all links connected to that node are aggregated together and split into real and imaginary. The table below provides some definitions for the new properties shown in the above example. 
+This input would then be read to create some internal variables: `NEV_voltage[n]`, `NEV_current[n][n]`, `NEV_power[n][n]`, `NEV_shunt[n][n]`, and `NEV_Y_FULL[2][n][n]`, where `n` corresponds to the number of terminals of the top-most parent node. `NEV_Y_FULL` is where the admittance matrices of the node, and all links connected to that node, are aggregated together and split into real and imaginary parts. The table below provides some definitions for the new properties shown in the above example. 
 
-##### Table 1 - NEV Node properties  Property | Definition   
----|---  
+Table: NEV Node properties { #tbl:nev-node-properties-property-definition }
+
+Property | Definition
+---|---
 `terminals` | Terminal definition for the node. It defines how many distinct voltage potentials a node supports. Values between 1 and 64 are supported.   
 `voltage` | Potential between terminals of `terminals`. Used to define starting voltages (SWING node and initial powerflow solutions) and used to read voltages. Format for the specification is "complex value,terminal 1, terminal 2" to define a potential between terminals 1 and 2. Terminal 0 is absolute ground (0.0 Volt potential).   
   
@@ -79,17 +81,17 @@ Then `NEV_voltage` = [7200+j0, -3600-j6235.3829, -3600+j6235.3829, 7200.0+j0, -3
 
 The `NEV_current`, `NEV_shunt`, and `NEV_power` arrays get instantiated in init(). Each element contained in these arrays represents the current injection, power injection, or shunt admittance between the terminals of the node where the terminals are represented by the row and column of the element. Positive directionality for power and current injections is defined as the power or current flowing into the terminal. the structure of the `NEV_current`, `NEV_shunt`, and `NEV_power` arrays are shown below. 
 
-`NEV_power`[N][N] 
+`NEV_power[N][N]` 
 
 $$\displaystyle{}\begin{bmatrix}
 S_{terminal_1-Ground}&S_{terminal_1-terminal_2}&\rightarrow &S_{terminal_1-termianl_N}\\ S_{terminal_2-terminal_1}&S_{terminal_2-Ground}&\rightarrow &S_{terminal_2-termianl_N}\\ \downarrow &\downarrow &\downarrow &\downarrow \\ S_{terminal_N-terminal_1}&S_{terminal_N-terminal_2}&\rightarrow &S_{terminal_N-Ground} \end{bmatrix}$$
 
-`NEV_current`[N][N] 
+`NEV_current[N][N]` 
 
 $$\displaystyle{}\begin{bmatrix}
 I_{terminal_1-Ground}&I_{terminal_1-terminal_2}&\rightarrow &I_{terminal_1-termianl_N}\\ I_{terminal_2-terminal_1}&I_{terminal_2-Ground}&\rightarrow &I_{terminal_2-termianl_N}\\ \downarrow &\downarrow &\downarrow &\downarrow \\ I_{terminal_N-terminal_1}&I_{terminal_N-terminal_2}&\rightarrow &I_{terminal_N-Ground} \end{bmatrix}$$
 
-`NEV_shunt`[N][N] 
+`NEV_shunt[N][N]` 
 
 $$\displaystyle{}\begin{bmatrix}
 Y_{terminal_1-Ground}&Y_{terminal_1-terminal_2}&\rightarrow &Y_{terminal_1-termianl_N}\\ Y_{terminal_2-terminal_1}&Y_{terminal_2-Ground}&\rightarrow &Y_{terminal_2-termianl_N}\\ \downarrow &\downarrow &\downarrow &\downarrow \\ Y_{terminal_N-terminal_1}&Y_{terminal_N-terminal_2}&\rightarrow &Y_{terminal_N-Ground} \end{bmatrix}$$
@@ -163,13 +165,15 @@ Loads will follow their the same behavior as the nodes but will have three addit
 
 The table below provides some definitions for the new properties shown in the above example. 
 
-##### Table 1 - NEV Load properties  Property | Definition   
----|---  
+Table: NEV Load properties { #tbl:nev-load-properties-property-definition }
+
+Property | Definition
+---|---
 `terminals` | Terminal definition for the node. Synonymous with phases, but not defined in an `ABC` sense.   
 `voltage` | Potential between corresponding terminals. Used to define starting voltages (SWING node and initial powerflow solutions) and used to read voltages.   
-`constant_power` | An [M][3] complex array of the constant power loads where M is the number of entries separated by the semi-colons.   
-`constant_current` | An [M][3] complex array of the constant current loads where M is the number of entries separated by the semi-colons.   
-`constant_impedance` | An [M][3] complex array of the constant impedance loads where M is the number of entries separated by the semi-colons.   
+`constant_power` | A `[M][3]` complex array of the constant power loads where `M` is the number of entries separated by semicolons.   
+`constant_current` | A `[M][3]` complex array of the constant current loads where `M` is the number of entries separated by semicolons.   
+`constant_impedance` | A `[M][3]` complex array of the constant impedance loads where `M` is the number of entries separated by semicolons.   
   
 ### Order of operations
 

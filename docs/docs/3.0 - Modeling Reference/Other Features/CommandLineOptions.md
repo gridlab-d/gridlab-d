@@ -19,7 +19,7 @@ The `--bothstdout` command line option controls whether error messages are sent 
 
 ## Browser
 
-When GridLAB-D needs a web browser window, such as for the `--info` command line option or for the user interface it uses the browser global variable to start a web browser. The `browser` variable is used differently depending the platform. The command line usage is:
+When GridLAB-D™ needs a web browser window, such as for the `--info` command line option or for the user interface it uses the browser global variable to start a web browser. The `browser` variable is used differently depending the platform. The command line usage is:
 
     gridlabd -D browser=program
     gridlabd --define browser=program
@@ -29,7 +29,7 @@ In a GLM file:
     #set browser=program
 
   
-#### Table 1. Default browser by OS
+Table: Default browser by OS { #tbl:default-browser-by-os }
 
 OS | Default Browswer
 --| --
@@ -83,13 +83,13 @@ For example, the address "127.0.0.1" matches "127.0." but does not match "128.0.
 
 ## Compile
 
-The compile command line option instructs GridLAB-D to only load and compile the specified GLM file, but not run them.    
+The compile command line option instructs GridLAB-D™ to only load and compile the specified GLM file, but not run them.    
     
     host% gridlabd --compile file
 
 ## Compile Once
 
-Control whether runtime classes are recompiled when no change is detected. When GridLAB-D loads a GLM file and encounters C/C++ source code, it invokes a compiler. If the GLM file is newer than the object code, the compiler is normally not invoked (`compile_once=TRUE`). When `compile_once==FALSE`, the compiler is invoke every time the GLM file is loaded. This can be important if compile flags or dependencies exist that the GLM loader does not recognize.
+Control whether runtime classes are recompiled when no change is detected. When GridLAB-D™ loads a GLM file and encounters C/C++ source code, it invokes a compiler. If the GLM file is newer than the object code, the compiler is normally not invoked (`compile_once=TRUE`). When `compile_once==FALSE`, the compiler is invoke every time the GLM file is loaded. This can be important if compile flags or dependencies exist that the GLM loader does not recognize.
 
 
 
@@ -172,7 +172,7 @@ From the **command line**:
 
 ## Dumpall
 
-The **dumpall** option produces a model dump output from GridLAB-D when the simulation is done. It is managed by the global variable **dumpall**, which is by default **FALSE**. From the **command line**:
+The **dumpall** option produces a model dump output from GridLAB-D™ when the simulation is done. It is managed by the global variable **dumpall**, which is by default **FALSE**. From the **command line**:
 
 * To toggle dumpall mode use the option 
     
@@ -211,9 +211,9 @@ Note that the message is not followed by a semicolon unless the semicolon is par
 
 ## Force Compile
 
-`The force_compile global variable is used to force the runtime class compiler to rebuild the executable for each class every time GridLAB-D is run. 
+`The force_compile global variable is used to force the runtime class compiler to rebuild the executable for each class every time GridLAB-D™ is run. 
 `
-Normally, GridLAB-D only rebuilds the implementation file if one of the source files that defines it has changed since the last time the executable was built. However, there are cases when this automatic process does not work correctly or cannot detect changes in include files. 
+Normally, GridLAB-D™ only rebuilds the implementation file if one of the source files that defines it has changed since the last time the executable was built. However, there are cases when this automatic process does not work correctly or cannot detect changes in include files. 
 
 From the **command line**: 
 
@@ -252,9 +252,9 @@ The following code defines a class test with a random variable x. The name of th
 
     Prior to Hassayampa (Version 3.0) The random number generated is seeded using the current system time with a resolution of 1 second. Consequently, if two runs are started within the same second they are very likely to generate the same sequence of unique ids.
 
-## Iteration LImit
+## Iteration Limit
 
-The `iteration_limit` global variable determines that maximum number of iterations of the main synchronization loop permitted before the clock must advanced. If the main loop reaches the iteration limit and the clock has not advanced, GridLAB-D will terminate the simulation with a convergence error.
+The `iteration_limit` global variable determines that maximum number of iterations of the main synchronization loop permitted before the clock must advanced. If the main loop reaches the iteration limit and the clock has not advanced, GridLAB-D™ will terminate the simulation with a convergence error.
 
 From the command line, to set the iteration at the command line, use the syntax:
 
@@ -266,7 +266,7 @@ In a glm, to set the iteration in a GLM file, use the syntax:
 
 ## Maximum Synctime
 
-The maximum synctime global variable is used to control how long GridLAB-D waits for a single sync operation before raising a global alarm that halts the simulation. Under certain circumstances applications may use sync operations to acquire information and wait for data sources that take longer the 60 seconds to respond. In such cases, it may be desirable to increase the `maximum_synctime` to allow for long sync response delays.
+The maximum synctime global variable is used to control how long GridLAB-D™ waits for a single sync operation before raising a global alarm that halts the simulation. Under certain circumstances applications may use sync operations to acquire information and wait for data sources that take longer the 60 seconds to respond. In such cases, it may be desirable to increase the `maximum_synctime` to allow for long sync response delays.
 
     host% gridlabd -D maximum_synctime=60
     host% gridlabd -define maximum_synctime=60
@@ -274,7 +274,7 @@ The maximum synctime global variable is used to control how long GridLAB-D waits
 
 ## Minimum Timestep
 
-The minimum timestep is shortest simulation time change allowed during a simulation. By default the minimum timestep is 1 second and for more simulation this will not cause any performance issues.
+The minimum timestep is the shortest simulation time change allowed during a simulation. By default the minimum timestep is 1 second and for more simulation this will not cause any performance issues.
 
 However, for certain kinds of very large simulations the result of a short `minimum_timestep` can be very slow progress. In such cases, an increase in the `minimum_timestep` can improve performance.
 
@@ -306,7 +306,7 @@ Obtain detailed information about the implementation of the classes in a module.
 
 ## Mt profile
 
-The `mt_profile` option produces profiler output from GridLAB-D for multithreaded operation. It is managed by the global variable `mt_profile` , which is by default 0. The value of the `mt_profile` determine the maximum number of thread to analyze.
+The `mt_profile` option produces profiler output from GridLAB-D™ for multithreaded operation. It is managed by the global variable `mt_profile` , which is by default 0. The value of the `mt_profile` determine the maximum number of thread to analyze.
 
 From the **command line**, to toggle profile mode use the option:
 
@@ -332,7 +332,7 @@ To disable profile mode use the directive:
 
 The no_deprecate global variable suppressed deprecated usage when set to 1 or TRUE. By default no_deprecate is set to 0 or FALSE.
 
-Deprecated usage is flagged for any capabilities or features that are considered obsolete and will be removed in future versions of GridLAB-D.
+Deprecated usage is flagged for any capabilities or features that are considered obsolete and will be removed in future versions of GridLAB-D™.
 
 From the **command line**:
 
@@ -383,7 +383,7 @@ The following code defines a class test with a random variable x. The name of th
 
 ## Open
 
-Request a GridLAB-D server load a GLM file: `http://server:port /open/filename.glm`
+Request a GridLAB-D™ server load a GLM file: `http://server:port /open/filename.glm`
 
 ## Option
 
@@ -395,7 +395,7 @@ Not all command options are well suited to being dispatched from inside GLM file
 
 ## Output
 
-Request download of the contents of an output file from a GridLAB-D server. The file requested is obtained from the workdir folder.
+Request download of the contents of an output file from a GridLAB-D™ server. The file requested is obtained from the workdir folder.
 
     http://server :port /output/filename.ext
 
@@ -407,7 +407,7 @@ The --pause command option enables the pause-at-exit feature.
 
 ## Pauseatexit
 
-The `pauseatexit` global variable enables a pause feature when GridLAB-D exits. Some shell automatically close when the gridlabd process exits and messages displayed are lost. Enabling this feature makes it possible to read those message before the shell is closed.
+The `pauseatexit` global variable enables a pause feature when GridLAB-D™ exits. Some shell automatically close when the gridlabd process exits and messages displayed are lost. Enabling this feature makes it possible to read those message before the shell is closed.
 
 From the command line, 
 
@@ -419,7 +419,7 @@ In a glm,
 
 ## Pclear
 
-The global process map can become corrupted in the event of the failure of an instance of GridLAB-D that leaves a zombie entry in the process map. In such circumstance the **\--clearmap** command can be used to purge the map. 
+The global process map can become corrupted in the event of the failure of an instance of GridLAB-D™ that leaves a zombie entry in the process map. In such circumstance the **\--clearmap** command can be used to purge the map. 
     
     
     host% gridlabd --pclear
@@ -439,10 +439,10 @@ Interactive process control.
 
     gridlabd --pcontrol
     
-The process control window is a continuous interactive screen that shows all the current GridLAB-D simulations active on the local host. The display is typically as follows: 
+The process control window is a continuous interactive screen that shows all the current GridLAB-D™ simulations active on the local host. The display is typically as follows: 
     
     
-    GridLAB-D Process Control - Version 3.0.0-4595 (Hassayampa)
+    GridLAB-D™ Process Control - Version 3.0.0-4595 (Hassayampa)
     
     PROC PID   RUNTIME    STATE   CLOCK                   MODEL
     ---- ----- ---------- ------- ----------------------- -----------------------------------------------------------------
@@ -462,7 +462,7 @@ The process control window is a continuous interactive screen that shows all the
 
 The columns in the listing are relative self-explanatory: 
 
-  * **PROC** is the GridLAB-D process map entry number. It is assumed that there can be no more than one entry per CPU available on the host.
+  * **PROC** is the GridLAB-D™ process map entry number. It is assumed that there can be no more than one entry per CPU available on the host.
   * **PID** is the host process id. This is used to send signals to the process.
   * **RUNTIME** is the elapsed wall clock time since the simulation started.
   * **STATE** is the state of the simulation. Possible states are
@@ -493,7 +493,7 @@ The bolded entry is the selected entry. The up and down arrow keys allows the se
 
 ## Perl
 
-Execute a PERL script on a GridLAB-D server. Only scripts already installed on the server may be executed. The script is executed with output connected to the server stdout stream.
+Execute a PERL script on a GridLAB-D™ server. Only scripts already installed on the server may be executed. The script is executed with output connected to the server stdout stream.
 
     http://server:port/per/filename.pl
 
@@ -529,7 +529,7 @@ A run associated with a processor can be killed and removed from the global proc
 
 ## Platform
 
-Specifies the current operating platform. The platform global variable is set according to which operating platform is running GridLAB-D. The platform global variable cannot be set at runtime.
+Specifies the current operating platform. The platform global variable is set according to which operating platform is running GridLAB-D™. The platform global variable cannot be set at runtime.
 
     #print ${platform}
     #if ${platform}=WINDOWS|LINUX|MACOSX
@@ -550,7 +550,7 @@ The `#print` macro displays a message when it is encountered by the loader. When
 
 ## Profile
 
-The profile option produces profiler output from GridLAB-D. It is managed by the global variable profiler, which is by default **FALSE**.
+The profile option produces profiler output from GridLAB-D™. It is managed by the global variable profiler, which is by default **FALSE**.
 
 From the command line, 
 
@@ -662,7 +662,7 @@ When running a multi-threaded model, the profiler output looks as follows:
 
 ## Pstatus
 
-The processor affinity API uses a global map of the processor affinities for all instances of GridLAB-D running on a machine. To display the global process map, use the `--pstatus` command line option. 
+The processor affinity API uses a global map of the processor affinities for all instances of GridLAB-D™ running on a machine. To display the global process map, use the `--pstatus` command line option. 
     
     
     host% **gridlabd --randtest & gridlabd --pstatus**
@@ -670,17 +670,17 @@ The processor affinity API uses a global map of the processor affinities for all
        0 16807 Running                     INIT /usr/lib/gridlabd/gridlabd.bin --pstatus
        1 16808 Running                     INIT /usr/lib/gridlabd/gridlabd.bin --randtest
    
-This global map can become corrupted in the event of the failure of an instance of GridLAB-D that leaves a zombie entry in the process map. In such circumstances the `--clearmap` command option can be used to purge the map. A process can be killed and removed from the list using the `--pkill` command option.
+This global map can become corrupted in the event of the failure of an instance of GridLAB-D™ that leaves a zombie entry in the process map. In such circumstances the `--clearmap` command option can be used to purge the map. A process can be killed and removed from the list using the `--pkill` command option.
 
 ## Python
 
-Execute a Python script on a GridLAB-D server. The specified filename must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content.
+Execute a Python script on a GridLAB-D™ server. The specified filename must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content.
 
     http://server :port /python/filename.py
 
 ## Quiet
 
-The **quiet** option silences all but the most critical output from GridLAB-D. It is managed by the global variable quiet, which is by default **FALSE**.
+The **quiet** option silences all but the most critical output from GridLAB-D™. It is managed by the global variable quiet, which is by default **FALSE**.
 
 From the command line:
 
@@ -712,7 +712,7 @@ In a glm:
 
 ## R 
 
-Execute an R script on a GridLAB-D server. The specified filename must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content.
+Execute an R script on a GridLAB-D™ server. The specified filename must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content.
 
     http://server :port /r/filename.r
 
@@ -807,7 +807,7 @@ A value near 1 indicates that the simulation has plenty of spare time to complet
 
 ## Redirect
 
-The `--redirect` command option is used to instruct GridLAB-D to redirect one of the output message stream to a file. The following stream may be redirected
+The `--redirect` command option is used to instruct GridLAB-D™ to redirect one of the output message stream to a file. The following stream may be redirected
 
 * **output** -
     The default stream is `gridlabd.out`
@@ -877,7 +877,7 @@ Violations of the access rule are reported as an error. This is useful for prote
 
 ## Resume
 
-The control message resume is used when operating in server mode. When receiving this message, GridLAB-D resumes the main loop state processing by setting the pauseat global variable to **NEVER**.
+The control message resume is used when operating in server mode. When receiving this message, GridLAB-D™ resumes the main loop state processing by setting the pauseat global variable to **NEVER**.
 
     http://servername:portnum/control/resume
 
@@ -890,7 +890,7 @@ Return code value from system shell commands. System commands executed using the
 
 ## Rt
 
-Request a download of runtime file from a GridLAB-D server. The file requested is obtained from the first folder in GLPATH where is can be found.
+Request a download of runtime file from a GridLAB-D™ server. The file requested is obtained from the first folder in GLPATH where is can be found.
 
     http://server :port /rt/filename.ext
 
@@ -913,7 +913,7 @@ Global variable to get a unique run identifier. The RUN global variable dynamica
 
 ## Runcheck (Check)
 
-The check option enables module check routines when GridLAB-D starts. It is managed by the global variable **runcheck**, which is by default **FALSE**.
+The check option enables module check routines when GridLAB-D™ starts. It is managed by the global variable **runcheck**, which is by default **FALSE**.
 
 From the command line,
 
@@ -939,7 +939,7 @@ From the glm,
 
         #set runcheck=0
 
-The **runchecks** global variable instructs GridLAB-D to call all the modules' check routines after initialization.
+The **runchecks** global variable instructs GridLAB-D™ to call all the modules' check routines after initialization.
 
 ## Sanitize
 
@@ -959,7 +959,7 @@ The follow global variables can be used to control the sanitizing process.
 
 * **sanitize_offset** - Specifies the lat/lon offset to use when changing the position of objects. Offsets are specified as either `lat,lon` or `lat/lon` where lat and lon are decimal values in the range ±90 and ±180, respectively. If the offset is blank, a random value in the range ±5 and ±180, respectively, is used. If the offset is `destroy` all the latitude and longitude information found in objects is completely erased. The erased values cannot be recovered from the index file.
 
-* **sanitize_prefix** - Specifies the prefix to use on names. The default is "GLD_". Prefixes are strongly recommended because the obfuscated names can begin with a digit, which is not allowed in GridLAB-D unless `relax_naming_rules` is used.
+* **sanitize_prefix** - Specifies the prefix to use on names. The default is "GLD_". Prefixes are strongly recommended because the obfuscated names can begin with a digit, which is not allowed in GridLAB-D™ unless `relax_naming_rules` is used.
 
 The following example sanitizes the GLM file `sensitive.glm` and outputs an index file `sensitive-index.txt`
     
@@ -1018,7 +1018,7 @@ The default prefix is "GLD_".
 
 ## Savefile
 
-Specify the file to which final simulation state is written. When a GridLAB-D simulation ends or aborts, the state of the model is saved in the file specified by savefile, if defined.
+Specify the file to which final simulation state is written. When a GridLAB-D™ simulation ends or aborts, the state of the model is saved in the file specified by savefile, if defined.
 
     host% gridlabd -D savefile="gridlabd.xml"
     host% gridlabd --define savefile="gridlabd.xml"
@@ -1026,7 +1026,7 @@ Specify the file to which final simulation state is written. When a GridLAB-D si
 
 ## Scilab 
 
-Execute a Scilab script on a GridLAB-D server. The specified *filename* must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content.
+Execute a Scilab script on a GridLAB-D™ server. The specified *filename* must exist on the server. The stdout and stderr are sent to the server's output streams. The output file is sent to the client as MIME-type content.
 
     http://server :port /scilab/filename.sce
 
@@ -1076,11 +1076,11 @@ outputs the following text
 
 ## Server
 
-The `--server` command line option instructs GridLAB-D to run in server mode with an extra thread to service HTTP requests on the server port number specified by the `server_portnum` global variable. Once server mode is started, incoming messages on the server port will be handled as HTTP request. Response can be either in HTML, XML, or data files such as images, CSV files, etc., depending on the type of request made.
+The `--server` command line option instructs GridLAB-D™ to run in server mode with an extra thread to service HTTP requests on the server port number specified by the `server_portnum` global variable. Once server mode is started, incoming messages on the server port will be handled as HTTP request. Response can be either in HTML, XML, or data files such as images, CSV files, etc., depending on the type of request made.
 
 ### Shutdown
 
-The control message shutdown is used when operating in server mode. When receiving this message, GridLAB-D stops the server and exits the simulation.
+The control message shutdown is used when operating in server mode. When receiving this message, GridLAB-D™ stops the server and exits the simulation.
 
      http://servername:portnum/control/shutdown
 
@@ -1091,11 +1091,11 @@ The global variable `server_portnum` controls on which TCP port the server will 
 
 The server port number is used only when the server begins listening for incoming connections. Once the listen process is started, the server port number can be changed, but that will not have any affect on the listen process.
 
-If the port number desired is already in use, GridLAB-D will increment the port by 1 and try again until it can find an available port.
+If the port number desired is already in use, GridLAB-D™ will increment the port by 1 and try again until it can find an available port.
 
 ### Server Quit on Close
 
-Controls whether GridLAB-D shuts down when the last server connection closes. When a server finishes servicing an incoming request, it evaluates whether there are any pending requests. If there are none and the connection is closed, GridLAB-D will shutdown the simulation if the server_quit_on_close evaluates to a non-zero quantity.
+Controls whether GridLAB-D™ shuts down when the last server connection closes. When a server finishes servicing an incoming request, it evaluates whether there are any pending requests. If there are none and the connection is closed, GridLAB-D™ will shutdown the simulation if the server_quit_on_close evaluates to a non-zero quantity.
 
     host% gridlabd -D server_quit_on_close=0|1|FALSE|TRUE
     host% gridlabd --define server_quit_on_close=0|1|FALSE|TRUE
@@ -1103,7 +1103,7 @@ Controls whether GridLAB-D shuts down when the last server connection closes. Wh
 
 ## Set (Macro)
 
-The `#set` macro is used to set a global variable in GridLAB-D. Set only works if the variable is already defined and will not create a new variable if it does not already exist unless the strictnames global variable is set to 1 or TRUE.
+The `#set` macro is used to set a global variable in GridLAB-D™. Set only works if the variable is already defined and will not create a new variable if it does not already exist unless the strictnames global variable is set to 1 or TRUE.
 
     #set variable = value
 
@@ -1153,7 +1153,7 @@ In a glm,
 
 ## Simulation Mode
 
-Controls the simulation mode of GridLAB-D. This variable is typically not set via the #DEFINE or command line approach. It is best to let the internal models control the simulation mode.
+Controls the simulation mode of GridLAB-D™. This variable is typically not set via the #DEFINE or command line approach. It is best to let the internal models control the simulation mode.
 
 * **EVENT** -
 The normal simulation mode is the event-based time solver (EVENT). In event-based operation the clock advances in variable time-step of 1 second or more.
@@ -1234,7 +1234,7 @@ In addition, each module may export a test routine, as indicate by the `--libinf
 
 ## Threadcount
 
-The `--threadcount` command line option is used to indicate how many threads are allocated to the GridLAB-D run. The threadcount global variable is set using this option. The default thread count is **1**.
+The `--threadcount` command line option is used to indicate how many threads are allocated to the GridLAB-D™ run. The threadcount global variable is set using this option. The default thread count is **1**.
 
 * From the command line,
 
@@ -1253,7 +1253,7 @@ The `--threadcount` command line option is used to indicate how many threads are
 
 ## Unittest
 
-The `--unitstest` start a self-test of the unit conversion system in GridLAB-D. The output of the test is written to the file defined by the global variable testoutputfile, which is by default set to test.txt.
+The `--unitstest` start a self-test of the unit conversion system in GridLAB-D™. The output of the test is written to the file defined by the global variable testoutputfile, which is by default set to test.txt.
 
 From the command line,
 
@@ -1271,7 +1271,7 @@ Compiler flag to enable use of GridLAB-D's internal solvers. The `USE_GLSOLVERS`
 
 ## Use MSVC
 
-Global flag to force the use of **VS2005** instead of **mingw**. Normally, GridLAB-D uses mingw to compile runtime code in the GLM files. However, when debugging modules using VS2005, it can be helpful to debugging if GridLAB-D uses the runtime compiler instead.
+Global flag to force the use of **VS2005** instead of **mingw**. Normally, GridLAB-D™ uses mingw to compile runtime code in the GLM files. However, when debugging modules using VS2005, it can be helpful to debugging if GridLAB-D™ uses the runtime compiler instead.
 
 
     host% gridlabd -D use_msvc=TRUE
@@ -1280,7 +1280,7 @@ Global flag to force the use of **VS2005** instead of **mingw**. Normally, GridL
 
 ## Verbose
 
-The **verbose** option produces all but the debugging output from GridLAB-D. It is managed by the global variable **verbose**, which is by default **FALSE**.
+The **verbose** option produces all but the debugging output from GridLAB-D™. It is managed by the global variable **verbose**, which is by default **FALSE**.
 
 From the command line,
 
@@ -1308,13 +1308,13 @@ In a glm,
 
 ## Version
 
-Obtain version information. The --version command line option is used to display the version of GridLAB-D. The message displayed is actually a concatenation of the major and minor numbers, the patch number, the build number, and the branch name.
+Obtain version information. The --version command line option is used to display the version of GridLAB-D™. The message displayed is actually a concatenation of the major and minor numbers, the patch number, the build number, and the branch name.
 
 * **Major** -
-The major version of GridLAB-D is changed whenever changes are made to the simulation that are not backward compatible. Changes such as the removal of a class or module, or a substantial change in the implementation that will significantly alter the result of simulation will be made only when major versions are released.
+The major version of GridLAB-D™ is changed whenever changes are made to the simulation that are not backward compatible. Changes such as the removal of a class or module, or a substantial change in the implementation that will significantly alter the result of simulation will be made only when major versions are released.
 
 * **Minor** -
-The minor version of GridLAB-D is changed whenever changes are made that are backward compatible within a major version, but are nonetheless substantive.
+The minor version of GridLAB-D™ is changed whenever changes are made that are backward compatible within a major version, but are nonetheless substantive.
 
 * **Patch** -
 The patch version is changed only when a trivial change or bug fix is released. No other substantive change in simulation results should be expected.
@@ -1327,11 +1327,11 @@ A new name is assigned to each branch. Names are assigned alphabetically based o
 
 ### Version Format
 
-For release builds of GridLAB-D the version information is displayed as follows 
+For release builds of GridLAB-D™ the version information is displayed as follows 
     
     
     host% **gridlabd --version**
-    GridLAB-D 3.0.0-2746 (Grizzly)
+    GridLAB-D™ 3.0.0-2746 (Grizzly)
               ^ ^ ^ ^    ^
               | | | |    +------- **Branch name**   - Alphabetic sequence named after WECC transmission system buses.
               | | | +------------ **Build number**  - A unique number that identifies which revision the build is based on.
@@ -1356,7 +1356,7 @@ The version number can be used for conditional tests in GLM files
 
 ## Warn
 
-The warn option produces all the warning output from GridLAB-D. It is managed by the global variable **warn**, which is by default **FALSE**.
+The warn option produces all the warning output from GridLAB-D™. It is managed by the global variable **warn**, which is by default **FALSE**.
 
 From the command line,
 
@@ -1469,7 +1469,7 @@ The HTTP 1.1 return status may be
 
 ## Xsd
 
-The      command line option is used to request the XML Schema Document or XSD for a GridLAB-D module or class, which described the rules to which XML files that are processed by GridLAB-D must conform.
+The      command line option is used to request the XML Schema Document or XSD for a GridLAB-D™ module or class, which described the rules to which XML files that are processed by GridLAB-D™ must conform.
 
 The primary reason for defining an XML schema is to formally describe an XML document; however the resulting schema has a number of other uses that go beyond simple validation.
 
@@ -1503,7 +1503,7 @@ From the command line,
 
 ## Xsl
 
-The `--xsl` command line option is used to generate an Extensible Stylesheet Language (XSL) document for GridLAB-D modules and for the core objects. XSL data is used to render and transform XML data.
+The `--xsl` command line option is used to generate an Extensible Stylesheet Language (XSL) document for GridLAB-D™ modules and for the core objects. XSL data is used to render and transform XML data.
 
 From the command line,
 
@@ -1511,7 +1511,7 @@ To generate an XSL document for a set of modules, use the syntax
 
     host% gridlabd --xsl module_1,module_2,...,module_N
 
-The output will be written to a file entitled "gridlabd-major_minor.xls", where **major** is the major version of GridLAB-D and **minor** is the minor version of GridLAB-D.
+The output will be written to a file entitled "gridlabd-major_minor.xls", where **major** is the major version of GridLAB-D™ and **minor** is the minor version of GridLAB-D™.
 
 
 # Global Variables
@@ -1522,7 +1522,7 @@ To get a list of global variables:
 
 !!! note
 
-    GridLAB-D defines the following global variables:
+    GridLAB-D™ defines the following global variables:
 
       * APPLE = varies
       * allow_reinclude = FALSE

@@ -56,12 +56,12 @@ def getValues(SCADAinput):
 	
 def main():
 	days, SCADA = getValues(None);
-	print (__doc__)
-	print ("Three chosen days are "+str(days))
-	print ("Peak Value (kw), Peak Time (hour), Total Energy (kwh), Minimum Value (kw), Minimum Time (hour) for: ")
-	print ("Summer " +str(SCADA[0]))
-	print ("Winter " +str(SCADA[1]))
-	print ("Shoulder " +str(SCADA[2]))
+	print(__doc__)
+	print("Three chosen days are "+str(days))
+	print("Peak Value (kw), Peak Time (hour), Total Energy (kwh), Minimum Value (kw), Minimum Time (hour) for: ")
+	print("Summer " +str(SCADA[0]))
+	print("Winter " +str(SCADA[1]))
+	print("Shoulder " +str(SCADA[2]))
 
 if __name__ ==  '__main__':
 	main();

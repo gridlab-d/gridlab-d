@@ -197,7 +197,7 @@ def PV_residential_allocation(feeder_name, sorted_triplex, penetration_kVA, trip
                 
         
     
-#     print "Residential |", "Required Install", max_install, "| Installed Capacity", installed_capacity                
+#     print("Residential |", "Required Install", max_install, "| Installed Capacity", installed_capacity)
     
     return solar_installation_data
 
@@ -272,8 +272,8 @@ def PV_commercial_allocation(feeder_name, com_sorted_meters, penetration_kVA):
     
     while installed_capacity < max_install - 0.2:
                 
-#         print "Installed", installed_capacity
-#         print "Max", max_install
+#         print("Installed", installed_capacity)
+#         print("Max", max_install)
         
         available_capacity = max_install - installed_capacity
         
@@ -282,8 +282,8 @@ def PV_commercial_allocation(feeder_name, com_sorted_meters, penetration_kVA):
             total_new_capacity = 0
             
             while Difference > 0.1:
-#                 print 'Difference', Difference 
-#                 print 'Output 1', com_solar_installation_data           
+#                 print('Difference', Difference)
+#                 print('Output 1', com_solar_installation_data)
                 for item in com_solar_installation_data:
                     new_capacity = (item[1]*Difference)/installed_capacity
                     item[1] = item[1] + new_capacity
@@ -292,7 +292,7 @@ def PV_commercial_allocation(feeder_name, com_sorted_meters, penetration_kVA):
                 installed_capacity += total_new_capacity
                 Difference = max_install - installed_capacity
             
-#             print 'Output 2', com_solar_installation_data
+#             print('Output 2', com_solar_installation_data)
                 
         elif available_capacity < min_install_size:
             random_BT = random.choice(com_sorted_meters.keys())
@@ -970,8 +970,8 @@ def modify_node_to_triplex_node(new_feeder_glm, current_feeder, dst, feeder_numb
                             v['power_rating'] = 3750
                             
                     else:
-                        print "UNKNOWN VOLTAGE TYPE"
-                        print v['name'], float(v['secondary_voltage']), v['connect_type']
+                        print("UNKNOWN VOLTAGE TYPE")
+                        print(v['name'], float(v['secondary_voltage']), v['connect_type'])
                         break
                     
                     phase_count = 0
@@ -1099,7 +1099,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, commercial_solar
                             all_element_value['resistance'] = '0.00000333'
                             
                         else:
-                            print "value not found 1"
+                            print( "value not found 1")
                             break
                             
                     if value[1] == '277':
@@ -1149,7 +1149,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, commercial_solar
                             all_element_value['resistance'] = '0.0000027'
                             
                         else:
-                            print "value not found 2"
+                            print("value not found 2")
                             break
                             
                     if value[1] == '240':
@@ -1169,7 +1169,7 @@ def remodify_com_conductor_data(line_solar_map, current_feeder, commercial_solar
                             all_element_value['resistance'] = '0.00001475'
                             
                         else:
-                            print "value not found 3"
+                            print("value not found 3")
                             break
                             
     new_commercial_str = feeder_parse_mod.sortedWrite(new_commercial_solar_GLM_data)
@@ -1262,7 +1262,7 @@ def PV_residential_allocation_UNIFORM(feeder_name, sorted_triplex, penetration_k
                 installed_capacity += total_new_capacity
                 Difference = max_install - installed_capacity
                 
-#         print 'max_install', max_install, 'installed_capacity', installed_capacity
+#         print('max_install', max_install, 'installed_capacity', installed_capacity)
                 
     return solar_installation_data             
 

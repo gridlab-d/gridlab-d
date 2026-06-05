@@ -952,8 +952,8 @@ def create_glm_object_dictionary(glm_dict,glm_object,glm_parameters):
 
 		# Make sure glm_parameters is the appropriate size
 		if len(glm_props) != len(glm_objects[obj]):
-			print len(glm_props)
-			print len(glm_objects[obj])
+			print(len(glm_props))
+			print(len(glm_objects[obj]))
 			raise RuntimeError("Incorrect number of parameters specified for the {:s} object.".format(obj))
 
 		#find an unused key in the glm dictionary

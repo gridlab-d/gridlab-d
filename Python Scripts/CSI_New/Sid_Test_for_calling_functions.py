@@ -59,7 +59,7 @@ for pen_lev in range(0,len(PV_penetration)):
          
         current_feeder = "C:\Users\srid966\Desktop\My Work\California Solar Initiative\Feeders Post Upgrades\%s" %(feeder_name)
          
-        print 'Penetration Level:', PV_penetration[pen_lev], ', Case:', count
+        print('Penetration Level:', PV_penetration[pen_lev], ', Case:', count)
        
         new_feeder_glm = '%s_%dpct_case_%d_' %(feeder_name, PV_penetration[pen_lev], count)+ feeder_glm
         new_commercial_glm = '%s_%dpct_case_%d_' %(feeder_name, PV_penetration[pen_lev], count)+ commercial_glm
@@ -120,9 +120,9 @@ for pen_lev in range(0,len(PV_penetration)):
         line_solar_map = Sid_PNNL_Solar.modify_node_to_triplex_node(new_feeder_glm, current_feeder, dst, feeder_numbers[feeder_name], transformer_solar_map, transformer_meter_map,  line_solar_map)
         Sid_PNNL_Solar.remodify_com_conductor_data(line_solar_map, current_feeder, commercial_solar_GLM)
          
-#         print line_solar_map
-#         print transformer_meter_map
-#         print transformer_solar_map
+#         print(line_solar_map)
+#         print(transformer_meter_map)
+#         print(transformer_solar_map)
          
         line_solar_map = None
         transformer_meter_map = None
@@ -132,7 +132,7 @@ shutil.copy2(src_va, dst)
 shutil.copy2(src_vb, dst)    
 shutil.copy2(src_vc, dst)    
  
-print 'DONE 1 - Case Files Generated!'
+print('DONE 1 - Case Files Generated!')
 
 filename2 = dst + '\\new_run_all.bat' 
 

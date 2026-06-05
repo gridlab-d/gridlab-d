@@ -43,15 +43,18 @@ The only required field is the model_name, which must point to a file. This file
 
 The properties `update_flag`, `exchange_count`, and `valid_flag` are recordable reference properties that may be of interest during troubleshooting. 
 
-### Published Inputs
+Table: Published Inputs { #tbl:table-pub }
+
 
 Input Name  | Quantity type  | Description   
 ---|---|---  
 **model_name**  | string  | The file path for the PowerWorld model to run. If the path is blank, or the file cannot be opened by PowerWorld, the run will stop.   
 **update_flag**  | bool  | A flag set by the pw_load objects that are attached to the specific pw_model, and reset by the model when it calls for a PowerWorld update.   
 **valid_flag**  | bool  | A flag set by the pw_model if the underlying PowerWorld model is in a valid state. Should this flag be set to 'false', the GridLAB-D™ powerflow solution will use the last good voltage value and will abort should GridLAB-D™ converge while PowerWorld remains divergent.   
-  
-### Published Outputs
+
+
+Table: Published Ouputs { #tbl:table-pubout }
+
 
 Output Name  | Quantity type  | Description   
 ---|---|---  
@@ -86,7 +89,8 @@ A typical **pw_load** looks like:
 
 A Substation object must be used to connect a **pw_load** to the GridLAB-D™ Powerflow solver. 
 
-### Published Inputs
+
+Table: Published Inputs { #tbl:table-pubin }
 
 Input Name  | Quantity type  | Description   
 ---|---|---  
@@ -99,7 +103,7 @@ Input Name  | Quantity type  | Description
   
 The published voltage outputs are read by the substation object that uses the **pw_load** as a parent. 
 
-### Published Outputs
+Table: Published Outputs { #tbl:table-pubouts }
 
 Output Name  | Quantity type  | Description   
 ---|---|---  
@@ -132,7 +136,9 @@ A **pw_recorder** that measures the voltage and power from a load:
     }
     
 
-### Published Inputs
+
+Table: Published Inputs { #tbl:table-pubints }
+
 
 Input Name  | Quantity type  | Description   
 ---|---|---  
@@ -163,7 +169,8 @@ Substation continues to be a child class of the node object inside the powerflow
 
 Listed below are the additional properties that interact with the pw_load object. 
 
-### Published Inputs
+
+Table: Published Inputs { #tbl:table-pubintss }
 
 Input Name  | Quantity type  | Description   
 ---|---|---  
@@ -174,6 +181,8 @@ Input Name  | Quantity type  | Description
 **transmission_level_constant_current_load**  | complex Amperes  | the positive-sequence constant current load to be posted directly to the pw_load object (powerflow solver does not handle this, it is explicitly converted and posted to PowerWorld's solver).   
   
 ### Published Outputs
+
+Table: Published Outputs { #tbl:table-outs }
 
 Output Name  | Quantity type  | Description   
 ---|---|---  

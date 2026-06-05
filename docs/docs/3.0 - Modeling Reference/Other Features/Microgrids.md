@@ -2,7 +2,7 @@
 
 The microgrids use case in GridLAB-D™ is implemented to allow islanded, smaller power system simulations. These simulations examine sub-second influences on parameters like frequency and voltage. The final capability allows the examination of transients in the voltage and frequency associated with microgrid operations. 
 
-Microgrids functionality in GridLAB-D is primarily an overall capability of the simulation engine. No specific microgrid module exists, but rather objects in several modules support transient-level time scales (~10 ms) and islanded operation.
+Microgrids functionality in GridLAB-D™ is primarily an overall capability of the simulation engine. No specific microgrid module exists, but rather objects in several modules support transient-level time scales (~10 ms) and islanded operation.
 
 Microgrids are typically operated in a manner that there is no strong, stiff source bus on the system. During microgrid operations, connections to the larger, bulk transmission system are disconnected and only local, smaller, often distributed, generation sources are utilized. Under such scenarios, the dynamics of the system are expected to play a more significant part in the stability of the power system.
 
@@ -12,7 +12,7 @@ The primary basis for the implementation of the microgrids capability involves m
 
 Equations are taken from Reference 1 and 2 below. Equation notation follow: 
 
-##### Table 1 - Equation Notation  
+Table: Equation Notation { #tbl:equation-notation }
 
 Variable | Definition   
 ---|---  
@@ -80,15 +80,14 @@ $\displaystyle{}B_{EX}$ | Exciter saturation function exponential term
 
 The GridLAB-D™ dynamic simulations represent electro-mechanic transients of unbalanced micro grid operation. The synchronous machines models are in fundamental frequency phasor representation considering unbalanced operation. The network and loads are represented with a full abc model. Additionally, diesel governor control and automatic voltage regulators are modeled. Figure 1 briefly presents the overall algorithm. Each model in the algorithm is explained in detail below. 
 
-![Figure 1](../../../images/Sub-second_algorithm.png)
+![Overall algorithm of sub-second implementation](../../../images/Sub-second_algorithm.png){ #fig:overall-algorithm-of-sub-second-implementation }
 
-##### Figure 1. Overall algorithm of sub-second implementation
 
 ### Notation
 
 The following variables and parameters are used in the dynamic model equations below. 
 
-##### Table 1 - Equation Notation  
+Table: Equation Notation { #tbl:equation-notation-2 }
 
 | Variable                          | Definition                           
 |-|-|
@@ -344,7 +343,7 @@ Under traditional, positive-sequence, balanced implementation, the positive-sequ
 
 With the ability to collapse the equations to balanced forms, and as a result ignore the $i_0$ term of the $dq0$ transformation, the equations for implementation become significantly reduced. Since everything is transferred to the $dq0$ plane, much of the formulation occurs in that notation. Table 2 shows the positive-sequence version compared to the unbalanced three-phase version above. Equations may be simplified for space using notation from 1. 
 
-##### Table 2 - Traditional vs. unbalanced implementation  
+Table: Traditional vs. unbalanced implementation { #tbl:traditional-vs-unbalanced-implementation }
 
 Quantity | Traditional | Unbalanced   
 ---|---|---  
@@ -410,7 +409,7 @@ The regulator output ($V_R$) can be further constrained by limiting values. Thes
 
 Terminal voltage for the exciter control is taken as the magnitude of the positive sequence component of all connected voltage terminals. 
 
-This equation set represents an implementation where all possible components of the DC exciter are implemented (compensators, stabilizers, and amplifiers). These devices may not all always be present, so appropriate catches and checks need to be in place to "remove" unneeded portions of the equations.[R1.2.3][R1.2.4]
+This equation set represents an implementation where all possible components of the DC exciter are implemented (compensators, stabilizers, and amplifiers). These devices may not all always be present, so appropriate catches and checks need to be in place to "remove" unneeded portions of the equations (R1.2.3, R1.2.4).
 
 ### Thyristor Rectifier Exciter
 
@@ -430,7 +429,7 @@ The value of $V_{in}$ can be constrained by limiting values of $V_{IMIN}$ and $V
 
 The key development for the microgrids capability in GridLAB-D™ is the inclusion of a power system dynamic solver that interfaces with the appropriate objects within the GridLAB-D™ environment. Initially, this is expected to be predominately the powerflow module. 
 
-Updates to voltage and frequency values should be made apparent for the next "quasi-steady-state" powerflow iteration. These values should be implemented in such a way that powerflow will not significantly override the control actions from the generator or load, with regards to voltage or frequency. An incremental powerflow solution is required at all dynamic timesteps to ensure the system is properly responding, so this incremental powerflow solution should coincide with the static solution at "quasi-steady-state" points.[R3.4][R3.5]
+Updates to voltage and frequency values should be made apparent for the next "quasi-steady-state" powerflow iteration. These values should be implemented in such a way that powerflow will not significantly override the control actions from the generator or load, with regards to voltage or frequency. An incremental powerflow solution is required at all dynamic timesteps to ensure the system is properly responding, so this incremental powerflow solution should coincide with the static solution at "quasi-steady-state" points (R3.4, R3.5).
 
 The implemented solver shall be done as a modified Euler, predictor-corrector solution method1. This implementation provides the basic structure laid out in the Power System Toolbox (PST) for MATLAB 3. Utilizing the modified Euler method allows the flexibility of the different timestep sizes and progression outlined in the Solution Timesteps section below. 
 
@@ -446,7 +445,7 @@ Inclusion in the microgrids-enabled dynamic solver capability is handled during 
 
 Most of the inputs to the microgrids capability are handled by the solver directly, with links to appropriate objects. One "extraneous" situation requires an external input into the dynamic solver. The input is: 
 
-##### Table 3 - Solver inputs  
+Table: Solver inputs { #tbl:solver-inputs }
 
 Variable | Type | Units | Definition   
 ---|---|---|---  
@@ -460,7 +459,7 @@ In cases of just being attached to a larger system, it is recommended than an ov
 
 Most of the added capabilities are handled at the specific objects. However, a few global outputs are available from the dynamic solver. These include: 
 
-##### Table 4 - Solver outputs  
+Table: Solver outputs { #tbl:solver-outputs }
 
 Variable | Type | Units | Definition   
 ---|---|---|---  
@@ -475,7 +474,7 @@ These values are published mainly for recorder objects to capture them for overa
 
 To facilitate data operations between the individual objects and the dynamic solver capability, a common data structure is used to pass information back and forth. This data structure should contain information and pointers to the following elements: 
 
-##### Table 5 - Solver interface elements  
+Table: Solver interface elements { #tbl:solver-interface-elements }
 
 Variable | Definition   
 ---|---  
@@ -494,7 +493,7 @@ Variable | Definition
 **frequency_change** | Pointer to frequency change in the local frequency solution between previous and current timestep   
 **machine_parameters** | Pointer to machine parameters - includes exciter, pss, and governor properties   
   
-`NULL` fields will be ignored as "no equipment present" to the solver. The pointer for this data structure is passed to the dynamic solver capability during the solver's initialization routine.[R2.1][R2.2]
+`NULL` fields will be ignored as "no equipment present" to the solver. The pointer for this data structure is passed to the dynamic solver capability during the solver's initialization routine (R2.1, R2.2).
 
 ### Solver external functions
 
@@ -543,7 +542,7 @@ After these two steps complete, the simulation advances to the next timestep. Th
 
 Timestep progression is handled in a manner similar to GridLAB-D's core functionality. All objects requesting a dynamic solution update will request a time for recalculation. The minimum value will drive the simulation forward. The solver shall be implemented as a predictor-corrector solver, so larger timestep progression should be possible. A "maximum dynamic" timestep will also be specified to ensure any unexpected "passive" element (not requesting a timestep update) are handled.[R3.2]
 
-The initial solver time resolution is 1 ms. Timestep updates occur in multiples of 1 ms, but are not allowed to be any less than 1 ms.[R3][R3.1]
+The initial solver time resolution is 1 ms. Timestep updates occur in multiples of 1 ms, but are not allowed to be any less than 1 ms (R3, R3.1).
 
 ### Solver Call Timing
 
@@ -576,15 +575,14 @@ The completion of this test gauges the numerical stability of the microgrids cap
 
 ## Two machine, single line system
 
-![Simple Two-machine Test System](../../../images/300px-Two-machine_single-line_System.png)
+![Simple Two-machine Test System](../../../images/300px-Two-machine_single-line_System.png){ #fig:simple-two-machine-test-system }
 
-##### Figure 1. Simple Two-machine Test System
 
 The two machine, single line (TWSL) system (Figure 1) are used to test the simulation of actual dynamics on the system. All devices are full three-phase. Overhead lines connecting the two generators and the load follow the format of the IEEE 4-node test feeders 5. All test results are validated against a DigSilent PowerFactory simulation to ensure the three-phase, unbalanced power is being handled correctly. 
 
 The two machine, single line system are used in a variety of ways to test and validate the results. For all of the testing scenarios, Gen 1 and Gen 2 are assumed to be 100 MVA diesel generators. Unless otherwise specified, both generators are identical. Both incorporate DC exciters and droop-control governors with the following parameters: 
 
-##### Table 6 - Two machine, single line system parameters  
+Table: Two machine, single line system parameters { #tbl:two-machine-single-line-system-parameters }
 
 Variable | Value   
 ---|---  
@@ -605,7 +603,7 @@ $B_{EX}$ | 1.55
   
 The actual tests are defined as: 
 
-##### Table 7 - Two machine, single line scenarios  
+Table: Two machine, single line scenarios { #tbl:two-machine-single-line-scenarios }
 
 Scenario | Testing | Description   
 ---|---|---  
@@ -621,9 +619,8 @@ Successful completion of these tests, as well as the successful validation again
 
 ## Two machine, three line system
 
-![Basic Two-machine Test System](../../../images/300px-Two-machine_three-line_System.png)
+![Basic Two-machine Test System](../../../images/300px-Two-machine_three-line_System.png){ #fig:basic-two-machine-test-system }
 
-##### Figure 2. Basic Two-machine Test System
 
 The two machine, three line (TWTL) system (Figure 2) is used to test the simulation of actual dynamics on the system. Many parameters follow those of the TWSL system. All devices are full three-phase. Overhead lines connecting the two generators and the load follow the format of the IEEE 4-node test feeders 5. All test results are validated against a DigSilent PowerFactory simulation to ensure the three-phase, unbalanced power is being handled correctly. 
 
@@ -633,9 +630,8 @@ The actual tests for the two machine, three line system is identical to those of
 
 ## Adapted IEEE 34-bus test feeder
 
-![Adapted IEEE 34-bus Test System](../../../images/300px-IEEE34Modified.png)
+![Adapted IEEE 34-bus Test System 6](../../../images/300px-IEEE34Modified.png){ #fig:adapted-ieee-34-bus-test-system-6 }
 
-##### Figure 3. Adapted IEEE 34-bus Test System 6
 
 The adapted 34-bus test feeder (Figure 3) serves as the overall test and validation system for the initial microgrids implementation. Since wind turbine generators and energy storage are not part of the initial microgrids implementations, these devices are substituted with equivalent diesel generators. All simulation results are validated against values obtained for an equivalent model run in the DigSilent software. 
 
@@ -665,7 +661,7 @@ Capabilities have slowly been evolving. This section documents what milestones c
 
 ## Version 2.3 - Grizzly
 
-  * transient mode capabilities - ability to transition to simulation timesteps as small as one nanosecond, then transition back into traditional, event-driven GridLAB-D mode.
+  * transient mode capabilities - ability to transition to simulation timesteps as small as one nanosecond, then transition back into traditional, event-driven GridLAB-D™ mode.
   * Player capabilities - the ability to play in subsecond data to influence objects during transient mode execution.
   * Recorder capabilities - the ability to record subsecond data during transient mode operations.
   * Powerflow capabilities - basic support for three-phase, unbalanced powerflow operations in transient mode and in isolated operation

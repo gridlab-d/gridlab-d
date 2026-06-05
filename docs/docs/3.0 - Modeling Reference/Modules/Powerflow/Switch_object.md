@@ -34,7 +34,7 @@ All standard **link** properties are inherited as well, and are not listed here 
 
 Details on the properties are outlined in Table 1. Note that although some of these are defined in the base **link** class, they're also listed here for completeness. 
 
-##### Table 1 - Switch properties  
+Table: Switch properties { #tbl:switch-properties }
 
 Property | Type | Definition   
 ---|---|---  
@@ -49,11 +49,9 @@ Property | Type | Definition
   
 ## Model Implementation
 
-TODO - Relevance - Review whether this level of detail of model implementation is necessary
-
 Implementation for the two different solver method (FBS and NR) are similar, but different enough that the details are outlined here. Switches are assumed to just connect direct phases. e.g., phase A of `from` to phase A of `to`; no phase-switching or other configurations are supported. 
 
-### FBS
+### Forward-Backward Sweep (FBS)
 
 The Forward-Backward Sweep method implementation follows the standard line equations from Distribution System Modeling and Analysis, by William Kersting: 
 
@@ -90,7 +88,7 @@ $\mathbf{b}=$ `switch_impedance`,
 $\mathbf{c}=0.0$,
 $\mathbf{d}=1.0$
 
-### NR
+### Newton-Raphson (NR)
 
 The Newton-Raphson method implementation is simplified into four matrices. The specifics of their use are detailed, but equations will be omitted, for brevity. 
 

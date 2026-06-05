@@ -31,9 +31,8 @@ $τm=Pcomp/ωr$ (1.3 1)
 
 The mechanical torque τm is related to the motor electric torque τe via the shaft speed ωr as $τe - τm=J(dωr)/dt+Kωr$, (1.3 2) where J is the rotational inertia and K is the friction constant of the shaft, respectively. The second quantity is the compressor thermal capacity Qcomp supplied into the interior environment of the building. The thermal capacity required by the interior environment is driven by the thermal preferences of building occupants as specified through the indoor air temperature set point Tset and affected by the current indoor air temperature Tin and outdoor air temperatures Tout, respectively. Take the heating for example. The higher Tset or the lower Tin and Tout will lead to higher Qcomp. Although Qcomp still depends on those inherent attributes of the given heat pump, only Tset, Tin and Tout are practically available to the building occupants. 
 
-[![Basic diagram of the motor load model.](../../../../../images/300px-Picture1.png)]
+![Basic diagram of the motor load model.](../../../../../images/300px-Picture1.png){ #fig:basic-diagram-of-the-motor-load-model }
 
-##### Figure 1. Basic diagram of the motor load model.
 
   
 Note that the time constant of all the building thermodynamics usually ranges from minutes to hours. However, the duration of power grid transient studies is only seconds. As a result, only two operation scenarios need to be considered for heat pump simulations. One is the steady-state operation when the indoor air temperature meets the set point, that is, $T_{in}=T_{set}$. In this scenario, the compressor power consumption Pcomp is constant. The other one is the set point change when more heating/cooling is desired to change unsatisfactory indoor air temperature. In this scenario, the compressor power consumption Pcomp will vary as the temperature control system drives up the motor aiming to bring the indoor air temperature to the set point. Therefore, it is proposed to simplify the mechanical part of the developed thermal-electrical model by approximating the compressor power consumption Pcomp and thermal capacity Qcomp with the following functions of only available variables, $(a0 + a1 PLR + a2 PLR2) × (b0 + b1 T_{in} + b2 T_{in2} + c0 T_{out} + c1 T_{out2} + c2 T_{in} T_{out})$ (1.3-3) where _PLR_ is the ratio between the shaft speed ωr and the rated speed ωrated, and _a i_, _b i_, and _c i_, _i_ = 0, 1, 2, are constant coefficients to be determined for _P comp_ and _Q comp_, respectively. In practice, the size of the heat pump that can be described by the maximum _Q comp_ should match the size of the building it serves. Hence, the calibrated model coefficients above will differ for different buildings, with building attributes embedded. 
@@ -52,7 +51,7 @@ Besides the heat pump, an integrated thermal-electrical model was also developed
 
 In practice, the HP sizes vary significantly as the building sizes change. In other words, there are many different sizes of HPs available in the market. However, it is not practical to model every single size of HPs. In this quarter, we continued our load modeling efforts by defining a set of representative HP sizes that will be modeled and later used in the integrated power grid simulation. According to the DOE prototype building , existing buildings can be classified as commercial or residential. Commercial buildings are those for commercial purposes, for example, school or office. There are a total of 16 types of commercial buildings. Residential buildings are mainly including single-family houses, townhouses, and etc. For residential buildings, there are 4 sub-types including Electric Resistance, Gas Furnace, Oil Furnace or Heat Pump. Different buildings have different thermal needs according to their sizes and usage. For example, the school building might have sudden high-power demands from air-conditioning, due to many students rushing into the classroom. For single-family house, the home power demands for cooling and heating are low in the daytime for weekdays, assuming the residents are out for work. After checking all possible HP sizes, we decided the following set of representative HP sizes for residential and commercial buildings, respectively as shown in Table 1.3 1 and Table 1.3 2. Note that the HP capacity is also often expressed in terms of ton, where 1 ton is equal to 12,000 BTU/hr. Both residential and commercial buildings are classified into three sizes including small, medium and large. Then the HP size is defined accordingly for each category. 
 
-##### Table 1.3 1 – Representative HP Sizes for Residential Buildings  
+Table: 1 – Representative HP Sizes for Residential Buildings { #tbl:1-representative-hp-sizes-for-residential-buildings }
 Residential HP | Thermal Capacity (BTU/hr) | Electric Power (kW) | Type   
 ---|---|---|---  
 **Small** | 12,000 | 1.2 | On/Off   
@@ -60,7 +59,7 @@ Residential HP | Thermal Capacity (BTU/hr) | Electric Power (kW) | Type
 **Large** | 60,000 | 6.0 | On/Off   
   
 
-##### Table 1.3 2 – Representative HP Sizes for Commercial Buildings  
+Table: 2 – Representative HP Sizes for Commercial Buildings { #tbl:2-representative-hp-sizes-for-commercial-buildings }
 
 Commercial HP | Thermal Capacity (BTU/hr) | Electric Power (kW) | Type   
 ---|---|---|---  
@@ -76,7 +75,7 @@ Commercial HP | Thermal Capacity (BTU/hr) | Electric Power (kW) | Type
 
 The heat pump of higher capacity is composed of multiple heat pumps of smaller capacity with the inherent modular configuration. Heat pumps of smaller capacity are used more for residential buildings. For example, a one-bedroom apartment may need a 1-ton heat pump, and two-bedroom apartment may need a 3-ton heat pump. A two-story residential building of 3,000 square feet usually needs a 5-ton heat pump, or a combination of both 2-ton and 3-ton heat pumps. Heat pumps of larger capacity are mainly for commercial building use. For example, a 30-ton heat pump usually consists of six 5-ton heat pumps. As a result, it is only necessary to determine the coefficients of proposed simplified model for HPs of five capacities including 1, 3, 5, 30 and 60 tons. Based on the HP specifications from manufacturers, the training data were generated, and the coefficients were determined. The system performance, including thermal capacity and power demands, is depending multiple factors: indoor air temperature, speed, outdoor air temperature. 
 
-##### Table 1.3 3 – Coefficients of Simplified Models for HPs of Five Capacities Without VFD  
+Table: 3 – Coefficients of Simplified Models for HPs of Five Capacities Without VFD { #tbl:3-coefficients-of-simplified-models-for-hps-of-five-capacities-without-vfd }
 
 Items | a0 | a1 | a2 | b0 | b1 | b2  
 ---|---|---|---|---|---|---  
@@ -94,7 +93,7 @@ Items | a0 | a1 | a2 | b0 | b1 | b2
   
 For 30-ton heat pumps, there is an option using the variable frequency drives (VFD). The system can adjust the motor speed to meet the desired cooling and heating demands. 
 
-##### Table 1.3 4 – Coefficients of Simplified Models for HPs of 30-Ton Capacity With VFD  
+Table: 4 – Coefficients of Simplified Models for HPs of 30-Ton Capacity With VFD { #tbl:4-coefficients-of-simplified-models-for-hps-of-30-ton-capacity-with-vfd }
 
 Items | a0 | a1 | a2 | b0 | b1 | b2 | c0 | c1 | c2  
 ---|---|---|---|---|---|---|---|---|---  

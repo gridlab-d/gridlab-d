@@ -32,7 +32,7 @@ will run a single two-threaded validation test at a time.
 
 Validation test failures are reported as errors. Optional test failures are reported as warning. 
 
-By default all output is redirected to the default output streams (see redirect**TODO** - Redirect - pull in def for redirect). You can send all output to the console using `--redirect none command option`. 
+By default all output is redirected to the default output streams. You can send all output to the console using `--redirect none command option`. 
 
 ### Options
 
@@ -120,7 +120,7 @@ Unhandled exceptions in Windows can cause modal dialogs to pop up that block the
 
 # Test
 
-The user may provide a command option `--test` to enable the various test routines supported in GridLAB-D. The routines are made available to users by listing the core test routines in the `* **test_list` variable and/or exporting the `module_test` routine from modules the support self-tests.
+The user may provide a command option `--test` to enable the various test routines supported in GridLAB-D™. The routines are made available to users by listing the core test routines in the `* **test_list` variable and/or exporting the `module_test` routine from modules the support self-tests.
 
 
 Core (in `core/test.c`)
@@ -153,7 +153,7 @@ Module (in `_module_ /test.cpp`)
     TECHNICAL MANUAL REVIEW NEEDED
 
 
-The following tests are current performed on the GridLAB-D.
+The following tests are current performed on the GridLAB-D™.
 
 * **test_bare_class** - Create a new runtime class with a single property, initializes the property, and verify that the property is set correctly.
 
@@ -197,15 +197,15 @@ The following tests are current performed on the GridLAB-D.
 
 * **test_guid** - Verify globally unique id implementation.
 
-* **test_inline_plc** - Verify inline PLC code ( TODO: : does not appear to do that.)
+* **test_inline_plc** - Verify inline PLC code ( TODO - Verify - does not appear to do that.)
 
-* **test_kml_output** - Verify kml output ( TODO: : does not appear to do that.)
+* **test_kml_output** - Verify kml output ( TODO - Verify - does not appear to do that.)
 
 * **test_latlon** - Verify all the allowed formats of latitude and longitude.
 
 * **test_loadshape_exercise_2_3_3** - Verify end use loadshapes.
 
-* **test_locale** - Verify the use of locale names instead of timezone specifications ( TODO: : only checks syntax, does not check proper functionality).
+* **test_locale** - Verify the use of locale names instead of timezone specifications ( TODO - Verify - only checks syntax, does not check proper functionality).
 
 * **test_notz** - Verify that omitted timezone does not cause a loader problem when datetime is used.
 

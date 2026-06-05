@@ -126,15 +126,25 @@ object line_spacing {
 }
 
 // Feeder
-object meter {
+//object meter {
+//     name network_node;
+//     bustype SWING;
+//     nominal_voltage 727488;
+//     voltage_A 140320.608000+30d;
+//     voltage_B 142052.646000-90d;
+//     voltage_C 141681.840000+150d;
+//     phases ABCN;
+//}
+
+object substation {
      name network_node;
      bustype SWING;
-     nominal_voltage 727488;
-     voltage_A 140320.608000+30d;
-     voltage_B 142052.646000-90d;
-     voltage_C 141681.840000+150d;
+     nominal_voltage 140000;
+     base_power 12MVA;
      phases ABCN;
+     positive_sequence_voltage 140000;
 }
+
 object transformer {
      name substation_transformer;
      from network_node;

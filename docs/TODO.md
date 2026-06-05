@@ -9,7 +9,7 @@
 
 # New Users
 
-- [ ] **Review tutorial pages, consider length and potentially splitting into smaller, more focused pages**
+- [X] **Review tutorial pages, consider length and potentially splitting into smaller, more focused pages**
 - [x] Keep metronome example? --> No, delete.
     - [x] Pull metronome mentions out of Getting Started and into a single metronome example 
     file (or delete if not kept) 
@@ -126,14 +126,14 @@ excerpt: if libgld comes into existence
 
 # Miscellaneous Notes
 
-- [ ] Branding, logo
+- [x] Branding, logo
 - [ ] Math doesn't display on search, can we fix that?
 - [ ] Search in general is not great, what can we do
 - [x] Get images from wiki (urls to wiki pages will no longer work)
-- [ ] Find a way to set default width of images to fill the ReadTheDocs window
+- [X] Find a way to set default width of images to fill the ReadTheDocs window
 - [X] Remove "History" sections from docs, irrelevant 
 - [ ] Visual navigation:
-    - [ ] Pages with subpages should be more visually distinct, bold, underilned, something. The [+] left of the header that is just barely visible until you hover over it is not very helpful.
+    - [ ] Pages with subpages should be more visually distinct, bold, underlined, something. The [+] left of the header that is just barely visible until you hover over it is not very helpful.
 - [ ] Word/page limit of a single doc page?
 - [X] "See Also" lists:  --> Replaced with "**Related Concepts**"
   - Do we want to keep these? Will have to ensure pages still exist and links are accurate. Do we assume that the pages are now well-organized enough that this is no longer needed?
@@ -153,6 +153,19 @@ excerpt: if libgld comes into existence
       
         host% gridlabd -[D] [validate_report]=validate.txt --validate
 
+
+# TODO Before 6.0 Release:
+- [ ] Inverter pages complete (Laurentiu)
+- [ ] Powerflow pages complete (Nathan)
+- [ ] API examples complete and working (Trevor/Victoria)
+- [ ] Clean up TODOs in Developing Reference Section (Mitch)
+- [ ] Update Installation Instructions 
+- [ ] Technical Overview TODOs removed and cleaned up
+- [ ] IR for docs (Scott to review)
+- [ ] After IR approved, redirect gridlabd.org to readthedocs
+- [ ] Merge docs branch with develop 
+
+
 # New Doc Pages (Existing Features) Topics
 
 Topic | Start Date | Time Estimate | Completed Date
@@ -160,7 +173,7 @@ Topic | Start Date | Time Estimate | Completed Date
 Deltamode | Oct 6 | 3 weeks | Jan 28
 Object synchronization process | Wrapped into time management, TODO: check that there isn't anything specific here to investigate
 Device model development process | 
-GridLAB-D loader and JSON file format | Mostly complete, pending specific parameter list for each object -- could start this any time.
+GridLAB-D™ loader and JSON file format | Mostly complete, pending specific parameter list for each object -- could start this any time.
 
 # New Features Dev Schedule
 Topic |  Estimate Complete Date | Actual Completed Date | Able to Start Docs?
@@ -198,7 +211,7 @@ Developing Reference | Mar 2
 - Move original definition file into subfolder of *Sharepoint/docs/scraped pages/definitions/integrated* so we can make sure we get to everything
 
 # AI Synthesis of FAQs
-"The insights provided [below] are **generalized observations** about forums for software tools like GridLAB-D, based on the typical structure and themes of discussions in technical communities"
+"The insights provided [below] are **generalized observations** about forums for software tools like GridLAB-D™, based on the typical structure and themes of discussions in technical communities"
 
 ### Common Themes:
 1. **Installation and Setup Issues:**
@@ -211,18 +224,18 @@ Developing Reference | Mar 2
    - Discussions on how to integrate custom modules, program new functionalities, or use the tool's API.
 
 4. **Interoperability with Other Tools:**
-   - Questions related to how GridLAB-D integrates with other tools such as OpenDSS, MATLAB, or SCADA systems.
+   - Questions related to how GridLAB-D™ integrates with other tools such as OpenDSS, MATLAB, or SCADA systems.
 
 5. **Performance Optimization:**
    - Topics on optimizing simulation runs, especially for large-scale models, to achieve better computation efficiency.
 
 6. **Best Practices:**
-   - Community discussions on industry best practices for utilizing GridLAB-D effectively.
+   - Community discussions on industry best practices for utilizing GridLAB-D™ effectively.
 
 ---
 
 ### Frequently Asked Questions:
-1. **How do I configure a basic GridLAB-D model for a specific feeder?**
+1. **How do I configure a basic GridLAB-D™ model for a specific feeder?**
 2. **What are the system requirements, and how do I resolve dependency-related errors?**
 3. **Why is my simulation producing unexpected results or failing to converge?**
 4. **Can I simulate renewable energy sources like solar or wind in GridLAB-D?**
@@ -238,7 +251,7 @@ Developing Reference | Mar 2
    - Users often report that advanced capabilities of the tool are inadequately documented, resulting in confusion.
 
 2. **Examples and Use Cases:**
-   - A lack of detailed, real-world modeling examples can make it difficult for users to understand how to use GridLAB-D effectively for their applications.
+   - A lack of detailed, real-world modeling examples can make it difficult for users to understand how to use GridLAB-D™ effectively for their applications.
 
 3. **Error Messages:**
    - Insufficient explanation of error codes or ambiguous error details in the documentation can delay troubleshooting efforts.
@@ -256,7 +269,7 @@ Developing Reference | Mar 2
 Here are specific **advanced features of GridLAB-D** that are often a source of confusion or leave room for improvement in clarity:
 ### 1. **Modeling Advanced Grid Components**
    - **Inverter and DER (Distributed Energy Resource) Modeling:**
-     - While GridLAB-D supports modeling of renewable energy systems such as solar PV, wind turbines, and inverters, users often struggle with:
+     - While GridLAB-D™ supports modeling of renewable energy systems such as solar PV, wind turbines, and inverters, users often struggle with:
        - Setting up **controller behavior** (e.g., droop control, volt-VAR capabilities).
        - Modeling grid-tied inverters with high accuracy.
        - Integrating DERs in large-scale simulations with realistic load profiles.
@@ -272,17 +285,17 @@ Here are specific **advanced features of GridLAB-D** that are often a source of 
 ---
 
 ### 2. **Co-Simulation and Tool Interoperability**
-   - Many users want to run **co-simulations** where GridLAB-D is integrated with other tools such as:
+   - Many users want to run **co-simulations** where GridLAB-D™ is integrated with other tools such as:
      - MATLAB/Simulink.
      - OpenDSS.
      - EnergyPlus (for building energy modeling).
      - SCADA systems and real-time simulators.
-   - While GridLAB-D provides provisions for data exchange through APIs, FNCS (Framework for Networked Co-Simulation), or Python scripting, the process of establishing seamless communication between tools is often poorly explained or under-documented.
+   - While GridLAB-D™ provides provisions for data exchange through APIs, FNCS (Framework for Networked Co-Simulation), or Python scripting, the process of establishing seamless communication between tools is often poorly explained or under-documented.
 
 ---
 
 ### 3. **Custom Modules and Extensions**
-   - GridLAB-D allows users to write **custom modules** in C++ to extend its functionalities, yet:
+   - GridLAB-D™ allows users to write **custom modules** in C++ to extend its functionalities, yet:
      - There is limited step-by-step documentation or examples for developing, testing, and debugging custom code.
      - Users struggle with setting up a development environment, particularly with dependencies related to the native toolchain.
 
@@ -291,7 +304,7 @@ Here are specific **advanced features of GridLAB-D** that are often a source of 
 ---
 
 ### 4. **Distributed/Parallel Simulations**
-   - GridLAB-D simulations can become computationally intensive for large-scale networks, especially if the model includes:
+   - GridLAB-D™ simulations can become computationally intensive for large-scale networks, especially if the model includes:
      - Thousands of nodes or distributed energy resources.
      - Minute-level or second-level timestep resolutions.
    - While support for distributed and parallel simulations exists, documentation on properly configuring this functionality is sparse. Users are often unclear about:
@@ -301,7 +314,7 @@ Here are specific **advanced features of GridLAB-D** that are often a source of 
 ---
 
 ### 5. **Dynamic Market and Tariff Modeling**
-   - GridLAB-D includes **dynamic pricing and market modeling capabilities** that allow simulations of demand response, real-time pricing, and bidding strategies. However:
+   - GridLAB-D™ includes **dynamic pricing and market modeling capabilities** that allow simulations of demand response, real-time pricing, and bidding strategies. However:
      - Users often need clarification when programming market modules or setting up dynamic tariff models.
      - The interaction of market modules with time-dependent customer loads, energy storage, and DERs is complex, and setting up realistic scenarios is non-trivial.
    - There is a lack of user-friendly tutorials or examples that walk through fully functional market-based simulations.
@@ -309,9 +322,9 @@ Here are specific **advanced features of GridLAB-D** that are often a source of 
 ---
 
 ### 6. **Stochastic Modeling and Uncertainty Analysis**
-   - GridLAB-D supports stochastic inputs, for example, using randomization in load profiles or generation patterns. However:
+   - GridLAB-D™ supports stochastic inputs, for example, using randomization in load profiles or generation patterns. However:
      - Users face difficulties setting up realistic randomized load or generation profiles, with parameter distributions often poorly explained.
-     - There is little clear guidance on conducting **uncertainty analysis** (e.g., Monte Carlo simulations) within the GridLAB-D framework.
+     - There is little clear guidance on conducting **uncertainty analysis** (e.g., Monte Carlo simulations) within the GridLAB-D™ framework.
 
 ---
 
@@ -323,7 +336,7 @@ Here are specific **advanced features of GridLAB-D** that are often a source of 
 ---
 
 ### 8. **Post-Processing and Output Interpretation**
-   - The output data produced by GridLAB-D can be extensive and challenging to analyze. Specific problems include:
+   - The output data produced by GridLAB-D™ can be extensive and challenging to analyze. Specific problems include:
      - Parsing and interpreting **complex multi-variable outputs.**
      - Understanding time-series results, especially for large-scale systems.
      - Visualizing results in the absence of advanced built-in plotting tools (leading users to depend on third-party tools like Python or Excel).
@@ -338,7 +351,7 @@ Here are specific **advanced features of GridLAB-D** that are often a source of 
 ---
 
 ### Why Are These Features Unclear?
-- **Sparse Documentation:** While GridLAB-D provides a user manual, some advanced topics are skimmed or assumed to be self-explanatory to experienced users.
+- **Sparse Documentation:** While GridLAB-D™ provides a user manual, some advanced topics are skimmed or assumed to be self-explanatory to experienced users.
 - **Fragmented Information:** Key details about parameters and configurations are scattered across the documentation, requiring users to dig deep to assemble a complete understanding.
 - **Lack of Examples:** Clear, fully functional examples for advanced simulations (e.g., DER-rich networks, market-driven systems) are often lacking.
 - **Open-Source Nature:** Open-source tools often rely on community-driven contributions, which can mean uneven or inconsistent documentation quality.

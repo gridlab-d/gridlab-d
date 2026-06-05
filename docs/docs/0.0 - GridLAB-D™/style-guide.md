@@ -6,7 +6,86 @@ This is a style guide for GridLAB-D™ Documentarians. The first sections cover 
 
 Is trademarked. Refer to it always as GridLAB-D™. Do not abbreviate to GLD.
 
-## Clear, Concise, and Precise.
+## In-Line Code and Proper Nouns
+
+Mention of variables or code-snippbits within documentation text should contain back-ticks to signify that the item is a variable or bit of code. For example:
+
+*Because GridLAB-D™ has a flat parameter list, it is not unusual for some device model parameters to only be used by the model if other parameters are set to certain values. For example, in the **house_e** model used to model single-zone structures, there are parameters for the `heating_setpoint` and `cooling_setpoint`. As you might be able to guess, when the HVAC system is in heating mode, changing the value of the `cooling_setpoint` has no impact on the devices simulated behavior.*
+
+Note that **house_e** is the name of the model, but not a variable. To avoid confusion, it is placed in bold. This also makes it stand out visually and should aid in comprehension. The parameters described in the model, `heating_setpoint` and `cooling_setpoint` are both in back-ticks. It is also acceptable to refer to the heating and cooling setpoint as you would in prose text; in that case, because the parameters are not referenced directly using their variable names, they do not get back-ticks.
+
+### File names
+
+Referenced file names should be in quotes and italics, like:
+
+"Please refer to the "*helper_file.txt*" for more information."
+
+Keep this format even when linking files, for example:
+
+"Navigate to the respository to check out *sample_file.glm* as an example."
+
+Remember that both an asterix and an underscore will italicize text, and both may be used in this documentation.
+
+## Figures, Tables, References, and Captions
+
+Images can be either local (in the images folder), or refering an external url. To insert an image in the documentation write
+
+```markdown
+  ![caption](local path or URL to the image file) { #anchor }
+```
+
+See the examples below generated with the following markdown code:
+
+```markdown
+  ![GridLAB-D™ Logo [external URL reference]](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg) { #fig:external-url-ex }
+```
+
+and
+
+```markdown
+  ![Distribution system switching capacitors [local path reference]](../../images/Dist_syst_switching_capacitors.png) { #fig:local-reference-ex }
+```
+
+### External Image URL Reference
+
+![GridLAB-D™ Logo [external URL reference]](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg){ #fig:external-url-ex }
+
+### Local Image Reference
+
+![Distribution system switching capacitors [local path reference]](../../images/Dist_syst_switching_capacitors.png){ #fig:local-reference-ex }
+
+Tables are introduced by preceeding them with the keyword ```Table:``` followed by the table caption and anchor for referencing. Note that paramaters and variable names in the first column of a table are **bold** rather than in `back-ticks` for ease of reading.
+
+Table: Table example { #tbl:table-ex }
+
+|Parameter Name|Unit|Type|Description|
+|---|---|---|---|
+|**voltage**|V|float|Terminal voltage|
+
+!!! note 
+
+    - Figure labels are below the image.
+    - Table captions appear above the table.
+    - Table and figure numbering is incremented automatically.
+    - Referencing the figures and tables within the same document is done using the defined anchor, e.g. ```[](#fig:external-url-ex)``` for [](#fig:external-url-ex) or ```[](#tbl:table-ex)``` for [](#tbl:table-ex). (This is achieved by using ```mkdocs-caption``` plugin and the ```attr_list``` option for the ```markdown_extensions``` in ```mkdocs.yml``` file.)
+
+### Local Page References
+
+It may be useful to point readers to a specific page for more information or context. Those references work the same way an image or link reference does. For example:
+
+[Command Line Options](../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md)
+
+Points to the page "Command Line Options"
+
+It maybe even more useful to have a link go to a *specific header* within a file. To do that, just add the `#Header` immediately following the `.md` part of the link. If there are spaces within the file name, you must use `-` in their place.
+
+For example, to point specifically to Modhelp section of the previous file:
+
+[Global Variables](../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md#ModHelp)
+
+## Writing Style
+
+### Clear, Concise, and Precise.
 
 Get to the point quickly. Short sentences are just fine. Break complicated, multi-line sentences or instructions into digestible chunks. Talk like a person and avoid jargon where possible; if not, define. Avoid instruction by implication, instead, use precise language to describe what falls into the scope of a instruction.
 
@@ -19,7 +98,7 @@ Get to the point quickly. Short sentences are just fine. Break complicated, mult
     That was an admonition! We have the ability to call attention to important elements in our text using some common flairs: attention, caution, danger, error, hint, important, warning, and more. To use, place three exclamation marks before the flair and then double-indent the text that follows as if it were a code snippbit. 
     Read more [here](https://sphinx-rtd-theme.readthedocs.io/en/stable/demo/demo.html#admonitions).
 
-## Revise "weak" writing
+### Revise "weak" writing
 
 I'm reproducing this example from the Microsoft Style Guide directly.
 
@@ -27,7 +106,7 @@ I'm reproducing this example from the Microsoft Style Guide directly.
 
 **With this**: *Store files online, access them from all your devices, and share them with coworkers.*
 
-## Voice
+### Voice
 
 When referring to the user, use "**you**". No need to use gender-specific singular pronouns either. If you need to refer to a group of users, use "**they**".
 
@@ -35,11 +114,11 @@ When referring to the user, use "**you**". No need to use gender-specific singul
 
 A casual voice is welcoming and less intimidating, so use contractions and write like you'd actually explain things to a person. Also, write primarily using the present tense.
 
-## Chunking
+### Chunking
 
 We want users to be empowered by our documentation. To do this, our documentation needs to be approachable and digestible. A key piece to that is visually chunking content into manageable sections. For example, a giant block of text is overwhelming. Instead, chunk things into smaller blocks of content. Consider adding sub-headings to allow readers to quickly navigate or scan the content. Graphics, equations, and code snippets are also incredibly valuable tools to improve comprehension.
 
-## Accessibility
+### Accessibility
 
 There are some specific accessibility tips to note, below. But in general, remember who we are writing for. If they're reading this documentation, they're not an expert. They're learning.  Just as you once learned these things. The reader may not even be a user yet, they might just want to know what GridLAB-D™ is in order to decide whether they should learn it. They might be a user, but this is their first experience performing distribution system modeling. They might have no coding experience at all. Keep the audience in mind while you write, and remember that we are here to teach. Other notes on accessibility:
 
@@ -51,27 +130,7 @@ There are some specific accessibility tips to note, below. But in general, remem
 
 * **All images require a descriptive caption**. Images are extremely powerful to help convey information, but an image without an explanation only creates confusion. Always provide a caption for an in-line image, and be as descriptive and specific as possible about what is pictured. Use the fifth header level for figure and table captions (#####).
 
-## In-Line Code and Proper Nouns
-
-Mention of variables or code-snippbits within documentation text should contain back-ticks to signify that the item is a variable or bit of code. For example:
-
-*Because GridLAB-D™ has a flat parameter list, it is not unusual for some device model parameters to only be used by the model if other parameters are set to certain values. For example, in the **house_e** model used to model single-zone structures, there are parameters for the `heating_setpoint` and `cooling_setpoint`. As you might be able to guess, when the HVAC system is in heating mode, changing the value of the `cooling_setpoint` has no impact on the devices simulated behavior.*
-
-Note that **house_e** is the name of the model, but not a variable. To avoid confusion, it is placed in bold. This also makes it stand out visually and should aid in comprehension. The parameters described in the model, `heating_setpoint` and `cooling_setpoint` are both in back-ticks. It is also acceptable to refer to the heating and cooling setpoint as you would in prose text; in that case, because the parameters are not referenced directly using their variable names, they do not get back-ticks.
-
-## File names
-
-Referenced file names should be in quotes and italics, like:
-
-"Please refer to the "*helper_file.txt*" for more information."
-
-Keep this format even when linking files, for example:
-
-"Navigate to the respository to check out ["*sample_file.glm*"](path) as an example."
-
-Remember that both an asterix and an underscore will italicize text, and both may be used in this documentation.
-
-## Avoid Biased Language
+### Avoid Biased Language
 
 To maintain a welcoming learning environment, avoid biased language in writing. These seemingly small changes ensure that everyone has a seat at the table. Additionally, use of some of the more dated, biased terms that have largely left the zeitgeist can be jarring and pull people out of their learning immersion.
 
@@ -85,7 +144,7 @@ In addition to these more inclusive language swaps, be aware of potentially cond
 
 The American Chemistry Society published a thorough Inclusivity Style Guide. If you are in doubt while writing, or something doesn't feel right, it's probably covered [here](https://www.acs.org/about/inclusion/inclusivity-style-guide/general-guidelines.html#involve-diverse-people-in-the-creative-process). Note that this is a bit of a rabbit hole, so try not to get lost.
 
-## PNNL Style Requirements
+### PNNL Style Requirements
 
 The PNNL Style Guide is available [here](https://confluence.pnnl.gov/confluence/pages/viewpage.action?spaceKey=COMMSTEAM\&title=PNNL+Style+Guide). For our use case, little of this will be relevant. However there are a few things that may come up:
 
@@ -93,27 +152,11 @@ The PNNL Style Guide is available [here](https://confluence.pnnl.gov/confluence/
 * **Affect** or **Effect** in place of *impact*.
 * **Address challenges** in place of *solve challenges*.
 
-# Quick Markdown Reference
+## Quick Markdown Reference
 
 Markdown can be extremely powerful to use, and there are a lot of tips and tricks that we shall attempt to capture here where relevant.
 
-## Adding Images
-
-Images can be either local (in the images folder), or refering an external url. See the below examples:
-
-![Here's an image](https://images.shoutwiki.com/gridlab-d/e/e6/Gdlogo.jpg)
-##### Figure 1: GridLAB-D Logo
-
-Note that figure labels are below the image and at a list-level of five. The same goes for tables, but table captions appear above the table.
-
-TODO - Figure Scaling - Have yet to figure out how to rescale an image that renders correctly in our documentation. Would like to add some auto-formatter to resize all images to be page-width in size. 
-
-### Local Image Reference
-
-![Dist syst switching capacitors.png](../../images/Dist_syst_switching_capacitors.png)
-##### Figure 2. Distribution system switching capacitors
-
-## Text Styling
+### Text Styling
 Note that you can double click a word or variable to highlight the entire text, then add a star or two and it'll wrap around. This works with the types of punctuation that are used as wrappers.
 
 *Italic* or *Italic*
@@ -126,22 +169,7 @@ Note that you can double click a word or variable to highlight the entire text, 
 
 [Link](http://a.com)
 
-![Image](https://avatars.githubusercontent.com/u/21207639?s=200&v=4)
-
-### Local Page References
-
-It may be useful to point readers to a specific page for more information or context. Those references work the same way an image or link reference does. For example:
-
-[Command Line Options](../../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md)
-
-Points to the page "Command Line Options"
-
-It maybe even more useful to have a link go to a *specific header* within a file. To do that, just add the `#Header` immediately following the `.md` part of the link. If there are spaces within the file name, you must use `-` in their place.
-
-For example, to point specifically to Global Variables section of the previous file:
-
-[Global Variables](../../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md#Global-Variables)
-
+![Image](https://avatars.githubusercontent.com/u/21207639?s=200&v=4){ #fig:GLD-Icon }
 
 ### Bulleted Lists
 
@@ -183,11 +211,11 @@ or:
 
 *Many wiki pages use these formats for lists, it is our job to convert them into lists that render correctly.*
 
-## There is no try.
+#### There is no try.
 
 When in doubt, build the docs and see if it looks right. If not, refer back to this style guide for advice.
 
-## Quick Markdown Reference, Continued.
+### More Markdown Tips
 
 Horizontal rule:
 
@@ -207,7 +235,7 @@ import numpy as np
 np.random()
 ```
 
-### Mermaid Diagram
+#### Mermaid Diagram
 
 ```mermaid
 graph LR 
@@ -223,7 +251,7 @@ graph LR
     again --> hello
 ```
 
-### Equations
+#### Equations
 
 In-line equation: $x^n + y^n = z^n$
 
@@ -242,21 +270,12 @@ $P_{vent} = floor\_area (0.1 - 0.01\imath)$ VA/sf, and $Q_{vent}=0.2402 \times 0
 
 Note that there cannot be spaces between the $ and the equation, on either side, to display correctly.
 
-### References
+#### References
 
 Borrowing heavily from [Microsoft Writing Style Guide](https://learn.microsoft.com/en-us/style-guide/welcome/).
 
 
-# Context
-
-Release | Effort | Status | Date
-| - | - | - | - 
-Hassayampa | As part of major DER dev project | Complete | 2015
-| | | In Progress | 
-| | | Needs Review | 
-
-
-# Build Instructions
+## Build Instructions
 
 Instructions to build the documentation on the platform: readthedocs. 
 
@@ -283,7 +302,7 @@ Things to keep in mind when updating the nav: list
 - The order they are listed is the order they will display. Rearrange as needed.
 
 
-## Local Build
+### Local Build
 
 Build locally to see how your changes look on readthedocs before you commit.
   * From the terminal: 
@@ -305,16 +324,16 @@ Build locally to see how your changes look on readthedocs before you commit.
 
 To enable the doxygen build, `pip install mkdoxy` and go to the doxygen [website](https://www.doxygen.nl/download.html) and install that locally on your desktop. Check that `C:\Program Files\doxygen\bin` or similar is added to PATH. 
 
-## Build on readthedocs 
+### Build on readthedocs 
 
 To build latest commit to be hosted publicly. Push your latest commit before building.
 
   * Navigate to our [docs](https://app.readthedocs.org/projects/gridlab-d/): `https://app.readthedocs.org/projects/gridlab-d/`
 
-![readthedocs](../../images/readthedocs.png)
+![readthedocs](../../images/readthedocs.png){ #fig:ReadTheDocs }
 
   * Click `docs`, then `Builds` and then click `Rebuild`:
 
-![build](../../images/build_docs.png)
+![build](../../images/build_docs.png){ #fig:BLD }
 
   * Once complete, click `View docs`

@@ -4,6 +4,8 @@ GridLAB-D™ contains both a generic energy storage object as well as a battery 
 
 ## Synopsis
 
+### battery
+
 A battery energy storage device is defined using the **battery** object.
 
 		module generators;
@@ -62,6 +64,7 @@ A battery energy storage device is defined using the **battery** object.
 		double reserve_state_of_charge[pu];
 	}
 
+### energy_storage
 
 A generic, technology agnostic energy storage device is defined with the **energy_storage** object.     
     
@@ -139,7 +142,7 @@ Property name |	Type |	Unit |	Description
 **phases**	| set	| none	| (A, B, C, N, S)
 
 
-#### Table 2. Properties only used for internal battery module
+Table: Properties only used for internal battery module { #tbl:properties-only-used-for-internal-battery-module }
 
 Property Name	| Type	| Unit | 	Description
 -- | -- | -- | --
@@ -152,13 +155,13 @@ Property Name	| Type	| Unit | 	Description
 **battery_load**	| double | 	W | 	Battery's current load. This is the value of power_in from the parent inverter.
 **reserve_state_of_charge**	| double | 	pu	| The state of charge which the battery may not go below
 
-## Remarks
+## Status 
 
-**TODO**: 
+**TODO** - Status - update with energy storage models status
 
 ## Example
 
-**TODO**: 
+**TODO** - Example - add example demonstrating energy storage model use case
 
 # Related Concepts:
 

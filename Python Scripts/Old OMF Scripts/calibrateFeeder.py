@@ -92,12 +92,12 @@ def warnOutliers(metrics,tofile):
 		if tofile == 1:
 			pass
 		else:
-			print ("\n")
+			print("\n")
 		for metricID in xrange(5):
 			if tofile == 1:
 				stats_log.write(str(round(metrics[seasonID][metricID],2)) + ",\t")
 			else:
-				print (season_titles[seasonID] +" "+metric_titles[metricID]+":\t"+str(round(100 * metrics[seasonID][metricID],2))+"% difference.")
+				print(season_titles[seasonID] +" "+metric_titles[metricID]+":\t"+str(round(100 * metrics[seasonID][metricID],2))+"% difference.")
 	if tofile == 1:
 		stats_log.write("\n")
 			
@@ -193,9 +193,9 @@ def cleanUP(fdir,savethis=None):
 			except OSError:
 				failed.append(glm)
 				continue
-		print (str(len(removed))+" files moved to 'losers'.")
+		print(str(len(removed))+" files moved to 'losers'.")
 		if len(failed) != 0:
-			print ("***WARNING: "+str(len(failed))+" files could not be moved.")
+			print("***WARNING: "+str(len(failed))+" files could not be moved.")
 	else:
 		for glm in glms:
 			# glm includes directory path
@@ -205,9 +205,9 @@ def cleanUP(fdir,savethis=None):
 			except OSError:
 				failed.append(glm)
 				continue
-		print (str(len(removed))+" files removed.")
+		print(str(len(removed))+" files removed.")
 		if len(failed) != 0:
-			print ("***WARNING: "+str(len(failed))+" files could not be removed.")
+			print("***WARNING: "+str(len(failed))+" files could not be removed.")
 
 def bestSoFar(counter):
 	# find smallest WSM score recorded so far
@@ -261,7 +261,7 @@ def failedLim(action):
 	''' Check if an action has reached it's 'fail limit'. '''
 	if action in action_failed_count.keys():
 		if action_failed_count[action] >= fail_lim:
-			print ("\tOoops, action id "+str(action)+" has met its fail count limit for now. Try something else.")
+			print("\tOoops, action id "+str(action)+" has met its fail count limit for now. Try something else.")
 			return 1
 		else:
 			return 0
@@ -306,21 +306,21 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 
 	# Advance counter. 
 	counter += 1
-	print ('\n****************************** Calibration Round # '+str(counter)+':')
+	print('\n****************************** Calibration Round # '+str(counter)+':')
 	
 	# Get the last action
 	last_action = calib_record[counter-1][2]
 	failed = calib_record[counter-1][3]
-	print ("The last action ID was "+str(last_action)+". (Fail code = "+str(failed)+")")
+	print("The last action ID was "+str(last_action)+". (Fail code = "+str(failed)+")")
 	if last_action == 9:
 		# we want last action tried before a shedule skew test round
 		last_action = calib_record[counter-2][2]
 		failed = calib_record[counter-2][3]
-		print ("We're going to consider the action before the schedule skew test, which was "+ str(last_action)+". (Fail code = "+str(failed)+")")
+		print("We're going to consider the action before the schedule skew test, which was "+ str(last_action)+". (Fail code = "+str(failed)+")")
 
 	# Delete all .glms from the directory. The winning ones from last round should have already been moved to a subdirectory. 
 	# The batch file runs everything /*.glm/ in the directory, so these unecessary ones have got to go. 
-	print ("Removing .glm files from the last calibration round...")
+	print("Removing .glm files from the last calibration round...")
 	cleanUP(fdir)
 	
 	if case_flag == -1:
@@ -330,53 +330,53 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 		if last_action in action_count.keys():
 			if action_count[last_action] == 1 and failed != 2:
 				# wipe failed counter
-				print ("\t( New action was tried and succesful. Wiping action fail counts. )")
+				print("\t( New action was tried and succesful. Wiping action fail counts. )")
 				for i in action_failed_count.keys():
 					action_failed_count[i] = 0
 				
-		print ("\nBegin choosing calibration action...")
+		print("\nBegin choosing calibration action...")
 		# Based on the main metrics (pv_s,te_s,pv_w,te_w), choose the desired action.
 		desired, desc = chooseAction.chooseAction(main_mets)
 		action = desired
-		print ("\tFirst choice: Action ID "+str(action)+" ("+desc+").")
+		print("\tFirst choice: Action ID "+str(action)+" ("+desc+").")
 	
 		# Use the 'big knobs' as long as total energy differences are 'really big' (get into ballpark)
 		c = 0
-		print ("\tAre we in ballpark yet?...")
+		print("\tAre we in ballpark yet?...")
 		if abs(main_mets[1]) > 0.25 or abs(main_mets[3]) > 0.25:
-			print ("\tSummer total energy difference is "+str(round(main_mets[1]*100,2))+"% and winter total energy is "+str(round(main_mets[3]*100,2))+"%...")
+			print("\tSummer total energy difference is "+str(round(main_mets[1]*100,2))+"% and winter total energy is "+str(round(main_mets[3]*100,2))+"%...")
 			c = 1
 		else:
-			print ("\tYes, summer total energy difference is "+str(round(main_mets[1]*100,2))+"% and winter total energy is "+str(round(main_mets[3]*100,2))+"%.")
+			print("\tYes, summer total energy difference is "+str(round(main_mets[1]*100,2))+"% and winter total energy is "+str(round(main_mets[3]*100,2))+"%.")
 		if c == 1:
 			if main_mets[1] < 0 and main_mets[3] < 0: # summer & winter low
-				print ("\tTrying to raise load overall (Action ID 1 or 7)...")
+				print("\tTrying to raise load overall (Action ID 1 or 7)...")
 				if not failedLim(1):
 					action = 1
 				elif not failedLim(7):
 					action = 7
 			elif main_mets[1] > 0 and main_mets[3] > 0: # summer & winter high
-				print ("\tTrying to lower load overall (Action ID -1 or -7)...")
+				print("\tTrying to lower load overall (Action ID -1 or -7)...")
 				if not failedLim(-1):
 					action = -1
 				elif not failedLim(-7):
 					action = -7
 			elif abs(main_mets[1]) > abs(main_mets[3]):
 				if main_mets[1] > 0:
-					print ("\tTry to lower load overall (Action ID -1 or -7)...")
+					print("\tTry to lower load overall (Action ID -1 or -7)...")
 					if not failedLim(-1):
 						action = -1
 					elif not failedLim(-7):
 						action = -7
 				else:
-					print ("\tTry to raise load overall (Action ID 1 or 7)...")
+					print("\tTry to raise load overall (Action ID 1 or 7)...")
 					if not failedLim(1):
 						action = 1
 					elif not failedLim(7):
 						action = 7
 			elif abs(main_mets[3]) > abs(main_mets[1]):
 				if main_mets[3] > 0:
-					print ("\tTry to lower load overall, or lower winter only (Action ID -1, -7, -2, -3)...")
+					print("\tTry to lower load overall, or lower winter only (Action ID -1, -7, -2, -3)...")
 					if not failedLim(-1):
 						action = -1
 					elif not failedLim(-7):
@@ -386,7 +386,7 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 					elif not failedLim(-3):
 						action = -3
 				else:
-					print ("\tTry to raise load overall, or raise winter only (Action ID 1, 7, 2, 3)...")
+					print("\tTry to raise load overall, or raise winter only (Action ID 1, 7, 2, 3)...")
 					if not failedLim(1):
 						action = 1
 					elif not failedLim(7):
@@ -396,17 +396,17 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 					elif not failedLim(3):
 						action = 3
 			desc = next_choice_action.action_desc[action]
-			print ("\tSet Action ID to "+str(action)+" ( "+desc+" ).")
+			print("\tSet Action ID to "+str(action)+" ( "+desc+" ).")
 		if action == desired:
-			print ("\tOk, let's go with first choice Action ID "+str(desired))
+			print("\tOk, let's go with first choice Action ID "+str(desired))
 
 		if failedLim(action):
 			# reached fail limit, take next choice
 			action = takeNext(action,action)
 			desc = next_choice_action.action_desc[action]
-			print ("\tTrying action "+str(action)+" ("+desc+")")
+			print("\tTrying action "+str(action)+" ("+desc+")")
 			if abs(action) == 0:
-				print ("\tWe're all out of calibration options...")
+				print("\tWe're all out of calibration options...")
 				cleanUP(fdir)
 				return glm_config
 
@@ -420,14 +420,14 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 	else:
 		action_count[action] = 1
 		
-	print ("\tFINAL DECISION: We're going to use Action ID "+str(action)+" ( "+desc+" ). \n\tThis action will have been tried " + str(action_count[action]) + " times.")
+	print("\tFINAL DECISION: We're going to use Action ID "+str(action)+" ( "+desc+" ). \n\tThis action will have been tried " + str(action_count[action]) + " times.")
 	
 	c = 0;
 	calibration_config_files = []
 	if case_flag == -1:
 		# Scaling normalized load shape
 		if abs(main_mets[0]) + abs(main_mets[2]) != abs(main_mets[0] + main_mets[2]):
-			print ('*** Warning: One peak is high and one peak is low... this shouldn\'t happen with load shape scaling...')
+			print('*** Warning: One peak is high and one peak is low... this shouldn\'t happen with load shape scaling...')
 		last_scalar = glm_config['load_shape_scalar']
 		avg_peak_diff = (main_mets[0] + main_mets[2])/2
 		ideal_scalar = round(last_scalar * (1/(avg_peak_diff + 1)),4)
@@ -441,7 +441,7 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 	else:
 		# Take the decided upon action and produce a list of lists with difference calibration parameters to try
 		calibrations = takeAction.takeAction(action,action_count[action],getCalibVals(glm_config,fdir),main_mets)
-		print ("That's " + str(len(calibrations)) + " calibrations to test.")
+		print("That's " + str(len(calibrations)) + " calibrations to test.")
 		# For each list of calibration values in list calibrations, make a .py file.
 		print("Begin writing calibration files...")
 		for i in calibrations:
@@ -454,15 +454,15 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 		glms_ran.extend(makeGLM.makeGLM(clockDates(days), i, baseGLM, case_flag, fdir))
 		
 	# Run all the .glms by executing the batch file.
-	print ('Begining simulations in GridLab-D.')
+	print('Begining simulations in GridLab-D.')
 	raw_metrics = runGLMS(fdir, scada, days)
 	
 	if len(raw_metrics) == 0:
 		if case_flag == -1:
-			print ("All runs failed.")
+			print("All runs failed.")
 			return glm_config
 		else:
-			print ("It appears that none of the .glms in the last round ran successfully. Let's try a different action.")
+			print("It appears that none of the .glms in the last round ran successfully. Let's try a different action.")
 			if action in action_failed_count.keys():
 				action_failed_count[action] += 1
 			else:
@@ -475,9 +475,9 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 	else:
 		# Choose the glm with the best WSM score.
 		glm_best, wsm_score_best = chooseBest(raw_metrics)
-		print ('** The winning WSM score this round is ' + str(wsm_score_best) + '.')
+		print('** The winning WSM score this round is ' + str(wsm_score_best) + '.')
 		
-		print ('** Last round\'s WSM score was '+str(calib_record[counter-1][1])+'.')
+		print('** Last round\'s WSM score was '+str(calib_record[counter-1][1])+'.')
 		
 		# Evaluate WSM scroe
 		wsm_eval = WSMevaluate(wsm_score_best, counter)
@@ -486,7 +486,7 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 		calib_record[counter] = [glm_best,wsm_score_best,action,wsm_eval]
 		
 		Roundbestsofar,WSMbestsofar = bestSoFar(counter)
-		print ('** Score to beat is '+str(WSMbestsofar)+' from round '+str(Roundbestsofar)+'.')
+		print('** Score to beat is '+str(WSMbestsofar)+' from round '+str(Roundbestsofar)+'.')
 		
 		if printAllStats == 1:
 			for i in raw_metrics.keys():
@@ -499,7 +499,7 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 				bestCfg = cal
 		
 		parameter_values = getCalibVals (bestCfg,fdir)
-		print ('Winning calibration parameters:\n\tAvg. House: '+str(parameter_values[0])+' VA\tAvg. Comm: '+str(parameter_values[1])+' VA\n\tBase Load: +'+str(round(parameter_values[2]*100,2))+'%\tOffsets: '+str(parameter_values[3])+' F\n\tCOP values: +'+str(round(parameter_values[5]*100,2))+'%\tGas Heat Pen.: -'+str(round(parameter_values[8]*100,2))+'%\n\tSched. Skew Std: '+str(parameter_values[9])+' s\tWindow-Wall Ratio: '+str(round(parameter_values[10]*100,2))+'%\n\tAddtl Heat Deg: '+str(parameter_values[11],)+' F\tSchedule Skew: '+str(parameter_values[7])+' s\t')
+		print('Winning calibration parameters:\n\tAvg. House: '+str(parameter_values[0])+' VA\tAvg. Comm: '+str(parameter_values[1])+' VA\n\tBase Load: +'+str(round(parameter_values[2]*100,2))+'%\tOffsets: '+str(parameter_values[3])+' F\n\tCOP values: +'+str(round(parameter_values[5]*100,2))+'%\tGas Heat Pen.: -'+str(round(parameter_values[8]*100,2))+'%\n\tSched. Skew Std: '+str(parameter_values[9])+' s\tWindow-Wall Ratio: '+str(round(parameter_values[10]*100,2))+'%\n\tAddtl Heat Deg: '+str(parameter_values[11],)+' F\tSchedule Skew: '+str(parameter_values[7])+' s\t')
 		
 		# Print warnings about any outlier metrics. 
 		warnOutliers(raw_metrics[glm_best],0)
@@ -511,7 +511,7 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 		log.write(calib_record[counter][0]+",\t"+str(calib_record[counter][1])+",\t"+str(calib_record[counter][2])+",\t"+str(calib_record[counter][3])+",\t"+re.sub('\[|\]','',str(main_mets_glm_best))+"\n")
 
 		if wsm_eval == 1: 
-			print ("This WSM score has been deemed acceptable.")
+			print("This WSM score has been deemed acceptable.")
 			movetoWinners(glm_best,fdir)
 			cleanUP(fdir)
 			return bestCfg
@@ -528,16 +528,16 @@ def calibrateLoop(glm_config, main_mets, scada, days, eval, counter, baseGLM, ca
 						action_failed_count[action] += 1
 					else:
 						action_failed_count[action] = 1
-					print ("\nThat last action did not improve the WSM score from the last round. Let's go back and try something different.")
+					print("\nThat last action did not improve the WSM score from the last round. Let's go back and try something different.")
 					return calibrateLoop(glm_config, main_mets, scada, days, wsm_eval, counter, baseGLM, case_flag, fdir)
 				else:
-					print ('\nTime for the next round.')
+					print('\nTime for the next round.')
 					movetoWinners(glm_best,fdir)
 					return calibrateLoop(bestCfg, main_mets_glm_best, scada, days, wsm_eval, counter, baseGLM, case_flag, fdir)
 
 def runGLMS(fdir, SCADA, days):
 		# Run those .glms by executing a batch file.
-		print ('Begining simulations in GridLab-D.')
+		print('Begining simulations in GridLab-D.')
 		glmFiles = [x for x in os.listdir(fdir) if x.endswith('.glm')]
 		proc = []
 		for glm in glmFiles:
@@ -545,7 +545,7 @@ def runGLMS(fdir, SCADA, days):
 				proc.append(subprocess.Popen(['C:/Projects/GridLAB-D_Builds/gld3.0/VS2005/x64/Release/gridlabd.exe', glm], cwd=fdir, stdout=stdout, stderr=stderr))
 		for p in proc:
 			p.wait()
-		print ('Beginning comparison of intitial simulation output with SCADA.')
+		print('Beginning comparison of intitial simulation output with SCADA.')
 		raw_metrics = gleanMetrics.funcRawMetsDict(fdir, glmFiles, SCADA, days)
 		return raw_metrics
 
@@ -582,12 +582,12 @@ def calibrateFeeder(baseGLM, days, SCADA, case_flag, calibration_config, fdir):
 							Peak Val., Peak Time, Total Energy, Min. Val., Min. Time \n')
 	
 	# Do initial run. 
-	print ('Beginning initial run for calibration.')
+	print('Beginning initial run for calibration.')
 	
 	glms_init = []
 	r = 0
 	if case_flag == -1:
-		print ('Using normalized load shape instead of houses.')
+		print('Using normalized load shape instead of houses.')
 		c = 0
 		calibration_config_files = []
 		print("Begin writing calibration files...")
@@ -604,7 +604,7 @@ def calibrateFeeder(baseGLM, days, SCADA, case_flag, calibration_config, fdir):
 	
 	if len(raw_metrics) == 0:
 		# if we can't even get the initial .glm to run... how will we continue? We need to carefully pick our defaults, for one thing.
-		print ('All the .glms in '+str(glms_init)+' failed to run or record complete simulation output in GridLab-D. Please evaluate what the error is before trying to calibrate again.')
+		print('All the .glms in '+str(glms_init)+' failed to run or record complete simulation output in GridLab-D. Please evaluate what the error is before trying to calibrate again.')
 		log.write('*all runs failed to run or record complete simulation output \n')
 		calib_record[r] = ['*all runs failed', None, -1, None]
 		if printAllStats == 1:
@@ -623,14 +623,14 @@ def calibrateFeeder(baseGLM, days, SCADA, case_flag, calibration_config, fdir):
 				glms_init.extend(makeGLM.makeGLM(clockDates(days), i, baseGLM, case_flag, fdir))
 			raw_metrics = runGLMS(fdir, SCADA, days)
 			if len(raw_metrics) == 0:
-				print ('All the .glms in '+str(glms_init)+' failed to run or record complete simulation output in GridLab-D. Please evaluate what the error is before trying to calibrate again.')
+				print('All the .glms in '+str(glms_init)+' failed to run or record complete simulation output in GridLab-D. Please evaluate what the error is before trying to calibrate again.')
 				return None, None, None
 		else:
 			return None, None, None
 		
 	# Find .glm with the best WSM score 
 	glm, wsm_score = chooseBest(raw_metrics)
-	print ('The WSM score is ' + str(wsm_score) + '.')
+	print('The WSM score is ' + str(wsm_score) + '.')
 	
 	# Print warnings for outliers in the comparison metrics.
 	if printAllStats == 1:
@@ -665,7 +665,7 @@ def calibrateFeeder(baseGLM, days, SCADA, case_flag, calibration_config, fdir):
 			calCfg = copy.deepcopy(calibration_config)
 	
 	if wsm_score <= wsm_acceptable:
-		print ("Hooray! We're done.")
+		print("Hooray! We're done.")
 		final_glm_file = calCfg
 		cleanUP(fdir)
 	else:
@@ -674,22 +674,22 @@ def calibrateFeeder(baseGLM, days, SCADA, case_flag, calibration_config, fdir):
 			final_glm_file = calibrateLoop(calCfg, main_mets, SCADA, days, 0, r, baseGLM, case_flag, fdir)
 		except KeyboardInterrupt:
 			last_count = max(calib_record.keys())
-			print ("Interuppted at calibration loop number "+str(last_count)+" where the best .glm was "+calib_record[last_count][0]+" with WSM score of "+str(calib_record[last_count][1])+".")
+			print("Interuppted at calibration loop number "+str(last_count)+" where the best .glm was "+calib_record[last_count][0]+" with WSM score of "+str(calib_record[last_count][1])+".")
 			final_glm_file = calCfg
 			cleanUP(fdir)
 	log.close()
 	stats_log.close()
 	
 	final_dict, last_key = Milsoft_GridLAB_D_Feeder_Generation.GLD_Feeder(baseGLM,case_flag,fdir,final_glm_file)
-	print ("Final_Calib_File = " + final_glm_file.get('name', 'None'))
+	print("Final_Calib_File = " + final_glm_file.get('name', 'None'))
 	return final_glm_file, final_dict, last_key
 
 def main():
 	#calibrateFeeder(outGLM, days, SCADA, feeder_config, calibration_config)
-	print (calibrateFeeder.__name__)
-	print (calibrateFeeder.__doc__)
-	print (calibrateLoop.__name__)
-	print (calibrateLoop.__doc__)
+	print(calibrateFeeder.__name__)
+	print(calibrateFeeder.__doc__)
+	print(calibrateLoop.__name__)
+	print(calibrateLoop.__doc__)
 	#warnOutliers([[0.578,0.243,-0.0027,-0.0437,0.0138],[0.3425,-0.9971,-0.0744,-0.1742,0.0033],[0.1310,-0.1492,0.0864,0.0586,0.0554]],3) #testing values
 if __name__ ==  '__main__':
 	main();

@@ -70,7 +70,7 @@ def chooseAction(difs):
 	'''Using 4 main metrics, decide which action to take.'''
 	checkVal = convert(difs);
 	if  0 in checkVal:
-		print ("Ooops! Something is the matter.");
+		print("Ooops! Something is the matter.");
 		return;
 	else:
 		for i in actionDict.keys():
@@ -79,8 +79,8 @@ def chooseAction(difs):
 
 def main():
 	action, desc = chooseAction(mets);
-	print (__doc__)
-	print ("From the test metrics, we've chosen to " +desc);
+	print(__doc__)
+	print("From the test metrics, we've chosen to " +desc);
 
 if __name__ ==  '__main__':
 	main();
