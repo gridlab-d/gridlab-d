@@ -22,7 +22,11 @@ extern "C" {
 
 void kill_starthandler(void);
 void kill_stophandler(void);
+#if defined(_WIN32) || defined(__linux__)
 int kill(pid_t pid, int sig) noexcept; // Provide a Windows implementation separately
+#else
+int kill(pid_t pid, int sig);
+#endif
 
 #ifdef __cplusplus
 } // extern "C"
