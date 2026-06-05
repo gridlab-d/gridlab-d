@@ -159,6 +159,7 @@ static struct s_varmap
 	{"xml_encoding", PT_int32, &global_xml_encoding, PA_PUBLIC, "XML data encoding"},
 	{"clock", PT_timestamp, &global_clock, PA_PUBLIC, "global clock"},
 	{"starttime", PT_timestamp, &global_starttime, PA_PUBLIC, "simulation start time"},
+	{"nexttime", PT_timestamp, &global_nexttime, PA_PUBLIC, "simulation next time"},
 	{"stoptime", PT_timestamp, &global_stoptime, PA_PUBLIC, "simulation stop time"},
 	{"step_time", PT_timestamp, &global_step_time, PA_PUBLIC, "API step target time"},
 	{"double_format", PT_char32, &global_double_format, PA_PUBLIC, "format for writing double values"},

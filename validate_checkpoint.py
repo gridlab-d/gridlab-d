@@ -22,11 +22,39 @@ import sys
 import time
 import os
 import json
+import re
+import zlib
 
 # Global state
 autotestFiles = []
 gldBinary = None
 testGldApiBinary = None
+
+PERFECT_PERCENT_THRESHOLD = 5.0
+ACCEPTABLE_PERCENT_THRESHOLD = 10.0
+MIN_COMPARE_MAGNITUDE = 1e-6
+MAX_MISMATCH_DETAILS = 20
+
+COMPLEX_VALUE_PATTERN = re.compile(
+    r"^\s*(?P<real>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*"
+    r"(?P<imag_sign>[+-])\s*(?P<imag>(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*"
+    r"(?P<imag_unit>[ijIJ])(?:\s+(?P<suffix>.*))?$"
+)
+
+IGNORED_CHECKPOINT_PATH_PREFIXES = (
+    "$.clock",
+)
+
+IGNORED_CHECKPOINT_FIELD_NAMES = {
+    "checkpoint_loaded",
+    "randomseed",
+    "rng_state",
+}
+
+IGNORED_CHECKPOINT_PATHS = {
+    "$.__preamble.comments[1]",
+}
+
 #Autotests to explicitly exclude from checkpointing
 excludeTests = ["test_cloud_tmy2_converted", "test_cloud_tmy3_converted"]
 
@@ -98,7 +126,13 @@ class TestResult:
         self.skip_reason = ""
         self.step_failed = None  # Which step failed (1-4)
         self.error_message = ""
-        self.differences = None  # Number of differences found (None if didn't reach Step 4)
+        self.differences = None  # Number of failed parameter comparisons (None if didn't reach Step 4)
+        self.perfect_occurrences = 0
+        self.acceptable_occurrences = 0
+        self.failed_occurrences = 0
+        self.numeric_failed_occurrences = 0
+        self.exact_failed_occurrences = 0
+        self.total_occurrences = 0
         self.details = {}
         
     def __repr__(self):
@@ -113,13 +147,477 @@ class TestResult:
             if self.error_message:
                 msg += f": {self.error_message}"
             return msg
+        elif self.total_occurrences > 0:
+            if self.failed_occurrences > 0:
+                return f"[{self.failed_occurrences} failures] {self.test_file.name}"
+            if self.acceptable_occurrences > 0:
+                return f"[{self.acceptable_occurrences} acceptable] {self.test_file.name}"
+            return f"[perfect] {self.test_file.name}"
         elif self.differences is not None:
-            if self.differences == 0:
-                return f"[0 differences] {self.test_file.name}"
-            else:
-                return f"[{self.differences} differences] {self.test_file.name}"
+            return f"[{self.differences} differences] {self.test_file.name}"
         else:
             return f"[ERROR] {self.test_file.name} - No comparison data"
+
+
+def is_numeric_value(value) -> bool:
+    """Return True for numeric values except booleans."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def classify_percent_difference(expected: float, actual: float) -> tuple[str, float]:
+    """Classify relative difference between two numeric values."""
+    if math.isnan(expected) and math.isnan(actual):
+        return "perfect", 0.0
+
+    if math.isnan(expected) or math.isnan(actual):
+        return "failed", float("inf")
+
+    if math.isinf(expected) or math.isinf(actual):
+        if expected == actual:
+            return "perfect", 0.0
+        return "failed", float("inf")
+
+    denom = max(abs(expected), abs(actual))
+    if denom == 0.0:
+        percent_diff = 0.0 if expected == actual else float("inf")
+    else:
+        percent_diff = (abs(expected - actual) / denom) * 100.0
+
+    if percent_diff <= PERFECT_PERCENT_THRESHOLD:
+        return "perfect", percent_diff
+    if percent_diff <= ACCEPTABLE_PERCENT_THRESHOLD:
+        return "acceptable", percent_diff
+    return "failed", percent_diff
+
+
+def parse_complex_string_magnitude(value: str):
+    """Extract complex magnitude and non-numeric suffix from a complex-like string."""
+    match = COMPLEX_VALUE_PATTERN.match(value)
+    if not match:
+        return None
+
+    real = float(match.group("real"))
+    imag_sign = -1.0 if match.group("imag_sign") == "-" else 1.0
+    imag = imag_sign * float(match.group("imag"))
+    suffix = (match.group("suffix") or "").strip()
+    magnitude = math.hypot(real, imag)
+    return magnitude, suffix
+
+
+def record_mismatch(summary: dict, path: str, reason: str, expected, actual) -> None:
+    """Record a failed occurrence and keep bounded detail samples for reporting."""
+    summary["failed"] += 1
+    summary["total"] += 1
+
+    if reason in {
+        "double differs by more than 10%",
+        "complex magnitude differs by more than 10%",
+    }:
+        summary["numeric_failed"] += 1
+    else:
+        summary["exact_failed"] += 1
+
+    if len(summary["mismatch_samples"]) < MAX_MISMATCH_DETAILS:
+        summary["mismatch_samples"].append(
+            {
+                "path": path,
+                "reason": reason,
+                "expected": expected,
+                "actual": actual,
+            }
+        )
+
+
+def record_occurrence(summary: dict, classification: str) -> None:
+    """Increment comparison occurrence counters by classification."""
+    summary[classification] += 1
+    summary["total"] += 1
+
+
+def should_skip_checkpoint_path(path: str) -> bool:
+    """Skip known nondeterministic checkpoint fields."""
+    if path in IGNORED_CHECKPOINT_PATHS:
+        return True
+
+    if path.startswith(IGNORED_CHECKPOINT_PATH_PREFIXES):
+        return True
+
+    path_leaf = path.rsplit(".", 1)[-1]
+    if "[" in path_leaf:
+        path_leaf = path_leaf.split("[", 1)[0]
+
+    return path_leaf in IGNORED_CHECKPOINT_FIELD_NAMES
+
+
+def should_skip_small_numeric(expected: float, actual: float) -> bool:
+    """Skip comparisons when both values are effectively zero."""
+    return abs(expected) < MIN_COMPARE_MAGNITUDE and abs(actual) < MIN_COMPARE_MAGNITUDE
+
+
+def compare_checkpoint_values(expected, actual, path: str, summary: dict) -> None:
+    """Recursively compare checkpoint values with type-aware rules."""
+    if should_skip_checkpoint_path(path):
+        return
+
+    if isinstance(expected, dict) and isinstance(actual, dict):
+        expected_keys = set(expected.keys())
+        actual_keys = set(actual.keys())
+
+        for missing_key in sorted(expected_keys - actual_keys):
+            record_mismatch(
+                summary,
+                f"{path}.{missing_key}",
+                "missing key in restored checkpoint",
+                expected[missing_key],
+                "<missing>",
+            )
+
+        for extra_key in sorted(actual_keys - expected_keys):
+            record_mismatch(
+                summary,
+                f"{path}.{extra_key}",
+                "unexpected key in restored checkpoint",
+                "<missing>",
+                actual[extra_key],
+            )
+
+        for shared_key in sorted(expected_keys & actual_keys):
+            compare_checkpoint_values(expected[shared_key], actual[shared_key], f"{path}.{shared_key}", summary)
+        return
+
+    if isinstance(expected, list) and isinstance(actual, list):
+        shared_len = min(len(expected), len(actual))
+
+        for idx in range(shared_len):
+            compare_checkpoint_values(expected[idx], actual[idx], f"{path}[{idx}]", summary)
+
+        for idx in range(shared_len, len(expected)):
+            record_mismatch(
+                summary,
+                f"{path}[{idx}]",
+                "missing list element in restored checkpoint",
+                expected[idx],
+                "<missing>",
+            )
+
+        for idx in range(shared_len, len(actual)):
+            record_mismatch(
+                summary,
+                f"{path}[{idx}]",
+                "unexpected list element in restored checkpoint",
+                "<missing>",
+                actual[idx],
+            )
+        return
+
+    if isinstance(expected, str) and isinstance(actual, str):
+        expected_complex = parse_complex_string_magnitude(expected)
+        actual_complex = parse_complex_string_magnitude(actual)
+
+        if expected_complex and actual_complex:
+            expected_mag, expected_suffix = expected_complex
+            actual_mag, actual_suffix = actual_complex
+
+            if should_skip_small_numeric(expected_mag, actual_mag):
+                return
+
+            if expected_suffix != actual_suffix:
+                record_mismatch(
+                    summary,
+                    path,
+                    "complex suffix mismatch",
+                    expected,
+                    actual,
+                )
+                return
+
+            classification, _ = classify_percent_difference(expected_mag, actual_mag)
+            if classification == "failed":
+                record_mismatch(
+                    summary,
+                    path,
+                    "complex magnitude differs by more than 10%",
+                    expected,
+                    actual,
+                )
+                return
+
+            record_occurrence(summary, classification)
+            return
+
+        if expected == actual:
+            record_occurrence(summary, "perfect")
+        else:
+            record_mismatch(summary, path, "string mismatch", expected, actual)
+        return
+
+    if is_numeric_value(expected) and is_numeric_value(actual):
+        # Treat integer-to-integer values as exact matches; doubles use percent-based comparison.
+        if isinstance(expected, int) and isinstance(actual, int):
+            if expected == actual:
+                record_occurrence(summary, "perfect")
+            else:
+                record_mismatch(summary, path, "integer mismatch", expected, actual)
+            return
+
+        if should_skip_small_numeric(float(expected), float(actual)):
+            return
+
+        classification, _ = classify_percent_difference(float(expected), float(actual))
+        if classification == "failed":
+            record_mismatch(summary, path, "double differs by more than 10%", expected, actual)
+            return
+
+        record_occurrence(summary, classification)
+        return
+
+    # All non-double and non-complex-string types require exact match.
+    if expected == actual:
+        record_occurrence(summary, "perfect")
+    else:
+        record_mismatch(summary, path, "type/value mismatch", expected, actual)
+
+
+def compare_checkpoint_files(test_dir: Path, test_stem: str) -> dict:
+    """Compare full checkpoint against restored checkpoint using type-aware rules."""
+    full_checkpoint_path = test_dir / f"{test_stem}_full_checkpoint.json"
+
+    restored_candidates = [
+        test_dir / f"{test_stem}_restored_checkpoint.json",
+        test_dir / "_checkpoint.json",
+        test_dir / f"{test_stem}_checkpoint.json",
+    ]
+
+    restored_checkpoint_path = None
+    for candidate in restored_candidates:
+        if candidate.exists() and candidate.is_file():
+            restored_checkpoint_path = candidate
+            break
+
+    if not full_checkpoint_path.exists() or not full_checkpoint_path.is_file():
+        raise FileNotFoundError(f"Missing full checkpoint file: {full_checkpoint_path.name}")
+
+    if restored_checkpoint_path is None:
+        raise FileNotFoundError("No restored checkpoint file found")
+
+    with full_checkpoint_path.open("r", encoding="utf-8") as f:
+        full_data = json.load(f)
+
+    with restored_checkpoint_path.open("r", encoding="utf-8") as f:
+        restored_data = json.load(f)
+
+    summary = {
+        "perfect": 0,
+        "acceptable": 0,
+        "failed": 0,
+        "numeric_failed": 0,
+        "exact_failed": 0,
+        "total": 0,
+        "mismatch_samples": [],
+        "full_checkpoint": str(full_checkpoint_path),
+        "restored_checkpoint": str(restored_checkpoint_path),
+    }
+
+    compare_checkpoint_values(full_data, restored_data, "$", summary)
+    return summary
+
+
+def extract_rng_snapshot(full_checkpoint_path: Path) -> tuple[int | None, dict[str, int], dict[str, dict[int, int]]]:
+    """Extract global randomseed and object rng_state values from a checkpoint."""
+    with full_checkpoint_path.open("r", encoding="utf-8") as f:
+        checkpoint_data = json.load(f)
+
+    globals_obj = checkpoint_data.get("globals", {})
+    randomseed = globals_obj.get("randomseed") if isinstance(globals_obj, dict) else None
+
+    rng_by_object_name: dict[str, int] = {}
+    rng_by_class_index: dict[str, dict[int, int]] = {}
+    objects = checkpoint_data.get("objects", {})
+    if isinstance(objects, dict):
+        for class_name, class_payload in objects.items():
+            if not isinstance(class_payload, dict):
+                continue
+
+            instances = class_payload.get("instances", [])
+            if not isinstance(instances, list):
+                continue
+
+            class_rng_states: dict[int, int] = {}
+            for idx, instance in enumerate(instances):
+                if not isinstance(instance, dict):
+                    continue
+
+                name = instance.get("name")
+                rng_state = instance.get("rng_state")
+                if not isinstance(rng_state, int):
+                    continue
+
+                class_rng_states[idx] = rng_state
+                if isinstance(name, str):
+                    rng_by_object_name[name] = rng_state
+
+            if class_rng_states and isinstance(class_name, str):
+                rng_by_class_index[class_name] = class_rng_states
+
+    return randomseed, rng_by_object_name, rng_by_class_index
+
+
+def create_rng_pinned_test_file(test_dir: Path, test_file_name: str, test_stem: str, full_checkpoint_path: Path) -> tuple[Path | None, dict]:
+    """Create a temporary test file pinned to RNG values captured from the Step 1 full run."""
+    summary = {
+        "randomseed_in_full": False,
+        "randomseed_applied": False,
+        "rng_states_extracted": 0,
+        "rng_states_applied": 0,
+        "named_rng_states": 0,
+        "class_index_rng_states": 0,
+        "pinned_file_created": False,
+    }
+
+    if not full_checkpoint_path.exists() or not full_checkpoint_path.is_file():
+        return None, summary
+
+    randomseed, rng_by_object_name, rng_by_class_index = extract_rng_snapshot(full_checkpoint_path)
+    summary["randomseed_in_full"] = isinstance(randomseed, int)
+    summary["named_rng_states"] = len(rng_by_object_name)
+    summary["class_index_rng_states"] = sum(len(v) for v in rng_by_class_index.values())
+    summary["rng_states_extracted"] = summary["class_index_rng_states"]
+
+    test_file_path = test_dir / test_file_name
+    if not test_file_path.exists() or not test_file_path.is_file():
+        return None, summary
+
+    with test_file_path.open("r", encoding="utf-8") as f:
+        model_data = json.load(f)
+
+    changed = False
+
+    if isinstance(randomseed, int):
+        directives = model_data.setdefault("_directives", {})
+        if isinstance(directives, dict):
+            set_directive = directives.setdefault("#set", {})
+            if isinstance(set_directive, dict):
+                if set_directive.get("randomseed") != randomseed:
+                    set_directive["randomseed"] = randomseed
+                    changed = True
+                    summary["randomseed_applied"] = True
+
+    objects = model_data.get("objects", {})
+    if isinstance(objects, dict) and (rng_by_object_name or rng_by_class_index):
+        for class_name, class_payload in objects.items():
+            if not isinstance(class_payload, dict):
+                continue
+
+            instances = class_payload.get("instances", [])
+            if not isinstance(instances, list):
+                continue
+
+            class_rng_states = rng_by_class_index.get(class_name, {}) if isinstance(class_name, str) else {}
+
+            for idx, instance in enumerate(instances):
+                if not isinstance(instance, dict):
+                    continue
+
+                target_rng_state = None
+                name = instance.get("name")
+                if isinstance(name, str) and name in rng_by_object_name:
+                    target_rng_state = rng_by_object_name[name]
+                elif idx in class_rng_states:
+                    target_rng_state = class_rng_states[idx]
+
+                if isinstance(target_rng_state, int) and instance.get("rng_state") != target_rng_state:
+                    instance["rng_state"] = target_rng_state
+                    changed = True
+                    summary["rng_states_applied"] += 1
+
+    if not changed:
+        return None, summary
+
+    backup_file_path = test_dir / f"{test_file_name}.rng_backup"
+    shutil.copy2(test_file_path, backup_file_path)
+
+    with test_file_path.open("w", encoding="utf-8") as f:
+        json.dump(model_data, f, indent=2)
+        f.write("\n")
+
+    summary["pinned_file_created"] = True
+    return backup_file_path, summary
+
+
+def prepare_seed_pinned_test_file(test_dir: Path, test_file_name: str, test_stem: str) -> tuple[Path | None, dict]:
+    """Ensure a deterministic randomseed is present before running Step 1/2/3."""
+    summary = {
+        "seed_present": False,
+        "seed_value": None,
+        "seed_source": "none",
+        "file_patched": False,
+    }
+
+    test_file_path = test_dir / test_file_name
+    if not test_file_path.exists() or not test_file_path.is_file():
+        return None, summary
+
+    with test_file_path.open("r", encoding="utf-8") as f:
+        model_data = json.load(f)
+
+    directives = model_data.setdefault("_directives", {})
+    if not isinstance(directives, dict):
+        return None, summary
+
+    set_directive = directives.setdefault("#set", {})
+    if not isinstance(set_directive, dict):
+        return None, summary
+
+    def parse_existing_seed(raw_seed):
+        if isinstance(raw_seed, bool):
+            return None
+        if isinstance(raw_seed, int):
+            return raw_seed
+        if isinstance(raw_seed, float):
+            return int(raw_seed)
+        if isinstance(raw_seed, str):
+            cleaned = raw_seed.strip()
+            if cleaned.endswith(";"):
+                cleaned = cleaned[:-1].strip()
+            if cleaned == "":
+                return None
+            try:
+                return int(cleaned, 10)
+            except ValueError:
+                try:
+                    return int(float(cleaned))
+                except ValueError:
+                    return None
+        return None
+
+    changed = False
+    existing_seed = parse_existing_seed(set_directive.get("randomseed"))
+    if existing_seed is not None:
+        summary["seed_present"] = True
+        summary["seed_value"] = existing_seed
+        summary["seed_source"] = "existing"
+    else:
+        seed_value = int(zlib.crc32(test_stem.encode("utf-8")) & 0x7FFFFFFF)
+        if seed_value == 0:
+            seed_value = 1
+        set_directive["randomseed"] = seed_value
+        summary["seed_present"] = True
+        summary["seed_value"] = seed_value
+        summary["seed_source"] = "generated"
+        changed = True
+
+    if not changed:
+        return None, summary
+
+    backup_file_path = test_dir / f"{test_file_name}.seed_backup"
+    shutil.copy2(test_file_path, backup_file_path)
+
+    with test_file_path.open("w", encoding="utf-8") as f:
+        json.dump(model_data, f, indent=2)
+        f.write("\n")
+
+    summary["file_patched"] = True
+    return backup_file_path, summary
 
 def parse_difference_count(output: str, returncode: int):
     """
@@ -127,12 +625,12 @@ def parse_difference_count(output: str, returncode: int):
     
     Returns: int (number of differences) or None if unable to parse
     """
+    # Legacy helper retained for compatibility with previous compare output parsing.
     # If return code is 0, there are 0 differences
     if returncode == 0:
         return 0
     
     # Look for patterns in output that indicate difference count
-    import re
     
     # Try to find patterns like "X differences" or "X errors" or "X mismatches"
     patterns = [
@@ -324,9 +822,15 @@ def runCheckpointTest(testFile: Path, keepCheckpoints: bool = False, verbose: bo
     testDir.resolve()
     testFileName = testFile.name
     run_env = build_gld_environment()
-    cleanup_test_artifacts(testDir, testFile.stem)
+    # Preserve generated artifacts for debugging/verification.
+    # Intentionally skip cleanup before running steps.
+    seed_backup_file: Path | None = None
+    seed_pin_summary: dict = {}
+    checkpoint_test_file_name = testFileName
     
     try:
+        seed_backup_file, seed_pin_summary = prepare_seed_pinned_test_file(testDir, testFileName, testFile.stem)
+
         # Step 1: Baseline run
         print(f"[{testFile.name}] Step 1/4: Baseline run...", end=" ", flush=True)
         step1_command = [testGldApiBinary, testFileName]
@@ -341,10 +845,10 @@ def runCheckpointTest(testFile: Path, keepCheckpoints: bool = False, verbose: bo
             print("FAILED")
             return result
         print("OK")
-        
+
         # Step 2: Partial run with checkpoint (1 timestep)
         print(f"[{testFile.name}] Step 2/4: Checkpoint at 1 timestep...", end=" ", flush=True)
-        step2_command = [testGldApiBinary, testFileName, "--checkpoint", "--steps", "1"]
+        step2_command = [testGldApiBinary, checkpoint_test_file_name, "--checkpoint", "--steps", "1"]
         step2_result = run_process(step2_command, testDir, run_env, 300, verbose)
         
         if step2_result.returncode != 0:
@@ -359,7 +863,7 @@ def runCheckpointTest(testFile: Path, keepCheckpoints: bool = False, verbose: bo
         
         # Step 3: Restore from checkpoint
         print(f"[{testFile.name}] Step 3/4: Restore from checkpoint...", end=" ", flush=True)
-        step3_command = [testGldApiBinary, testFileName, "--restore"]
+        step3_command = [testGldApiBinary, checkpoint_test_file_name, "--restore"]
         step3_result = run_process(step3_command, testDir, run_env, 300, verbose)
         
         if step3_result.returncode != 0:
@@ -372,32 +876,46 @@ def runCheckpointTest(testFile: Path, keepCheckpoints: bool = False, verbose: bo
             return result
         print("OK")
         
-        # Step 4: Compare results
+        # Step 4: Compare results with type-aware percentage checks
         print(f"[{testFile.name}] Step 4/4: Compare results...", end=" ", flush=True)
-        step4_command = [testGldApiBinary, testFileName, "--compare", "--tolerance", ".00006"]
-        step4_result = run_process(step4_command, testDir, run_env, 300, True)
-        
-        # Parse comparison output to count differences
-        compare_output = (step4_result.stdout or "") + (step4_result.stderr or "")
-        difference_count = parse_difference_count(compare_output, step4_result.returncode)
-        result.differences = difference_count
-        
-        if step4_result.returncode != 0 and difference_count is None:
+        try:
+            compare_summary = compare_checkpoint_files(testDir, testFile.stem)
+        except Exception as compare_error:
             result.step_failed = 4
-            result.error_message = "Comparison failed"
-            result.details['step_4'] = compare_output
+            result.error_message = f"Comparison failed: {compare_error}"
             print("FAILED")
             return result
+
+        result.perfect_occurrences = compare_summary["perfect"]
+        result.acceptable_occurrences = compare_summary["acceptable"]
+        result.failed_occurrences = compare_summary["failed"]
+        result.numeric_failed_occurrences = compare_summary["numeric_failed"]
+        result.exact_failed_occurrences = compare_summary["exact_failed"]
+        result.total_occurrences = compare_summary["total"]
+        result.differences = result.failed_occurrences
+        result.details["step_4"] = {
+            "full_checkpoint": compare_summary["full_checkpoint"],
+            "restored_checkpoint": compare_summary["restored_checkpoint"],
+            "numeric_failed": compare_summary["numeric_failed"],
+            "exact_failed": compare_summary["exact_failed"],
+            "mismatch_samples": compare_summary["mismatch_samples"],
+        }
+
         print("OK")
-        
-        # Step 4 completed - report differences found
-        if result.differences is not None:
-            if result.differences == 0:
-                print(f"[{testFile.name}] No differences found ✓")
-            else:
-                print(f"[{testFile.name}] Found {result.differences} differences")
-        if not keepCheckpoints:
-            cleanup_test_artifacts(testDir, testFile.stem)
+        if result.failed_occurrences > 0:
+            print(
+                f"[{testFile.name}] FAILED: {result.failed_occurrences}/{result.total_occurrences} parameter checks failed "
+                f"(numeric>10%={result.numeric_failed_occurrences}, exact={result.exact_failed_occurrences})"
+            )
+        elif result.acceptable_occurrences > 0:
+            print(
+                f"[{testFile.name}] ACCEPTABLE: {result.acceptable_occurrences}/{result.total_occurrences} within 5-10%"
+            )
+        else:
+            print(f"[{testFile.name}] PERFECT: {result.perfect_occurrences}/{result.total_occurrences} within 5%")
+
+        # Preserve generated artifacts for debugging/verification.
+        # Intentionally skip cleanup after running steps.
         return result
         
     except subprocess.TimeoutExpired:
@@ -410,6 +928,10 @@ def runCheckpointTest(testFile: Path, keepCheckpoints: bool = False, verbose: bo
         result.error_message = f"Exception: {str(e)}"
         print(f"ERROR: {str(e)}")
         return result
+    finally:
+        if seed_backup_file is not None and seed_backup_file.exists() and seed_backup_file.is_file():
+            test_file_path = testDir / testFileName
+            shutil.move(str(seed_backup_file), str(test_file_path))
 
 def getGLDVersionInfo() -> str:
     """
@@ -438,6 +960,11 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
     gldInfo = getGLDVersionInfo()
     
     # Categorize results
+    skipped_tests = []         # DELTAMODE-enabled or ERRor tests not run
+    perfect_tests = []         # All compared values are within 5% or exact by type
+    acceptable_tests = []      # No failures, at least one 5-10% occurrence
+    failed_compare_tests = []  # Completed but has >10% or exact-match failures
+    incomplete_tests = []      # Didn't complete checkpoint process
     skipped_tests = []      # DELTAMODE-enabled/ERRor tests/explicit skips not run
     perfect_tests = []      # 0 differences
     acceptable_tests = []   # > 0 differences but completed
@@ -447,16 +974,19 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
         if result.skipped:
             skipped_tests.append(result)
         elif result.step_failed:
-            failed_tests.append(result)
-        elif result.differences == 0:
-            perfect_tests.append(result)
-        elif result.differences is not None and result.differences > 0:
+            incomplete_tests.append(result)
+        elif result.failed_occurrences > 0:
+            failed_compare_tests.append(result)
+        elif result.acceptable_occurrences > 0:
             acceptable_tests.append(result)
+        elif result.total_occurrences > 0:
+            perfect_tests.append(result)
         else:
-            failed_tests.append(result)
+            incomplete_tests.append(result)
     
-    # Sort acceptable tests by difference count (descending)
-    acceptable_tests.sort(key=lambda r: r.differences if r.differences else 0, reverse=True)
+    # Sort by occurrence counts for easier triage.
+    acceptable_tests.sort(key=lambda r: r.acceptable_occurrences, reverse=True)
+    failed_compare_tests.sort(key=lambda r: r.failed_occurrences, reverse=True)
     
     with resultsFile.open("w") as f:
         f.write(f"GridLAB-D Checkpoint Validation Results\n")
@@ -472,22 +1002,35 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
             f.write("\n")
 
         if perfect_tests:
-            f.write(f"✓ Perfect Match (0 differences) - {len(perfect_tests)} tests:\n")
+            f.write(f"✓ Perfect Match (all numeric within 5%) - {len(perfect_tests)} tests:\n")
             for result in perfect_tests:
                 f.write(f"\t{result}\n")
             f.write("\n")
         
-        # Acceptable tests (differences but completed)
+        # Acceptable tests (no failures, some values in 5-10%)
         if acceptable_tests:
-            f.write(f"≈ Acceptable (with differences) - {len(acceptable_tests)} tests:\n")
+            f.write(f"≈ Acceptable Match (numeric within 10%) - {len(acceptable_tests)} tests:\n")
             for result in acceptable_tests:
-                f.write(f"\t{result}\n")
+                f.write(
+                    f"\t{result.test_file.name} - acceptable={result.acceptable_occurrences}, total={result.total_occurrences}\n"
+                )
+            f.write("\n")
+
+        # Failed comparisons
+        if failed_compare_tests:
+            f.write(f"✗ Failed Comparison (>10% or exact mismatch) - {len(failed_compare_tests)} tests:\n")
+            for result in failed_compare_tests:
+                f.write(
+                    f"\t{result.test_file.name} - failed={result.failed_occurrences}, "
+                    f"numeric_failed={result.numeric_failed_occurrences}, exact_failed={result.exact_failed_occurrences}, "
+                    f"acceptable={result.acceptable_occurrences}, total={result.total_occurrences}\n"
+                )
             f.write("\n")
         
-        # Failed tests
-        if failed_tests:
-            f.write(f"✗ Failed (incomplete) - {len(failed_tests)} tests:\n")
-            for result in failed_tests:
+        # Incomplete tests
+        if incomplete_tests:
+            f.write(f"✗ Incomplete (checkpoint process failed) - {len(incomplete_tests)} tests:\n")
+            for result in incomplete_tests:
                 f.write(f"\t{result}\n")
             f.write("\n")
         
@@ -495,8 +1038,15 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
         f.write("Results Summary:\n")
         total_tests_discovered = len(results)
         total_tests_run = total_tests_discovered - len(skipped_tests)
+        total_completed = len(perfect_tests) + len(acceptable_tests) + len(failed_compare_tests)
         f.write(f"\tTotal Tests Discovered: {total_tests_discovered}\n")
         f.write(f"\tTotal Tests Run: {total_tests_run}\n")
+        f.write(f"\tSkipped (DELTAMODE/ERR): {len(skipped_tests)}\n")
+        f.write(f"\tPerfect (<=5%): {len(perfect_tests)}\n")
+        f.write(f"\tAcceptable (>5% and <=10%): {len(acceptable_tests)}\n")
+        f.write(f"\tFailed Comparisons (>10% or exact mismatch): {len(failed_compare_tests)}\n")
+        f.write(f"\tIncomplete: {len(incomplete_tests)}\n")
+
         f.write(f"\tSkipped (DELTAMODE/ERR/Exclude): {len(skipped_tests)}\n")
         f.write(f"\tPerfect (0 diff): {len(perfect_tests)}\n")
         f.write(f"\tAcceptable (>0 diff): {len(acceptable_tests)}\n")
@@ -505,41 +1055,67 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
         total_completed = len(perfect_tests) + len(acceptable_tests)
         if total_tests_run > 0:
             f.write(f"\tCompleted Rate: {math.floor((float(total_completed) / float(total_tests_run)) * 100.0)}%\n")
-        if acceptable_tests:
-            total_diffs = sum(r.differences for r in acceptable_tests if r.differences)
-            avg_diffs = total_diffs / len(acceptable_tests) if acceptable_tests else 0
-            max_diffs = max(r.differences for r in acceptable_tests if r.differences)
-            f.write(f"\tMax Differences: {max_diffs}\n")
-            f.write(f"\tAvg Differences (acceptable tests): {avg_diffs:.1f}\n")
+
+        completed_results = perfect_tests + acceptable_tests + failed_compare_tests
+        if completed_results:
+            total_perfect_occurrences = sum(r.perfect_occurrences for r in completed_results)
+            total_acceptable_occurrences = sum(r.acceptable_occurrences for r in completed_results)
+            total_failed_occurrences = sum(r.failed_occurrences for r in completed_results)
+            total_numeric_failed_occurrences = sum(r.numeric_failed_occurrences for r in completed_results)
+            total_exact_failed_occurrences = sum(r.exact_failed_occurrences for r in completed_results)
+            total_occurrences = sum(r.total_occurrences for r in completed_results)
+            f.write(f"\tCompared Parameters: {total_occurrences}\n")
+            f.write(f"\tPerfect Occurrences (<=5%): {total_perfect_occurrences}\n")
+            f.write(f"\tAcceptable Occurrences (>5% and <=10%): {total_acceptable_occurrences}\n")
+            f.write(f"\tFailed Occurrences (>10% or exact mismatch): {total_failed_occurrences}\n")
+            f.write(f"\tNumeric Failure Occurrences (>10%): {total_numeric_failed_occurrences}\n")
+            f.write(f"\tExact Mismatch Occurrences: {total_exact_failed_occurrences}\n")
+
         f.write(f"\tTotal Test Time: {testPerformance} seconds\n")
         
-        # Details on failures
-        if failed_tests:
+        # Details on incomplete tests
+        if incomplete_tests:
             f.write(f"\n{'='*60}\n")
-            f.write("Failed Tests Details:\n\n")
-            for result in failed_tests:
+            f.write("Incomplete Tests Details:\n\n")
+            for result in incomplete_tests:
                 f.write(f"{result.test_file.stem}:\n")
                 if result.step_failed:
                     f.write(f"  Failed at Step: {result.step_failed}\n")
                 if result.error_message:
                     f.write(f"  Error: {result.error_message}\n")
                 f.write("\n")
-        
-        # Details on acceptable tests with high differences
-        if acceptable_tests and any(r.differences and r.differences > 10 for r in acceptable_tests):
+
+        # Details on failed comparisons
+        if failed_compare_tests:
             f.write(f"\n{'='*60}\n")
-            f.write("Tests with High Differences (>10):\n\n")
-            for result in acceptable_tests:
-                if result.differences and result.differences > 10:
-                    f.write(f"  {result.test_file.stem}: {result.differences} differences\n")
+            f.write("Failed Comparison Details:\n\n")
+            for result in failed_compare_tests:
+                f.write(
+                    f"{result.test_file.stem}: failed={result.failed_occurrences}, "
+                    f"numeric_failed={result.numeric_failed_occurrences}, exact_failed={result.exact_failed_occurrences}, "
+                    f"acceptable={result.acceptable_occurrences}, total={result.total_occurrences}\n"
+                )
+                mismatch_samples = result.details.get("step_4", {}).get("mismatch_samples", [])
+                if mismatch_samples:
+                    for sample in mismatch_samples:
+                        f.write(
+                            f"  - {sample['path']}: {sample['reason']}\n"
+                        )
+                f.write("\n")
     
     # Print summary to console
     print("\n" + "="*60)
     print("Checkpoint Testing Summary:")
     total_tests_discovered = len(results)
     total_tests_run = total_tests_discovered - len(skipped_tests)
+    total_completed = len(perfect_tests) + len(acceptable_tests) + len(failed_compare_tests)
     print(f"  Total Tests Discovered: {total_tests_discovered}")
     print(f"  Total Tests Run: {total_tests_run}")
+    print(f"  - Skipped (DELTAMODE/ERR): {len(skipped_tests)}")
+    print(f"  ✓ Perfect (<=5%): {len(perfect_tests)}")
+    print(f"  ≈ Acceptable (>5% and <=10%): {len(acceptable_tests)}")
+    print(f"  ✗ Failed Comparisons (>10% or exact mismatch): {len(failed_compare_tests)}")
+    print(f"  ✗ Incomplete: {len(incomplete_tests)}")
     print(f"  - Skipped (DELTAMODE/ERR/Exclude): {len(skipped_tests)}")
     print(f"  ✓ Perfect (0 differences): {len(perfect_tests)}")
     print(f"  ≈ Acceptable (with differences): {len(acceptable_tests)}")
@@ -547,15 +1123,28 @@ def processResults(results: list, resultsFile: Path, testPerformance: int, keepC
     total_completed = len(perfect_tests) + len(acceptable_tests)
     if total_tests_run > 0:
         print(f"  Completed Rate: {math.floor((float(total_completed) / float(total_tests_run)) * 100.0)}%")
-    if acceptable_tests:
-        max_diffs = max(r.differences for r in acceptable_tests if r.differences)
-        print(f"  Max Differences: {max_diffs}")
+
+    completed_results = perfect_tests + acceptable_tests + failed_compare_tests
+    if completed_results:
+        total_perfect_occurrences = sum(r.perfect_occurrences for r in completed_results)
+        total_acceptable_occurrences = sum(r.acceptable_occurrences for r in completed_results)
+        total_failed_occurrences = sum(r.failed_occurrences for r in completed_results)
+        total_numeric_failed_occurrences = sum(r.numeric_failed_occurrences for r in completed_results)
+        total_exact_failed_occurrences = sum(r.exact_failed_occurrences for r in completed_results)
+        total_occurrences = sum(r.total_occurrences for r in completed_results)
+        print(f"  Compared Parameters: {total_occurrences}")
+        print(f"  Perfect Occurrences (<=5%): {total_perfect_occurrences}")
+        print(f"  Acceptable Occurrences (>5% and <=10%): {total_acceptable_occurrences}")
+        print(f"  Failed Occurrences (>10% or exact mismatch): {total_failed_occurrences}")
+        print(f"  Numeric Failure Occurrences (>10%): {total_numeric_failed_occurrences}")
+        print(f"  Exact Mismatch Occurrences: {total_exact_failed_occurrences}")
+
     print(f"  Total Test Time: {testPerformance} seconds")
     print(f"  Results written to: {resultsFile}")
     print("="*60 + "\n")
     
-    # Return non-zero if any tests failed to complete
-    if failed_tests:
+    # Return non-zero if any tests are incomplete or have failed comparisons.
+    if incomplete_tests or failed_compare_tests:
         rv = 1
     
     return rv

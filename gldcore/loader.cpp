@@ -501,6 +501,7 @@ STATUS loader::loadClock()
             global_stoptime = tsval;
         }
     }
+      
     return rv;
 }
 
@@ -1138,6 +1139,10 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 {
                     obj->clock = stoll(propValue); // @todo convert_to_timestamp should be used
                 }
+                else if (propName.compare("last_sync") == 0)
+                {
+                    obj->last_sync = stoll(propValue); // @todo convert_to_timestamp should be used
+                }
                 else if (propName.compare("valid_to") == 0)
                 {
                     obj->valid_to = stoll(propValue); // @todo convert_to_timestamp should be used
@@ -1471,6 +1476,26 @@ STATUS loader::loadGlobals()
                            this->filename.string().c_str(), name.c_str());
             continue;
         }
+
+        GLOBALVAR *gvar = global_find(name);
+        if (gvar != nullptr && gvar->prop != nullptr && gvar->prop->ptype == PT_timestamp)
+        {
+            // convert_to_timestamp() treats bare numeric values as invalid; epoch
+            // values in JSON checkpoints should be interpreted as seconds.
+            if (value.is_number())
+            {
+                propValue += "s";
+            }
+            else if (value.is_string())
+            {
+                static const std::regex numeric_epoch_pattern(R"(^[0-9]+(?:\.[0-9]+)?$)");
+                if (std::regex_match(propValue, numeric_epoch_pattern))
+                {
+                    propValue += "s";
+                }
+            }
+        }
+
         STATUS rv = global_setvar(name.c_str(), propValue.data());
         if (rv == FAILED)
         {

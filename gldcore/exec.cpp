@@ -284,6 +284,7 @@ int exec_init()
     /* set the start time */
     // global_clock = global_starttime + local_tzoffset(global_starttime);
     global_clock = global_starttime;
+    global_nexttime = TS_ZERO;
 
     /* save locale for simulation */
     locale_push();
@@ -530,13 +531,20 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             convert_from_timestamp(global_starttime, ts_buffer, sizeof(ts_buffer));
             checkpoint["clock"]["starttime"] = "'" + std::string(ts_buffer) + "'";
 
+            std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
+            TIMESTAMP next_event = exec_sync_get(sync_data_nullptr);
+            if (next_event > global_clock && next_event < TS_NEVER && next_event <= global_stoptime)
+            {
+                global_nexttime = next_event;
+            }
+
             checkpoint["clock"]["timezone"] = tz;
             checkpoint["_checkpoint"] = true;
 
             // ── Collect objects by class ──
             std::map<std::string, std::vector<OBJECT *>> objects_by_class;
 
-            auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str) -> nlohmann::json
+            auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str, const void *raw_addr = nullptr) -> nlohmann::json
             {
                 switch (ptype)
                 {
@@ -566,6 +574,12 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                 }
                 case PT_timestamp:
                 {
+                    // Preserve full epoch timestamps from the underlying property storage.
+                    if (raw_addr != nullptr)
+                    {
+                        TIMESTAMP val = *static_cast<const TIMESTAMP *>(raw_addr);
+                        return static_cast<int64_t>(val);
+                    }
                     TIMESTAMP val = strtoll(value_str, nullptr, 10);
                     return static_cast<int64_t>(val);
                 }
@@ -633,6 +647,9 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     }
                     if (obj->groupid[0] != '\0')
                         instance["groupid"] = std::string(obj->groupid);
+                    instance["clock"] = static_cast<int64_t>(obj->clock);
+                    if (obj->last_sync != 0)
+                        instance["last_sync"] = static_cast<int64_t>(obj->last_sync);
                     if (obj->rank != 0)
                         instance["rank"] = static_cast<int>(obj->rank);
                     if (obj->schedule_skew != 0)
@@ -849,12 +866,16 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                                 char raw_value[1024] = "";
                                 if (object_get_raw_value_by_name(obj, pmap->name, raw_value, sizeof(raw_value)) > 0)
                                 {
+                                    if (pmap->ptype == PT_loadshape && strcmp(raw_value, "type: unknown") == 0)
+                                        break;
                                     instance[pmap->name] = std::string(raw_value);
                                     break;
                                 }
                                 if (object_get_value_by_name(obj, pmap->name, value_str, sizeof(value_str)) > 0 && strlen(value_str) > 0 && strcmp(value_str, "null") != 0 && strcmp(value_str, "NULL") != 0 && strcmp(value_str, "\"\"") != 0 && strcmp(value_str, "''") != 0 && strcmp(value_str, "NAN") != 0 && strcmp(value_str, "nan") != 0 && strstr(value_str, "nan") == nullptr && strstr(value_str, "NAN") == nullptr)
                                 {
                                     std::string out_value(value_str);
+                                    if (pmap->ptype == PT_loadshape && out_value == "type: unknown")
+                                        break;
                                     // Some PT_char* properties are returned with an extra quoted layer
                                     // (e.g., "\"a,b,c\""). Strip one outer pair so checkpoints
                                     // preserve plain string values.
@@ -929,7 +950,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                                 strcmp(value_buffer, "\"\"") == 0 || strcmp(value_buffer, "''") == 0 ||
                                 strcmp(value_buffer, "NAN") == 0 || strcmp(value_buffer, "nan") == 0)
                                 continue;
-                            module[prop->name] = parse_property_value(prop->ptype, value_buffer);
+                            module[prop->name] = parse_property_value(prop->ptype, value_buffer, prop->addr);
                         }
                     }
                 }
@@ -957,7 +978,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                                 strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
                                 strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
                             {
-                                modules[module_name][var_name] = parse_property_value(global->prop->ptype, buffer);
+                                modules[module_name][var_name] = parse_property_value(global->prop->ptype, buffer, global->prop->addr);
                             }
                         }
                         else
@@ -971,7 +992,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             {
                                 if (global_name.compare("randomseed") != 0)
                                 {
-                                    globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+                                    globals[global_name] = parse_property_value(global->prop->ptype, buffer, global->prop->addr);
                                 }
                                 else
                                 {
@@ -987,7 +1008,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             strcmp(buffer, "\"\"") != 0 && strcmp(buffer, "''") != 0 &&
                             strcmp(buffer, "NAN") != 0 && strcmp(buffer, "nan") != 0)
                         {
-                            globals[global_name] = parse_property_value(global->prop->ptype, buffer);
+                            globals[global_name] = parse_property_value(global->prop->ptype, buffer, global->prop->addr);
                         }
                     }
                 }
@@ -2296,8 +2317,30 @@ TIMESTAMP exec_sync_get(
     std::shared_ptr<struct sync_data>
         &d) /**< Sync data to get sync time from (nullptr to read main)  */
 {
+    static bool checkpoint_first_iteration_advance_pending = true;
     if (d == nullptr)
         d = main_sync;
+
+    // After loading a checkpoint, force the first main-loop sync read to
+    // move forward if it would otherwise hold at (or behind) the current clock.
+    if (global_checkpoint_loaded && global_nexttime > global_clock &&
+        checkpoint_first_iteration_advance_pending)
+    {
+        TIMESTAMP current_step = absolute_timestamp(d->step_to);
+        if (current_step < global_clock && global_clock < TS_NEVER - 1)
+        {
+            TIMESTAMP next_step = current_step;
+
+            // Prefer the saved checkpoint next-event time when it is valid.
+            if (global_nexttime > global_clock && global_nexttime < TS_NEVER)
+            {
+                d->step_to = global_nexttime;
+            }
+        }
+
+        checkpoint_first_iteration_advance_pending = false;
+    }
+
     if (exec_sync_isnever(d))
         return TS_NEVER;
     if (exec_sync_isinvalid(d))
@@ -2638,7 +2681,13 @@ STATUS run_preparation()
     /* reset sync event */
     std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
     exec_sync_reset(sync_data_nullptr);
-    exec_sync_set(sync_data_nullptr, global_clock, false);
+    TIMESTAMP initial_sync_time = global_clock;
+    if (global_checkpoint_loaded && global_nexttime > global_clock &&
+        global_nexttime < TS_NEVER)
+    {
+        initial_sync_time = global_nexttime;
+    }
+    exec_sync_set(sync_data_nullptr, initial_sync_time, false);
     if (global_stoptime < TS_NEVER)
         exec_sync_set(sync_data_nullptr, global_stoptime + 1, false);
 

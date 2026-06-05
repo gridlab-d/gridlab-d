@@ -212,7 +212,7 @@ extern "C"
 #include "realtime.h"
 
 	GLOBAL TIMESTAMP global_clock INIT(TS_ZERO);	   /**< The main clock timestamp */
-	GLOBAL TIMESTAMP global_nextTime INIT(TS_ZERO);	   /** < The next smallest event timestamp */
+	GLOBAL TIMESTAMP global_nexttime INIT(TS_ZERO);	   /** < The next smallest event timestamp */
 	GLOBAL TIMESTAMP global_starttime INIT(946684800); /**< The simulation starting time (default is 2000-01-01 0:00) */
 	GLOBAL TIMESTAMP global_stoptime INIT(TS_NEVER);   /**< The simulation stop time (default is 1 year after start time) */
 
