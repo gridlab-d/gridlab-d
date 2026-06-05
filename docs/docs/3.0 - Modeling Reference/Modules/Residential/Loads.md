@@ -37,7 +37,7 @@ If no implicit enduses are desired (you are using explicit enduse devices, or de
 
 Explicit enduses are distinct objects within a house that have their own internal state-based models.  They will typically adjust their conditions based on inputs from the house itself (environmental properties like temperature), usage patterns provided (water usage, occupancy, time of day), and local electrical paramters (voltage).  Explicit enduse load models are often used to capture how different system conditions or user behaviors can impact the studied system, such as modifying a setpoint temperature, having the device respond to demand response or transactive signals, or even how lower voltage conditions on a feeder may impact operations.
 
-Unlike the **implicit_enduse** load, explicit enduse loads are individual objects that have to be instantiated inside the GridLAB-D model within the **house** object of interest.  As a simple example, this house has an explicit enduse load of a [waterheater](./Waterheater.md) defined:
+Unlike the **implicit_enduse** load, explicit enduse loads are individual objects that have to be instantiated inside the GridLAB-D™ model within the **house** object of interest.  As a simple example, this house has an explicit enduse load of a [waterheater](./Waterheater.md) defined:
 
     object house {
       name house1;
@@ -55,7 +55,7 @@ Unlike the **implicit_enduse** load, explicit enduse loads are individual object
       };
 	}
 
-This example includes the `water_demand` that is controlled via a [schedule](../../../2.0%20-%20New%20Users/Tutorial/2.5.5%20-%20Schedules%20and%20Loadshapes.md) called "daily_use".
+This example includes the `water_demand` that is controlled via a [schedule](../../../2.0%20-%20New%20Users/Tutorial/2.2.7%20-%20Schedules%20and%20Loadshapes.md) called "daily_use".
 
 Available explicit enduse loads that are validated include:
 
@@ -67,7 +67,7 @@ Available explicit enduse loads that are validated include:
 * [lights](./Lights.md)
 * [thermal storage](./Thermal_Energy_Storage_model_guide.md)
 
-To populate explicit enduse loads on a feeder or larger test system, it is highly recommended to use one of the TESP population scripts to automate that process. Refer to the [Feeder Generator API](../../../2.0%20-%20New%20Users/Tutorial/2.5.8%20-%20Built-In%20Distribution%20Models.md#Feeder-Generator-API) for more details. 
+To populate explicit enduse loads on a feeder or larger test system, it is highly recommended to use one of the TESP population scripts to automate that process. Refer to the [Feeder Generator API](../../../2.0%20-%20New%20Users/Tutorial/2.2.10%20-%20Built-In%20Distribution%20Models.md#feeder-generator-api) for more details. 
 
 ### Experimental/low TRL explicit enduse models
 
@@ -78,10 +78,9 @@ Other end use load classes were previously developed for appliances like microwa
 
 The differences a given house's load with and without the use of implicit enduses is very clear:
 
-![Implicit end use comparison](../../../../images/Implicit_enduse_comparison.png)
-### Figure 1. Implicit End Use Comparison
+![Implicit end use comparison](../../../../images/Implicit_enduse_comparison.png){ #fig:ImplicitEndUSe }
 
-Generic end uses can be implemented using the **residential_enduse** object. This object requires a schedule and a loadshape definition (see [Built in schedules and loadshapes](../../../2.0%20-%20New%20Users/Tutorial/2.5.5%20-%20Schedules%20and%20Loadshapes.md)). All other end uses are (or will soon be) inheriting the properties and methods of the **residential_enduse** object. 
+Generic end uses can be implemented using the **residential_enduse** object. This object requires a schedule and a loadshape definition (see [Built in schedules and loadshapes](../../../2.0%20-%20New%20Users/Tutorial/2.2.7%20-%20Schedules%20and%20Loadshapes.md)). All other end uses are (or will soon be) inheriting the properties and methods of the **residential_enduse** object. 
 
 
 ### Explicit End Use Loads
@@ -391,15 +390,13 @@ Open up [*residential_load_basics.glm*](https://github.com/gridlab-d/course/blob
 
 The inclusion of these modules ties-in the GridLAB-D™ functionality for a number of classes in each of these modules. Without these declarations, running this model in GridLAB-D™ will through an error the first time it finds an object that is an instantiation of one of the classes defined in those modules.
 
-![Residential basics](../../../../images/Residential_basics.png)
-##### Figure 2. Residential Basics
+![Residential Basics](../../../../images/Residential_basics.png){ #fig:residential-basics }
 
 Looking at the rest of the model file, find one of the definitions of a **house** object. All the house objects in this file have been defined using a variety of parameters to describe the thermal characteristics of the building. The diversity of parameters provides a variety of ways to describe a house; use whichever ones are most useful to describe the particular residence you are trying to model. 
 
 Running a simulation using this model file generates several output files (generated by **recorder** objects in the model) including two house-specific files and one all-house temperature file. Looking at the ["*b1m1_house_data.csv*"](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/Residential%20Loads%20-%20Basics/b1m1_house_data.csv) shows data for several different thermal parameters for that residence.  The model file shows that we are running this model using Spokane's weather on Aug. 8th so we would expect the air-conditioner to run some of the time but not necessarily continuously; looking at the `is_COOL_on` parameter we can see that this is the case, particularly in the afternoon.
 
-![Residential air conditioner](../../../../images/Residential_air_conditioner.png)
-##### Figure 3. Residential Air Conditioner
+![Residential Air Conditioner](../../../../images/Residential_air_conditioner.png){ #fig:residential-air-conditioner }
 
 The model file also shows that the air temperature of the house was set to 72.5 °F. This parameter is technically an output parameter; that is, the thermodynamic model of the system will calculate the indoor air temperature and we shouldn't be able to externally define it to a fixed value. Though this is generally the case, the equations of the residential thermodynamic model need an initial condition and this statement is used to provide this. Looking at the data file for that house, we see that the indoor air temperature does indeed start at the specified value.
 
@@ -440,13 +437,11 @@ Because the HVAC system is such a big part of the total energy use of a house, t
 
 Running the simulation and comparing the results to those from the ["*residential_load_basic.glm*"](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/Residential%20Loads%20-%20Basics/residential_load_basics.glm) model confirms an intuitive understanding of these two parameters. The thermostat setpoint parameter defines the center of the deadband of the thermostat. When the temperature rises above the upper limit of the deadband the air-conditioner engages and begins cooling the house until the indoor temperature reaches the lower end of the deadbad, at which point the air-conditioner shuts off. Comparing a change in set-point (while keeping the deadband constant) shows the air conditioner operating over the same temperature range (the two degree deadband) just at a higher temperature.
 
-![Cooling setpoint comparison](../../../../images/Cooling_setpoint_comparison.png)
-##### Figure 4. Cooling setpoint comparison
+![Cooling setpoint comparison](../../../../images/Cooling_setpoint_comparison.png){ #fig:cooling-setpoint-comparison }
 
 The second change in the model increases the deadband size while keeping the setpoint constant. We can see from the simulation results that, indeed, the indoor temperature is centered about 73.5 degrees but under the basic model the range for the temperature is 74.25 to 72.75 °F (total deadband size of 1.5 °F); in the model we just modified the temperature ranges from 72 to 75 °F.
 
-![Thermostat deadband comparison.png](../../../../images/Thermostat_deadband_comparison.png)
-##### Figure 5. Thermostat deadband comparison
+![Thermostat deadband comparison](../../../../images/Thermostat_deadband_comparison.png){ #fig:thermostat-deadband-comparison }
 
 We can also see the effect that changing these two parameters has on total energy consumption of the house for the day. Comparing the data  for the two cases, there is a column in the data file showing the total energy consumption and the last entry in each column will be the total for the day.
 
@@ -492,7 +487,7 @@ Near the top of the file you'll see two particular statements that set-up this a
     #include "appliance_schedules.glm";
 
 
-The first statement turns off all the `implcit_enduses`; if we left did nothing else the only load in each house would be the HVAC unit with no energy being consumed when the HVAC was off, as we've seen in an earlier example. To replace all those other loads we're going to use a combination of [ZIPloads](./ZIPload.md), [schedules](../../../2.0%20-%20New%20Users/Tutorial/2.5.5%20-%20Schedules%20and%20Loadshapes.md) and a new statement called `schedule_skew`.
+The first statement turns off all the `implcit_enduses`; if we left did nothing else the only load in each house would be the HVAC unit with no energy being consumed when the HVAC was off, as we've seen in an earlier example. To replace all those other loads we're going to use a combination of [ZIPloads](./ZIPload.md), [schedules](../../../2.0%20-%20New%20Users/Tutorial/2.2.7%20-%20Schedules%20and%20Loadshapes.md) and a new statement called `schedule_skew`.
 
 First, to explain a tiny bit `#include` is a simple way to split up models into multiple files. It is entirely possible to never use them and simply put the entire model definition, all ten, twenty, or one hundred thousand lines in a single file; this has been done. The other extreme, which also is done, is to make the main model file a list of `#include`s with virtually no other content in that file. Which definitions go in which files is somewhat a matter of style but there is a strong case to made to separate out parts of the model that do lend themselves to modularity. In this case, having a single file that defines appliance schedules is very convenient as it can be copied and used by multiple models simply by `#include`-ing it. 
 
@@ -504,8 +499,7 @@ The other way these common schedules can be customized for each residence is thr
 
 With all the `implcit_enduses` loads in the model now defined uniquely, both respective to the amount of energy and the timing of the energy, we would expect the total load of the feeder to look more diversified and smoothed out in time. In fact, you may have noticed that we have taken out the HVAC system in all the residences of this model so we can more clearly see the difference. Running the model with and without the `implicit_enduses NONE;` and ZIPload's in all the houses commented out shows us just the difference in these methods of modeling these types of loads.
 
-![Residential load comparison](../../../../images/Residential_load_comparison.png)
-##### Figure 6. Residential load comparison
+![Residential load comparison](../../../../images/Residential_load_comparison.png){ #fig:residential-load-comparison }
 
 Using the ZIPload's and `schedule_skew` results in a much smoother load shape, even when only running a system with six houses. The difference in magnitude may or may not be appropriate; it would be up to the modeler to determine if the factors used when scaling the base values define the in ["*appliance_schedules.glm*"](https://github.com/gridlab-d/course/blob/master/Tutorial/Shared%20Model%20Files/appliance_schedules.glm) are realistic or not.
 

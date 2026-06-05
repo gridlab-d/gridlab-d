@@ -1,4 +1,4 @@
 - Model name: five_ev_chargers.glm
 - Model source: Trevor's computer (I used it at some point for an unknown reason)
 - Supporting narrative source: none
-- Example purpose: Shows how to use GridLAB-D and HELICS together by having a Python script manage the charging power for the EVs modeledin GridLAB-D.
+- Example purpose: Shows how to use GridLAB-D™ and HELICS together by having a Python script manage the charging power for the EVs modeledin GridLAB-D™.

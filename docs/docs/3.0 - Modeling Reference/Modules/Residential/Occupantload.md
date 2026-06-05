@@ -32,6 +32,8 @@ If no explicit shape mode is used (`shape.type == MT_UNKNOWN`), this equation is
 
 ## Properties
 
+Table: Occupant Load Properties { #tbl:table-occ }
+
 Property Name | Type | Unit | Description
 ---|---|---|---
 **number_of_occupants** | int32 | - | Number of occupants represented by the object.

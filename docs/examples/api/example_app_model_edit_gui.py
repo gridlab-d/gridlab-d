@@ -1,4 +1,4 @@
-"""GridLAB-D model editor GUI.
+"""GridLAB-D™ model editor GUI.
 
 This script provides a GUI for editing groups of object properties in a GLM.
 Each property rule has a class filter and applies uniform random edits only to
@@ -62,7 +62,7 @@ PUBLISHABLE_TYPES = {
 
 
 def _extract_numeric(value) -> float | None:
-	"""Extract the first numeric value from a GridLAB-D property string.
+	"""Extract the first numeric value from a GridLAB-D™ property string.
 
 	Args:
 		value: Raw property value from GridLAB-D; may be numeric, a string
@@ -153,7 +153,7 @@ def _parse_header_properties(header_path: Path) -> set[str]:
 
 
 def _parse_published_properties_and_units(source_path: Path) -> tuple[set[str], dict[str, str]]:
-	"""Parse property names and units from a GridLAB-D gl_publish_variable block.
+	"""Parse property names and units from a GridLAB-D™ gl_publish_variable block.
 
 	Scans a .cpp file for ``PT_*`` type tokens followed by quoted name strings
 	of the form ``"name[unit]"`` and collects each published property and its
@@ -197,7 +197,7 @@ def _parse_published_properties_and_units(source_path: Path) -> tuple[set[str], 
 
 
 def _find_repo_root(start: Path) -> Path | None:
-	"""Walk up the directory tree to locate the GridLAB-D repository root.
+	"""Walk up the directory tree to locate the GridLAB-D™ repository root.
 
 	The root is identified by the simultaneous presence of
 	``residential/house_e.h`` and ``generators/solar.h``.
@@ -421,14 +421,14 @@ class ModelEditGUI:
 	def __init__(self, root: tk.Tk):
 		"""Initialize the GUI and build the application window.
 
-		Loads property metadata from GridLAB-D source files, constructs all
+		Loads property metadata from GridLAB-D™ source files, constructs all
 		UI widgets, and adds a default empty rule row.
 
 		Args:
 			root: The top-level Tkinter window that hosts the GUI.
 		"""
 		self.root = root
-		self.root.title("GridLAB-D Property Group Editor")
+		self.root.title("GridLAB-D™ Property Group Editor")
 		self.root.geometry("1200x800")
 
 		self.input_file_var = tk.StringVar()
@@ -443,7 +443,7 @@ class ModelEditGUI:
 		self._add_rule_row()
 
 	def _load_property_metadata(self) -> tuple[dict[str, list[str]], dict[str, dict[str, str]]]:
-		"""Parse property names and units from GridLAB-D header and source files.
+		"""Parse property names and units from GridLAB-D™ header and source files.
 
 		Locates the repository root relative to this script, then parses each
 		class's .h and .cpp files to build a combined property list and a
@@ -622,8 +622,8 @@ class ModelEditGUI:
 	def _pick_input_file(self) -> None:
 		"""Open a file dialog to select the input GLM and pre-fill the output path."""
 		filename = filedialog.askopenfilename(
-			title="Select GridLAB-D model file",
-			filetypes=[("GridLAB-D Models", "*.glm"), ("All Files", "*.*")],
+			title="Select GridLAB-D™ model file",
+			filetypes=[("GridLAB-D™ Models", "*.glm"), ("All Files", "*.*")],
 		)
 		if filename:
 			self.input_file_var.set(filename)
@@ -634,9 +634,9 @@ class ModelEditGUI:
 	def _pick_output_file(self) -> None:
 		"""Open a save-as dialog to choose the output file path."""
 		filename = filedialog.asksaveasfilename(
-			title="Save edited GridLAB-D model as",
+			title="Save edited GridLAB-D™ model as",
 			defaultextension=".glm",
-			filetypes=[("GridLAB-D Models", "*.glm"), ("All Files", "*.*")],
+			filetypes=[("GridLAB-D™ Models", "*.glm"), ("All Files", "*.*")],
 		)
 		if filename:
 			self.output_file_var.set(filename)
@@ -691,13 +691,13 @@ class ModelEditGUI:
 		return rules
 
 	def _get_target_classes(self, class_filter: str) -> list[str]:
-		"""Return the list of GridLAB-D class names for a given filter key.
+		"""Return the list of GridLAB-D™ class names for a given filter key.
 
 		Args:
 			class_filter: A key from :data:`CLASS_FILTER_MAP`, e.g. ``"house"``.
 
 		Returns:
-			A list of GridLAB-D internal class name strings to query.
+			A list of GridLAB-D™ internal class name strings to query.
 		"""
 		return CLASS_FILTER_MAP[class_filter]
 
@@ -726,7 +726,7 @@ class ModelEditGUI:
 		return objects
 
 	def _load_sim(self, input_path: Path):
-		"""Load a GLM file into a new GridLAB-D simulation instance.
+		"""Load a GLM file into a new GridLAB-D™ simulation instance.
 
 		Args:
 			input_path: Absolute path to the .glm file to load.
@@ -824,7 +824,7 @@ class ModelEditGUI:
 
 		Loads the simulation, iterates over every rule, draws a uniform random
 		value in [min, max] for each matching object property, updates it via
-		the GridLAB-D API, then calls ``save_checkpoint`` to write the modified
+		the GridLAB-D™ API, then calls ``save_checkpoint`` to write the modified
 		model.  Optionally shows distribution histograms.  Errors are shown in
 		a modal dialog.
 		"""
@@ -948,7 +948,7 @@ class ModelEditGUI:
 
 
 def main() -> None:
-	"""Launch the GridLAB-D Property Group Editor GUI application."""
+	"""Launch the GridLAB-D™ Property Group Editor GUI application."""
 	root = tk.Tk()
 	ModelEditGUI(root)
 	root.mainloop()

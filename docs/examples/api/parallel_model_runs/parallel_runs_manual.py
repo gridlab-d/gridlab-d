@@ -1,7 +1,7 @@
 """
 Created on 03/19/2026
 
-This example tests the ability of GridLAB-D to run models in parallel.
+This example tests the ability of GridLAB-D™ to run models in parallel.
 It is has been written to verify the failures seen in the LLM generated
 script "parallel_model_runs.py" and help figure out why that one is
 failing.

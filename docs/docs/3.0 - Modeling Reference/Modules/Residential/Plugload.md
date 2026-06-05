@@ -33,6 +33,8 @@ $$
 
 ## Properties
 
+Table: Plug Load Properties { #tbl:table-plugloads }
+
 Property Name | Type | Unit | Description
 ---|---|---|---
 **circuit_split** | double | - | Split/balance indicator for circuit assignment (`-1` to `+1`).

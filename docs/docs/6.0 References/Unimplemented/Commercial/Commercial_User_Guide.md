@@ -116,6 +116,8 @@ The format for the office schedule consists of two parts, the day and the hours,
 
 ### Properties
 
+Table: Office Properties { #tbl:table-office }
+
 Property name | Type | Unit | Description   
 ---|---|---|---  
 **floor_area** | double | ft^2 | Floor area of the office (presuming one floor).   

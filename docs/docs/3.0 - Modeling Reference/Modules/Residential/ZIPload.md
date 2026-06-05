@@ -1,6 +1,6 @@
 # ZIPload
 
-Thus far the loads on the systems we’ve been modeling have been fairly abstract and ralatively simple, with only a constant power load on a single phase being specified. A more general form of this type of load is often referred to as a **ZIP** load which is represented as a load with three distinct parts: 
+Thus far the loads on the systems we’ve been modeling have been fairly abstract and relatively simple, with only a constant power load on a single phase being specified. A more general form of this type of load is often referred to as a **ZIP** load which is represented as a load with three distinct parts: 
 
  - a constant impedance portion $Z$, 
  - a constant current portion $I$, and
@@ -14,8 +14,7 @@ Thus far the loads on the systems we’ve been modeling have been fairly abstrac
 
 * For constant power ($P$), the power will remain unchanged and the current will increase linearly with the voltage change.
 
-![ZipLoad](../../../../images/ZIPLoads.png)
-##### Figure 1. ZIPload Model
+![ZIPload Model](../../../../images/ZIPLoads.png){ #fig:zipload-model }
 
 In parallel with the real power components, ZIP loading can also be applied to the reactive power component; that is, these loads can all be expressed as complex values in GridLAB-D™, as you have seen in previous examples. In a three phase system, the load on each phase can be described independently, giving a total of nine complex load values to fully define a three-phase load.
 
@@ -57,8 +56,7 @@ Open the model [zip_loads.glm](https://github.com/gridlab-d/course/blob/master/T
 
 Looking at the two loads, you'll see that `b1m1_load_a` is defined in terms of the `constant_power`, `constant_current`, and `constant_voltage`. The default units for these value are W, A, and Ohms, respectively. Load `b1m1_load_b` has a very similar composite load but it is defined in the alternative style mentioned above. Running a simulation using this model and opening ["*meter_powers.csv*"](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%205%20-%20Loads/ZIP%20Loads/meter_powers.csv) reveals that both of these loads have similar power over the duration of the simulation, at least to the precision of the values entered.
 
-![Zip load comparison scaled.png](../../../../images/Zip_load_comparison_scaled.png)
-##### Figure 2. ZIPload real power comparison from *meter_powers.csv*
+![ZIPload real power comparison from *meter_powers.csv*](../../../../images/Zip_load_comparison_scaled.png){ #fig:zipload-real-power-comparison-from-meter-powers-csv }
 
 ### Modeling Approach
 
@@ -87,6 +85,8 @@ In a time-variant load representation, the coefficients of the ZIP model, $V_n, 
 Internally, the model performs all of the proper phase rotations and scaling for various voltage levels (e.g., the model would look the same for a house attached on Phase A versus Phase C). The ZIPload model applies ZIP voltage scaling using the attached circuit voltage magnitude and the default line voltage. Currently, it is assumed that nominal voltage is either 120 or 240 V. 
 
 ## Parameters
+
+Table: ZIPload Parameters { #tbl:table-ZIP }
 
 Property Name  | Type  | Unit  | Description   
 ---|---|---|---  
@@ -223,11 +223,12 @@ This model is representative of a ZIPload used in cycling mode to roughly repres
 			is_240 TRUE;
 	};
     
+### ZIPload with Passive Controller
+
 !!! note
 
 	The passive controller is part of the market module, which has been deprecated. See [market module](../../../6.0%20References/Unimplemented/Market/1.0%20-%20Market_User_Guide.md) for more information.
 
-### ZIPload with Passive Controller
 
 This model is representative of a ZIPload with a passive controller used to implement the elasticity model out of the market module. 
     

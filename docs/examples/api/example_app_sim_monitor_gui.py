@@ -1,12 +1,12 @@
 
 
-"""Interactive GridLAB-D simulation monitor GUI demo.
+"""Interactive GridLAB-D™ simulation monitor GUI demo.
 
-This script launches a desktop GUI that runs a GridLAB-D model in steps and
+This script launches a desktop GUI that runs a GridLAB-D™ model in steps and
 plots selected object properties over time.
 
 Usage:
-		1. Run this script with the GridLAB-D Python environment active.
+		1. Run this script with the GridLAB-D™ Python environment active.
 		2. Click Browse and select a GLM model file.
 		3. Set start time, stop time, and step size.
 		4. Add one or more plots in the Plots panel.
@@ -42,10 +42,10 @@ import gridlabd
 
 
 def _extract_numeric(value: Any) -> float:
-	"""Convert a GridLAB-D value into a numeric value for plotting.
+	"""Convert a GridLAB-D™ value into a numeric value for plotting.
 
 	Args:
-		value: Raw value returned from GridLAB-D property APIs.
+		value: Raw value returned from GridLAB-D™ property APIs.
 
 	Returns:
 		A numeric scalar representation of the input value.
@@ -69,9 +69,9 @@ def _extract_numeric(value: Any) -> float:
 
 
 def _parse_iso(value: str) -> datetime:
-	"""Parse a GridLAB-D ISO timestamp into a naive local-wall-time datetime.
+	"""Parse a GridLAB-D™ ISO timestamp into a naive local-wall-time datetime.
 
-	GridLAB-D may return offset-aware values (e.g., ``-07:00``). GUI
+	GridLAB-D™ may return offset-aware values (e.g., ``-07:00``). GUI
 	date/time picker inputs are naive datetimes. Normalize parsed values by
 	stripping timezone info while preserving wall-clock fields so comparisons
 	and arithmetic remain consistent.
@@ -107,8 +107,8 @@ class SignalConfig:
 
 	Attributes:
 		signal_id: Stable internal signal identifier.
-		object_name: GridLAB-D object name.
-		property_name: GridLAB-D property name.
+		object_name: GridLAB-D™ object name.
+		property_name: GridLAB-D™ property name.
 		plot_id: Plot identifier this signal is assigned to.
 		values: Collected numeric samples for plotting.
 	"""
@@ -305,7 +305,7 @@ class SignalRow:
 
 
 class SimulationMonitorApp:
-	"""Tkinter app for running GridLAB-D in steps and monitoring properties.
+	"""Tkinter app for running GridLAB-D™ in steps and monitoring properties.
 
 	This class owns all GUI widgets, model/session state, simulation control
 	logic, and live plotting behavior.
@@ -318,7 +318,7 @@ class SimulationMonitorApp:
 			root: Tk root window.
 		"""
 		self.root = root
-		self.root.title("GridLAB-D Simulation Monitor")
+		self.root.title("GridLAB-D™ Simulation Monitor")
 		self.root.geometry("1400x980")
 		self.root.minsize(1200, 860)
 
@@ -524,8 +524,8 @@ class SimulationMonitorApp:
 	def _browse_model(self) -> None:
 		"""Open a model-file picker and auto-load the selected GLM."""
 		selected = filedialog.askopenfilename(
-			title="Select GridLAB-D model",
-			filetypes=[("GridLAB-D model", "*.glm"), ("All files", "*.*")],
+			title="Select GridLAB-D™ model",
+			filetypes=[("GridLAB-D™ model", "*.glm"), ("All files", "*.*")],
 		)
 		if selected:
 			self.model_path_var.set(selected)
@@ -568,7 +568,7 @@ class SimulationMonitorApp:
 			messagebox.showerror("Load failed", f"Failed to load model:\n{exc}")
 
 	def _refresh_model_metadata(self) -> None:
-		"""Refresh object and property lookup caches from GridLAB-D APIs.
+		"""Refresh object and property lookup caches from GridLAB-D™ APIs.
 
 		Raises:
 			RuntimeError: If metadata cannot be retrieved or no objects are found.
@@ -621,7 +621,7 @@ class SimulationMonitorApp:
 		"""Return available property names for a specific object.
 
 		Args:
-			object_name: GridLAB-D object name.
+			object_name: GridLAB-D™ object name.
 
 		Returns:
 			Property names for the requested object, or an empty list.
@@ -897,7 +897,7 @@ class SimulationMonitorApp:
 			raise ValueError(f"Invalid {which} date/time selection.") from exc
 
 	def _apply_time_bounds(self) -> None:
-		"""Apply user-configured start and stop times to GridLAB-D.
+		"""Apply user-configured start and stop times to GridLAB-D™.
 
 		Raises:
 			ValueError: If stop time is not later than start time.
@@ -977,7 +977,7 @@ class SimulationMonitorApp:
 
 			code = self.gld.set_time(self.config_start_time.isoformat())
 			if code != 0:
-				raise RuntimeError(f"GridLAB-D set_time failed with code {code}")
+				raise RuntimeError(f"GridLAB-D™ set_time failed with code {code}")
 
 			self._clear_plot_data()
 			self.status_var.set(
@@ -1022,7 +1022,7 @@ class SimulationMonitorApp:
 		"""Advance simulation to the next target time and collect signal values.
 
 		Raises:
-			RuntimeError: If GridLAB-D calls fail or return invalid states.
+			RuntimeError: If GridLAB-D™ calls fail or return invalid states.
 		"""
 		if not self.gld:
 			raise RuntimeError("Simulation is not initialized.")
@@ -1032,15 +1032,15 @@ class SimulationMonitorApp:
 
 		code, current_time_str = self.gld.get_time()
 		if code != 0:
-			raise RuntimeError(f"GridLAB-D get_time failed with code {code}")
+			raise RuntimeError(f"GridLAB-D™ get_time failed with code {code}")
 
 		if current_time_str is None:
 			# Initialization state: do one step first to get a concrete timestamp.
 			step_code, stepped_time = self.gld.step()
 			if step_code != 0:
-				raise RuntimeError(f"GridLAB-D step failed with code {step_code}")
+				raise RuntimeError(f"GridLAB-D™ step failed with code {step_code}")
 			if stepped_time is None:
-				raise RuntimeError("GridLAB-D returned no simulation time after step.")
+				raise RuntimeError("GridLAB-D™ returned no simulation time after step.")
 			sim_time = _parse_iso(stepped_time)
 		else:
 			base_time = _parse_iso(current_time_str)
@@ -1057,9 +1057,9 @@ class SimulationMonitorApp:
 
 			step_code, stepped_time = self.gld.step_to(target_time.isoformat())
 			if step_code != 0:
-				raise RuntimeError(f"GridLAB-D step_to failed with code {step_code}")
+				raise RuntimeError(f"GridLAB-D™ step_to failed with code {step_code}")
 			if stepped_time is None:
-				raise RuntimeError("GridLAB-D returned no simulation time after step_to.")
+				raise RuntimeError("GridLAB-D™ returned no simulation time after step_to.")
 			sim_time = _parse_iso(stepped_time)
 
 		self.time_data.append(sim_time)
@@ -1137,7 +1137,7 @@ class SimulationMonitorApp:
 		self.canvas.draw_idle()
 
 	def _shutdown_gld(self) -> None:
-		"""Finalize and release the active GridLAB-D instance if present."""
+		"""Finalize and release the active GridLAB-D™ instance if present."""
 		if not self.gld:
 			return
 		try:

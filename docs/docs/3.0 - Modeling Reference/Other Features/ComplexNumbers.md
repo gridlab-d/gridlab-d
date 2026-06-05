@@ -73,7 +73,7 @@ The **complex_format** global variable control the formatting used to convert co
 
 !!! bugs
 
-        If the formatting of complex numbers is not presented in the order %lg %lg %c with appropriate non-conversion parsing characters interspersed, GridLAB-D may crash without warning or remedy.
+        If the formatting of complex numbers is not presented in the order %lg %lg %c with appropriate non-conversion parsing characters interspersed, GridLAB-D™ may crash without warning or remedy.
         
 ### Complex Output Format
 
@@ -85,6 +85,8 @@ Control the output representation of complex numbers. The complex_output_format 
 
 
 Valid options for the argument are: 
+
+Table: Complex Number Argument Options { #tbl:table-complex }
 
 Value | Description | Math Representation | Output Text   
 ---|---|---|---  

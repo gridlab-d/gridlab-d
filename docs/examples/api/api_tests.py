@@ -25,7 +25,7 @@ script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
 
-# Initilize GridLAB-D and load the model
+# Initilize GridLAB-D™ and load the model
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))

@@ -1,3 +1,5 @@
+Table: Inverter Wiki Table { #tbl:WikiTable }
+
 Property name | Type | Unit | Description   
 ---|---|---|---  
 **inverter_type** | enumeration | none | Defines type of inverter technology and efficiency of the unit (FOUR_QUADRANT , PWM, TWELVE_PULSE, SIX_PULSE, TWO_PULSE)   

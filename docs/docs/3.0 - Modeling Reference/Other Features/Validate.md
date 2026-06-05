@@ -120,7 +120,7 @@ Unhandled exceptions in Windows can cause modal dialogs to pop up that block the
 
 # Test
 
-The user may provide a command option `--test` to enable the various test routines supported in GridLAB-D. The routines are made available to users by listing the core test routines in the `* **test_list` variable and/or exporting the `module_test` routine from modules the support self-tests.
+The user may provide a command option `--test` to enable the various test routines supported in GridLAB-D™. The routines are made available to users by listing the core test routines in the `* **test_list` variable and/or exporting the `module_test` routine from modules the support self-tests.
 
 
 Core (in `core/test.c`)
@@ -153,7 +153,7 @@ Module (in `_module_ /test.cpp`)
     TECHNICAL MANUAL REVIEW NEEDED
 
 
-The following tests are current performed on the GridLAB-D.
+The following tests are current performed on the GridLAB-D™.
 
 * **test_bare_class** - Create a new runtime class with a single property, initializes the property, and verify that the property is set correctly.
 
