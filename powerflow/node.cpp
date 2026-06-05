@@ -52,10 +52,10 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "compile.h"
 #include "property.h"
 #include "solver_nr.h"
 #include "node.h"
+#include "compile.h"
 
 //"Small" multiplier for restoring voltages in in-rush.  Zeros seem to make it angry
 // TODO: See if this is a "zero-catch" somewhere making it useless, or legitimate numerical stability

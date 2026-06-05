@@ -2,9 +2,9 @@
 #define _COMPILED_H
 
 #if defined(_WIN32) && !defined(__MINGW32__)
-    #define _WIN32_WINNT 0x0400
-    #undef int64                // wtypes.h also used int64
+//    #define _WIN32_WINNT 0x0400
 //    #define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
+    #undef int64                // wtypes.h also used int64
     // Winsock2 must precede windows.h
     #include <winsock2.h>
     #include <windows.h>
@@ -14,7 +14,7 @@
         #define DLEXT ".dll"
     #endif
     #define DLLOAD(P) LoadLibrary(P)
-    #define DLSYM(H, S) GetProcAddress((HINSTANCE)H, S)
+    #define DLSYM(H, S) (void *)GetProcAddress((HINSTANCE)H, S)
     #define DLERR "no diagnostics available"
     // #define snprintf _snprintf
 #else // LINUX/MAC/MINGW
