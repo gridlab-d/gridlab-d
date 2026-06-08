@@ -1,29 +1,14 @@
 # Technical Overview
 
-The GridLAB-D™ system currently implements modules to perform the following functions: 
+GridLAB-D™ is a modular, open-source simulation platform for electric distribution systems and connected end-use behavior. It is designed for studies where physical grid operation, customer loads, controls, and external workflows need to be represented together over time.
 
-  * Power and energy flow and control.
-  * Load electric, thermal, and control behavior.
-  * Economic behaviors.
-  * Data collection and analysis.
-  * Physical and economic boundary condition management.
-  * Integration with other software.
+This page summarizes major capabilities at a high level. For detailed model definitions and parameter references, see the [Modeling Reference](../3.0%20-%20Modeling%20Reference/) section.
 
-# Power Flow
 
-The power flow component of GridLAB-D™ is separated into a distribution module and a transmission module. While distribution systems are the primary focus of GridLAB-D™, the transmission module is included so that the interactions between two or more distribution systems can be simulated. 
 
-## Transmission System
+## Distribution Power System Modeling
 
-**TODO - Delete? - This Transmission System module no longer exists in GLD?** The transmission system functionality is included to allow for the interconnection of multiple distribution feeders. If a transmission module was not included, each distribution system could only be solved independently of other systems. While distribution systems can be solved independently, as is common in current commercial software packages, GridLAB-D™ will have the ability to generate a power flow solution for multiple distributions systems interconnected via a transmission or sub-transmission network. Traditionally, the ability to examine interactions at this level has been limited by computational power. To address this limitation, GridLAB-D™ is being developed for execution on multiple processor systems. In the current version of GridLAB-D™, the AC power flow solution method used for the transmission system is the Gauss-Seidel (GS) method, chosen for its inherent ability to solve for poor initial conditions, and to remain numerically stable in multiprocessor environments. 
-
-## Distribution System
-
-**TODO - Keep? - If transmission system paragraph is deleted, this does not need to be called out as "Distribution System."** To accurately represent distribution systems, individual feeders are expressed in terms of conductor types, conductor placement on poles, underground conductor orientation, phasing, and grounding. GridLAB-D™ does not simplify distribution system component models. The distribution module of GridLAB-D™ utilizes the traditional forward and backward sweep method for solving the unbalanced 3-phase AC power flow problem. This method was selected in lieu of newer methods such as current injection methods for the same reasons that the GS method was selected for the transmission module; converging in the fewest number of iterations is not the primary goal. Similar to the transmission module, the distribution modules begin with a flat start at initialization, and all subsequent solutions will be derived from the previous time step. 
-
-**TODO - Needed? - Does this belong in "Technical Overview"? Too deep? Too shallow?** Metering is supported for both single/split phase and three-phase customers. GridLAB-D™ also supports reclosers, islanding, distributed generation models, and overbuilt lines are anticipated in coming versions. 
-
-The following power distribution system components are implemented and available for use: 
+GridLAB-D™ models unbalanced, three-phase distribution networks with detailed equipment and feeder representations. Commonly used components include:
 
 * Overhead and underground lines
 * Transformers
