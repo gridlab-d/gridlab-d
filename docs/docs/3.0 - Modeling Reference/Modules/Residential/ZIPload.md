@@ -1,6 +1,6 @@
 # ZIPload
 
-Thus far the loads on the systems we’ve been modeling have been fairly abstract and ralatively simple, with only a constant power load on a single phase being specified. A more general form of this type of load is often referred to as a **ZIP** load which is represented as a load with three distinct parts: 
+Thus far the loads on the systems we’ve been modeling have been fairly abstract and relatively simple, with only a constant power load on a single phase being specified. A more general form of this type of load is often referred to as a **ZIP** load which is represented as a load with three distinct parts: 
 
  - a constant impedance portion $Z$, 
  - a constant current portion $I$, and
@@ -223,11 +223,12 @@ This model is representative of a ZIPload used in cycling mode to roughly repres
 			is_240 TRUE;
 	};
     
+### ZIPload with Passive Controller
+
 !!! note
 
 	The passive controller is part of the market module, which has been deprecated. See [market module](../../../6.0%20References/Unimplemented/Market/1.0%20-%20Market_User_Guide.md) for more information.
 
-### ZIPload with Passive Controller
 
 This model is representative of a ZIPload with a passive controller used to implement the elasticity model out of the market module. 
     

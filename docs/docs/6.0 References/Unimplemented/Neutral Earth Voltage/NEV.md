@@ -702,8 +702,10 @@ Underground distribution lines will be modeled in a flexible way such that not o
 
 ## Variables
 
-Table: Equation Notation  Variable | Definition { #tbl:equation-notation-variable-definition-3 }
----|---  
+Table: Equation Notation { #tbl:equation-notation-variable-definition-3 }
+
+Variable | Definition
+---|---
 $\displaystyle{}V_{i_{mg}}$ | Voltage at node i, phase m relative to true ground (V)   
 $\displaystyle{}I_{i_{mg}}$ | Voltage at node i, phase m relative to true ground (A)   
 $\displaystyle{}\hat z_{i-j_{nn}}$ | Element of series impedance matrix relating voltage/current relationship for line connecting nodes i and j, corresponding to self impedance of phase n. Return path (ground) impedance folded in ($\Omega /mile$)   

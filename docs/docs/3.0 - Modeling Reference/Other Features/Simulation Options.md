@@ -30,7 +30,7 @@ The GridLAB-D™ software can be run using the _command-line_ or the _server mod
 
 ### **GridLAB-D™ Command-Line Tool**
 
-GridLAB-D™ takes the path to a GridLAB-D™ model file (GLM file) as input. For more information about creating GLM files refer to the guide to [Creating GLM Files](../../2.0%20-%20New%20Users/Tutorial/2.5.2%20-%20GLM%20Models.md). 
+GridLAB-D™ takes the path to a GridLAB-D™ model file (GLM file) as input. For more information about creating GLM files refer to the guide to [Creating GLM Files](../../2.0%20-%20New%20Users/Tutorial/2.2.3%20-%20GLM%20Models.md). 
 
 **Syntax Highlighting**
 

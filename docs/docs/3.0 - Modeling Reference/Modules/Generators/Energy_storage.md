@@ -4,6 +4,8 @@ GridLAB-D™ contains both a generic energy storage object as well as a battery 
 
 ## Synopsis
 
+### battery
+
 A battery energy storage device is defined using the **battery** object.
 
 		module generators;
@@ -62,6 +64,7 @@ A battery energy storage device is defined using the **battery** object.
 		double reserve_state_of_charge[pu];
 	}
 
+### energy_storage
 
 A generic, technology agnostic energy storage device is defined with the **energy_storage** object.     
     

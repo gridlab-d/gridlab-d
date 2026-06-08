@@ -1,5 +1,5 @@
 # Technical Overview
-**TODO - FT - Holistic look at this file to ensure relevane and accuracy**
+
 The GridLAB-D™ system currently implements modules to perform the following functions: 
 
   * Power and energy flow and control.
@@ -25,54 +25,51 @@ The power flow component of GridLAB-D™ is separated into a distribution module
 
 The following power distribution system components are implemented and available for use: 
 
-  * Overhead and underground lines
-  * Transformers
-  * Voltage regulators
-  * Fuses
-  * Switches
-  * Shunt capacitor banks
+* Overhead and underground lines
+* Transformers
+* Voltage regulators
+* Fuses and switches
+* Capacitor banks
+* Metering for single/split-phase and three-phase service
 
-# Thermal Modeling - Buildings
+This supports analysis of feeder behavior, voltage performance, protection and control interactions, and distributed resource impacts under realistic operating conditions.
 
-Commercial and residential buildings are implemented using the Equivalent Thermal Parameters model. These are differential models solved for both time as a function of state and state as a function of time. Currently implemented residential end uses include: 
+## End-Use and Building Load Modeling
 
-  * Water heaters
-  * Refrigerators
-  * Stand-alone freezers
-  * Dishwashers
-  * Clothes washers and dryers
-  * Electric ranges
-  * Microwaves
-  * Electric plugs and lights
-  * Internal gains
-  * House loads (including air conditioning, heat pumps, and solar loads)
+GridLAB-D™ includes physics-based load models for residential and commercial applications. Residential building behavior is represented using the [Equivalent Thermal Parameters (ETP)](../3.0%20-%20Modeling%20Reference/Modules/Residential/ETP_closed_form_solution.md) model, with end-use detail for appliances and household systems.
 
-**TODO - Relevance - Are we still developing more detailed end use behavior as we march forward in time?** Commercial loads are simulated using an aggregate multi-zone Energy Technology Perspectives (ETP) model that will be enhanced with more detailed end use behavior in coming versions. 
+Representative residential end uses include:
 
+* Water heaters
+* Plug loads
+* Occupancy loads
+* Lighting
+* HVAC loads, including heat pumps and air conditioning
+* EV chargerrs
 
-# Economic Behaviors
-**TODO - Keep? - If GLD no longer has markets module, this will probably go away also.** Today's power system simulation tools do not provide the analysis capabilities needed to study the forces driving change in the energy industry. The combined influence of fast-changing information technology, novel and cost-effective distributed energy resources, multiple and overlapping energy markets, and new business strategies result in very high uncertainty about the success of these important innovations. Some concerns expressed by utility engineers, regulators, various stakeholders, and consumers can be addressed by GridLAB-D™. Some example uses include:
+These capabilities allow users to study how customer behavior and building dynamics affect feeder-level power demand and system performance.
 
-* Data Collection and Analysis - Rate Structures.
-* Physical and Economic Boundary Conditions - Distributed Resources.
-* Peak Load Management.
-* Distribution Automation Design.
+## Control, Automation, and Scenario Analysis
 
-## Data Collection and Analysis - Rate Structures
+GridLAB-D™ supports time-series simulation of control and automation strategies, including studies involving:
 
-Multiple differentiated energy products based on new rate structure offerings to consumers is very attractive to utilities because it creates the opportunity to reveal demand elasticity and gives utilities the ability to balance supplier market power in the wholesale markets. The challenge is designing rate structures that are both profitable and attractive to consumers. **TODO - Relevance - Do we provide the following functionality?** GridLAB-D™ will provide the ability to model consumer choice behavior in response to multiple rate offerings (including fixed rates, demand rates, time-of-day rates, and real-time rates) to determine whether a suite of rate offerings is likely to succeed. 
+* Voltage and reactive power management
+* Distributed energy resource integration
+* Demand response and peak-load management workflows
+* Reliability and operational scenario analysis
 
-## Physical and Economic Boundary Conditions - Distributed Resources
+The modular architecture allows studies to combine electrical, control, and load dynamics in a single simulation workflow.
 
-The advent of new distributed energy resource (DER) technologies, such as on-site distributed generation, **TODO - Define - Is this "Building Combined Heat and Power"? If so we should define it.** BCHP, and Grid-Friendly™ appliance controls creates a number of technology opportunities and challenges. GridLAB-D™ will permit utility managers to better evaluate the cost/benefit trade-off between infrastructure expansion investments and distributed resources investments by including the other economic benefits of DER (e.g., increase wholesale purchasing elasticity, improved reliability metrics, ancillary services products to sell in wholesale markets). 
+## Data Collection and Output Workflows
 
-## Peak Load Management
+GridLAB-D™ provides built-in mechanisms for recording, replaying, and post-processing simulation data. Users can capture both object-level and system-level outputs to support validation, benchmarking, and downstream analytics.
 
-Many peak-shaving programs and emergency curtailment programs have failed to deliver their expected benefits. GridLAB-D™ can be calibrated to observe consumer behavior to understand its interaction with various peak shaving strategies. **TODO - Rephrase? - Following sentence is slightly off. Maybe just "available" needs to be changed to "availability"? But this sentence still reads a little odd.** The impact of consumer satisfaction on the available of peak-shaving resources can be evaluated, and a more accurate forecast of the true available resources can be determined. **TODO - Relevant? - The following sentence - Does it do this? Will it? Should it?** GridLAB-D™ will even be able to evaluate the consumer rebound effect following one or more curtailment or load-shed events in a single day. 
+## Integration and Extensibility
 
-## Distribution Automation Design
+GridLAB-D™ is designed to integrate with external tools and custom workflows. In current practice, integration commonly includes:
 
-GridLAB-D™ can support some aspects of the design and analysis of distribution automation technology, allowing utilities to offer heterogeneous reliability within the same system but managing power closer to the point of use. 
+* Python-based orchestration and automation
+* Co-simulation and cross-tool workflows (for example, HELICS-based workflows)
+* Batch studies and scripted analysis pipelines
 
-# Integration with Other Software
-**TODO - Empty - Empty section? Remove or write**
+As capabilities evolve across releases, users should consult the version-specific Modeling Reference and release notes for implementation details.
