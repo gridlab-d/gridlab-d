@@ -16,6 +16,7 @@ import gridlabd
 from pathlib import Path
 import os
 from datetime import datetime, timedelta
+import pprint as pp
 
 # Ensure's we're running from the correct directory
 script_path = os.path.abspath(__file__)
@@ -26,14 +27,23 @@ os.chdir(script_dir)
 gld = gridlabd.GridLabD()
 model_path = Path("transient")
 gld.set_working_directory(str(model_path))
-load_status = gld.load("test_deltamode_capacitor_VAR_VOLT_ABC_indiv_dwell_NR.glm")
+load_status = gld.load("test_TPIM_under_voltage_contactor.glm")
 if load_status != 0:
     raise RuntimeError(f"Failed to load model with status code {load_status}")
 start_str = gld.get_starttime()
 stop_str = gld.get_stoptime()
 print(f"Start time in model: {start_str}")
 print(f"Stop time in model: {stop_str}")
-gld.run()
+run_code = gld.run()
+if run_code != 0:
+    # There was an error
+    print(f"Run return code: {run_code}")
+    messages = gld.get_messages()
+    filtered_messages = [
+        message for message in messages
+        if message.get("type") in {"WARNING", "ERROR"}
+    ]
+    pp.pprint(filtered_messages)
 gld.stop()
 gld.exit_gld()
 
