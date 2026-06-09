@@ -25,11 +25,9 @@ GridLAB-D™ can be thought of as a core simulator with a collection of modules 
 
 Because of the modular nature of GridLAB-D™, there are a few terms that should be clarified as they will frequently come up during discussion of the design and use of GridLAB-D™.
 
-* “Model” - An engineering or mathematical term (rather than programming). There are two somewhat-related ways in which this term is used in the GridLAB-D™ world,
-
-* **TODO - Clarification - The following is a sentence fragment. What is a general term? Is this supposed to be related to "Model?" If so, it should not be its own bullet** A general term to describe how a particular part of GridLAB-D™ functions or is represented in code. For example, "How does GridLAB-D™ model solar panels?"
-
-* A "model file" (commonly ending in ".glm") containing the description of the distribution system being studied. This file contains the specific statement used to model a distribution system as a whole. For example, "Where is the model you used for that assignment?"
+* “Model” - An engineering or mathematical term (rather than programming). There are two somewhat-related ways in which this term is used in the GridLAB-D™ world. 
+    * One way is a general term to describe how a particular part of GridLAB-D™ functions or how it is represented in code. For example, "How does GridLAB-D™ model solar panels?"
+    * A second way a "Model" is used is within a "model file" (commonly ending in ".glm") containing the description of the distribution system being studied. This file contains the specific statement used to model a distribution system as a whole. For example, "Where is the model you used for that assignment?"
 
 * "Class" - A C++ programing term with a similar usage as "model". Much of GridLAB-D™ is written in C++ and sometimes GridLAB-D™ developers and programmers will use this term somewhat interchangeably with "model", particularly after a long day of programming and trouble-shooting. To be specific, a "class" is the collection of code that contains the equations, parameter declarations, and algorithms that define how a particular entity will behave in GridLAB-D™.
 
