@@ -49,7 +49,7 @@ def get_simulation_times(hdf5_file):
 
     return sim_times
 
-def plot_air_temperature(hdf5_filename="output_data.h5"):
+def plot_air_temperature(hdf5_filename="example_reading_data_output.h5"):
     """
     Read air temperature data from HDF5 file and plot it.
     
@@ -113,7 +113,7 @@ def plot_air_temperature(hdf5_filename="output_data.h5"):
         print(f"Error plotting air temperature data: {e}")
 
 
-def plot_hvac_units_on(hdf5_filename="output_data.h5"):
+def plot_hvac_units_on(hdf5_filename="example_reading_data_output.h5"):
     """Read HVAC on-count data from HDF5 file and plot it."""
     try:
         with h5py.File(hdf5_filename, "r") as hdf5_file:
@@ -362,8 +362,8 @@ house_dict = gld.get_objects_by_class(class_name="house")
 
 
 
-# Open HDF5 and CSV files for writing
-hdf5_file = h5py.File("output_data.h5", "w")
+# Open HDF5 file for writing
+hdf5_file = h5py.File("example_reading_data_output.h5", "w")
 time_dtype = h5py.string_dtype(encoding="utf-8")
 
 big_step_count = 0
@@ -412,7 +412,7 @@ while sim_time_dt < stoptime_dt:
         step_size = 60
         small_step_count += 1
     
-    # Write air temperature and HVAC last off time to HDF5 and CSV files
+    # Write air temperature and HVAC last off time to HDF5
     # Initialize HDF5 datasets on first iteration
     if 'air_temperature' not in hdf5_file:
         air_temp_group = hdf5_file.create_group("air_temperature")
@@ -444,5 +444,5 @@ gld.stop()
 gld.exit_gld()
 
 # Plot the air temperature data from the HDF5 file
-plot_air_temperature("output_data.h5")
-#plot_hvac_units_on("output_data.h5")
+plot_air_temperature("example_reading_data_output.h5")
+#plot_hvac_units_on("example_reading_data_output.h5")
