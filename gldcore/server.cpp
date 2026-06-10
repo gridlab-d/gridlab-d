@@ -496,7 +496,7 @@ static void http_send(HTTPCNX *http)
                  http->status ? http->status : HTTP_INTERNALSERVERERROR);
   IN_MYCONTEXT output_verbose("%s (len=%d, mime=%s)", header, http->len,
                               http->type ? http->type : "none");
-  len += sprintf(header + len, "\nContent-Length: %ld\n", http->len);
+  len += sprintf(header + len, "\nContent-Length: %zd\n", http->len);
   if (http->type && http->type[0] != '\0')
     len += sprintf(header + len, "Content-Type: %s\n", http->type);
   len += sprintf(header + len, "Cache-Control: no-cache\n");
@@ -1990,7 +1990,7 @@ int http_get_rt(HTTPCNX *http, char *uri)
   char fullpath[1024];
   char filename[1024];
   size_t pos = 0;
-  if (sscanf(uri, "%1023[^:]:%ld", filename, &pos) == 0)
+  if (sscanf(uri, "%1023[^:]:%zd", filename, &pos) == 0)
     strncpy(filename, uri, sizeof(filename) - 1);
   if (!find_file(filename, nullptr, R_OK, fullpath, sizeof(fullpath)))
   {

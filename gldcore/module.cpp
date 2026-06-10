@@ -1489,7 +1489,7 @@ int module_compile(const char *name,   /**< name of library */
 	char mopt[8] = "";
 	const char *libs = "-lstdc++";
 #ifdef _WIN32
-	snprintf(mopt, sizeof(mopt), "-m%d", sizeof(void *) * 8);
+	snprintf(mopt, sizeof(mopt), "-m%lld", sizeof(void *) * 8);
 	libs = "";
 #endif
 

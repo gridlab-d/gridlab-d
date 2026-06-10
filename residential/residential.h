@@ -136,4 +136,9 @@ void allocate_deltamode_arrays(
     void); /* Overall function to allocate deltamode capabilities - rather than
               having to edit everything */
 
+// MSVC++ STL debugging options - comment out to disable
+// When using vectors of objects that are frequently accessed and 
+// modified and causes problems in MSVC debug builds. 
+//#define _HAS_ITERATOR_DEBUGGING 0
+
 #endif /* _RESIDENTIAL_H */
