@@ -460,7 +460,6 @@ OBJECT *object_create_single(CLASS *oclass)
     obj->child_count = 0;
     obj->rank = 0;
     obj->clock = 0;
-    obj->last_sync = 0;
     obj->latitude = QNAN;
     obj->longitude = QNAN;
     obj->in_svc = TS_ZERO;
@@ -543,7 +542,6 @@ OBJECT *object_create_foreign(OBJECT *obj) /**< a pointer to the OBJECT data str
     obj->parent = nullptr;
     obj->rank = 0;
     obj->clock = 0;
-    obj->last_sync = 0;
     obj->latitude = QNAN;
     obj->longitude = QNAN;
     obj->in_svc = TS_ZERO;
@@ -1085,16 +1083,6 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
         else
             return SUCCESS;
     }
-    else if (strcmp(name, "last_sync") == 0)
-    {
-        if ((obj->last_sync = convert_to_timestamp(value)) == TS_INVALID)
-        {
-            output_error("object %s:%d last_sync timestamp '%s' is invalid", obj->oclass->name, obj->id, value);
-            return FAILED;
-        }
-        else
-            return SUCCESS;
-    }
     else if (strcmp(name, "valid_to") == 0)
     {
         if ((obj->valid_to = convert_to_timestamp(value)) == TS_INVALID)
@@ -1204,7 +1192,7 @@ static int set_header_value(OBJECT *obj, char *name, char *value)
     {
         output_error("object %s:%d called set_header_value() for invalid field '%s'", obj->oclass->name, obj->id, name);
         /*	TROUBLESHOOT
-            The valid header fields are "name", "parent", "rank", "clock", "last_sync", "valid_to", "latitude",
+            The valid header fields are "name", "parent", "rank", "clock", "valid_to", "latitude",
             "longitude", "in_svc", "out_svc", "heartbeat", and "flags".
         */
         return FAILED;
@@ -1847,18 +1835,6 @@ TIMESTAMP _object_sync(OBJECT *obj,     /**< the object to synchronize */
     TIMESTAMP effective_valid_to = std::min(obj->clock + global_skipsafe, obj->valid_to);
     int autolock = obj->oclass->passconfig & PC_AUTOLOCK;
 
-    // On the first replayed bottom-up sync after checkpoint restore, wrappers may
-    // receive ts == obj->clock. If a persisted previous sync time is available,
-    // use it as the effective previous clock for this call.
-    // bool use_last_sync_for_replay =
-    //     (global_checkpoint_loaded && pass == PC_BOTTOMUP &&
-    //      ts == obj->clock && obj->last_sync > 0 && obj->last_sync < obj->clock);
-    // if (use_last_sync_for_replay)
-    // {
-    //     effective_previous_clock = obj->last_sync;
-    //     obj->clock = effective_previous_clock;
-    // }
-
     /* check skipsafe */
     if (global_skipsafe > 0 && (obj->flags & OF_SKIPSAFE) && ts < effective_valid_to)
 
@@ -1925,18 +1901,6 @@ TIMESTAMP _object_sync(OBJECT *obj,     /**< the object to synchronize */
     else
     {
         sync_time = (*obj->oclass->sync)(obj, ts, pass);
-    }
-
-    // If we temporarily rewound the object clock for replay and the class did not
-    // update it during sync, restore the original value.
-    // if (use_last_sync_for_replay && obj->clock == effective_previous_clock)
-    // {
-    //     obj->clock = original_clock;
-    // }
-
-    if (pass == PC_BOTTOMUP)
-    {
-        obj->last_sync = effective_previous_clock;
     }
 
     if (absolute_timestamp(plc_time) < absolute_timestamp(sync_time))

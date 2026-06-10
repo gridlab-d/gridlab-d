@@ -648,8 +648,6 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     if (obj->groupid[0] != '\0')
                         instance["groupid"] = std::string(obj->groupid);
                     instance["clock"] = static_cast<int64_t>(obj->clock);
-                    if (obj->last_sync != 0)
-                        instance["last_sync"] = static_cast<int64_t>(obj->last_sync);
                     if (obj->rank != 0)
                         instance["rank"] = static_cast<int>(obj->rank);
                     if (obj->schedule_skew != 0)
