@@ -15,6 +15,7 @@ from datetime import datetime
 from subprocess import PIPE
 from typing import Any, Optional
 
+from ._glm_json import glm_to_json
 from ._protocol import Command, Message, Response
 from ._time_utils import gld_to_iso
 
@@ -204,6 +205,10 @@ class IsolatedGridLabD:
         """Get the GridLAB-D executable path."""
         from .gridlabd_core import GridLabD as CppGridLabD
         return CppGridLabD.get_executable_path()
+
+    def convert_glm_to_json(self, glm_path, output_path=None):
+        """Convert a GLM file to JSON using the Python converter."""
+        return glm_to_json(glm_path, output_path)
     
     # Configuration methods
     def set_config_file(self, config_file: str) -> int:

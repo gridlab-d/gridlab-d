@@ -13,8 +13,8 @@ raise GLMConditionalError and must be resolved before conversion.
 
 import os
 import re
-import pyjson5
-from importlib_resources import files
+import json
+from pathlib import Path
 
 # Import the modular components with fallback
 try:
@@ -26,7 +26,7 @@ except (ImportError, ValueError):
     from glm_entities import Item, Entity, O_Entity, GLM
     from glm_utils import gld_strict_name, add_attr_to_entity, convert_suffix_id
 
-glm_entities_path = files('references').joinpath('glm_classes.json')
+glm_entities_path = Path(__file__).resolve().parent / 'references' / 'glm_classes.json'
 
 def create_conditional_error_message(directive, line, context=""):
     """Create a standardized error message for conditional directives.
@@ -111,7 +111,7 @@ class GLMModel:
         self.outside_starts = []
         
         with open(glm_entities_path, 'r', encoding='utf-8') as json_file:
-            self.classes = pyjson5.load(json_file)
+            self.classes = json.load(json_file)
             entity = Entity("clock", None)
             entity.add_attr("TEXT", "Time zone", "", "timezone", value=None)
             entity.add_attr("TEXT", "Start time", "", "timestamp", value=None)
@@ -1002,17 +1002,22 @@ class GLMModel:
             if oid:
                 params['object_declaration'] = oid
             counter += 1
-            # Generate internal tracking name (without parent prefix)
-            name = _type + "_" + str(counter)
+            # Generate an internal tracking name. Nested unnamed objects include
+            # the parent reference so generated parent links remain unique and
+            # resolvable when multiple anonymous object declarations exist.
+            name = (parent if parent else '') + _type + "_" + str(counter)
             params['_auto_generated_name'] = True
+            if parent:
+                params['parent'] = parent
             self.add_object(_type, name, params)
             return line, counter, name
 
         # Collect parameters
         counter += 1
         name_prefix = parent if parent else ''
-        # Generate internal tracking name initially (without parent prefix)
-        name = _type + "_" + str(counter)
+        # Generate internal tracking name initially. An explicit name property
+        # later in the object block replaces this value.
+        name = name_prefix + _type + "_" + str(counter)
         params = {}
         params['_auto_generated_name'] = True
         
@@ -1526,5 +1531,3 @@ class GLMModel:
         if directive in ['set', 'define']:
             return (line, None)
         return line
-
-

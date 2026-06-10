@@ -34,6 +34,7 @@ echo "Creating prebuilt directory structure..."
 rm -rf prebuilt
 mkdir -p prebuilt/lib
 mkdir -p prebuilt/share
+mkdir -p prebuilt/json_schema/references
 
 # Copy GridLAB-D API library
 echo "Copying GridLAB-D libraries..."
@@ -51,6 +52,16 @@ find ../build/lib -name "*.so" -not -name "libgldapi.so" -exec cp {} prebuilt/li
 echo "Copying data files..."
 cp ../gldcore/tzinfo.txt prebuilt/share/
 cp ../gldcore/unitfile.txt prebuilt/share/
+
+# Copy the Python GLM-to-JSON converter used by gridlabd.glm_to_json()
+echo "Copying GLM-to-JSON converter..."
+cp ../utilities/json_schema/__init__.py prebuilt/json_schema/
+cp ../utilities/json_schema/glm_to_json.py prebuilt/json_schema/
+cp ../utilities/json_schema/glm_parser.py prebuilt/json_schema/
+cp ../utilities/json_schema/glm_entities.py prebuilt/json_schema/
+cp ../utilities/json_schema/glm_utils.py prebuilt/json_schema/
+cp ../utilities/json_schema/references/glm_classes.json prebuilt/json_schema/references/
+cp ../utilities/json_schema/references/glm_schema.json prebuilt/json_schema/references/
 
 # Copy header files needed for compilation
 echo "Copying header files..."
