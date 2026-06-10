@@ -209,7 +209,7 @@ nav:
     - Python API:
       - Introduction: docs/3.0 - Modeling Reference/Python API/1.0 - Python API Overview.md
       - Quick Start: docs/3.0 - Modeling Reference/Python API/2.0 - Python API Quick Start.md
-      - Functionality:
+      - Basic API Functionality:
         - Introduction: docs/3.0 - Modeling Reference/Python API/Functionality/3.0 - Python API Basics.md
         - Running Multiple Models: docs/3.0 - Modeling Reference/Python API/Functionality/3.1 - Running Multiple Models.md
         - Controlling Simulation Start and Stop Time: docs/3.0 - Modeling Reference/Python API/Functionality/3.2 - Controlling Simulation Start and Stop Times.md
