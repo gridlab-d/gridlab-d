@@ -6,23 +6,22 @@
 #include <cstdlib>
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+    #include "config.h"
 #endif
 #ifdef _WIN32
-#undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0400
-//#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
-#include <windows.h>
-#include <winsock2.h>
+    #undef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0400
+    #include <windows.h>
+    #include <winsock2.h>
 #else
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/errno.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#define SOCKET int
-#define INVALID_SOCKET (-1)
-#define closesocket close
+    #include <arpa/inet.h>
+    #include <netinet/in.h>
+    #include <sys/errno.h>
+    #include <sys/socket.h>
+    #include <sys/types.h>
+    #define SOCKET int
+    #define INVALID_SOCKET (-1)
+    #define closesocket close
 #endif
 
 // #include <pthread.h>
