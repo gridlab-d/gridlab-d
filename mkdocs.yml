@@ -79,6 +79,7 @@ nav:
     - Technical Overview: docs/1.0 - Prospective Users/Technical_Overview.md
   - 2.0 - New Users:
     - Quick Install: docs/2.0 - New Users/2.1 - Installation Guide.md
+    - Python API Quick Start: docs/2.0 - New Users/2.2 - Python API Quick Start.md
     - Troubleshooting: docs/2.0 - New Users/2.3 - Troubleshooting.md
     - Tutorial:
       - GridLAB-D™ Overview: docs/2.0 - New Users/Tutorial/2.2.1 - Overview.md
