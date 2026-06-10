@@ -340,7 +340,7 @@ public:
   }
 
   /* comparison */
-  bool IsZero(double err = 0.0) /**< zero test */
+  bool IsZero(double err = 0.0) const /**< zero test */
   {
     return Mag() <= err;
   }
@@ -360,7 +360,7 @@ public:
   bool operator<=(complex y) { return fmod(y.Arg() - Arg(), 2 * PI) <= PI; };
   bool operator>(complex y) { return fmod(y.Arg() - Arg(), 2 * PI) > PI; };
   bool operator>=(complex y) { return fmod(y.Arg() - Arg(), 2 * PI) >= PI; };
-  bool IsFinite(void) { return isfinite(r) && isfinite(i); };
+  bool IsFinite(void) const { return isfinite(r) && isfinite(i); };
 };
 }
 #endif

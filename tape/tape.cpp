@@ -7,14 +7,10 @@
         Tape players and recorders are used to manage the boundary conditions
         and record properties of objects during simulation.  There are two kinds
         of players and two kinds of recorders:
-        - \p player is used to play a recording of a single value to property of
- an object
-        - \p shaper is used to play a periodic scaled shape to a property of
- groups of objects
-        - \p recorder is used to collect a recording of one of more properties
- of an object
-        - \p collector is used to collect an aggregation of a property from a
- group of objects
+        - \p player is used to play a recording of a single value to property of an object
+        - \p shaper is used to play a periodic scaled shape to a property of groups of objects
+        - \p recorder is used to collect a recording of one of more properties of an object
+        - \p collector is used to collect an aggregation of a property from a group of objects
  @{
  **/
 
@@ -81,33 +77,9 @@ extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, ...);
 #endif
 
 /* delta mode control */
-TIMESTAMP delta_mode_needed =
-    TS_NEVER; /* the time at which delta mode needs to start */
+TIMESTAMP delta_mode_needed = TS_NEVER; /* the time at which delta mode needs to start */
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
-#undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0400
-#include <windows.h>
-#ifndef DLEXT
-#define DLEXT ".dll"
-#endif
-#define DLLOAD(P) LoadLibrary(P)
-#define DLSYM(H, S) GetProcAddress((HINSTANCE)H, S)
-#define snprintf _snprintf
-#else /* ANSI */
-#include "dlfcn.h"
-#include "metrics_collector.h"
-#include "metrics_collector_writer.h"
-#include "violation_recorder.h"
-
-#ifndef DLEXT
-#define DLEXT ".so"
-#else
-#endif
-#define DLLOAD(P) dlopen(P, RTLD_LAZY)
-#define DLSYM(H, S) dlsym(H, S)
-#endif
+#include "compile.h"
 
 #ifndef WIN32
 #define strtok_s strtok_r

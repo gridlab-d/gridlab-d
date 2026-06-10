@@ -12,7 +12,6 @@
 
 /* simulate needed curses functions in Windows */
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
 #include <windows.h>
 #include <winsock2.h>
 #undef HAVE_CURSES

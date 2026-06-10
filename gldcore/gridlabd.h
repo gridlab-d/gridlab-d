@@ -64,7 +64,7 @@
 
 /* permanently disable use of CPPUNIT */
 #ifndef _NO_CPPUNIT
-#define _NO_CPPUNIT
+    #define _NO_CPPUNIT
 #endif
 
 // module version info (must match core version info)
@@ -72,64 +72,46 @@
 #define MINOR 3
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+    #include "config.h"
 #endif
 
 #ifdef _WIN32
-#define HAVE_LIBCPPUNIT
+    #define HAVE_LIBCPPUNIT
 #endif
-
-// #ifdef __cplusplus
-//	#ifndef CDECL
-//		/** Defines a function as a C-type function **/
-//		#define CDECL extern "C"
-//	#endif
-// #else
-//	#define CDECL
-// #endif
-//
-// #ifdef _WIN32
-// #ifndef EXPORT
-///** Defines a function as exported to core **/
-// #define EXPORT CDECL __declspec(dllexport)
-// #endif
-// #else
-// #define EXPORT CDECL
-// #endif
 
 #ifdef __cplusplus
-#ifndef CDECL
-/** Defines a function as a C-type function **/
-#define CDECL extern "C"
-#endif
+    #ifndef CDECL
+        /** Defines a function as a C-type function **/
+        #define CDECL extern "C"
+    #endif
 #else
-#define CDECL
-#endif
+    #define CDECL
+#endif // __cplusplus
 
 #ifdef _WIN32
-#ifndef EXPORT
-/** Defines a function as exported to core **/
-#define EXPORT CDECL __declspec(dllexport)
-#endif
+    #ifndef EXPORT
+        /** Defines a function as exported to core **/
+        #define EXPORT CDECL __declspec(dllexport)
+    #endif
 #else
-#define EXPORT CDECL
+    #define EXPORT CDECL
 #endif
 
 #if defined(_WIN32)
-#define MODULE_API __declspec(dllexport) // always exporting from this module
+    #define MODULE_API __declspec(dllexport) // always exporting from this module
 #else
-#if defined(__GNUC__) && (__GNUC__ >= 4)
-#define MODULE_API __attribute__((visibility("default")))
-#else
-#define MODULE_API
-#endif
+    #if defined(__GNUC__) && (__GNUC__ >= 4)
+        #define MODULE_API __attribute__((visibility("default")))
+    #else
+        #define MODULE_API
+    #endif
 #endif
 
 #include <atomic>
 #include <cstdarg>
 
 #if defined(__unix__) || defined(__APPLE__)
-#include <execinfo.h>
+    #include <execinfo.h>
 #endif
 
 #include "platform.h"
@@ -138,21 +120,22 @@
 #include "object.h"
 #include "find.h"
 #include "gldrandom.h"
+
 #define STREAM_MODULE
 #include "stream.h"
 #include "module.h"
 #include "aggregate.h"
 
 #ifndef X_OK
-#define X_OK 0x01
+    #define X_OK 0x01
 #endif
 
 #ifndef R_OK
-#define R_OK 0x02
+    #define R_OK 0x02
 #endif
 
 #ifndef F_OK
-#define F_OK 0 // Define F_OK to represent file existence checks
+    #define F_OK 0 // Define F_OK to represent file existence checks
 #endif
 
 typedef struct s_aggregate AGGREGATION;
@@ -168,22 +151,23 @@ template <typename T>
 constexpr OBJECT *object_header(T *data);
 
 #ifdef DLMAIN
-#define EXTERN
-#define INIT(X) = (X)
+    #define EXTERN
+    #define INIT(X) = (X)
 #else
-#ifdef __cplusplus
-#define EXTERN
-#else
-#define EXTERN extern
-#endif /* __cplusplus */
-#define INIT(X)
-#endif
+    #ifdef __cplusplus
+        #define EXTERN
+    #else
+        #define EXTERN extern
+    #endif // __cplusplus
+    #define INIT(X)
+#endif // DLMAIN
+
 CDECL EXTERN CALLBACKS *callback INIT(NULL);
 #undef INIT
 #undef EXTERN
 
 #ifndef MODULENAME
-#define MODULENAME(obj) (obj->oclass->module->name)
+    #define MODULENAME(obj) (obj->oclass->module->name)
 #endif
 
 /******************************************************************************
@@ -196,10 +180,10 @@ CDECL EXTERN CALLBACKS *callback INIT(NULL);
 #define gl_version_branch (*callback->version.branch)
 
 #ifdef __cplusplus
-extern "C" int object_isa(OBJECT *obj, const char *type);
+    extern "C" int object_isa(OBJECT *obj, const char *type);
 #else
-int object_isa(OBJECT *obj, const char *type);
-#endif
+    int object_isa(OBJECT *obj, const char *type);
+#endif // __cplusplus
 
 /******************************************************************************
  * Variable publishing
@@ -367,7 +351,8 @@ inline void GL_THROW(const char *format, ...)
 
 	GL_CATCH blocks must always be terminated by a #GL_ENDCATCH statement.
  **/
-#endif
+#endif // __cplusplus
+
 #define GL_CATCH(Msg) \
 	}                 \
 	else              \
@@ -489,7 +474,7 @@ inline int gl_module_depends(char *name,			   /**< module name */
 #else
 #define gl_module_getfirst (*callback->module.getfirst)
 #define gl_module_depends (*callback->module.depends)
-#endif
+#endif // __cplusplus
 
 /** @} **/
 
@@ -564,7 +549,7 @@ inline int gl_module_depends(char *name,			   /**< module name */
 // }
 // #else
 // #define gl_object_isa (*callback->object_isa)
-// #endif
+// #endif // __cplusplus
 
 #ifdef __cplusplus
 
@@ -659,7 +644,7 @@ inline bool gl_object_isa(OBJECT *obj, char *type, char *modname = nullptr)
 #else
 // C fallback keeps macro behavior for pure-C translation units
 #define gl_object_isa (*callback->object_isa)
-#endif
+#endif // __cplusplus
 
 /** Declare an object property as publicly accessible.
 	@see object_define_map()
@@ -686,7 +671,7 @@ inline FUNCTIONADDR gl_get_function(OBJECT *obj, const char *name)
 #else
 #define gl_publish_function (*callback->function.define)
 #define gl_get_function (*callback->function.get)
-#endif
+#endif // __cplusplus
 
 /** Changes the dependency rank of an object.
 	Normally dependency rank is determined by the object parent,
@@ -702,7 +687,7 @@ inline int gl_set_dependent(OBJECT *obj, /**< object to set dependency */
 }
 #else
 #define gl_set_dependent (*callback->object.set_dependent)
-#endif
+#endif // __cplusplus
 
 /** Establishes the rank of an object relative to another object (it's parent).
 	When an object is parent to another object, it's rank is always greater.
@@ -720,7 +705,7 @@ inline int gl_set_parent(OBJECT *obj,	 /**< object to set parent of */
 }
 #else
 #define gl_set_parent (*callback->object.set_parent)
-#endif
+#endif // __cplusplus
 
 /** Adjusts the rank of an object relative to another object (it's parent).
 	When an object is parent to another object, it's rank is always greater.
@@ -738,7 +723,7 @@ inline int gl_set_rank(OBJECT *obj, /**< object to change rank */
 }
 #else
 #define gl_set_rank (*callback->object.set_rank)
-#endif
+#endif // __cplusplus
 
 #define gl_object_get_first (*callback->object.get_first)
 #define gl_object_find_by_id (*callback->object_find_by_id)
@@ -785,7 +770,7 @@ inline PROPERTY *gl_get_property(OBJECT *obj,				  /**< a pointer to the object 
 }
 #else
 #define gl_get_property (*callback->properties.get_property)
-#endif
+#endif // __cplusplus
 
 /** Get the value of a property in an object
 	@see object_get_value_by_addr()
@@ -801,7 +786,8 @@ inline int gl_get_value(OBJECT *obj,		   /**< the object from which to get the d
 }
 #else
 #define gl_get_value (*callback->properties.get_value_by_addr)
-#endif
+#endif // __cplusplus
+
 #define gl_set_value_by_type (*callback->properties.set_value_by_type)
 
 /** Set the value of a property in an object
@@ -817,7 +803,7 @@ inline int gl_set_value(OBJECT *obj,	/**< the object to alter */
 }
 #else
 #define gl_set_value (*callback->properties.set_value_by_addr)
-#endif
+#endif // __cplusplus
 
 char *gl_name(OBJECT *my, char *buffer, size_t size);
 #ifdef __cplusplus
@@ -852,7 +838,7 @@ inline int gl_set_value(OBJECT *obj,	///< the object whose property value is bei
 	}
 	return 1;
 }
-#endif
+#endif // __cplusplus
 
 /** Get a reference to another object
 	@see object_get_reference()
@@ -872,7 +858,7 @@ inline int gl_get_value_by_name(OBJECT *obj,
 }
 #else
 #define gl_get_value_by_name (*callback->properties.get_value_by_name)
-#endif
+#endif // __cplusplus
 
 #ifdef __cplusplus
 inline char *gl_getvalue(OBJECT *obj,
@@ -880,7 +866,7 @@ inline char *gl_getvalue(OBJECT *obj,
 {
 	return gl_get_value_by_name(obj, name, buffer, sz) >= 0 ? buffer : NULL;
 }
-#endif
+#endif // __cplusplus
 
 /** Set the value of a property in an object
 	@see object_set_value_by_name()
@@ -917,7 +903,7 @@ inline OBJECT **gl_get_object_prop(OBJECT *obj, PROPERTY *prop)
 }
 #else
 #define gl_get_object_prop (*callback->objvar.object_var)
-#endif
+#endif // __cplusplus
 
 #ifdef __cplusplus
 inline bool *gl_get_bool(OBJECT *obj,	 /**< object to set dependency */
@@ -927,7 +913,7 @@ inline bool *gl_get_bool(OBJECT *obj,	 /**< object to set dependency */
 }
 #else
 #define gl_get_bool (*callback->objvar.bool_var)
-#endif
+#endif // __cplusplus
 
 #ifdef __cplusplus
 inline bool *gl_get_bool(OBJECT *obj,	 /**< object to set dependency */
@@ -937,7 +923,7 @@ inline bool *gl_get_bool(OBJECT *obj,	 /**< object to set dependency */
 }
 #else
 #define gl_get_bool_by_name (*callback->objvarname.bool_var)
-#endif
+#endif // __cplusplus
 
 /** Retrieve the complex value associated with the property
 	@see object_get_complex()
@@ -1175,7 +1161,7 @@ inline int gl_gethour(TIMESTAMP t)
 	gl_localtime(t, &dt);
 	return dt.hour;
 }
-#endif
+#endif // __cplusplus
 /**@}*/
 /******************************************************************************
  * Global variables
@@ -1391,7 +1377,7 @@ inline size_t nextpow2(size_t x)
 }
 
 /**@}*/
-#endif //__cplusplus
+#endif // __cplusplus
 
 /******************************************************************************
  * Interpolation routines
@@ -1550,7 +1536,7 @@ inline const char *gl_module_find_transform_function(TRANSFORMFUNCTION function)
 #define gl_transform_add_linear (*callback->transfor.add_linear)	  /* int transform_add_linear(TRANSFORMSOURCE stype,double *source,void *target,double scale,double bias,OBJECT *obj,PROPERTY *prop,SCHEDULE *sched) */
 #define gl_transform_add_external (*callback->transform.add_external) /* int (*transform.add_external)(OBJECT*,PROPERTY*,char*,OBJECT*,PROPERTY*); */
 #define gl_module_find_transform_function (*callback->module.find_transform_function)
-#endif
+#endif // __cplusplus
 /**@}*/
 
 #ifdef __cplusplus
@@ -1560,7 +1546,7 @@ inline size_t gl_randomvar_getspec(char *str, size_t size, const randomvar_struc
 #else
 #define gl_randomvar_getnext (*callback->randomvar.getnext) /* randomvar *(*randomvar.getnext)(randomvar*) */
 #define gl_randomvar_getspec (*callback->randomvar.getspec) /* size_t (*randomvar.getspec(char*,size_t,randomvar*) */
-#endif
+#endif // __cplusplus
 
 /******************************************************************************
  * Remote data access
@@ -1599,7 +1585,7 @@ inline void gl_write(void *local,	 /** local memory for data */
 	/* @todo */
 	return callback->remote.writevar(local, var);
 }
-#endif
+#endif // __cplusplus
 /**@}*/
 
 static unsigned long _nan[] = {
@@ -1607,10 +1593,10 @@ static unsigned long _nan[] = {
 	0x7fffffff,
 };
 #ifdef _WIN32
-#define NaN (*(double *)&_nan)
+    #define NaN (*(double *)&_nan)
 #else // UNIX/LINUX
-#include <math.h>
-#define NaN NAN
+    #include <math.h>
+    #define NaN NAN
 #endif
 
 #ifdef __cplusplus
@@ -2414,9 +2400,9 @@ public:
 	}
 
 #if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
-#include <execinfo.h>
-#include <iostream>
-#include <cstdlib>
+    #include <execinfo.h>
+    #include <iostream>
+    #include <cstdlib>
 
 	void print_stack_trace()
 	{
@@ -3292,35 +3278,33 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef DLMAIN
-EXPORT int do_kill(void *);
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
-#include <winsock2.h>
-#include <windows.h>
+    EXPORT int do_kill(void *);
+    #ifdef _WIN32
+        #include <winsock2.h>
+        #include <windows.h>
 
-EXPORT int gld_major = MAJOR, gld_minor = MINOR;
-BOOL APIENTRY DllMain(HANDLE h, DWORD r)
-{
-	if (r == DLL_PROCESS_DETACH)
-		do_kill(h);
-	return TRUE;
-}
-#else  // !WIN32
-CDECL int gld_major, gld_minor;
-int gld_major = MAJOR;
-int gld_minor = MINOR;
-CDECL int dllinit() __attribute__((constructor));
-CDECL int dllkill() __attribute__((destructor));
-CDECL int dllinit() { return 0; }
-CDECL int dllkill() { return do_kill(NULL); }
-#endif // !WIN32
+        EXPORT int gld_major = MAJOR, gld_minor = MINOR;
+        BOOL APIENTRY DllMain(HANDLE h, DWORD r)
+        {
+            if (r == DLL_PROCESS_DETACH)
+                do_kill(h);
+            return TRUE;
+        }
+    #else  // !WIN32
+        CDECL int gld_major, gld_minor;
+        int gld_major = MAJOR;
+        int gld_minor = MINOR;
+        CDECL int dllinit() __attribute__((constructor));
+        CDECL int dllkill() __attribute__((destructor));
+        CDECL int dllinit() { return 0; }
+        CDECL int dllkill() { return do_kill(NULL); }
+    #endif // !WIN32
 #elif defined CONSOLE
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
-#include <winsock2.h>
-#include <windows.h>
-#endif
-#include "console.h"
+    #ifdef _WIN32
+        #include <winsock2.h>
+        #include <windows.h>
+    #endif
+    #include "console.h"
 #endif // DLMAIN
 
 #define EXPORT_CREATE_C(X, C)                           \
@@ -3458,11 +3442,11 @@ CDECL int dllkill() { return do_kill(NULL); }
 
 // Let callers override the sentinel constants, but default sensibly.
 #ifndef SYNC_NEVER_TS
-#define SYNC_NEVER_TS TS_NEVER
+    #define SYNC_NEVER_TS TS_NEVER
 #endif
 
 #ifndef SYNC_INVALID_TS
-#define SYNC_INVALID_TS ((TIMESTAMP) - 1) // matches your ((long long)-1)
+    #define SYNC_INVALID_TS ((TIMESTAMP) - 1) // matches your ((long long)-1)
 #endif
 
 // ------------------------------
@@ -3676,43 +3660,14 @@ CDECL int dllkill() { return do_kill(NULL); }
 	}
 #define EXPORT_METHOD(X, N) EXPORT_METHOD_C(X, X, N)
 
-#endif
+#endif  // __cplusplus
 
 /****************************************
  * GENERAL SOLVERS
  ****************************************/
 #ifdef USE_GLSOLVERS
 
-#if defined WIN32 && !defined __MINGW32__
-#define _WIN32_WINNT 0x0400
-#undef int64				// wtypes.h also used int64
-#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
-#include <winsock2.h>
-#include <windows.h>
-#define int64 _int64
-#define PREFIX ""
-#ifndef DLEXT
-#define DLEXT ".dll"
-#endif
-#define DLLOAD(P) LoadLibrary(P)
-#define DLSYM(H, S) GetProcAddress((HINSTANCE)H, S)
-// #define snprintf _snprintf
-#else /* ANSI */
-#ifndef __MINGW32__
-#include "dlfcn.h"
-#endif
-#define PREFIX ""
-#ifndef DLEXT
-#define DLEXT ".so"
-#endif
-#ifndef __MINGW32__
-#define DLLOAD(P) dlopen(P, RTLD_LAZY)
-#else
-#include "dlfcn.h"
-#define DLLOAD(P) dlopen(P, RTLD_LAZY)
-#endif
-#define DLSYM(H, S) dlsym(H, S)
-#endif
+#include "compile.h"
 
 class glsolver
 {
@@ -3780,7 +3735,8 @@ public:
 	};
 };
 
-#endif // __cplusplus
+#endif //USE_GLSOLVERS
+
+#endif //_GRIDLABD_H
 
 /** @} **/
-#endif

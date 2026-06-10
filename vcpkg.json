@@ -4,7 +4,12 @@
   "builtin-baseline": "856505bb767458c99d8e3c3ed441f59a058d3687",
   "dependencies": [
     "eigen3",
-    { "name": "pdcurses", "platform": "windows" }
+    "xerces-c",
+    "hdf5",
+    {
+      "name": "pdcurses",
+      "platform": "windows"
+    }
   ]
 }
 

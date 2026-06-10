@@ -636,15 +636,19 @@ int waterheater::init(OBJECT *parent)
 		a_circular_const = (Vdot_circ*60.0)/(GALPCF*V_layer);
 		b_matrix_coefficient = heating_element_capacity*BTUPHPKW/(RHOWATER*Cp*V_layer*number_of_mixing_zone_disks);
 		last_transition_time = 0;
-		for(int i=0; i<number_of_states; i++) {
-			T_layers.emplace_back();
-		}
-		for(int i=0; i<number_of_states; i++) {
-			A_diffusion.emplace_back(number_of_states, 0.0);
-			A_loss.emplace_back(number_of_states, 0.0);
-			B_control.emplace_back(2, 0.0);
-			A_matrix.emplace_back(number_of_states, 0.0);
-		}
+
+		A_plug.resize(number_of_states, std::vector<double>(number_of_states, 0.0));
+		A_circular_flow.resize(number_of_states, std::vector<double>(number_of_states, 0.0));
+		T_layers.resize(number_of_states, std::vector<double>());
+		A_diffusion.resize(number_of_states, std::vector<double>(number_of_states, 0.0));
+		A_loss.resize(number_of_states, std::vector<double>(number_of_states, 0.0));
+		B_control.resize(number_of_states, std::vector<double>(2, 0.0));
+		A_matrix.resize(number_of_states, std::vector<double>(number_of_states, 0.0));
+		dT_dt.resize(number_of_states, 0.0);
+		T_now.resize(number_of_states, 0.0);
+		T_new.resize(number_of_states, 0.0);
+		control_temp.resize(2, 0.0);
+
 		int rows = number_of_states - 1;
 		for(int i=1; i<=rows-1; i++) {
 			A_diffusion[i][i-1] = a_diffusion_coefficient;
@@ -693,23 +697,6 @@ int waterheater::init(OBJECT *parent)
 			control_lower.push_back(0.0);
 		}
 
-        dT_dt.reserve(number_of_states);
-        T_now.resize(number_of_states, 0.0);
-        T_new.resize(number_of_states, 0.0);
-        control_temp.resize(2, 0.0);
-
-        A_diffusion.resize(number_of_states);
-        A_loss.resize(number_of_states);
-        A_plug.resize(number_of_states);
-        A_circular_flow.resize(number_of_states);
-
-        for (size_t i = 0; i < number_of_states; i++) {
-            A_plug[i].resize(number_of_states, 0.0);
-            A_circular_flow[i].resize(number_of_states, 0.0);
-            A_matrix[i].resize(number_of_states, 0.0);
-        }
-
-        T_layers.resize(number_of_states, vector<double>());
 	}
 	return residential_enduse::init(parent);
 }
@@ -949,7 +936,7 @@ void waterheater::sync_energytake()
 				}
 				else
 				{
-					energy_increment_value += gl_random_normal(RNGSTATE,60,30);
+					energy_increment_value = gl_random_normal(RNGSTATE,60,30);
 				}
 				energytake =  ((tank_setpoint - Tw_temp) * tank_volume * 2.44) + energy_increment_value;
 			}
@@ -973,9 +960,7 @@ void waterheater::sync_energytake()
 		heating_element_capacity = 0;
 	}	
 	return;
-				
 }
-
 
 TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
@@ -1840,9 +1825,8 @@ int waterheater::multilayer_time_to_transition() {
 		}
 		product1 = multiply_waterheater_matrices(A_matrix, T_now);
 		product2 = multiply_waterheater_matrices(B_control, control_temp);
-		dT_dt.clear();
 		for(int i=0; i<number_of_states; i++) {
-			dT_dt.push_back(product1[i] + product2[i]);//should be deg F/hr
+			dT_dt[i] = (product1[i] + product2[i]);//should be deg F/hr
 			T_new[i] = (T_now[i] + (dT_dt[i]*(int)discrete_step_size/3600.0));
 			T_layers[i].push_back(T_new[i]);
 		}
@@ -1899,8 +1883,8 @@ void waterheater::calculate_waterheater_matrices(int time_now) {
 
 	int i;
 	int rows = number_of_states - 1;
-	water_demand = water_demand*mixing_fraction;
-	double a_plug_coefficient = (water_demand*60.0)/(GALPCF*V_layer);
+	double my_water_demand = water_demand*mixing_fraction;
+	double a_plug_coefficient = (my_water_demand*60.0)/(GALPCF*V_layer);
 	for(i=1; i<=rows-1; i++) {
 		A_plug[i][i-1] = a_plug_coefficient;
 		A_plug[i][i] = -1.0*a_plug_coefficient;

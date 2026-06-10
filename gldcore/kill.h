@@ -5,15 +5,15 @@
 #define _KILL_H
 
 #if defined(_WIN32)
-#include <process.h> // _getpid
-// MSVC doesn’t define pid_t; MinGW does in <sys/types.h>.
-#ifndef __MINGW32__
-typedef int pid_t;
+    #include <process.h> // _getpid
+    // MSVC doesn’t define pid_t; MinGW does in <sys/types.h>.
+    #ifndef __MINGW32__
+        typedef int pid_t;
+    #else
+        #include <sys/types.h>
+    #endif
 #else
-#include <sys/types.h>
-#endif
-#else
-#include <sys/types.h> // pid_t on POSIX
+    #include <sys/types.h> // pid_t on POSIX
 #endif
 
 #ifdef __cplusplus
@@ -22,7 +22,11 @@ extern "C" {
 
 void kill_starthandler(void);
 void kill_stophandler(void);
-int kill(pid_t pid, int sig); // Provide a Windows implementation separately
+#if defined(_WIN32) || defined(__linux__)
+int kill(pid_t pid, int sig) noexcept; // Provide a Windows implementation separately
+#else
+int kill(pid_t pid, int sig);
+#endif
 
 #ifdef __cplusplus
 } // extern "C"
@@ -31,7 +35,7 @@ int kill(pid_t pid, int sig); // Provide a Windows implementation separately
 #if defined(_WIN32)
 static inline void kill_starthandler(void) { /* no-op on Windows */ }
 static inline void kill_stophandler(void) { /* no-op on Windows */ }
-static inline int kill(pid_t /*pid*/, int /*sig*/) {
+static inline int kill(pid_t /*pid*/, int /*sig*/) noexcept {
   /* return -1 to indicate "not supported" on Windows by default */
   return -1;
 }
