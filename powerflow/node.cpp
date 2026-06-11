@@ -152,24 +152,24 @@ node::node(MODULE *mod) : powerflow_object(mod)
 								PT_complex, "current_inj_B[A]", PADDR(current_inj[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 								PT_complex, "current_inj_C[A]", PADDR(current_inj[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 
-								PT_complex, "current_AB[A]", PADDR(current_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_BC[A]", PADDR(current_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_CA[A]", PADDR(current_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_AN[A]", PADDR(current_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_BN[A]", PADDR(current_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_CN[A]", PADDR(current_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_AB[VA]", PADDR(power_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_BC[VA]", PADDR(power_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_CA[VA]", PADDR(power_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_AN[VA]", PADDR(power_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_BN[VA]", PADDR(power_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_CN[VA]", PADDR(power_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_AB[S]", PADDR(power_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_BC[S]", PADDR(power_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_CA[S]", PADDR(power_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_AN[S]", PADDR(power_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_BN[S]", PADDR(power_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_CN[S]", PADDR(power_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+                               PT_complex, "current_AB[A]", PADDR(current_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "current_BC[A]", PADDR(current_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "current_CA[A]", PADDR(current_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "current_AN[A]", PADDR(current_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "current_BN[A]", PADDR(current_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "current_CN[A]", PADDR(current_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "power_AB[VA]", PADDR(power_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "power_BC[VA]", PADDR(power_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "power_CA[VA]", PADDR(power_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "power_AN[VA]", PADDR(power_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "power_BN[VA]", PADDR(power_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "power_CN[VA]", PADDR(power_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+                               PT_complex, "shunt_AB[S]", PADDR(shunt_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+                               PT_complex, "shunt_BC[S]", PADDR(shunt_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+                               PT_complex, "shunt_CA[S]", PADDR(shunt_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+                               PT_complex, "shunt_AN[S]", PADDR(shunt_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+                               PT_complex, "shunt_BN[S]", PADDR(shunt_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+                               PT_complex, "shunt_CN[S]", PADDR(shunt_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
 
 								// House-related variables - for 3-phase house connections
 								PT_complex, "residential_nominal_current_A[A]", PADDR(nom_res_curr[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase A from a residential object, if attached",
@@ -295,7 +295,7 @@ int node::create(void)
 
 	NR_node_reference = -1;									   // Newton-Raphson bus index, set to -1 initially
 	house_present = false;									   // House attachment flag
-	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0; // Nominal house current variables
+	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = gld::complex(0.0, 0.0); // Nominal house current variables
 
 	prev_phases = 0x00;
 

@@ -33,9 +33,9 @@ public:
 	double RX;						// the reactance to resistance ratio
 	// thermal model input
 	enum {MINERAL_OIL=1, DRY=2};
-	enumeration coolant_type; ///< coolant type, used in life time model
+	enumeration coolant_type; ///< type of coolant used in life time model
 	enum {OA=1, FA=2, NDFOA=3, NDFOW=4, DFOA=5, DFOW=6};
-	enumeration cooling_type; ///< type of coolant used in life time model
+	enumeration cooling_type; ///< type of cooling used in life time model
 	double core_coil_weight;		// The weight of the core and coil assembly in pounds.
 	double tank_fittings_weight;	// The weight of the tank and fittings in pounds.
 	double oil_vol;					// The number of gallons of oil in the transformer.

@@ -1,4 +1,19 @@
 #include "loader.h"
+#include <unordered_set>
+
+unsigned int64 loader::polynomialHasher(string key)
+{
+    const unsigned int64 p = 97;      // base
+    const unsigned int64 m = 1e9 + 9; // modulus
+    unsigned int64 hashValue = 0;
+    unsigned int64 pPow = 1;
+    for (char c : key)
+    {
+        hashValue = (hashValue + (static_cast<unsigned int64>(c) - static_cast<unsigned int64>('a') + 1) * pPow) % m;
+        pPow = (pPow * p) % m;
+    }
+    return hashValue;
+}
 
 void loader::clearQuotesFromStr(string &str)
 {
@@ -434,14 +449,14 @@ STATUS loader::loadClock()
             return FAILED;
         }
     }
-    if (j_obj.contains("timestamp"))
+    if (j_obj.contains("starttime"))
     {
-        string ts = j_obj["timestamp"].get<string>();
+        string ts = j_obj["starttime"].get<string>();
         clearQuotesFromStr(ts);
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
         if (tsval == TS_INVALID)
         {
-            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
+            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. starttime "
                              "provided: %s.",
                              this->filename.string().c_str(), ts.c_str());
             return FAILED;
@@ -451,14 +466,14 @@ STATUS loader::loadClock()
             global_starttime = tsval;
         }
     }
-    if (j_obj.contains("starttime"))
+    if (j_obj.contains("timestamp"))
     {
-        string ts = j_obj["starttime"].get<string>();
+        string ts = j_obj["timestamp"].get<string>();
         clearQuotesFromStr(ts);
         TIMESTAMP tsval = convert_to_timestamp(ts.c_str());
         if (tsval == TS_INVALID)
         {
-            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. starttime "
+            output_error_raw("loader::loadClock() parsing file, %s: expected time value in the clock. timestamp "
                              "provided: %s.",
                              this->filename.string().c_str(), ts.c_str());
             return FAILED;
@@ -645,6 +660,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
     nameObj.name = clsName;
     int64 id = -1;
     int64 id2 = -1;
+    bool idSpecified = false;
     if (objInstance.contains("object_declaration"))
     {
         string objectDeclaration = objInstance["object_declaration"].get<string>();
@@ -685,6 +701,7 @@ STATUS loader::loadObject(const string className, ojson objInstance)
         }
         else
         {
+            idSpecified = true;
             id = stoll(classNameStripped);
         }
     }
@@ -748,6 +765,29 @@ STATUS loader::loadObject(const string className, ojson objInstance)
                 break;
             }
         }
+        if (obj->name == nullptr)
+        {
+            if (idSpecified)
+            {
+                string objName = className + ":" + to_string(id);
+                if (object_set_name(obj, objName.data()) == nullptr)
+                {
+                    output_error_raw("loader::loadObject() parsing file, %s: property name %s could not be used",
+                                     this->filename.string().c_str(), objName.c_str());
+                    rv = FAILED;
+                }
+            }
+            else
+            {
+                string objName = className + ":" + to_string(obj->id);
+                if (object_set_name(obj, objName.data()) == nullptr)
+                {
+                    output_error_raw("loader::loadObject() parsing file, %s: property name %s could not be used",
+                                     this->filename.string().c_str(), objName.c_str());
+                    rv = FAILED;
+                }
+            }
+        }
         if (rv == FAILED)
         {
             break;
@@ -761,6 +801,21 @@ STATUS loader::loadObject(const string className, ojson objInstance)
             id++;
         }
     }
+
+    // Override rng_state with name (if present) and randomseed (if present) based hash
+    if (rv != FAILED && global_randomseed > 0 && obj->flags & OF_RANDOMSEEDSET != OF_RANDOMSEEDSET)
+    {
+        if (obj->name == nullptr)
+        {
+            obj->rng_state = static_cast<unsigned int>(polynomialHasher(std::to_string(global_randomseed)));
+        }
+        else
+        {
+            obj->rng_state = static_cast<unsigned int>(polynomialHasher(std::string(obj->name) + std::to_string(global_randomseed)));
+        }
+        obj->flags |= OF_RANDOMSEEDSET;
+    }
+
     return rv;
 }
 
@@ -817,6 +872,22 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
         this->currentObject = obj;
         this->currentModule = obj->oclass->module;
         this->parse.current_object = obj;
+
+        // Protect against empty property values to prevent segfaults in parsing functions
+        if (propValue.empty())
+        {
+            if (prop == nullptr)
+            {
+                output_error_raw("loader::objectProperties() parsing file, %s: property %s is not defined in class "
+                                 "%s and has empty value",
+                                 this->filename.string().c_str(), propName.c_str(),
+                                 oClass->name);
+                return FAILED;
+            }
+            // Empty value for valid property - just skip parsing
+            return SUCCESS;
+        }
+
         if (prop != nullptr && prop->ptype == PT_complex && this->parse.complex_unit(propValue, &cval, &unit) > 0)
         {
             if (unit != nullptr && prop->unit != nullptr && strcmp((char *)unit, "") != 0 && unit_convert_complex(unit, prop->unit, &cval) == 0)
@@ -1009,6 +1080,19 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                     obj->out_svc = convert_to_timestamp_delta(propValue.c_str(), &obj->out_svc_micro,
                                                               &obj->out_svc_double);
                 }
+                else if (propName.compare("in_svc_double") == 0)
+                {
+                    obj->in_svc_double = stod(propValue);
+                }
+                else if (propName.compare("out_svc_double") == 0)
+                {
+                    obj->out_svc_double = stod(propValue);
+                }
+                else if (propName.compare("rng_state") == 0)
+                {
+                    obj->rng_state = static_cast<unsigned int>(stoul(propValue));
+                    obj->flags |= OF_RANDOMSEEDSET;
+                }
                 else if (propName.compare("name") == 0)
                 {
                     if (object_set_name(obj, propValue.data()) == nullptr)
@@ -1116,7 +1200,7 @@ double loader::loadLatitude(char *buffer)
         }
         return obj->latitude;
     }
-    else if (isnan(v) && (strcmp(buffer, "") != 0 || stricmp_portable(buffer, "none") != 0))
+	else if (isnan(v) && (strcmp(buffer, "") != 0 || stricmp(buffer, "none") != 0))
     {
         output_error_raw("loader::loadLatitude() parsing file, %s: %s is not a valid latitude",
                          this->filename.string().c_str(), buffer);
@@ -1143,7 +1227,7 @@ double loader::loadLongitude(char *buffer)
         }
         return obj->longitude;
     }
-    else if (isnan(v) && (strcmp(buffer, "") != 0 || stricmp_portable(buffer, "none") != 0))
+	else if (isnan(v) && (strcmp(buffer, "") != 0 || stricmp(buffer, "none") != 0))
     {
         output_error_raw("loader::loadLongitude() parsing file, %s: %s is not a valid longitude",
                          this->filename.string().c_str(), buffer);
@@ -1247,6 +1331,52 @@ STATUS loader::loadSchedules()
     return rv;
 }
 
+STATUS loader::loadGlobals()
+{
+    if (!this->jsn.contains("globals") || !this->jsn["globals"].is_object())
+    {
+        return SUCCESS; // no globals section — nothing to do
+    }
+
+    // Read-only or runtime-set globals that must not be overridden on reload
+    static const std::unordered_set<std::string> skip_globals = {
+        "version",
+        "version.major",
+        "version.minor",
+        "version.patch",
+        "version.build",
+        "version.branch",
+        "platform",
+        "exename",
+        "execdir",
+        "checkpoint_loaded",
+    };
+
+    STATUS result = SUCCESS;
+    std::string propValue;
+    for (auto &[name, value] : this->jsn["globals"].items())
+    {
+        if (skip_globals.count(name))
+        {
+            continue;
+        }
+        if (convert(value, propValue) == FAILED)
+        {
+            output_warning("loader::loadGlobals() parsing file, %s: unable to convert value for global '%s', skipping",
+                           this->filename.string().c_str(), name.c_str());
+            continue;
+        }
+        STATUS rv = global_setvar(name.c_str(), propValue.data());
+        if (rv == FAILED)
+        {
+            output_warning("loader::loadGlobals() parsing file, %s: could not set global '%s', skipping",
+                           this->filename.string().c_str(), name.c_str());
+            // Non-fatal — continue with remaining globals
+        }
+    }
+    return result;
+}
+
 STATUS loader::loadJsonFile(filesystem::path filename)
 {
     if (this->open_file(filename))
@@ -1261,11 +1391,21 @@ STATUS loader::loadJsonFile(filesystem::path filename)
             output_error("loader::loadJsonFile() parsing file, %s: file is empty!", filename.string().c_str());
             return FAILED;
         }
+        // Check if this is a checkpoint file
+        if (this->jsn.contains("_checkpoint") && this->jsn["_checkpoint"].is_boolean() && this->jsn["_checkpoint"].get<bool>() == true)
+        {
+            global_checkpoint_loaded = 1;
+            output_verbose("loader::loadJsonFile(): checkpoint file detected");
+        }
         if (this->loadDirectives() == FAILED)
         {
             return FAILED;
         }
         if (this->loadModules() == FAILED)
+        {
+            return FAILED;
+        }
+        if (global_checkpoint_loaded && this->loadGlobals() == FAILED)
         {
             return FAILED;
         }

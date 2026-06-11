@@ -61,18 +61,12 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_int16,"thermostatic_control_range",PADDR(L),PT_DESCRIPTION, "Range of the thermostat's control operation",
 			PT_double,"number_of_devices_off",PADDR(N_off),PT_DESCRIPTION, "Total number of devices that are off",
 			PT_double,"number_of_devices_on",PADDR(N_on),PT_DESCRIPTION, "Total number of devices that are on",
-			//PT_double,"density_of_devices_off[1/K]",PADDR(noff),PT_DESCRIPTION, "Density of devices that are off per unit of temperature",
-			//PT_double,"density_of_devices_on[1/K]",PADDR(non),PT_DESCRIPTION, "Density of devices that are on per unit of temperature",
 			PT_double,"rate_of_cooling[K/h]",PADDR(roff),PT_DESCRIPTION, "rate at which devices cool down",
 			PT_double,"rate_of_heating[K/h]",PADDR(ron),PT_DESCRIPTION, "rate at which devices heat up",
-			//PT_double,"total_cycle_time[h]",PADDR(t), PT_DESCRIPTION, "total cycle time of a thermostatic device",
-			//PT_double,"total_off_time[h]",PADDR(toff),PT_DESCRIPTION, "total off time of device",
-			//PT_double,"total_on_time[h]",PADDR(ton),PT_DESCRIPTION, "total on time of device",
+			PT_double,"total_cycle_time[h]",PADDR(t), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for time to transition",
 			PT_int16,"temperature",PADDR(x),PT_DESCRIPTION, "temperature of the device's controlled media (eg air temp or water temp)",
 			PT_double,"phi",PADDR(phi),PT_DESCRIPTION, "duty cycle of the device",
-			//PT_double,"diversity_of_population",PADDR(PHI),PT_DESCRIPTION, "diversity of a population of devices",
 			PT_double,"demand_rate[1/h]",PADDR(eta),PT_DESCRIPTION, "consumer demand rate that prematurely turns on a device or population",
-			//PT_double,"effective_rate[K/h]",PADDR(rho),PT_DESCRIPTION, "effect rate at which devices heats up or cools down under consumer demand",
 			PT_double,"nominal_power",PADDR(nominal_power),PT_DESCRIPTION, "the rated amount of power demanded by devices that are on",
 
 			//Variables for creating a duty cycle
@@ -80,6 +74,10 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_double,"recovery_duty_cycle[pu]",PADDR(recovery_duty_cycle),PT_DESCRIPTION, "fraction of time in the on state, while in recovery interval",
 			PT_double,"period[h]",PADDR(period),PT_DESCRIPTION, "time interval to apply duty cycle",
 			PT_double,"phase[pu]",PADDR(phase),PT_DESCRIPTION, "initial phase of load; duty will be assumed to occur at beginning of period",
+			PT_double,"next_time",PADDR(next_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next time",
+			PT_double,"last_duty_cycle",PADDR(last_duty_cycle), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last duty cycle",
+			PT_double,"last_time",PADDR(last_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last time",
+			PT_int32,"first_pass",PADDR(first_pass), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first pass",
 			nullptr)<1)
 
 			GL_THROW("unable to publish properties in %s",__FILE__);
@@ -88,6 +86,33 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 
 ZIPload::~ZIPload()
 {
+}
+
+// Initialize non-published variables (not loaded from checkpoint)
+int ZIPload::shared_init(OBJECT *parent)
+{
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("zipload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
+			return 2; // defer
+		}
+	}
+	// Example: reset internal state variables
+	// (add any non-published variable initializations here)
+	// For now, nothing custom, but this is the pattern for future use
+	return 1;
+}
+
+// Called after checkpoint load to reinitialize non-published variables
+int ZIPload::checkpoint_init(OBJECT *parent)
+{
+	// Only initialize variables that aren't published. If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
+	return residential_enduse::checkpoint_init(parent);
 }
 
 int ZIPload::create() 
@@ -127,15 +152,11 @@ int ZIPload::create()
 
 int ZIPload::init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
-			char objname[256];
-			gl_verbose("zipload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
-			return 2; // defer
-		}
-	}
 	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
+
+	int rv = shared_init(parent);
+	if (rv != 1) return rv;
 
 	if (demand_response_mode == true)
 	{
@@ -145,7 +166,7 @@ int ZIPload::init(OBJECT *parent)
 		about it, please see the Matlab files found in ../design/dr_model/ or read the paper titled "On the Equilibrium Dynamics of Demand Response"
 		submitted to HICSS 2011 or post your questions on the WIKI forum.
 		*/
-		
+
 		// Initial error checks
 		if (abs(eta) > 1)
 		{
@@ -163,7 +184,7 @@ int ZIPload::init(OBJECT *parent)
 			from phi.  Please set to a value between 1 and 0 (inclusive).
 			*/
 		}
-		
+
 		// Set up the buffers and perform some error checks
 		if (L > 0)
 			if (L < 70)
@@ -240,7 +261,6 @@ int ZIPload::init(OBJECT *parent)
 			*/
 		}
 
-		non = noff = 0;
 		double test_N = 0;
 
 		for (x=0; x<L; x++)
@@ -254,13 +274,6 @@ int ZIPload::init(OBJECT *parent)
 				//non += drm.on[x] = eta * (1-phi) * exp(eta*(L-x+0.5)/roff) / (exp(eta*L/roff)-1);
 				//noff += drm.off[x] = drm.on[x]*ron/roff;
 			}
-
-			/* uniform distribution */
-			else
-			{
-				non += drm.on[x] = N * phi/L;
-				noff += drm.off[x] = N * (1-phi)/L;
-			}
 		}
 
 		/* check for valid population */
@@ -269,7 +282,7 @@ int ZIPload::init(OBJECT *parent)
 			double extra = N - test_N;
 			drm.off[0] += extra;
 		}
-		
+
 	}
 
 	if (duty_cycle > 1 || duty_cycle < 0)
@@ -345,9 +358,6 @@ TIMESTAMP ZIPload::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		for (int jj=0; jj<L; jj++)
 		{
-			//previous_drm.on[jj] = drm.on[jj];
-			//previous_drm.off[jj] = drm.off[jj];
-
 			if (eta > 0)
 			{			
 				if (jj != (L-1))
@@ -640,6 +650,13 @@ EXPORT TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0)
 		return t1;
 	}
 	SYNC_CATCHALL(ZIPload);
+}
+
+// EXPORTed checkpoint_init for module loader
+EXPORT int checkpoint_init_ZIPload(OBJECT *obj, OBJECT *parent)
+{
+	ZIPload *my = object_data<ZIPload>(obj);
+	return my->checkpoint_init(parent);
 }
 
 /**@}**/

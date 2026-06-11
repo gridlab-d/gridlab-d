@@ -36,8 +36,6 @@ python validate_json.py solar.json
 echo -e "\n== Validate Te_Challange_test =="
 python validate_json.py Te_Challange_test.json
 echo -e "\n== Validate TE_Challenge =="
-python validate_json.py -TE_Challenge.json
-echo -e "\n== Validate TE_Challenge =="
 python validate_json.py TE_Challenge.json
 echo -e "\n== Validate TEController =="
 python validate_json.py TEController.json

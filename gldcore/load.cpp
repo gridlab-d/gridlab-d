@@ -6997,13 +6997,7 @@ int is_autodef(char *value)
 }
 
 /* started processes */
-#include "threadpool.h"
 #include <csignal>
-// struct s_threadlist {
-//	pthread_t *data;
-//	struct s_threadlist *next;
-// } *threadlist = nullptr;
-
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -7113,57 +7107,7 @@ public:
 void kill_processes(void)
 {
 	threadlist.kill_all();
-
-	/*while ( threadlist!=nullptr )
-	{
-		void *ptr;
-		struct s_threadlist *next = threadlist->next;
-		int sig = SIGTERM;
-		int rc = pthread_kill(*(threadlist->data),sig);
-		switch ( rc ) {
-		case 0:
-			output_debug("killing thread %p", threadlist->data);
-			break;
-		case ESRCH:
-			output_error("unable to kill thread %p (no such thread)", threadlist->data);
-			break;
-		case EINVAL:
-			output_error("unable to kill thread %p (signal %d invalid/ignored)", threadlist->data, sig);
-			break;
-		default:
-			output_error("unable to kill thread %p (unknown return code %d)", threadlist->data, rc);
-			break;
-		}
-		free(threadlist->data);
-		threadlist=next;
-	}*/
 }
-
-/** @return -1 on failure, thread_id on success **/
-// void* start_process(const char *cmd)
-//{
-//	static bool first = true;
-//	pthread_t *pThreadInfo = (pthread_t*)malloc(sizeof(pthread_t));
-//	struct s_threadlist *thread = (struct s_threadlist*)malloc(sizeof(struct s_threadlist));
-//     char *args = static_cast<char *>(malloc(strlen(cmd) + 1));
-//	strcpy(args,cmd);
-//	if ( thread==nullptr || pThreadInfo==nullptr || pthread_create(pThreadInfo,nullptr,(void*(*)(void*))system,args)!=0 )
-//	{
-//		output_error_raw("%s(%d): unable to create thread to start '%s'", filename, linenum, cmd);
-//		return nullptr;
-//	}
-//	else
-//		output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
-//	thread->data = pThreadInfo;
-//	thread->next = threadlist;
-//	threadlist = thread;
-//	if ( first )
-//	{
-//		atexit(kill_processes);
-//		first = false;
-//	}
-//	return threadlist;
-// }
 
 void *start_process(const char *cmd)
 {
@@ -8059,42 +8003,42 @@ STATUS loadall(char *file)
 		return FAILED; /* not what they expected--do not proceed */
 	}
 
-	/* first time only */
-	if (loaded_files == 0)
-	{
-		/* load the gridlabd.conf file */
-		if (find_file("gridlabd.conf", nullptr, R_OK, conf, sizeof(conf)) == nullptr)
-			output_warning("gridlabd.conf was not found");
-		/* TROUBLESHOOT
-			The <code>gridlabd.conf</code> was not found in the <b>GLPATH</b> environment path.
-			This file is always loaded before a GLM file is loaded.
-			Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
-		 */
-		else
-		{
-			sprintf(filename, "gridlabd.conf");
-			if (loadall_glm_roll(conf) == FAILED)
-			{
-				return FAILED;
-			}
-		}
+	// /* first time only */
+	// if (loaded_files == 0)
+	// {
+	// 	/* load the gridlabd.conf file */
+	// 	if (find_file("gridlabd.conf", nullptr, R_OK, conf, sizeof(conf)) == nullptr)
+	// 		output_warning("gridlabd.conf was not found");
+	// 	/* TROUBLESHOOT
+	// 		The <code>gridlabd.conf</code> was not found in the <b>GLPATH</b> environment path.
+	// 		This file is always loaded before a GLM file is loaded.
+	// 		Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
+	// 	 */
+	// 	else
+	// 	{
+	// 		sprintf(filename, "gridlabd.conf");
+	// 		if (loadall_glm_roll(conf) == FAILED)
+	// 		{
+	// 			return FAILED;
+	// 		}
+	// 	}
 
-		/* load the debugger.conf file */
-		if (global_debug_mode)
-		{
-			char dbg[1024];
+	// 	/* load the debugger.conf file */
+	// 	if (global_debug_mode)
+	// 	{
+	// 		char dbg[1024];
 
-			if (find_file("debugger.conf", nullptr, R_OK, dbg, sizeof(dbg)) == nullptr)
-				output_warning("debugger.conf was not found");
-			/* TROUBLESHOOT
-				The <code>debugger.conf</code> was not found in the <b>GLPATH</b> environment path.
-				This file is loaded when the debugger is enabled.
-				Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
-			 */
-			// else if (loadall_glm_roll(dbg) == FAILED)
-			// return FAILED;
-		}
-	}
+	// 		if (find_file("debugger.conf", nullptr, R_OK, dbg, sizeof(dbg)) == nullptr)
+	// 			output_warning("debugger.conf was not found");
+	// 		/* TROUBLESHOOT
+	// 			The <code>debugger.conf</code> was not found in the <b>GLPATH</b> environment path.
+	// 			This file is loaded when the debugger is enabled.
+	// 			Make sure that <b>GLPATH</b> includes the <code>.../etc</code> folder and try again.
+	// 		 */
+	// 		// else if (loadall_glm_roll(dbg) == FAILED)
+	// 		// return FAILED;
+	// 	}
+	// }
 
 	/* if nothing requested only config files are loaded */
 	if (file == nullptr)

@@ -14,23 +14,24 @@
 #include "property.h"
 
 #include <charconv>
-//#include <format>
+// #include <format>
 #include <fstream>
 #include <iostream>
 #include <queue>
 #include <string>
 #include <regex>
-#include <nlohmann/json.hpp>  // Requires JSON for Modern C++ library
+#include <nlohmann/json.hpp> // Requires JSON for Modern C++ library
 
 using namespace std;
 using ojson = nlohmann::ordered_json;
 
 #ifdef __cplusplus
 
-class loader {
+class loader
+{
 
 private:
-	parser parse = parser();
+    parser parse = parser();
     ojson jsn;
     filesystem::path filename;
     OBJECT *currentObject = nullptr;
@@ -44,6 +45,7 @@ private:
     int set_flags(OBJECT *obj, char *propval);
     void clearQuotesFromStr(string &str);
     STATUS loadJsonFile(filesystem::path filePath);
+    unsigned int64 polynomialHasher(string key);
 
 public:
     bool open_file(filesystem::path &file_name);
@@ -58,10 +60,10 @@ public:
     STATUS loadSchedules();
     STATUS loadDirectives();
     STATUS loadIncludes();
+    STATUS loadGlobals();
     STATUS loadall_json_roll(char *file_name);
 };
 
 #endif // C++
 
 #endif // _LOADER_H_
-

@@ -64,6 +64,15 @@ sec_control::sec_control(MODULE *module)
 								PT_double, "xi[MW]", PADDR(curr_state.xi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID integrator output",
 								PT_double, "PIDout[MW]", PADDR(curr_state.PIDout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID output",
 								PT_double, "dP[MW]", PADDR(curr_state.dP), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Delta P signal [MW]",
+								// Next state variables
+								PT_double, "next_state.perr(t)[MW]", PADDR(next_state.perr[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.perr[0]",
+								PT_double, "next_state.perr(t-1)[MW]", PADDR(next_state.perr[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.perr[1]",
+								PT_double, "next_state.uniterr[MW]", PADDR(next_state.uniterr), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.uniterr",
+								PT_double, "next_state.deltaf[Hz]", PADDR(next_state.deltaf), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.deltaf",
+								PT_double, "next_state.dxi[MW]", PADDR(next_state.dxi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.dxi",
+								PT_double, "next_state.xi[MW]", PADDR(next_state.xi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.xi",
+								PT_double, "next_state.PIDout[MW]", PADDR(next_state.PIDout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.PIDout",
+								PT_double, "next_state.dP[MW]", PADDR(next_state.dP), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_state.dP",
 								NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 

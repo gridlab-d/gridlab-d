@@ -80,8 +80,6 @@ public:
 	double envelope_UA;							///< envelope UA (BTU.sq.ft/hr.ft2)
 	double number_of_doors;						///< door-wall ratio
 	double area_per_door;						///< area per exterior door
-	double total_door_area;						///< exterior door area
-	double total_wall_area;						///< exterior opaque wall area
 	double gross_wall_area;						///< gross wall area (sq.ft)
 	double ceiling_height;						///< ceiling height
 	double interior_exterior_wall_ratio;		///< ratio of internal to external wall area
@@ -89,7 +87,6 @@ public:
 	double exterior_ceiling_fraction;			///< ratio of external ceiling sf to floor area
 	double exterior_floor_fraction;
 	double aspect_ratio;						///< building footprint aspect ratio
-	double solar_aperture[N_SOLAR_SURFACES];	///< Future: Solar aperture(WWR) by orientation
 	double house_content_heat_transfer_coeff;	///< mass UA
 	double air_density;							///< air density
 	double air_heat_capacity;					///< heat capacity of air
@@ -127,7 +124,6 @@ public:
 	// window variables
 	double glazing_shgc;						///< glazing SHGC
 	double window_wall_ratio;					///< window-wall ratio
-	double window_roof_ratio;					///< window-roof ratio (skylights)
 	double total_window_area;
 	double window_exterior_transmission_coefficient; ///< fraction of energy that transmits through windows
 	double solar_heatgain_factor;				///< product of the window solar heatgain coefficient and the exterior transmission coefficient
@@ -175,8 +171,6 @@ public:
 	double cooling_COP;				///< space cooling COP
 
 	double over_sizing_factor;		///< Future: equipment over sizing factor
-	double rated_heating_capacity;	///< rated heating capacity of the system (BTUh/sf; varies w.r.t Tout),
-	double rated_cooling_capacity;	///< rated cooling capacity of the system (BTUh/sf; varies w.r.t Tout)
 	double hvac_breaker_rating;		///< HVAC current limit on the breaker
 	double hvac_power_factor;		///< HVAC power factor
 	// auxiliary heat characteristics
@@ -482,6 +476,8 @@ private:
 	CIRCUIT *pHVAC_EnduseLoad;
 	void dump_house_parameters_function(void);
 
+	int shared_init(OBJECT *parent); ///<Shared initialization for non-published variables used by both checkpoint_init and init
+
 public:
 	int error_flag;
 	static CLASS *oclass, *pclass;
@@ -502,6 +498,7 @@ public:
 	void update_Tevent(void);
 
 	int init(OBJECT *parent);
+	int checkpoint_init(OBJECT *parent);
 	int init_climate(void);
 	int isa(char *classname);
 
