@@ -354,7 +354,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->solar_direct) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_solar_direct(void) { return solar_direct; }
+    inline double get_solar_direct(void) const { return solar_direct; }
     // inline void set_solar_direct(double p)
     // {
     // 	solar_direct = p;
@@ -381,7 +381,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->tz_meridian) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_tz_meridian(void) { return tz_meridian; }
+    inline double get_tz_meridian(void) const { return tz_meridian; }
     // inline void set_tz_meridian(double p)
     // {
     // 	tz_meridian = p;
@@ -408,7 +408,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->solar_diffuse)
     // - reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_solar_diffuse(void) { return solar_diffuse; }
+    inline double get_solar_diffuse(void) const { return solar_diffuse; }
     // inline void set_solar_diffuse(double p)
     // {
     // 	solar_diffuse = p;
@@ -622,7 +622,7 @@ public:
     // *>(&current_defaults->ground_reflectivity) - reinterpret_cast<const char
     // *>(current_defaults);
     // }
-    inline double get_ground_reflectivity(void) { return ground_reflectivity; }
+    inline double get_ground_reflectivity(void) const { return ground_reflectivity; }
     // inline void set_ground_reflectivity(double p)
     // {
     // 	ground_reflectivity = p;
@@ -685,7 +685,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->temperature) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_temperature(void) { return temperature; }
+    inline double get_temperature(void) const { return temperature; }
     // inline void set_temperature(double p)
     // {
     // 	temperature = p;
@@ -743,7 +743,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->wind_speed) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_wind_speed(void) { return wind_speed; }
+    inline double get_wind_speed(void) const { return wind_speed; }
     // inline void set_wind_speed(double p)
     // {
     // 	wind_speed = p;
@@ -770,7 +770,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->solar_global) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_solar_global(void) { return solar_global; }
+    inline double get_solar_global(void) const { return solar_global; }
     // inline void set_solar_global(double p)
     // {
     // 	solar_global = p;
@@ -859,7 +859,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->wind_dir) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_wind_dir(void) { return wind_dir; }
+    inline double get_wind_dir(void) const { return wind_dir; }
     // inline void set_wind_dir(double p)
     // {
     // 	wind_dir = p;
@@ -1007,7 +1007,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->solar_zenith) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_solar_zenith(void) { return solar_zenith; }
+    inline double get_solar_zenith(void) const { return solar_zenith; }
     // inline void set_solar_zenith(double p)
     // {
     // 	solar_zenith = p;
@@ -1035,7 +1035,7 @@ public:
     // *>(&current_defaults->direct_normal_extra) - reinterpret_cast<const char
     // *>(current_defaults);
     // }
-    inline double get_direct_normal_extra(void) { return direct_normal_extra; }
+    inline double get_direct_normal_extra(void) const { return direct_normal_extra; }
     // inline void set_direct_normal_extra(double p)
     // {
     // 	direct_normal_extra = p;
@@ -1062,7 +1062,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->pressure) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_pressure(void) { return pressure; }
+    inline double get_pressure(void) const { return pressure; }
     // inline void set_pressure(double p)
     // {
     // 	pressure = p;
@@ -1089,7 +1089,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->tz_offset_val)
     // - reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_tz_offset_val(void) { return tz_offset_val; }
+    inline double get_tz_offset_val(void) const { return tz_offset_val; }
     // inline void set_tz_offset_val(double p)
     // {
     // 	tz_offset_val = p;
@@ -1177,7 +1177,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->opq_sky_cov) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline double get_opq_sky_cov(void) { return opq_sky_cov; }
+    inline double get_opq_sky_cov(void) const { return opq_sky_cov; }
     // inline void set_opq_sky_cov(double p)
     // {
     // 	opq_sky_cov = p;
@@ -1296,7 +1296,7 @@ public:
     // 	return reinterpret_cast<const char *>(&current_defaults->cloud_model) -
     // reinterpret_cast<const char *>(current_defaults);
     // }
-    inline enumeration get_cloud_model(void) { return cloud_model; }
+    inline enumeration get_cloud_model(void) const { return cloud_model; }
     // inline void set_cloud_model(enumeration p)
     // {
     // 	cloud_model = p;

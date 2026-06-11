@@ -3,18 +3,16 @@
 //
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN // Exclude rarely used Windows headers
-#include <winsock2.h>
-#include <windows.h>
-#include <direct.h>
-#include <io.h>
+    #include <winsock2.h>
+    #include <windows.h>
+    #include <direct.h>
+    #include <io.h>
 #else
-#include <unistd.h>
-#include <dirent.h>
-#endif
-
-#ifdef __linux__
-#include <sys/types.h>
+    #include <unistd.h>
+    #include <dirent.h>
+    #include <signal.h>
+    #include <sys/types.h>
+    #include <sys/wait.h>
 #endif
 
 #include <cerrno>
@@ -24,26 +22,15 @@
 #include <cstring>
 #include <format>
 #include <sys/stat.h>
-
 #include <chrono>
 #include <thread>
-
-#ifndef _WIN32
-#include <signal.h>
-#include <sys/wait.h>
-#endif
-
 #include <atomic>
 #include <mutex>
 #include <vector>
-
 #include <algorithm>
 #include <cctype> // for std::isspace
 #include <deque>
-
 #include <string>
-
-#include <deque>
 #include <sstream>
 
 #include "globals.h"
@@ -540,7 +527,7 @@ typedef struct
     struct dirent *next;
 } DIR;
 #define DT_DIR 0x01
-const char *GetLastErrorMsg(void)
+static const char *GetLastErrorMsg(void)
 {
     static unsigned int lock = 0;
     std::unique_lock<std::shared_mutex> wlock(
@@ -563,7 +550,7 @@ const char *GetLastErrorMsg(void)
     LocalFree(lpMsgBuf);
     return szBuf;
 }
-DIR *opendir(const char *dirname)
+static DIR *opendir(const char *dirname)
 {
     WIN32_FIND_DATA fd;
     char search[MAX_PATH];
@@ -612,14 +599,14 @@ DIR *opendir(const char *dirname)
     FindClose(dh);
     return dirp;
 }
-struct dirent *readdir(DIR *dirp)
+static struct dirent *readdir(DIR *dirp)
 {
     struct dirent *dp = dirp->next;
     if (dp)
         dirp->next = dp->next;
     return dp;
 }
-int closedir(DIR *dirp)
+static int closedir(DIR *dirp)
 {
     struct dirent *dp = dirp->first;
     while (dp != nullptr)
@@ -631,10 +618,6 @@ int closedir(DIR *dirp)
     }
     return 0;
 }
-#define WIFEXITED(X) (X >= 0 && X < 128)
-#define WEXITSTATUS(X) (X & 127)
-#define WTERMSIG(X) (X & 127)
-#define WIFSIGNALED(X) ((X) >= 128)
 #endif
 
 /** command line arguments that are passed to test runs */
@@ -663,9 +646,8 @@ static int vsystem(const char *fmt, ...)
 static constexpr int DEFAULT_TEST_TIMEOUT_SECONDS = 2000;
 
 #ifdef _WIN32
-#include <windows.h>
 
-int vsystem_posix_exec_argv_capture(
+static int vsystem_posix_exec_argv_capture(
     const std::vector<std::string> &argv, const std::string &out_path,
     const std::string &err_path,
     int timeout_seconds = DEFAULT_TEST_TIMEOUT_SECONDS)
@@ -764,7 +746,8 @@ int vsystem_posix_exec_argv_capture(
 
 // replace vsystem_posix() with an argv-based exec
 #ifndef _WIN32
-int vsystem_posix_exec_argv(const std::vector<std::string> &argv)
+
+static int vsystem_posix_exec_argv(const std::vector<std::string> &argv)
 {
     pid_t pid = fork();
     if (pid == -1)
@@ -812,7 +795,7 @@ static void forward_fd_to_file(int fd, const std::string &path)
     std::fclose(fp);
 }
 
-int vsystem_posix_exec_argv_capture(
+static int vsystem_posix_exec_argv_capture(
     const std::vector<std::string> &argv, const std::string &out_path,
     const std::string &err_path,
     int timeout_seconds = DEFAULT_TEST_TIMEOUT_SECONDS)
@@ -910,7 +893,7 @@ int vsystem_posix_exec_argv_capture(
 
 // A simple signal handler for SIGCHLD.
 // Its only purpose is to catch the signal so we can control its behavior.
-void sigchld_handler(int sig)
+static void sigchld_handler(int sig)
 {
     // The OS will still reap the terminated child process.
     // By catching the signal, we prevent it from interrupting blocking calls
@@ -921,7 +904,7 @@ void sigchld_handler(int sig)
 
 // A robust vsystem implementation for POSIX systems (macOS, Linux)
 // that correctly returns the child process's wait status.
-int vsystem_posix(const char *command)
+static int vsystem_posix(const char *command)
 {
     pid_t pid = fork();
 
@@ -1072,7 +1055,6 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
     }
 #ifdef _WIN32
     if ((0 != mkdir(dir)) && clean)
-
 #else
     if ((0 != mkdir(dir, 0750)) && clean)
 #endif
@@ -1444,7 +1426,7 @@ static DIRLIST *popdir(void)
     return item;
 }
 
-void *(run_test_proc)(int arg) // *arg)
+static void *(run_test_proc)(int arg) // *arg)
 {
     size_t id = (size_t)arg;
     output_debug("starting run_test_proc id %d", id);
@@ -1548,7 +1530,7 @@ static size_t process_dir(const char *path, bool runglms = false)
     return count;
 }
 
-char *encode_result(std::atomic<char> *data, size_t sz)
+static char *encode_result(std::atomic<char> *data, size_t sz)
 {
     char *result = (char *)malloc(sz * 2 + 1); // Correct size
     if (result == NULL)

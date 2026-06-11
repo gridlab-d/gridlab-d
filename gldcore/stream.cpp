@@ -311,7 +311,7 @@ size_t stream(void *ptr,   ///< pointer to buffer
 #ifdef _DEBUG
     if (is_str)
       len = strlen((char *)ptr);
-    unsigned int a = fprintf(fp, "%d ", len);
+    unsigned int a = fprintf(fp, "%zd ", len);
     if (a < 0)
       throw;
     unsigned int i;

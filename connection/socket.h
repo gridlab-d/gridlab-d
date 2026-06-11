@@ -7,29 +7,23 @@
 #define _SOCKET_H
 
 #ifdef _WIN32
-
-// conflict for use of int64 in winsock2.h
-#ifdef int64
-#undef int64
-#endif
-
-#include <winsock2.h>
-
-#define int64 __int64 /**< Win32 version of 64-bit integers */
-typedef int socklen_t;
-
-#else // WIN32
-
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/errno.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#define SOCKET int
-#define INVALID_SOCKET (~0)
-#define SOCKET_ERROR (-1)
-
+    // conflict for use of int64 in winsock2.h
+    #ifdef int64
+        #undef int64
+    #endif
+    #include <winsock2.h>
+    #define int64 __int64 /**< Win32 version of 64-bit integers */
+    typedef int socklen_t;
+#else // LINUX
+    #include <arpa/inet.h>
+    #include <netinet/in.h>
+    #include <sys/errno.h>
+    #include <sys/socket.h>
+    #include <sys/types.h>
+    #include <unistd.h>
+    #define SOCKET int
+    #define INVALID_SOCKET (~0)
+    #define SOCKET_ERROR (-1)
 #endif // WIN32
 
 class Socket {
