@@ -215,19 +215,9 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
     }
 }
 
-static bool checkpoint_replay_active_now()
-{
-    char replay_active[16] = {0};
-    char *value = gl_global_getvar("checkpoint_replay_active", replay_active, sizeof(replay_active));
-    return value != nullptr && atoi(value) != 0;
-}
-
 int double_assert::postnotify(PROPERTY *prop, char *value)
 {
-    if (!checkpoint_replay_active_now() && once == ONCE_DONE && strcmp(prop->name, "value") == 0)
-    {
-        once = ONCE_TRUE;
-    }
+    // Nothing to do here, return success
     return 1;
 }
 

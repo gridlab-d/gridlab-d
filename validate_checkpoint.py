@@ -49,6 +49,8 @@ IGNORED_CHECKPOINT_FIELD_NAMES = {
     "checkpoint_loaded",
     "randomseed",
     "rng_state",
+    "starttime",
+    "nexttime"
 }
 
 IGNORED_CHECKPOINT_PATHS = {
