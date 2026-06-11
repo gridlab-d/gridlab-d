@@ -149,8 +149,7 @@ int range::create()
 	int res = residential_enduse::create();
 
 	// initialize public values
-	
-	
+
 	oven_diameter = 1.5;  // All heaters are 1.5-ft wide for now...
 	Tinlet = 60.0;		// default set here, but published by the model for users to set this value
 	oven_demand = 0.0;	
@@ -175,10 +174,8 @@ int range::create()
 	food_density = 5;
 	specificheat_food = 1;
 	time_oven_setting = 3600;
-	
 
 	enduse_queue_oven = 0.85;
-
 
 	// location...mostly in garage, a few inside...
 	location = gl_random_bernoulli(&hdr->rng_state,0.80) ? GARAGE : INSIDE;
@@ -228,22 +225,28 @@ int range::create()
 	enduse_queue_cooktop = 0.99;
 
 	return res;
-
 }
 
-/** Shared initialization for both normal init and checkpoint restore
- **/
-int range::shared_init(OBJECT *parent)
+/** Initialize oven model properties - randomized defaults for all published variables **/
+int range::init(OBJECT *parent)
 {
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
+	
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("range::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
+
+	hdr->flags |= OF_SKIPSAFE;
+
 	static double sTair = 74;
 	static double sTout = 68;
 
@@ -261,32 +264,6 @@ int range::shared_init(OBJECT *parent)
 		pTout = &sTout;
 		gl_warning("range parent lacks \'outside_temperature\' property, using default");
 	}
-	return 1;
-}
-
-/** Called when restoring from checkpoint to reinitialize non-published variables
- **/
-int range::checkpoint_init(OBJECT *parent)
-{
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
-/** Initialize oven model properties - randomized defaults for all published variables
- **/
-int range::init(OBJECT *parent)
-{
-	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
-	
-	OBJECT *hdr = object_header(this);
-	hdr->flags |= OF_SKIPSAFE;
-
-	if (heat_fraction==0) heat_fraction = 0.2;
-
-	// Initialize pointers and other non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
 
 	/* sanity checks */
 	/* initialize oven volume */
@@ -1275,7 +1252,7 @@ EXPORT int create_range(OBJECT **obj, OBJECT *parent)
 	if (*obj!=nullptr)
 	{
 		range *my = object_data<range>(*obj);;
-		gl_set_parent(*obj,parent);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -1297,12 +1274,8 @@ EXPORT int isa_range(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT int checkpoint_init_range(OBJECT *obj)
-{
-	return object_data<range>(obj)->checkpoint_init(obj->parent);
-}
 
-EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_range_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	range *my = object_data<range>(obj);
 	if (obj->clock <= ROUNDOFF)
@@ -1333,6 +1306,22 @@ EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return TS_INVALID;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_range_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_range(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_range_impl(obj, t0, pass);
+}
+#endif
+
 EXPORT int commit_range(OBJECT *obj)
 {
 	range *my = object_data<range>(obj);
@@ -1353,16 +1342,5 @@ EXPORT TIMESTAMP plc_range(OBJECT *obj, TIMESTAMP t0)
 	return TS_NEVER;  
 }
 
-/** $Id: range.cpp 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file range.cpp
-	@addtogroup range Electric range
-	@ingroup residential
-
-	The residential electric range uses a hybrid thermal model that is capable
-	of tracking a single-mass of food.
-
- @{
- **/
 /**@}**/
 

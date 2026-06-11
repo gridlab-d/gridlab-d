@@ -21,11 +21,13 @@ public:
 			ON=1,					///< microwave is on
 	} state;					///< microwave state
 	double cycle_time;
+
 private:
 	double runtime;				///< current runtime (expected time in ON state)
 	double state_time;			///< time in current state
 	double prev_demand;			///< previous demand
 	TIMESTAMP cycle_start, cycle_on, cycle_off;
+
 public:
 	static CLASS *oclass, *pclass;
 	static microwave *defaults;
@@ -35,8 +37,6 @@ public:
 	int create();
 	void init_noshape();
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
-	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	double update_state(double dt=0.0);

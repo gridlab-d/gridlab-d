@@ -16,18 +16,14 @@ class range : public residential_enduse {
 private:
 	double standby_load;	///< typical power loss through thermal jacket losses (UA 2, 60 to 140 degF, 160 BTU/hr, 47W, 411kWh/year, ~10% energy star guesstimate)
 public:
-
-		typedef enum e_state {	
-						
-			CT_STOPPED=1,				///<cooktop is stopped
-			CT_STAGE_1_ONLY=2,			///<cooktop is running with stage 1 settings
-			CT_STAGE_2_ONLY=3,			///<cooktop is running with stage 2 settings
-			CT_STAGE_3_ONLY=4,			///<cooktop is running with stage 3 settings
-			CT_STALLED=5,				///<cooktop is stalled
-			CT_TRIPPED=6,				///<cooktop is tripped
+    typedef enum e_state {
+        CT_STOPPED=1,				///<cooktop is stopped
+        CT_STAGE_1_ONLY=2,			///<cooktop is running with stage 1 settings
+        CT_STAGE_2_ONLY=3,			///<cooktop is running with stage 2 settings
+        CT_STAGE_3_ONLY=4,			///<cooktop is running with stage 3 settings
+        CT_STALLED=5,				///<cooktop is stalled
+        CT_TRIPPED=6,				///<cooktop is tripped
 	} STATE;							///<control state
-
-
 
 	typedef enum {
 		ONENODE,	///< range model uses a single zone
@@ -87,7 +83,6 @@ public:
 	double time_cooktop_operation;
 	double time_cooktop_setting;
 	bool cooktop_check;
-	
 
 	double total_power_oven;        ///<total power usage in oven
 	double total_power_cooktop;		///<total power usage in cooktop
@@ -155,8 +150,6 @@ public:
 	~range(void);
 	int create();
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
-	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	void thermostat(TIMESTAMP t0, TIMESTAMP t1);					// Thermostat plc control code - determines whether to heat...
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);

@@ -476,8 +476,6 @@ private:
 	CIRCUIT *pHVAC_EnduseLoad;
 	void dump_house_parameters_function(void);
 
-	int shared_init(OBJECT *parent); ///<Shared initialization for non-published variables used by both checkpoint_init and init
-
 public:
 	int error_flag;
 	static CLASS *oclass, *pclass;
@@ -498,7 +496,6 @@ public:
 	void update_Tevent(void);
 
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
 	int init_climate(void);
 	int isa(char *classname);
 

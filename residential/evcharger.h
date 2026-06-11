@@ -49,6 +49,7 @@ class evcharger : public residential_enduse
 		VT_ELECTRIC=0,				///< vehicle is pure electric (no long trips)
 		VT_HYBRID=1,				///< vehicle is hybrid (long trip possible)
 	} VEHICLETYPE;
+
 private:
 	EVDEMAND *pDemand;				///< ref demand profile for this vehicle
 
@@ -88,8 +89,6 @@ public:
 	~evcharger();
 	int create();
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
-	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	double update_state(double dt=0.0);

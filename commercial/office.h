@@ -1,8 +1,8 @@
 /** $Id: office.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file office.h
-	@addtogroup office 
-	@ingroup commercial
+        Copyright (C) 2008 Battelle Memorial Institute
+        @file office.h
+        @addtogroup office
+        @ingroup commercial
  @{
  **/
 
@@ -15,15 +15,15 @@ class multizone;
 
 /* each electric load must have an enduse member */
 typedef struct s_endusex {
-	double power_factor;		/**< ENDUSE power factor */
-	gld::complex energy;				/**< ENDUSE cumulative energy (Wh) */
-	gld::complex power;				/**< ENDUSE power (W) */
-	gld::complex demand;				/**< ENDUSE peak power demand (W) */
-	gld::complex constant_power;		/**< ENDUSE constant power part*/
-	gld::complex constant_current;	/**< ENDUSE constant current part*/
-	gld::complex constant_admittance;	/**< ENDUSE addmittance part*/
-	double heatgain;
-	double heatgain_fraction;
+  double power_factor;              /**< ENDUSE power factor */
+  gld::complex energy;              /**< ENDUSE cumulative energy (Wh) */
+  gld::complex power;               /**< ENDUSE power (W) */
+  gld::complex demand;              /**< ENDUSE peak power demand (W) */
+  gld::complex constant_power;      /**< ENDUSE constant power part*/
+  gld::complex constant_current;    /**< ENDUSE constant current part*/
+  gld::complex constant_admittance; /**< ENDUSE addmittance part*/
+  double heatgain;
+  double heatgain_fraction;
 } ENDUSE;
 
 /*****************************************************
@@ -31,199 +31,214 @@ typedef struct s_endusex {
  *****************************************************/
 /* HVAC has three mode */
 typedef enum {
-	HC_OFF,						/**< HVAC is off */
-	HC_HEAT,					/**< HVAC is heating */
-	HC_AUX,						/**< HVAC is supplemental heating */
-	HC_COOL,					/**< HVAC is cooling */
-	HC_ECON,					/**< HVAC is economizing */
-	HC_VENT,					/**< HVAC is ventilating */
+  HC_OFF,  /**< HVAC is off */
+  HC_HEAT, /**< HVAC is heating */
+  HC_AUX,  /**< HVAC is supplemental heating */
+  HC_COOL, /**< HVAC is cooling */
+  HC_ECON, /**< HVAC is economizing */
+  HC_VENT, /**< HVAC is ventilating */
 } HCMODE;
 
 /* HVAC design parameters */
 typedef struct s_hvacdesign {
-	double design_temperature;	/**< design temperature (F) */
-	double balance_temperature;	/**< balance temperature (F) */
-	double efficiency;			/**< BTU output efficiency (BTU/W) */
-	double cop;					/**< coefficient of performance (pu) */
-	double capacity;			/**< BTU capacity (constant portion) */
-	double capacity_perF;		/**< BTU capacity (temperature dependent portion) */
+  double design_temperature;  /**< design temperature (F) */
+  double balance_temperature; /**< balance temperature (F) */
+  double efficiency;          /**< BTU output efficiency (BTU/W) */
+  double cop;                 /**< coefficient of performance (pu) */
+  double capacity;            /**< BTU capacity (constant portion) */
+  double capacity_perF; /**< BTU capacity (temperature dependent portion) */
 } HVACDESIGN;
 
 /* HVAC load */
 typedef struct s_hvac {
-	ENDUSE enduse;				/**< HVAC enduse data */
-	HCMODE mode;				/**< HVAC mode */
-	HVACDESIGN cooling;			/**< HVAC cooling data */
-	HVACDESIGN heating;			/**< HVAC heating data */
-	double minimum_ach;			/**< minimum air-changes per hour needed when occupied */
+  ENDUSE enduse;      /**< HVAC enduse data */
+  HCMODE mode;        /**< HVAC mode */
+  HVACDESIGN cooling; /**< HVAC cooling data */
+  HVACDESIGN heating; /**< HVAC heating data */
+  double minimum_ach; /**< minimum air-changes per hour needed when occupied */
 } HVAC;
 
 /*****************************************************
  ENDUSE: LIGHTING
  *****************************************************/
 typedef struct s_lighting {
-	ENDUSE enduse;				/**< LIGHTS enduse data */
-	double capacity;			/**< LIGHTS capacity (W) */
-	double fraction;			/**< LIGHTS fraction (puW) */
+  ENDUSE enduse;   /**< LIGHTS enduse data */
+  double capacity; /**< LIGHTS capacity (W) */
+  double fraction; /**< LIGHTS fraction (puW) */
 } LIGHTS;
 
 /*****************************************************
  ENDUSE: PLUGS
  *****************************************************/
 typedef struct s_plugs {
-	ENDUSE enduse;				/**< PLUGS enduse data */
-	double capacity;			/**< PLUGS capacity (W) */
-	double fraction;			/**< PLUGS fraction (puW) */
+  ENDUSE enduse;   /**< PLUGS enduse data */
+  double capacity; /**< PLUGS capacity (W) */
+  double fraction; /**< PLUGS fraction (puW) */
 } PLUGS;
 
 /*****************************************************
  Prevailing conditions
  *****************************************************/
 typedef struct s_conditions {
-	double *pTemperature;		/**< output temperature (F) */
-	double *pHumidity;			/**< relative humidity */
-	double *pSolar;				/**< solar radiation (BTU/h) */
-	double out_temp;			/**< outside air temperature (F) */
-	double air_temperature;		/**< indoor air temperature (F) */
-	double mass_temperature;	/**< indoor mass temperature (F) */
-	double occupancy;			/**< number of people */
-	double temperature_change;	/**< change in temperature (F/h) */
+  double *pTemperature;      /**< output temperature (F) */
+  double *pHumidity;         /**< relative humidity */
+  double *pSolar;            /**< solar radiation (BTU/h) */
+  double out_temp;           /**< outside air temperature (F) */
+  double air_temperature;    /**< indoor air temperature (F) */
+  double mass_temperature;   /**< indoor mass temperature (F) */
+  double occupancy;          /**< number of people */
+  double temperature_change; /**< change in temperature (F/h) */
 } CONDITIONS;
 
 /*****************************************************
  Controls
  *****************************************************/
 typedef struct s_controls {
-	double cooling_setpoint;		/**< cooling setpoint (F) */
-	double economizer_cutin;		/**< outdoor temperature at which economizer starts (F) */
-	double heating_setpoint;		/**< heating setpoint (F) */
-	double auxiliary_cutin;			/**< temperature difference at which aux heat starts (F) */
-	double setpoint_deadband;		/**< deadband temperature (F) */
-	double ventilation_fraction;	/**< ventilation fraction (pu) */
-	double lighting_fraction;		/**< lighting fraction (pu) */
+  double cooling_setpoint;  /**< cooling setpoint (F) */
+  double economizer_cutin;  /**< outdoor temperature at which economizer starts
+                               (F) */
+  double heating_setpoint;  /**< heating setpoint (F) */
+  double auxiliary_cutin;   /**< temperature difference at which aux heat starts
+                               (F) */
+  double setpoint_deadband; /**< deadband temperature (F) */
+  double ventilation_fraction; /**< ventilation fraction (pu) */
+  double lighting_fraction;    /**< lighting fraction (pu) */
 } CONTROLS;
 
 /*****************************************************
  Zone information
  *****************************************************/
 typedef struct s_zonedata {
-	struct {
-		double floor_area;		/**< total floor area (sf) */
-		double floor_height;	/**< floor-ceiling height (ft) */
-		double exterior_ua;		/**< exterior wall UA (BTU/F.h) */
-		double interior_ua;		/**< interior mass UA (BTU/F.h) */
-		double interior_mass;	/**< interior mass (BTU/F) */
-		double window_area[9];	/**< windows areas (sf); see climate::CLTD for index order */
-		double glazing_coeff;	/**< windows glazing coefficient (pu) */
-		double occupants;		/**< occupants design capacity */
-		char256 schedule;		/**< occupancy schedule (e.g., "ddd hhh; ddd hhh..." */
-	} design;
-	HVAC hvac;					/**< HVAC enduse */
-	LIGHTS lights;				/**< LIGHTS enduse */
-	PLUGS plugs;				/**< PLUGS enduse */
-	ENDUSE total;				/**< total enduses */
-	CONDITIONS current;			/**< current conditions */
-	CONTROLS control;			/**< controllers */
+  struct {
+    double floor_area;     /**< total floor area (sf) */
+    double floor_height;   /**< floor-ceiling height (ft) */
+    double exterior_ua;    /**< exterior wall UA (BTU/F.h) */
+    double interior_ua;    /**< interior mass UA (BTU/F.h) */
+    double interior_mass;  /**< interior mass (BTU/F) */
+    double window_area[9]; /**< windows areas (sf); see climate::CLTD for index
+                              order */
+    double glazing_coeff;  /**< windows glazing coefficient (pu) */
+    double occupants;      /**< occupants design capacity */
+    char256 schedule; /**< occupancy schedule (e.g., "ddd hhh; ddd hhh..." */
+  } design;
+  HVAC hvac;          /**< HVAC enduse */
+  LIGHTS lights;      /**< LIGHTS enduse */
+  PLUGS plugs;        /**< PLUGS enduse */
+  ENDUSE total;       /**< total enduses */
+  CONDITIONS current; /**< current conditions */
+  CONTROLS control;   /**< controllers */
 } ZONEDATA;
 
 class office : public gld_object {
-	//GL_STRUCT(ZONEDATA,zone);
+  // GL_STRUCT(ZONEDATA,zone);
 public:
-	static double warn_low_temp;
-	static double warn_high_temp;
-	static bool warn_control;
+  static double warn_low_temp;
+  static double warn_high_temp;
+  static bool warn_control;
+
 public:
-	/* buffers */
-#define SET_OCCUPIED(D,H) (occupied[H]|=(1<<D)) /* Sunday=0, ..., Holiday=7 */
-#define CLR_OCCUPIED(D,H) (occupied[H]&=~(1<<D))
-#define IS_OCCUPIED(D,H) ((occupied[H]&(1<<D))?1:0)
-	char occupied[24];		/**< internal bitmap buffer for occupancy schedule */
-	gld::complex *pVoltage;
-	gld::complex *pCurrent;
+  /* buffers */
+#define SET_OCCUPIED(D, H)                                                     \
+  (occupied[H] |= (1 << D)) /* Sunday=0, ..., Holiday=7 */
+#define CLR_OCCUPIED(D, H) (occupied[H] &= ~(1 << D))
+#define IS_OCCUPIED(D, H) ((occupied[H] & (1 << D)) ? 1 : 0)
+  char occupied[24]; /**< internal bitmap buffer for occupancy schedule */
+  gld::complex *pVoltage;
+  gld::complex *pCurrent;
+
 private:
-	double TcoolOn, TcoolOff; // hvac cooling on, off temperature [degF]
-	double TheatOn, TheatOff; // hvac heating on, off temperature [degF]
-	double cop;
-	double Qi, Qh, Qs, Qz; // heating gains: plugs/lights, hvac, solar, multi-zone
-	double Teq, Tevent;
-	double r1, r2, k1, k2;
-	double c1, c2, c3, c4, c5, c6, c7, dTi;
-	void update_control_setpoints();
-	TIMESTAMP update_lighting(TIMESTAMP t1);
-	TIMESTAMP update_plugs(TIMESTAMP t1);
-	double update_hvac();
-public:
-	static CLASS *oclass;
-	static office *defaults;
-	office(MODULE *module);
-	int create();
-	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t1);
-	inline TIMESTAMP postsync(TIMESTAMP t1) { return TS_NEVER; };
-	TIMESTAMP plc(TIMESTAMP t1);
-
-	friend class multizone;
+  double TcoolOn, TcoolOff; // hvac cooling on, off temperature [degF]
+  double TheatOn, TheatOff; // hvac heating on, off temperature [degF]
+  double cop;
+  double Qi, Qh, Qs, Qz; // heating gains: plugs/lights, hvac, solar, multi-zone
+  double Teq, Tevent;
+  double r1, r2, k1, k2;
+  double c1, c2, c3, c4, c5, c6, c7, dTi;
+  void update_control_setpoints();
+  TIMESTAMP update_lighting(TIMESTAMP t1);
+  TIMESTAMP update_plugs(TIMESTAMP t1);
+  double update_hvac();
 
 public:
-	static inline office* get_defaults() {
-		if (!defaults) {
-			defaults = new office(); // Initialize lazily
-		}
-		return defaults;
-	}
+  static CLASS *oclass;
+  static office *defaults;
+  office(MODULE *module);
+  int create();
+  int init(OBJECT *parent);
+  TIMESTAMP presync(TIMESTAMP t1);
+  TIMESTAMP sync(TIMESTAMP t1);
+  inline TIMESTAMP postsync(TIMESTAMP t1) { return TS_NEVER; };
+  TIMESTAMP plc(TIMESTAMP t1);
 
-	office() {}
-	~office() { if (defaults) delete defaults; }
+  friend class multizone;
+
+public:
+  static inline office *get_defaults() {
+    if (!defaults) {
+      defaults = new office(); // Initialize lazily
+    }
+    return defaults;
+  }
+
+  office() {}
+  ~office() {
+    if (defaults)
+      delete defaults;
+  }
 
 protected:
-	ZONEDATA zone; // Member variable of type `ZONEDATA`.
+  ZONEDATA zone; // Member variable of type `ZONEDATA`.
 
 public:
-	// Static inline method to get the byte offset of the member `zone`.
-	static inline size_t get_zone_offset(void) {
-		office* current_defaults = get_defaults();
-		return reinterpret_cast<const char*>(&(current_defaults->zone)) -
-			reinterpret_cast<const char*>(current_defaults);
-	}
+  // Static inline method to get the byte offset of the member `zone`.
+  static inline size_t get_zone_offset(void) {
+    office *current_defaults = get_defaults();
+    return reinterpret_cast<const char *>(&(current_defaults->zone)) -
+           reinterpret_cast<const char *>(current_defaults);
+  }
 
-	// Inline function to get the value of `zone` with thread safety.
-	inline ZONEDATA get_zone(void) {
-		auto& mtx = SharedMutexManager::get_mutex(my());
-		std::shared_lock<std::shared_mutex> lock(mtx); // Shared lock for read access
-		return zone;
-	}
+  // Inline function to get the value of `zone` with thread safety.
+  inline ZONEDATA get_zone(void) {
+    auto &mtx = SharedMutexManager::get_mutex(my());
+    std::shared_lock<std::shared_mutex> lock(
+        mtx); // Shared lock for read access
+    return zone;
+  }
 
-	// Inline method to return a gld_property object for `zone`.
-	inline gld_property get_zone_property(void) {
-		return gld_property(my(), std::string("zone").c_str());
-	}
+  // Inline method to return a gld_property object for `zone`.
+  inline gld_property get_zone_property(void) {
+    return gld_property(my(), std::string("zone").c_str());
+  }
 
-	// Inline method to get the string representation of the `zone` property.
-	inline gld_string get_zone_string(void) {
-		return get_zone_property().get_string();
-	}
+  // Inline method to get the string representation of the `zone` property.
+  inline gld_string get_zone_string(void) {
+    return get_zone_property().get_string();
+  }
 
-	// Inline method to set the `zone` property from a provided string with thread safety.
-	inline void set_zone(char* str) {
-		auto& mtx = SharedMutexManager::get_mutex(my());
-		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
-		get_zone_property().from_string(str);
-	}
+  // Inline method to set the `zone` property from a provided string with thread
+  // safety.
+  inline void set_zone(char *str) {
+    auto &mtx = SharedMutexManager::get_mutex(my());
+    std::unique_lock<std::shared_mutex> lock(
+        mtx); // Exclusive lock for write access
+    get_zone_property().from_string(str);
+  }
 
-	inline void set_zone(const std::string& str) {
-		auto& mtx = SharedMutexManager::get_mutex(my());
-		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
-		get_zone_property().from_string(const_cast<char*>(str.c_str()));
-	}
+  inline void set_zone(const std::string &str) {
+    auto &mtx = SharedMutexManager::get_mutex(my());
+    std::unique_lock<std::shared_mutex> lock(
+        mtx); // Exclusive lock for write access
+    get_zone_property().from_string(const_cast<char *>(str.c_str()));
+  }
 
-	// Inline method to set the `zone` property directly using a `ZONEDATA` object.
-	inline void set_zone(ZONEDATA p) {
-		auto& mtx = SharedMutexManager::get_mutex(my());
-		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
-		zone = p;
-	}
-
+  // Inline method to set the `zone` property directly using a `ZONEDATA`
+  // object.
+  inline void set_zone(ZONEDATA p) {
+    auto &mtx = SharedMutexManager::get_mutex(my());
+    std::unique_lock<std::shared_mutex> lock(
+        mtx); // Exclusive lock for write access
+    zone = p;
+  }
 };
 
 #endif

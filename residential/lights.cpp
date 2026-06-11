@@ -106,39 +106,21 @@ int lights::create(void)
 	return res;
 }
 
-int lights::shared_init(OBJECT *parent)
-{
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+int lights::init(OBJECT *parent) {
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent;
+#endif
+
+    if (parent != nullptr) {
+        if ((parent->flags & OF_INIT) != OF_INIT) {
 			char objname[256];
 			gl_verbose("lights::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	// These variables need initialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	// (lights class has no non-published variables at this time)
-	return 1;
-}
-
-int lights::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
-int lights::init(OBJECT *parent)
-{
-	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	
-	OBJECT *hdr = object_header(this);
-	hdr->flags |= OF_SKIPSAFE;
+    hdr->flags |= OF_SKIPSAFE;
 
 	// check the load configuration before initializing the parent class
 	if(shape.load > 1.0)
@@ -285,7 +267,6 @@ EXPORT int create_lights(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			lights *my = object_data<lights>(*obj);
-			gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -312,21 +293,41 @@ EXPORT int isa_lights(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT int checkpoint_init_lights(OBJECT *obj)
-{
-	lights *my = object_data<lights>(obj);
-	return my->checkpoint_init(obj->parent);
+static TIMESTAMP sync_lights_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
+    try {
+        lights *my = object_data<lights>(obj);
+        TIMESTAMP t2 = TS_NEVER;
+        switch (pass) {
+            case PC_PRETOPDOWN:
+                break;
+            case PC_BOTTOMUP:
+                t2 = my->sync(obj->clock, t1);
+                obj->clock = t1;
+                break;
+            case PC_POSTTOPDOWN:
+                break;
+            default:
+                gl_error("lights::sync- invalid pass configuration");
+                t2 = TS_INVALID; // serious error in exec.c
+        }
+        return t2;
+    }
+    SYNC_CATCHALL(lights);
 }
 
-EXPORT TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t1)
-{
-	try {
-		lights *my = object_data<lights>(obj);
-		TIMESTAMP t2 = my->sync(obj->clock, t1);
-		obj->clock = t1;
-		return t2;
-	}
-	SYNC_CATCHALL(lights);
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+    return sync_lights_impl(obj, t0, pass);
 }
+#else
+extern "C" MODULE_API TIMESTAMP sync_lights(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_lights_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

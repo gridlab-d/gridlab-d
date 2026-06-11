@@ -136,6 +136,11 @@ int sec_control::create(void)
 int sec_control::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+  parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	STATUS fxn_return_status;
 
 	// Deferred initialization code
@@ -1223,7 +1228,7 @@ EXPORT int create_sec_control(OBJECT **obj, OBJECT *parent)
 		if (*obj != NULL)
 		{
 			sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -1244,10 +1249,10 @@ EXPORT int init_sec_control(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(sec_control);
 }
 
-EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_sec_control_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj);
+	sec_control *my = object_data<sec_control>(obj);
 	try
 	{
 		switch (pass)
@@ -1272,14 +1277,31 @@ EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	return t2;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+    return sync_sec_control_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_sec_control(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_sec_control_impl(obj, t1, pass);
+}
+#endif
+
+
 EXPORT int isa_sec_control(OBJECT *obj, char *classname)
 {
-	return /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj)->isa(classname);
+	return object_data<sec_control>(obj)->isa(classname);
 }
 
 EXPORT STATUS preupdate_sec_control(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
-	sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj);
+	sec_control *my = object_data<sec_control>(obj);
 	STATUS status_output = FAILED;
 
 	try
@@ -1296,7 +1318,7 @@ EXPORT STATUS preupdate_sec_control(OBJECT *obj, TIMESTAMP t0, unsigned int64 de
 
 EXPORT SIMULATIONMODE interupdate_sec_control(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj);
+	sec_control *my = object_data<sec_control>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1312,7 +1334,7 @@ EXPORT SIMULATIONMODE interupdate_sec_control(OBJECT *obj, unsigned int64 delta_
 
 EXPORT STATUS postupdate_sec_control(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj);
+	sec_control *my = object_data<sec_control>(obj);
 	STATUS status = FAILED;
 	try
 	{

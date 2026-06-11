@@ -64,6 +64,7 @@ private:
 	bool climate_object_found;
 
 	void push_powerflow_currents(void);
+
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
@@ -121,7 +122,6 @@ public:
 	};
 	enumeration battery_state;
 
-		
 	double power_set_high;
 	double power_set_low;
 	double power_set_high_highT;
@@ -154,7 +154,6 @@ public:
 	double b_soc_reserve;
 
 	TIMESTAMP state_change_time;
-
 
 	//battery module parameters
 	double v_max; //the maximum DC voltage of the battery in V
@@ -216,6 +215,7 @@ public:
 
 	gld_property *map_complex_value(OBJECT *obj, const char *name);
 	gld_property *map_double_value(OBJECT *obj, const char *name);
+
 public:
 	static CLASS *oclass;
 	static battery *defaults;

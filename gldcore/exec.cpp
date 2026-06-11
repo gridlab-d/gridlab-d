@@ -101,30 +101,50 @@
 #include <set>
 #include <thread>
 #include <vector>
-
-#ifdef _WIN32
-#include <direct.h>
-#include <winbase.h>
-#include <winsock2.h>
-#else
-#include <algorithm>
-#include <arpa/inet.h>
-#include <cerrno>
 #include <chrono>
-#include <cmath>
-#include <list>
-#include <netinet/in.h>
-#include <ratio>
-#include <set>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <map>
+#include <nlohmann/json.hpp>
+#include <sstream>
+#include <string>
 #include <vector>
 
-#define SOCKET int
-#define INVALID_SOCKET (-1)
-#define closesocket close
+#include "compile.h"
+
+#ifdef _WIN32
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
+    #define WEXITSTATUS(X) (X & 127)
+
+    // if you use modern TCP/IP helpers
+    #include <ws2tcpip.h>
+    // CRT utils on Windows
+    #include <direct.h>
+#else
+    #include <algorithm>
+    #include <arpa/inet.h>
+    #include <cerrno>
+    #include <chrono>
+    #include <cmath>
+    #include <list>
+    #include <netinet/in.h>
+    #include <ratio>
+    #include <set>
+    #include <sys/socket.h>
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <unistd.h>
+    #include <vector>
+
+    #define SOCKET int
+    #define INVALID_SOCKET (-1)
+    #define closesocket close
 #endif
 
 #include "class.h"
@@ -142,7 +162,6 @@
 #include "linkage.h"
 #include "loadshape.h"
 #include "local.h"
-#include "lock.h"
 #include "module.h"
 #include "object.h"
 #include "output.h"
@@ -153,20 +172,9 @@
 #include "stream.h"
 #include "test.h"
 #include "transform.h"
-#include <fstream>
-#include <map>
-#include <nlohmann/json.hpp>
-#include <sstream>
-#include <string>
-#include <vector>
-
 #include "cpp_threadpool.h"
 
 using namespace std::literals;
-
-#ifdef _WIN32
-#define WEXITSTATUS(X) (X & 127)
-#endif
 
 // Only setup threadpool for each object rank list at the first iteration;
 cpp_threadpool *threadpool;
@@ -1075,7 +1083,7 @@ static void ss_do_object_sync(int thread, void *item)
                     sprintf(objname, "%s:%d", obj->oclass->name, obj->id);
                 else
                     strcpy(objname, obj->name);
-                fprintf(fp, "%s,%s,%d,%d,%s,%s\n", lastdate, passname,
+                fprintf(fp, "%s,%s,%d,%d,%s,%s\n", lastdate, passname.c_str(),
                         global_iteration_limit - iteration_counter, thread, objname,
                         syncdate);
             }
@@ -1246,14 +1254,11 @@ static int init_by_deferral_retry(std::vector<OBJECT *> &def_array, int def_ct)
                 break;
             case 1:
             {
-                // wlock(&obj->lock);
-                // replace the above with SharedMutexManager
                 std::unique_lock<std::shared_mutex> write_lock(
                     SharedMutexManager::get_mutex(&obj->lock));
 
                 obj->flags |= OF_INIT;
                 obj->flags -= OF_DEFERRED;
-                // wunlock(&obj->lock);
                 write_lock.unlock();
                 break;
             }
@@ -1360,12 +1365,9 @@ static int init_by_deferral()
             break;
         case 1:
         {
-            // wlock(&obj->lock);
-            // replace the above with SharedMutexManager
             std::unique_lock<std::shared_mutex> write_lock(
                 SharedMutexManager::get_mutex(&obj->lock));
             obj->flags |= OF_INIT;
-            // wunlock(&obj->lock);
             write_lock.unlock();
             break;
         }
@@ -1373,12 +1375,9 @@ static int init_by_deferral()
         {
             def_array[def_ct] = obj;
             ++def_ct;
-            // wlock(&obj->lock);
-            // replace the above with SharedMutexManager
             std::unique_lock<std::shared_mutex> write_lock2(
                 SharedMutexManager::get_mutex(&obj->lock));
             obj->flags |= OF_DEFERRED;
-            // wunlock(&obj->lock);
             write_lock2.unlock();
             break;
         }
@@ -3561,16 +3560,11 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
     // Create local variables for internal use (use provided values or defaults)
     int64 local_passes = (passes != nullptr) ? *passes : 0;
     int64 local_tsteps = (tsteps != nullptr) ? *tsteps : 0;
-    FILE *prep_dbg = fopen("/tmp/env_check.log", "a");
-    fprintf(prep_dbg, "About to call run_preparation()\n");
-    fclose(prep_dbg);
+    output_verbose("About to call run_preparation()");
 
     if (run_preparation() == FAILED)
     {
-        FILE *prep_fail = fopen("/tmp/env_check.log", "a");
-        fprintf(prep_fail, "run_preparation() returned FAILED\n");
-        fclose(prep_fail);
-
+        output_error("run_preparation() returned FAILED");
         return FAILED;
     }
 
@@ -3660,9 +3654,8 @@ STATUS exec_start(int64 *passes, int64 *tsteps)
 
     /* terminate links */
     STATUS final_status = exec_sync_getstatus(sync_data_nullptr);
-    FILE *status_dbg = fopen("/tmp/env_check.log", "a");
-    fprintf(status_dbg, "exec_start returning status=%d\n", final_status);
-    fclose(status_dbg);
+    output_verbose("exec_start returning status=%d\n", final_status);
+
     // delete threadpool;
     return final_status;
 }

@@ -1,22 +1,22 @@
 /** $Id: output.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file output.h
-	@addtogroup output
+        Copyright (C) 2008 Battelle Memorial Institute
+        @file output.h
+        @addtogroup output
  @{
  **/
 
 #ifndef _ERROR_H
 #define _ERROR_H
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "timestamp.h"
 
-typedef int (*PRINTFUNCTION)(const char *,...);
+typedef int (*PRINTFUNCTION)(const char *, ...);
 
-typedef enum {FS_IN = 0, FS_STD = 1, FS_ERR = 2} FILESTREAM;
+typedef enum { FS_IN = 0, FS_STD = 1, FS_ERR = 2 } FILESTREAM;
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,19 +31,19 @@ void output_cleanup(void);
 void output_prefix_enable(void);
 void output_both_stdout();
 FILE *output_set_stream(FILESTREAM fs, FILE *newfp);
-FILE* output_redirect(const char *name, char *path);
-FILE* output_redirect_stream(char *name, FILE *fp);
-int output_fatal(const char *format,...);
-int output_error(const char *format,...);
-int output_error_raw(const char *format,...);
-int output_warning(const char *format,...);
-int output_debug(const char *format,...);
-int output_verbose(const char *format,...);
-int output_message(const char *format,...);
-int output_raw(const char *format,...);
-int output_test(const char *format,...);
+FILE *output_redirect(const char *name, char *path);
+FILE *output_redirect_stream(char *name, FILE *fp);
+int output_fatal(const char *format, ...);
+int output_error(const char *format, ...);
+int output_error_raw(const char *format, ...);
+int output_warning(const char *format, ...);
+int output_debug(const char *format, ...);
+int output_verbose(const char *format, ...);
+int output_message(const char *format, ...);
+int output_raw(const char *format, ...);
+int output_test(const char *format, ...);
 int output_progress(void);
-int output_profile(const char *format,...);
+int output_profile(const char *format, ...);
 
 int output_notify_error(void (*)(void));
 

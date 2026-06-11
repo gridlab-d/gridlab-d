@@ -745,7 +745,13 @@ int climate::isa(char *classname)
 int climate::init(OBJECT *parent)
 {
 	char *dot = 0;
+	
 	OBJECT *obj = object_header(this);
+	
+	#ifdef __APPLE__
+		parent = obj->parent;
+	#endif
+
 	TIMESTAMP t0 = obj->clock;
 	double meter_to_feet = 1.0;
 	double tz_num_offset;
@@ -1557,6 +1563,7 @@ void climate::update_cloud_pattern(TIMESTAMP delta_t)
 		}
 	}
 }
+
 double climate::convert_to_binary_cloud()
 {
 	// Convert fractal cloud pattern to binary value based on TMY2 opaque sky value.
@@ -2153,6 +2160,7 @@ void climate::write_out_cloud_pattern(char pattern)
 		out_file.close();
 	}
 }
+
 void climate::build_cloud_pattern(int col_min, int col_max, int row_min, int row_max)
 { // Min/Max row/col must always define a 2^x + 1 region of cloud_pattern
 	int const SIGMA = 5;

@@ -13,7 +13,7 @@ std::string get_base_filename(const std::string& filepath) {
     // Get filename without path
     size_t pos = filepath.find_last_of("/\\");
     std::string filename = (pos == std::string::npos) ? filepath : filepath.substr(pos + 1);
-    
+
     // Remove extension
     size_t dot = filename.find_last_of('.');
     if (dot != std::string::npos) {
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     bool checkpoint_mode = false;
     bool restore_mode = false;
     int num_steps = 2;
-    
+
     for (int i = 2; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "--checkpoint") {
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
             num_steps = std::stoi(argv[++i]);
         }
     }
-    
+
     // Load GLM file
     if(restore_mode) {
         fileName = get_base_filename(fileName) + "_checkpoint.json";
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    
+
     if (checkpoint_mode) {
         // Run N steps and save checkpoint
         double sim_time;
@@ -64,11 +64,11 @@ int main(int argc, char* argv[]) {
             gld.step(sim_time);
         }
         printf("Completed %d steps. Simulation time: %.2f\n", num_steps, sim_time);
-        
+
         // Get checkpoint and save it
         nlohmann::json checkpoint = gld.get_checkpoint_json();
         printf("Checkpoint saved.\n");
-    } 
+    }
     else if (restore_mode) {
         printf("Checkpoint loaded.\n");
         std::cout << gld.gld_model.dump(4) << std::endl; // Pretty print with 4-space indent
@@ -81,9 +81,9 @@ int main(int argc, char* argv[]) {
         gld.run();
         nlohmann::json checkpoint = gld.get_checkpoint_json();
     }
-    
+
     // Exit
     gld.exit_gld(fileName.c_str());
-    
+
     return 0;
 }

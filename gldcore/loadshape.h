@@ -91,8 +91,8 @@ struct s_loadshape {
 	/* state variables */
 	double q;			/**< the internal state of the machine */
 	MACHINESTATE s;		/**< the current state of the machine (0 or 1) */
-	TIMESTAMP t0;	/**< time of last update (in seconds since epoch) */
-	TIMESTAMP t2;	/**< time of next update (in seconds since epoch) */
+	TIMESTAMP t0;   	/**< time of last update (in seconds since epoch) */
+	TIMESTAMP t2;   	/**< time of next update (in seconds since epoch) */
 	unsigned int *obj_rng_state_ptr; /**< state of the parent object random number generator */
 
 	struct s_loadshape *next;	/* next loadshape in list */

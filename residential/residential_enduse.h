@@ -31,14 +31,13 @@ public:
 	loadshape shape;
 	enumeration re_override;
 	enumeration power_state;
+
 public:
 	static CLASS *oclass;
 	residential_enduse(MODULE *mod);
 	residential_enduse() {}
 	int create(bool connect_shape=true);
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
-	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 
