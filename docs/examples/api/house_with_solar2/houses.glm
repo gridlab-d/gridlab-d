@@ -375,7 +375,7 @@ object house {
      Rroof 36.76;
      Rwall 15.05;
      Rfloor 35.59;
-     glazing_layers 1;
+     glazing_layers 3;
      glass_type 2;
      glazing_treatment 2;
      window_frame 4;
@@ -389,8 +389,8 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 74;
-     heating_setpoint 75;
+     cooling_setpoint 69;
+     heating_setpoint 65;
      object ZIPload {
            name house1_resp_R1-12-47-4_tn_39;
            // Responsive load
@@ -710,8 +710,8 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 72;
-     heating_setpoint 83;
+     cooling_setpoint 73;
+     heating_setpoint 69;
      object ZIPload {
            name house1_resp_R2-12-47-2_tn_289;
            // Responsive load
@@ -816,7 +816,7 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 1;
+     cooling_setpoint 82;
      heating_setpoint 64;
      object ZIPload {
            name house1_resp_R2-12-47-2_tn_276;
@@ -959,7 +959,7 @@ object house {
           location INSIDE;
           tank_UA 3.3;
           demand large_3*1.04;
-          tank_volume 101;
+          tank_volume 30;
      };
 }
 object triplex_meter {
@@ -1066,7 +1066,7 @@ object house {
           location INSIDE;
           tank_UA 2.1;
           demand large_5*1.05;
-          tank_volume 107;
+          tank_volume 60;
      };
 }
 object triplex_meter {
@@ -1261,8 +1261,8 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 74;
-     heating_setpoint 71;
+     cooling_setpoint 72;
+     heating_setpoint 68;
      object ZIPload {
            name house3_resp_R2-12-47-2_tn_274;
            // Responsive load
@@ -1368,5 +1368,4 @@ object inverter {
 //  file indoor_air_temperature.csv;
 //  interval 300;
 //}
-
 

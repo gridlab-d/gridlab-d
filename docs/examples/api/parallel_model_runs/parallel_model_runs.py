@@ -3,7 +3,7 @@
 Run multiple GridLAB-D models in parallel and compute daily energy usage.
 
 This script launches one process per model folder using Python multiprocessing,
-collects measured_real_power from object network_node at 300-second intervals,
+collects real power from object network_node at 300-second intervals,
 and reports per-model plus fleet-average daily energy.
 """
 
@@ -34,13 +34,13 @@ class RunResult:
 
 
 def _parse_real_power_watts(raw_value: str | float | int) -> float:
-	"""Convert GridLAB-D measured_real_power value into watts."""
+	"""Convert a GridLAB-D real-power value into watts."""
 	if isinstance(raw_value, (int, float)):
 		return float(raw_value)
 
 	text = str(raw_value).strip()
 	if not text:
-		raise ValueError("Empty measured_real_power value")
+		raise ValueError("Empty real-power value")
 
 	unit_factor = 1.0
 	lowered = text.lower()
@@ -57,7 +57,7 @@ def _parse_real_power_watts(raw_value: str | float | int) -> float:
 	except ValueError:
 		match = re.search(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", token)
 		if not match:
-			raise ValueError(f"Cannot parse measured_real_power value: {text!r}")
+			raise ValueError(f"Cannot parse real-power value: {text!r}")
 		return float(match.group(0)) * unit_factor
 
 
@@ -88,6 +88,16 @@ def _run_single_model(model_dir: str) -> RunResult:
 				f"Clock override failed in {model_path.name}; expected 2026-07-01T00:00:00, got {start_time!r}"
 			)
 
+		network_node = gld.get_object_properties("network_node")
+		if "measured_real_power" in network_node:
+			power_property = "measured_real_power"
+		elif "distribution_load" in network_node:
+			power_property = "distribution_load"
+		else:
+			raise RuntimeError(
+				f"network_node in {model_path.name} has no supported real-power property"
+			)
+
 		total_steps = int((SIM_END - SIM_START).total_seconds() / STEP_SECONDS)
 		for _ in range(total_steps):
 			step_code, stepped_time = gld.step()
@@ -96,10 +106,11 @@ def _run_single_model(model_dir: str) -> RunResult:
 					f"step failed for {model_path.name} with code {step_code}"
 				)
 
-			prop_code, prop_value = gld.get_property("network_node", "measured_real_power")
+			prop_code, prop_value = gld.get_property("network_node", power_property)
 			if prop_code != 0:
 				raise RuntimeError(
-					f"get_property failed for {model_path.name} at {stepped_time} with code {prop_code}"
+					f"get_property({power_property}) failed for {model_path.name} "
+					f"at {stepped_time} with code {prop_code}"
 				)
 
 			real_power_w = _parse_real_power_watts(prop_value)
@@ -156,12 +167,12 @@ def main() -> None:
 		if item.success:
 			print(
 				f"  {item.model_name}: {item.energy_kwh:.6f} kWh "
-				f"({len(item.samples)} measured_real_power samples)"
+				f"({len(item.samples)} real-power samples)"
 			)
 		else:
 			print(
 				f"  {item.model_name}: FAILED "
-				f"after {len(item.samples)} measured_real_power samples"
+				f"after {len(item.samples)} real-power samples"
 			)
 			print(f"    error: {item.error}")
 
