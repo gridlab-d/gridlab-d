@@ -1139,10 +1139,6 @@ STATUS loader::objectProperties(CLASS *oClass, OBJECT *obj, string propName, str
                 {
                     obj->clock = stoll(propValue); // @todo convert_to_timestamp should be used
                 }
-                else if (propName.compare("last_sync") == 0)
-                {
-                    obj->last_sync = stoll(propValue); // @todo convert_to_timestamp should be used
-                }
                 else if (propName.compare("valid_to") == 0)
                 {
                     obj->valid_to = stoll(propValue); // @todo convert_to_timestamp should be used

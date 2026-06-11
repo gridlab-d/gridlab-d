@@ -130,7 +130,6 @@ typedef struct s_object_list
     unsigned int child_count;        /**< number of object that have this object as a parent */
     OBJECTRANK rank;                 /**< object's rank */
     TIMESTAMP clock;                 /**< object's private clock */
-    TIMESTAMP last_sync;             /**< object's previous sync clock (used for checkpoint replay) */
     TIMESTAMP valid_to;              /**< object's valid-until time */
     TIMESTAMP schedule_skew;         /**< time skew applied to schedule operations involving this object */
     FORECAST *forecast;              /**< forecast data block */
