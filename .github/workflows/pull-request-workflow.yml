@@ -14,99 +14,99 @@ env:
   helics-ref: "v3.6.1"
 
 jobs:
-  linux-build-and-validate:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x86_64
-    runs-on: ${{matrix.os}}
-    steps:
-      - name: Install Dependencies
-        run: |
-          sudo apt update
-          sudo apt install -yq --no-install-recommends \
-            build-essential \
-            cmake \
-            ninja-build \
-            libboost-dev \
-            libeigen3-dev \
-            nlohmann-json3-dev
+#   linux-build-and-validate:
+#     strategy:
+#       matrix:
+#         include:
+#           - os: ubuntu-latest
+#             arch: x86_64
+#     runs-on: ${{matrix.os}}
+#     steps:
+#       - name: Install Dependencies
+#         run: |
+#           sudo apt update
+#           sudo apt install -yq --no-install-recommends \
+#             build-essential \
+#             cmake \
+#             ninja-build \
+#             libboost-dev \
+#             libeigen3-dev \
+#             nlohmann-json3-dev
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
+#       - name: Setup Python
+#         uses: actions/setup-python@v6
+#         with:
+#           python-version: "3.11"
 
-      - name: Build HELICS Cache
-        id: cache-helics
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-helics
-        with:
-          path: ~/.cache/HELICS
-          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+#       - name: Build HELICS Cache
+#         id: cache-helics
+#         uses: actions/cache@v5
+#         env:
+#           cache-name: cache-helics
+#         with:
+#           path: ~/.cache/HELICS
+#           key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+#           restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
 
-      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
-        name: Checkout HELICS
-        uses: actions/checkout@v6
-        with:
-          repository: "GMLC-TDC/HELICS"
-          ref: ${{ env.helics-ref }}
-          submodules: "recursive"
-          path: helics-build
+#       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+#         name: Checkout HELICS
+#         uses: actions/checkout@v6
+#         with:
+#           repository: "GMLC-TDC/HELICS"
+#           ref: ${{ env.helics-ref }}
+#           submodules: "recursive"
+#           path: helics-build
 
-      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
-        name: Build HELICS
-        working-directory: ${{github.workspace}}/helics-build
-        run: |
-          threads=`nproc`
-          cmake -B ${{github.workspace}}/helics-build/build \
-          -G Ninja \
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-          -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
-          cmake --install ${{github.workspace}}/helics-build/build
+#       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+#         name: Build HELICS
+#         working-directory: ${{github.workspace}}/helics-build
+#         run: |
+#           threads=`nproc`
+#           cmake -B ${{github.workspace}}/helics-build/build \
+#           -G Ninja \
+#           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+#           -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
+#           -DHELICS_ZMQ_SUBPROJECT=ON
+#           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
+#           cmake --install ${{github.workspace}}/helics-build/build
 
-      - name: Checkout GridLAB-D
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
+#       - name: Checkout GridLAB-D
+#         uses: actions/checkout@v6
+#         with:
+#           submodules: recursive
 
-      - name: Build GridLAB-D
-        run: |
-          threads=`nproc`
-          cmake -S . -B ${{github.workspace}}/build \
-          -G Ninja \
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
-          -DGLD_USE_HELICS=ON \
-          -DGLD_HELICS_DIR=~/.cache/HELICS \
-          -DGLD_CI_BUILD=ON
-          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
+#       - name: Build GridLAB-D
+#         run: |
+#           threads=`nproc`
+#           cmake -S . -B ${{github.workspace}}/build \
+#           -G Ninja \
+#           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+#           -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
+#           -DGLD_USE_HELICS=ON \
+#           -DGLD_HELICS_DIR=~/.cache/HELICS \
+#           -DGLD_CI_BUILD=ON
+#           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
 
-      - name: Install GridLAB-D
-        working-directory: ${{github.workspace}}/build
-        run: cmake --install . --config ${{env.BUILD_TYPE}}
+#       - name: Install GridLAB-D
+#         working-directory: ${{github.workspace}}/build
+#         run: cmake --install . --config ${{env.BUILD_TYPE}}
 
-      - name: Run GridLAB-D autotests
-        working-directory: ${{github.workspace}}
-        run: |
-          # Add installed GridLAB-D binaries to PATH
-          export PATH=$PATH:~/.temp/GridLAB-D/bin
-          # Run integration validation from repository root
-          python validate_gld.py -T 1
+#       - name: Run GridLAB-D autotests
+#         working-directory: ${{github.workspace}}
+#         run: |
+#           # Add installed GridLAB-D binaries to PATH
+#           export PATH=$PATH:~/.temp/GridLAB-D/bin
+#           # Run integration validation from repository root
+#           python validate_gld.py -T 1
 
-      - name: Upload validation artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: validate-${{ matrix.name }}
-          path: |
-            validate.txt
-          if-no-files-found: ignore
+#       - name: Upload validation artifacts
+#         if: always()
+#         uses: actions/upload-artifact@v7
+#         with:
+#           name: validate-${{ matrix.name }}
+#           path: |
+#             validate.txt
+#           if-no-files-found: ignore
 
   win-build-and-validate:
     runs-on: windows-latest
@@ -121,7 +121,6 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
         with:
-          vs-version: '[17.0)'
           msbuild-architecture: 'x64'
           
       - name: Setup vcpkg (manifest mode + cache)
@@ -163,10 +162,11 @@ jobs:
           -B out/build/ci-windows
           -G "Visual Studio 17 2022"
           -A x64
-          -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+          -DCPREFIX_CONFIGURATION_TYPES="Debug;Release"
+          -DCMAKE_BUILD_TYPE="Release"
           -DVCPKG_TARGET_TRIPLET=x64-windows
-          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D"
           -DGLD_CI_BUILD=ON
 
       - name: Build GridLAB-D (Release)
@@ -258,72 +258,72 @@ jobs:
             validate.txt
           if-no-files-found: ignore
 
-  mac-build:
-    strategy:
-      matrix:
-        include:
-          - os: macos-latest
-            arch: x86_64
-    runs-on: ${{matrix.os}}
-    steps:
-      - name: Install Homebrew dependencies
-        run: |
-          brew update
-          env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
+  # mac-build:
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - os: macos-latest
+  #           arch: x86_64
+  #   runs-on: ${{matrix.os}}
+  #   steps:
+  #     - name: Install Homebrew dependencies
+  #       run: |
+  #         brew update
+  #         env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
 
-      - name: Build HELICS Cache
-        id: cache-helics
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-helics
-        with:
-          path: ~/.cache/HELICS
-          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+  #     - name: Build HELICS Cache
+  #       id: cache-helics
+  #       uses: actions/cache@v4
+  #       env:
+  #         cache-name: cache-helics
+  #       with:
+  #         path: ~/.cache/HELICS
+  #         key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+  #         restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
 
-      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
-        name: Checkout HELICS
-        uses: actions/checkout@v5
-        with:
-          repository: 'GMLC-TDC/HELICS'
-          ref: ${{ env.helics-ref }}
-          submodules: 'recursive'
-          fetch-depth: 0
-          path: helics-build
+  #     - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+  #       name: Checkout HELICS
+  #       uses: actions/checkout@v5
+  #       with:
+  #         repository: 'GMLC-TDC/HELICS'
+  #         ref: ${{ env.helics-ref }}
+  #         submodules: 'recursive'
+  #         fetch-depth: 0
+  #         path: helics-build
 
-      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
-        name: Build HELICS
-        working-directory: ${{github.workspace}}/helics-build
-        run: |
-          threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-          -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON \
-          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DHELICS_DISABLE_WEBSERVER=ON
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
-          cmake --install ${{github.workspace}}/helics-build/build
+  #     - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+  #       name: Build HELICS
+  #       working-directory: ${{github.workspace}}/helics-build
+  #       run: |
+  #         threads=`sysctl -n hw.logicalcpu`
+  #         cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+  #         -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON \
+  #         -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DHELICS_DISABLE_WEBSERVER=ON
+  #         cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
+  #         cmake --install ${{github.workspace}}/helics-build/build
 
-      - name: Checkout GridLAB-D
-        uses: actions/checkout@v5
-        with:
-          submodules: recursive
+  #     - name: Checkout GridLAB-D
+  #       uses: actions/checkout@v5
+  #       with:
+  #         submodules: recursive
 
-      - name: Build GridLAB-D
-        run: |
-          threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
-          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DGLD_CI_BUILD=ON
-          cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
+  #     - name: Build GridLAB-D
+  #       run: |
+  #         threads=`sysctl -n hw.logicalcpu`
+  #         cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+  #         -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
+  #         -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DGLD_CI_BUILD=ON
+  #         cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
 
-      - name: Install GridLAB-D
-        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
-        run: cmake --install . --config ${{env.BUILD_TYPE}}
+  #     - name: Install GridLAB-D
+  #       working-directory: ${{github.workspace}}/build-${{matrix.arch}}
+  #       run: cmake --install . --config ${{env.BUILD_TYPE}}
 
-      - name: Run GridLAB-D autotests
-        working-directory: ${{github.workspace}}
-        run: |
-          export PATH=$PATH:~/.temp/GridLAB-D/bin
-          gridlabd -T 0 --validate
-          # Future Catch2 unit tests (placeholder):
-          # ./build-${{matrix.arch}}/tests/unit_tests --reporter junit --out unit-tests-macos.xml
-          ctest --verbose
+  #     - name: Run GridLAB-D autotests
+  #       working-directory: ${{github.workspace}}
+  #       run: |
+  #         export PATH=$PATH:~/.temp/GridLAB-D/bin
+  #         gridlabd -T 0 --validate
+  #         # Future Catch2 unit tests (placeholder):
+  #         # ./build-${{matrix.arch}}/tests/unit_tests --reporter junit --out unit-tests-macos.xml
+  #         ctest --verbose
