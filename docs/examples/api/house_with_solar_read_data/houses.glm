@@ -126,15 +126,25 @@ object line_spacing {
 }
 
 // Feeder
-object meter {
+//object meter {
+//     name network_node;
+//     bustype SWING;
+//     nominal_voltage 727488;
+//     voltage_A 140320.608000+30d;
+//     voltage_B 142052.646000-90d;
+//     voltage_C 141681.840000+150d;
+//     phases ABCN;
+//}
+
+object substation {
      name network_node;
      bustype SWING;
-     nominal_voltage 727488;
-     voltage_A 140320.608000+30d;
-     voltage_B 142052.646000-90d;
-     voltage_C 141681.840000+150d;
+     nominal_voltage 140000;
+     base_power 12MVA;
      phases ABCN;
+     positive_sequence_voltage 140000;
 }
+
 object transformer {
      name substation_transformer;
      from network_node;
@@ -366,21 +376,21 @@ object house {
      parent house1_house_meter;
      name house1;
      groupid Residential;
-     schedule_skew 1691;
-     floor_area 1359;
+     schedule_skew 1083;
+     floor_area 3287;
      number_of_stories 1;
      ceiling_height 8;
      over_sizing_factor 0.1;
      //Thermal integrity -> Single Family 7
-     Rroof 36.76;
-     Rwall 15.05;
+     Rroof 50.34;
+     Rwall 27.33;
      Rfloor 35.59;
-     glazing_layers 1;
+     glazing_layers 3;
      glass_type 2;
      glazing_treatment 2;
      window_frame 4;
-     Rdoors 9.51;
-     airchange_per_hour 0.26;
+     Rdoors 10.51;
+     airchange_per_hour 0.23;
      cooling_COP 3.8;
      air_temperature 71.22;
      mass_temperature 71.22;
@@ -390,11 +400,11 @@ object house {
      breaker_amps 1000;
      hvac_breaker_rating 1000;
      cooling_setpoint 79;
-     heating_setpoint 73;
+     heating_setpoint 65;
      object ZIPload {
            name house1_resp_R1-12-47-4_tn_39;
            // Responsive load
-           schedule_skew 961;
+           schedule_skew 1083;
            base_power responsive_loads*1.20;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -406,7 +416,7 @@ object house {
      };
      object ZIPload {
            // Unresponsive load
-           schedule_skew 1085;
+           schedule_skew 1083;
            base_power unresponsive_loads*1.10;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -417,15 +427,16 @@ object house {
            power_fraction 0.400000;
      };
      object waterheater {
-          schedule_skew 2696;
+          name house1_waterheater;
+          schedule_skew 4326;
           heating_element_capacity 4.5 kW;
-          tank_setpoint 144.42;
+          tank_setpoint 132.7;
           temperature 132;
           thermostat_deadband 7.8;
           location INSIDE;
           tank_UA 3.7;
-          demand large_5*0.9;
-          tank_volume 78;
+          demand large_6*0.99;
+          tank_volume 50;
      };
 
 }
@@ -440,7 +451,7 @@ object inverter {
     name house1_sol_inverter;
     parent house1_solar_meter;
     generator_status ONLINE;
-    inverter_efficiency 0.90;
+    inverter_efficiency 0.95;
     rated_power 5000;
     inverter_type FOUR_QUADRANT;
     four_quadrant_control_mode CONSTANT_PF;
@@ -451,7 +462,7 @@ object inverter {
       tilt_angle 20;
       orientation_azimuth 180;
       efficiency 0.20;
-      area 253.08; //square feet
+      area 270.00; //square feet
     };
 }
 
@@ -474,21 +485,21 @@ object house {
      parent house2_house_meter;
      name house2;
      groupid Residential;
-     schedule_skew 1569;
-     floor_area 1668;
-     number_of_stories 2;
+     schedule_skew 784;
+     floor_area 2759;
+     number_of_stories 1;
      ceiling_height 9;
      over_sizing_factor 0.1;
      //Thermal integrity -> Single Family 1
-     Rroof 24.05;
-     Rwall 3.93;
+     Rroof 14.81;
+     Rwall 10.60;
      Rfloor 8.77;
-     glazing_layers 2;
+     glazing_layers 1;
      glass_type 1;
      glazing_treatment 1;
      window_frame 1;
      Rdoors 3.17;
-     airchange_per_hour 0.53;
+     airchange_per_hour 0.83;
      cooling_COP 2.5;
      air_temperature 69.58;
      mass_temperature 69.58;
@@ -497,12 +508,12 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 70;
-     heating_setpoint 61;
+     cooling_setpoint 82;
+     heating_setpoint 64;
      object ZIPload {
            name house2_resp_R1-12-47-4_tn_41;
            // Responsive load
-           schedule_skew 831;
+           schedule_skew 784;
            base_power responsive_loads*1.35;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -514,7 +525,7 @@ object house {
      };
      object ZIPload {
            // Unresponsive load
-           schedule_skew 798;
+           schedule_skew 784;
            base_power unresponsive_loads*1.26;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -525,15 +536,16 @@ object house {
            power_fraction 0.400000;
      };
      object waterheater {
-          schedule_skew 361;
+          name house2_waterheater;
+          schedule_skew 1406;
           heating_element_capacity 5.0 kW;
-          tank_setpoint 131.19;
+          tank_setpoint 122.3;
           temperature 132;
           thermostat_deadband 5.5;
           location INSIDE;
           tank_UA 3.7;
           demand large_5*0.99;
-          tank_volume 48;
+          tank_volume 60;
      };
 }
 object triplex_meter {
@@ -547,7 +559,7 @@ object inverter {
     name house2_sol_inverter;
     parent house2_solar_meter;
     generator_status ONLINE;
-    inverter_efficiency 0.98;
+    inverter_efficiency 0.95;
     rated_power 7000;
     inverter_type FOUR_QUADRANT;
     four_quadrant_control_mode CONSTANT_PF;
@@ -558,7 +570,7 @@ object inverter {
       tilt_angle 30;
       orientation_azimuth 180;
       efficiency 0.20;
-      area 226.34; //square feet
+      area 200.00; //square feet
     };
 }
 
@@ -581,22 +593,22 @@ object house {
      parent house3_house_meter;
      name house3;
      groupid Residential;
-     schedule_skew 5118;
-     floor_area 1474;
+     schedule_skew 3942;
+     floor_area 2120;
      number_of_stories 2;
      ceiling_height 9;
      over_sizing_factor 0.2;
      //Thermal integrity -> Single Family 1
-     Rroof 9.73;
-     Rwall 15.65;
+     Rroof 17.29;
+     Rwall 8.08;
      Rfloor 11.42;
      glazing_layers 1;
      glass_type 1;
      glazing_treatment 1;
      window_frame 1;
      Rdoors 3.13;
-     airchange_per_hour 0.73;
-     cooling_COP 3.3;
+     airchange_per_hour 0.66;
+     cooling_COP 2.7;
      air_temperature 69.23;
      mass_temperature 69.23;
      total_thermal_mass_per_floor_area 3.227;
@@ -604,12 +616,12 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 80;
-     heating_setpoint 60;
+     cooling_setpoint 78;
+     heating_setpoint 68;
      object ZIPload {
            name house2_resp_R2-12-47-2_tn_230;
            // Responsive load
-           schedule_skew 4430;
+           schedule_skew 3942;
            base_power responsive_loads*1.04;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -621,7 +633,7 @@ object house {
      };
      object ZIPload {
            // Unresponsive load
-           schedule_skew 3164;
+           schedule_skew 3942;
            base_power unresponsive_loads*0.98;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -632,15 +644,16 @@ object house {
            power_fraction 0.400000;
      };
      object waterheater {
-          schedule_skew 8305;
+          name house3_waterheater;
+          schedule_skew 7400;
           heating_element_capacity 4.0 kW;
-          tank_setpoint 135.47;
+          tank_setpoint 133.5;
           temperature 132;
           thermostat_deadband 6.8;
           location INSIDE;
           tank_UA 2.4;
           demand large_2*1.04;
-          tank_volume 25;
+          tank_volume 30;
      };
 }
 object triplex_meter {
@@ -664,8 +677,8 @@ object inverter {
       panel_type SINGLE_CRYSTAL_SILICON;
       tilt_angle 15;
       orientation_azimuth 180;
-      efficiency 0.25;
-      area 180.04; //square feet
+      efficiency 0.20;
+      area 225.00; //square feet
     };
 }
 
@@ -687,21 +700,21 @@ object house {
      parent house4_billing_meter;
      name house4;
      groupid Residential;
-     schedule_skew 3429;
-     floor_area 2566;
+     schedule_skew 3777;
+     floor_area 3786;
      number_of_stories 2;
      ceiling_height 9;
      over_sizing_factor 0.2;
      //Thermal integrity -> Single Family 1
-     Rroof 20.58;
-     Rwall 10.04;
+     Rroof 17.71;
+     Rwall 10.55;
      Rfloor 11.22;
-     glazing_layers 2;
+     glazing_layers 1;
      glass_type 1;
      glazing_treatment 1;
      window_frame 1;
      Rdoors 2.88;
-     airchange_per_hour 0.09;
+     airchange_per_hour 0.76;
      cooling_COP 2.6;
      air_temperature 70.12;
      mass_temperature 70.12;
@@ -711,11 +724,11 @@ object house {
      breaker_amps 1000;
      hvac_breaker_rating 1000;
      cooling_setpoint 83;
-     heating_setpoint 72;
+     heating_setpoint 69;
      object ZIPload {
            name house1_resp_R2-12-47-2_tn_289;
            // Responsive load
-           schedule_skew 3161;
+           schedule_skew 3777;
            base_power responsive_loads*1.56;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -727,7 +740,7 @@ object house {
      };
      object ZIPload {
            // Unresponsive load
-           schedule_skew 2912;
+           schedule_skew 3777;
            base_power unresponsive_loads*1.56;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -738,15 +751,16 @@ object house {
            power_fraction 0.400000;
      };
      object waterheater {
-          schedule_skew 7317;
+          name house4_waterheater;
+          schedule_skew 6186;
           heating_element_capacity 5.0 kW;
-          tank_setpoint 108.9;
+          tank_setpoint 120.1;
           temperature 132;
           thermostat_deadband 6.0;
           location INSIDE;
           tank_UA 3.2;
           demand large_6*0.98;
-          tank_volume 38;
+          tank_volume 30;
      };
 }
 object triplex_meter {
@@ -770,8 +784,8 @@ object inverter {
       panel_type SINGLE_CRYSTAL_SILICON;
       tilt_angle 30;
       orientation_azimuth 180;
-      efficiency 0.28;
-      area 278.87; //square feet
+      efficiency 0.20;
+      area 300.00; //square feet
     };
 }
 
@@ -793,21 +807,21 @@ object house {
      parent house5_house_meter;
      name house5;
      groupid Residential;
-     schedule_skew 1432;
-     floor_area 4601;
+     schedule_skew 532;
+     floor_area 3803;
      number_of_stories 1;
      ceiling_height 8;
      over_sizing_factor 0.2;
      //Thermal integrity -> Single Family 3
-     Rroof 11.17;
-     Rwall 8.22;
+     Rroof 16.64;
+     Rwall 11.87;
      Rfloor 14.21;
      glazing_layers 2;
      glass_type 1;
      glazing_treatment 1;
      window_frame 1;
      Rdoors 3.33;
-     airchange_per_hour 1.18;
+     airchange_per_hour 0.43;
      cooling_COP 2.8;
      air_temperature 68.17;
      mass_temperature 68.17;
@@ -816,12 +830,12 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 77;
+     cooling_setpoint 82;
      heating_setpoint 64;
      object ZIPload {
            name house1_resp_R2-12-47-2_tn_276;
            // Responsive load
-           schedule_skew 4296;
+           schedule_skew 532;
            base_power responsive_loads*1.47;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -833,7 +847,7 @@ object house {
      };
      object ZIPload {
            // Unresponsive load
-           schedule_skew 4304;
+           schedule_skew 532;
            base_power unresponsive_loads*1.63;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -844,15 +858,16 @@ object house {
            power_fraction 0.400000;
      };
      object waterheater {
-          schedule_skew 2029;
+          name house5_waterheater;
+          schedule_skew 1781;
           heating_element_capacity 4.5 kW;
-          tank_setpoint 142.93;
+          tank_setpoint 135.3;
           temperature 132;
           thermostat_deadband 6.9;
           location INSIDE;
           tank_UA 3.8;
           demand large_2*1.02;
-          tank_volume 60;
+          tank_volume 40;
      };
 }
 object triplex_meter {
@@ -877,7 +892,7 @@ object inverter {
       tilt_angle 30;
       orientation_azimuth 180;
       efficiency 0.20;
-      area 466.02; //square feet
+      area 350.00; //square feet
     };
 }
 
@@ -900,21 +915,21 @@ object house {
      parent house6_house_meter;
      name house6;
      groupid Residential;
-     schedule_skew 3013;
-     floor_area 2291;
-     number_of_stories 2;
+     schedule_skew 3593;
+     floor_area 2440;
+     number_of_stories 1;
      ceiling_height 10;
      over_sizing_factor 0.2;
      //Thermal integrity -> Single Family 1
-     Rroof 23.52;
-     Rwall 14.83;
+     Rroof 18.94;
+     Rwall 10.04;
      Rfloor 10.28;
-     glazing_layers 3;
+     glazing_layers 1;
      glass_type 1;
      glazing_treatment 1;
      window_frame 1;
      Rdoors 3.09;
-     airchange_per_hour 0.18;
+     airchange_per_hour 0.77;
      cooling_COP 2.6;
      air_temperature 68.75;
      mass_temperature 68.75;
@@ -923,12 +938,12 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 69;
-     heating_setpoint 55;
+     cooling_setpoint 86;
+     heating_setpoint 66;
      object ZIPload {
            name house12_resp_R2-12-47-2_tn_274;
            // Responsive load
-           schedule_skew 2687;
+           schedule_skew 3593;
            base_power responsive_loads*1.25;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -940,7 +955,7 @@ object house {
      };
      object ZIPload {
            // Unresponsive load
-           schedule_skew 2613;
+           schedule_skew 3593;
            base_power unresponsive_loads*1.33;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -951,15 +966,16 @@ object house {
            power_fraction 0.400000;
      };
      object waterheater {
-          schedule_skew -113;
+          name house6_waterheater;
+          schedule_skew -111;
           heating_element_capacity 5.0 kW;
-          tank_setpoint 110.31;
+          tank_setpoint 130.6;
           temperature 132;
           thermostat_deadband 6.4;
           location INSIDE;
           tank_UA 3.3;
           demand large_3*1.04;
-          tank_volume 96;
+          tank_volume 30;
      };
 }
 object triplex_meter {
@@ -984,7 +1000,7 @@ object inverter {
       tilt_angle 30;
       orientation_azimuth 180;
       efficiency 0.20;
-      area 436.32; //square feet
+      area 400.00; //square feet
     };
 }
 
@@ -1007,21 +1023,21 @@ object house {
      parent house7_house_meter;
      name house7;
      groupid Residential;
-     schedule_skew -3866;
-     floor_area 4844;
-     number_of_stories 2;
+     schedule_skew -3651;
+     floor_area 3887;
+     number_of_stories 1;
      ceiling_height 8;
      over_sizing_factor 0.2;
      //Thermal integrity -> Single Family 2
-     Rroof 33.89;
-     Rwall 13.15;
+     Rroof 19.85;
+     Rwall 12.86;
      Rfloor 12.07;
      glazing_layers 2;
      glass_type 1;
      glazing_treatment 1;
      window_frame 1;
      Rdoors 3.22;
-     airchange_per_hour 1.29;
+     airchange_per_hour 0.74;
      cooling_COP 2.8;
      air_temperature 68.52;
      mass_temperature 68.52;
@@ -1030,12 +1046,12 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 75;
-     heating_setpoint 65;
+     cooling_setpoint 83;
+     heating_setpoint 67;
      object ZIPload {
            name house2_resp_R2-12-47-2_tn_275;
            // Responsive load
-           schedule_skew -3759;
+           schedule_skew -3651;
            base_power responsive_loads*1.27;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -1047,7 +1063,7 @@ object house {
      };
      object ZIPload {
            // Unresponsive load
-           schedule_skew -4033;
+           schedule_skew -3651;
            base_power unresponsive_loads*1.55;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -1058,15 +1074,16 @@ object house {
            power_fraction 0.400000;
      };
      object waterheater {
-          schedule_skew 9382;
+          name house7_waterheater;
+          schedule_skew 8290;
           heating_element_capacity 4.0 kW;
-          tank_setpoint 120.57;
+          tank_setpoint 123.8;
           temperature 132;
           thermostat_deadband 4.0;
           location INSIDE;
           tank_UA 2.1;
           demand large_5*1.05;
-          tank_volume 94;
+          tank_volume 60;
      };
 }
 object triplex_meter {
@@ -1091,7 +1108,7 @@ object inverter {
       tilt_angle 30;
       orientation_azimuth 180;
       efficiency 0.20;
-      area 266.62; //square feet
+      area 350.00; //square feet
     };
 }
 
@@ -1114,21 +1131,21 @@ object house {
      parent house8_house_meter;
      name house8;
      groupid Residential;
-     schedule_skew -180;
-     floor_area 2609;
+     schedule_skew -172;
+     floor_area 3125;
      number_of_stories 1;
      ceiling_height 8;
      over_sizing_factor 0.2;
      //Thermal integrity -> Single Family 3
-     Rroof 19.35;
-     Rwall 15.41;
+     Rroof 18.27;
+     Rwall 14.35;
      Rfloor 12.89;
      glazing_layers 2;
      glass_type 1;
      glazing_treatment 1;
      window_frame 1;
      Rdoors 2.46;
-     airchange_per_hour 0.68;
+     airchange_per_hour 0.59;
      cooling_COP 3.1;
      air_temperature 70.51;
      mass_temperature 70.51;
@@ -1137,12 +1154,12 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 77;
-     heating_setpoint 65;
+     cooling_setpoint 85;
+     heating_setpoint 60;
      object ZIPload {
            name house9_resp_R2-12-47-2_tn_274;
            // Responsive load
-           schedule_skew -197;
+           schedule_skew -172;
            base_power responsive_loads*1.20;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -1154,7 +1171,7 @@ object house {
      };
      object ZIPload {
            // Unresponsive load
-           schedule_skew -177;
+           schedule_skew -172;
            base_power unresponsive_loads*1.09;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -1167,7 +1184,7 @@ object house {
      object ZIPload {
            name house9_ppump_R2-12-47-2_tn_274;
            // Pool Pump
-           schedule_skew 734642;
+           schedule_skew 679074;
            base_power pool_pump_season*1.55;
            duty_cycle 0.32;
            phase 0.18;
@@ -1182,15 +1199,16 @@ object house {
            is_240 TRUE;
      };
      object waterheater {
-          schedule_skew -5441;
+          name house8_waterheater;
+          schedule_skew -6649;
           heating_element_capacity 5.0 kW;
-          tank_setpoint 126.02;
+          tank_setpoint 128.4;
           temperature 132;
           thermostat_deadband 7.2;
           location INSIDE;
           tank_UA 3.3;
           demand large_6*0.99;
-          tank_volume 80;
+          tank_volume 70;
      };
 }
 object triplex_meter {
@@ -1215,7 +1233,7 @@ object inverter {
       tilt_angle 25;
       orientation_azimuth 180;
       efficiency 0.20;
-      area 158.34; //square feet
+      area 150.00; //square feet
     };
 }
 
@@ -1238,21 +1256,21 @@ object house {
      parent house9_house_meter;
      name house9;
      groupid Residential;
-     schedule_skew -4480;
-     floor_area 2843;
+     schedule_skew -5027;
+     floor_area 2935;
      number_of_stories 1;
      ceiling_height 8;
      over_sizing_factor 0.2;
      //Thermal integrity -> Single Family 5
-     Rroof 42.53;
-     Rwall 21.36;
+     Rroof 40.75;
+     Rwall 18.78;
      Rfloor 17.89;
      glazing_layers 2;
      glass_type 1;
      glazing_treatment 1;
      window_frame 2;
      Rdoors 2.64;
-     airchange_per_hour 0.53;
+     airchange_per_hour 0.57;
      cooling_COP 3.2;
      air_temperature 69.95;
      mass_temperature 69.95;
@@ -1261,12 +1279,12 @@ object house {
      cooling_system_type ELECTRIC;
      breaker_amps 1000;
      hvac_breaker_rating 1000;
-     cooling_setpoint 74;
-     heating_setpoint 69;
+     cooling_setpoint 82;
+     heating_setpoint 68;
      object ZIPload {
            name house3_resp_R2-12-47-2_tn_274;
            // Responsive load
-           schedule_skew -4604;
+           schedule_skew -5027;
            base_power responsive_loads*1.27;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -1278,7 +1296,7 @@ object house {
      };
      object ZIPload {
            // Unresponsive load
-           schedule_skew -4182;
+           schedule_skew -5027;
            base_power unresponsive_loads*1.02;
            heatgain_fraction 0.900;
            power_pf 1.000;
@@ -1291,7 +1309,7 @@ object house {
      object ZIPload {
            name house3_ppump_R2-12-47-2_tn_274;
            // Pool Pump
-           schedule_skew 195475;
+           schedule_skew 218869;
            base_power pool_pump_season*1.68;
            duty_cycle 0.29;
            phase 0.38;
@@ -1306,15 +1324,16 @@ object house {
            is_240 TRUE;
      };
      object waterheater {
-          schedule_skew -2095;
+          name house9_waterheater;
+          schedule_skew -2493;
           heating_element_capacity 4.0 kW;
-          tank_setpoint 155.73;
+          tank_setpoint 131.8;
           temperature 132;
           thermostat_deadband 4.2;
           location INSIDE;
           tank_UA 2.9;
           demand large_4*1.03;
-          tank_volume 24;
+          tank_volume 30;
      };
 
 }
@@ -1340,7 +1359,7 @@ object inverter {
       tilt_angle 20;
       orientation_azimuth 180;
       efficiency 0.20;
-      area 286.99; //square feet
+      area 275.00; //square feet
     };
 }
 
