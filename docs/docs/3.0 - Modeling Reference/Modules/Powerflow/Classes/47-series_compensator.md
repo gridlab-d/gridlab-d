@@ -1,27 +1,29 @@
 ## Series Compensator
 
+The series_compensator object  automatically regulates voltage on a distribution line. It sits between two nodes (a "from" node and a "to" node) and works like an adjustable transformer, raising or lowering the downstream voltage to keep it close to a user-defined setpoint on each phase. It supports both standard three-phase and triplex (split-phase) connections, and includes optional features such as frequency-responsive voltage adjustment, configurable control gains and response timing, and an automatic bypass mode that disengages the device when upstream voltage falls outside safe limits. 
 
-    
+
+### Sample
     
     object series_compensator {	
-           name ser_comp; // Name of the series compensator
-           phases AN;  // In this example the device is a single phase device
-           kp 0.4;  // Proportional gain of the voltage controller
-           ki 200;  // Integral gain of the voltage controller
-           kpf 2;   // proportional gain of the frequency controller
-           from 37; // The device is connected between Node 37 and Node 3701
-           to 3701; // The device is connected between Node 37 and Node 3701
-           f_db_max 0.05;  // Upper limiter of the deadband of the frequency controller, unit: Hz.
-           f_db_min -0.05; // Lower limiter of the deadband of the frequency controller, unit: Hz.
-           delta_Vmax 0.058; // Upper limiter of the voltage set point, unit: per unit
-           delta_Vmin -0.083; // Lower limiter of the voltage set point, unit: per unit
-           n_max_ext_A 1.3; // Maximum turn ratio of the series compensator, phase A
-           n_max_ext_B 1.3; // Maximum turn ratio of the series compensator, phase B
-           n_max_ext_C 1.3; // Maximum turn ratio of the series compensator, phase C
-           n_min_ext_A 0.7; // Minimum turn ratio of the series compensator, phase A
-           n_min_ext_B 0.7; // Minimum turn ratio of the series compensator, phase B
-           n_min_ext_C 0.7; // Minimum turn ratio of the series compensator, phase C
-           frequency_regulation true;
+        name ser_comp; // Name of the series compensator
+        phases AN;  // In this example the device is a single phase device
+        kp 0.4;  // Proportional gain of the voltage controller
+        ki 200;  // Integral gain of the voltage controller
+        kpf 2;   // proportional gain of the frequency controller
+        from 37; // The device is connected between Node 37 and Node 3701
+        to 3701; // The device is connected between Node 37 and Node 3701
+        f_db_max 0.05;  // Upper limiter of the deadband of the frequency controller, unit: Hz.
+        f_db_min -0.05; // Lower limiter of the deadband of the frequency controller, unit: Hz.
+        delta_Vmax 0.058; // Upper limiter of the voltage set point, unit: per unit
+        delta_Vmin -0.083; // Lower limiter of the voltage set point, unit: per unit
+        n_max_ext_A 1.3; // Maximum turn ratio of the series compensator, phase A
+        n_max_ext_B 1.3; // Maximum turn ratio of the series compensator, phase B
+        n_max_ext_C 1.3; // Maximum turn ratio of the series compensator, phase C
+        n_min_ext_A 0.7; // Minimum turn ratio of the series compensator, phase A
+        n_min_ext_B 0.7; // Minimum turn ratio of the series compensator, phase B
+        n_min_ext_C 0.7; // Minimum turn ratio of the series compensator, phase C
+        frequency_regulation true;
     }
 
 ### Series Compensator Parameters

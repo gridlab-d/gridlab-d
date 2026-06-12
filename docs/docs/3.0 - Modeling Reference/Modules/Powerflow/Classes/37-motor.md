@@ -2,6 +2,22 @@
 
 The **motor** object models a three-phase or single phase induction motor. For detailed technical information on motor modeling approaches, see the additional documentation: [Tech_DeltaSPIM](../Motor/Tech_DeltaSPIM.md) (single-phase dynamic phasor model), [Tech_DeltaTPIM](../Motor/Tech_DeltaTPIM.md) (three-phase dynamic phasor model), and [Tech_CompositionMotor](../Motor/Tech_CompositionMotor.md) (composite motor models for heat pumps and refrigerators).
 
+### Sample
+
+	object motor {
+		name Q14411__A_1;
+		parent TN_1;
+		phases AS;
+		frequency_measure_type PLL;
+		base_power 2298.290421;
+		motor_trip false;
+		reconnect_time 10.730187;
+		trip_time 2.269767;
+		nominal_voltage 120;
+		triplex_connection_type TRIPLEX_12;
+	};
+
+
 ### Motor Parameters
 
 #### Properties

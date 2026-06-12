@@ -1,6 +1,18 @@
 ## Sync Check
 
 The Sync Check object implements a synchronization check functionality for switches to close when two grids are within parameters.
+It must be a child of a switch and will use the voltage and frequency measurements on the from and to nodes to determine if the switch can be closed.
+
+### Sample
+
+object sync_check {
+	name sync_check_obj;
+	parent switch3_3B;
+	armed false;
+	frequency_tolerance 0.01 Hz;
+	voltage_tolerance_pu 0.02;
+	metrics_period 5.1 ms;	//Rounded up a little to prevent double conversion issues
+}
 
 ### Sync Check Parameters
 
