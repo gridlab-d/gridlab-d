@@ -1,6 +1,8 @@
 ## Performance Motor
 
+!!! warning
 
+	This class is considered in development but is not actively maintained and is not validated.
 
 The **performance_motor** class implements the LD1PAC load characteristic model, based on the WECC Air Conditioner Motor Model Test Report and the PowerWorld LD1PAC specification. This model represents compressor and HVAC equipment behavior, including motor states (RUNNING, STALLED, TRIPPED, OFF), voltage-dependent stalling thresholds, reconnection timing, and frequency sensitivity. For detailed technical information on the LD1PAC model, refer to the [WECC Air Conditioner Motor Model Test Report](https://www.wecc.org/Reliability/WECC%20Air%20Conditioner%20Motor%20Model%20Test%20Report--%20Final.pdf) and the [PowerWorld LD1PAC User Manual](https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Load%20Characteristic%20LD1PAC.htm).
 

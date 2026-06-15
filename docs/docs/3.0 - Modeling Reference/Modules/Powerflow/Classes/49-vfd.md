@@ -1,5 +1,46 @@
 ## VFD
 
+!!! warning
+
+    This class is unmaintained and will likely be removed in a future release.
+
+
+The vfd object models a variable frequency drive (VFD) motor controller.
+
+### Sample
+
+    object meter {
+        phases "ABC";
+        name node4;
+        nominal_voltage 4200;
+    }
+
+    object vfd {
+        from node4;
+        to node5;
+        object player {
+            property desired_motor_speed;
+            file ../data_vfd_speedPlayer_delta.player;
+            flags DELTAMODE;
+        };
+        phases "ABC";
+    }
+
+    object load {
+        name node5;
+        bustype SWING;
+        phases "ABC";
+        base_power_A 1000;
+        base_power_B 1000;
+        base_power_C 1000;
+        current_pf_A 0.9;
+        current_pf_B 0.9;
+        current_pf_C 0.9;
+        current_fraction_A 1;
+        current_fraction_B 1;
+        current_fraction_C 1;
+        nominal_voltage 4200;
+    }
 
 ### VFD Parameters
 

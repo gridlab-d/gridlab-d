@@ -3,21 +3,24 @@ Table: class_documentation_tracking table 1 { #tbl:class-documentation-tracking-
 
 | File                             | # prop | Progress | todo           | intro paragraph | sample                                                                         |
 | -------------------------------- | -----: | -------: | -------------- | --------------- | ------------------------------------------------------------------------------ |
+| 43-jsondump.md                   |     11 |     100% | intro + sample |                 | will be moved to some archive folder for depricated code.                      |
+| 49-vfd.md                        |     11 |     100% | intro + sample | done            | discuss removing?                                                              |
+| 46-load_tracker.md               |      9 |     100% |                | done            | done                                                                           |
+| 47-series_compensator.md         |     50 |     100% |                | done            | done                                                                           |
+| 37-motor.md                      |     82 |     100% |                | done            | done                                                                           |
+| 45-performance_motor.md          |     33 |     100% |                | done            | no examples exist on any public repository                                     |
+| 48-sync_check.md                 |     31 |     100% |                | done            | done                                                                           |
+| 42-emissions.md                  |     96 |     100% |                | done            | module is in development (last update in 2011) and may not be used or finished |
 | 17-load.md                       |    117 |     100% |                | done            | done                                                                           |
 | 18-meter.md                      |    102 |     100% |                | done            | done                                                                           |
-| 42-emissions.md                  |     96 |     100% |                | done            | module is in development (last update in 2011) and may not be used or finished |
 | 03-node.md                       |     92 |     100% |                | done            | done                                                                           |
-| 37-motor.md                      |     82 |      75% | sample         | done            |                                                                                |
 | 19-triplex_node.md               |     69 |     100% |                | done            | done                                                                           |
 | 20-triplex_meter.md              |     65 |     100% |                | done            | done                                                                           |
 | 21-triplex_load.md               |     57 |     100% |                | done            | done                                                                           |
 | 30-parametric_load.md            |     52 |     100% |                | done            | done                                                                           |
-| 47-series_compensator.md         |     50 |      50% | intro          |                 | done                                                                           |
 | 04-link.md                       |     48 |     100% |                | done            | done                                                                           |
-| 16-transformer_configuration.md  |     39 |     100% |                |                 |                                                                                |
-| 45-performance_motor.md          |     33 |      75% | sample         | done            |                                                                                |
+| 16-transformer_configuration.md  |     39 |     100% |                | done            | done                                                                           |
 | 24-capacitor.md                  |     31 |     100% |                | done            | done                                                                           |
-| 48-sync_check.md                 |     31 |      50% | intro+sample   |                 |                                                                                |
 | 06-line_configuration.md         |     27 |     100% |                | done            | done                                                                           |
 | 23-regulator_configuration.md    |     25 |     100% |                | done            | done                                                                           |
 | 29-substation.md                 |     24 |     100% |                | done            | done                                                                           |
@@ -28,11 +31,8 @@ Table: class_documentation_tracking table 1 { #tbl:class-documentation-tracking-
 | 38-restoration.md                |     14 |     100% |                | done            | done                                                                           |
 | 22-regulator.md                  |     13 |     100% |                | done            | done                                                                           |
 | 41-power_metrics.md              |     11 |     100% |                | done            | done                                                                           |
-| 43-jsondump.md                   |     11 |      50% | intro + sample |                 |                                                                                |
-| 49-vfd.md                        |     11 |      50% | intro + sample |                 |                                                                                |
 | 07-line_spacing.md               |     10 |     100% |                | done            | done                                                                           |
 | 39-series_reactor.md             |     10 |     100% |                | done            | done                                                                           |
-| 46-load_tracker.md               |      9 |      50% | intro + sample |                 |                                                                                |
 | 09-overhead_line_conductor.md    |      7 |     100% |                | done            | done                                                                           |
 | 25-fuse.md                       |      7 |     100% |                | done            | done                                                                           |
 | 26-switch.md                     |      7 |     100% |                | done            | done                                                                           |

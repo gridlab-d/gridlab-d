@@ -47,18 +47,9 @@ for step in range(num_steps):
         message for message in messages
         if message.get("type") in {"WARNING", "ERROR"}
     ]
-    # TODO add additional filter that only looks at messages that have the
-    # current simulation time in their timestamp.
-    pprint(filtered_messages)
+    if filtered_messages:
+        pprint(filtered_messages)
     gld.clear_messages()
-
-# Ending the simulation and exiting GridLAB-D
-# Taking one extra step beyond the stated simulation stop time
-# gld.clear_messages()
-# error_code, return_time_str = gld.step()
-# messages = gld.get_messages()
-# print('\n **************************** \n')
-# pprint(messages)
 
 gld.stop()
 gld.exit_gld()

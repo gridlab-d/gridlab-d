@@ -1,6 +1,9 @@
 ## Emissions
+!!! warning
 
-In Development. 
+    The Emissions object is not actively maintained and is not validated. It may contain bugs. The module may be removed in a future release.
+
+The Emissions object estimates pollutant emissions (CO2, SO2, NOx) produced to meet the electrical demand measured at a parent meter. It must be attached to a meter, from which it periodically samples `measured_power` and accumulates energy over a configurable `cycle_interval` (default 15 minutes). At the end of each interval, it dispatches the accumulated energy demand across nine generation sources (nuclear, hydro, solar thermal, biomass, wind, coal, natural gas, geothermal, petroleum) in a user-specified merit order, where each source supplies up to its `Max_Out` capacity until demand is met, with any leftover demand assigned to coal as a fallback. For each source used, it multiplies the energy produced by that source's conversion efficiency (Btu/kWh) and emission factors (lb/Btu) to compute per-source and total emissions, which are then published as object properties for reporting.
 
 ### Emissions Parameters
 

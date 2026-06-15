@@ -16,7 +16,7 @@ import gridlabd
 from pathlib import Path
 import json
 import os
-from pprint import pprint
+import pprint as pp
 from datetime import datetime, timedelta
 
 # Ensure's we're running from the correct directory
@@ -48,9 +48,21 @@ sim_duration = stoptime - starttime
 num_steps = int(sim_duration.total_seconds() / step_size)
 for step in range(num_steps):
     for i in range(3):
-        gld[i].step()
+        time_code, current_time_str= gld[i].step()
         status, current_time = gld[i].get_time()
         print(f"Model {i} - Step {step+1}/{num_steps} - Current time: {current_time}")
+        if status != 0:
+            raise RuntimeError(f"Simulation step failed at {current_time_str} with error code {time_code}.")
+        messages = gld[i].get_messages()
+        filtered_messages = [
+            message for message in messages
+            if message.get("type") in {"WARNING", "ERROR"}
+        ]
+        
+        if len(filtered_messages) > 0:
+            pp.pprint(filtered_messages)
+            input("Press Enter to continue...")
+        gld[i].clear_messages()
 
 
 for i in range(3):

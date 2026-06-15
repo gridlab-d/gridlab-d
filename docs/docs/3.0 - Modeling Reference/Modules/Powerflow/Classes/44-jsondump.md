@@ -1,5 +1,11 @@
 ## Jsondump
 
+!!! warning
+
+    This class is DEPRICATED and will be removed in a future release.
+
+
+
 
 ### Jsondump Parameters
 

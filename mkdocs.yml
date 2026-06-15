@@ -79,8 +79,8 @@ nav:
     - Technical Overview: docs/1.0 - Prospective Users/Technical_Overview.md
   - 2.0 - New Users:
     - Quick Install: docs/2.0 - New Users/2.1 - Installation Guide.md
-    - Video Tutorials: docs/2.0 - New Users/2.3 - Video Tutorials.md
-    - Troubleshooting: docs/2.0 - New Users/2.4 - Troubleshooting.md
+    - Python API Quick Start: docs/2.0 - New Users/2.2 - Python API Quick Start.md
+    - Troubleshooting: docs/2.0 - New Users/2.3 - Troubleshooting.md
     - Tutorial:
       - GridLAB-D™ Overview: docs/2.0 - New Users/Tutorial/2.2.1 - Overview.md
       - Built-In Distribution Models: docs/2.0 - New Users/Tutorial/2.2.10 - Built-In Distribution Models.md
@@ -215,7 +215,7 @@ nav:
     - Python API:
       - Introduction: docs/3.0 - Modeling Reference/Python API/1.0 - Python API Overview.md
       - Quick Start: docs/3.0 - Modeling Reference/Python API/2.0 - Python API Quick Start.md
-      - Functionality:
+      - Basic API Functionality:
         - Introduction: docs/3.0 - Modeling Reference/Python API/Functionality/3.0 - Python API Basics.md
         - Running Multiple Models: docs/3.0 - Modeling Reference/Python API/Functionality/3.1 - Running Multiple Models.md
         - Controlling Simulation Start and Stop Time: docs/3.0 - Modeling Reference/Python API/Functionality/3.2 - Controlling Simulation Start and Stop Times.md
