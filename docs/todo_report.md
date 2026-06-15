@@ -38,10 +38,6 @@ This report contains all TODO items found in Markdown files.
 - `2.0 - New Users\Tutorial\2.2.5 - SimulationTime.md` - l.43 - D™ uses the UTC as the default time zone. Time zones are specified in the *"tzinfo.txt"* file that is installed with GridLAB-D™ under the `share` folder. The following time zones are currently supported for the United States:
 
 
-## Quasi
-- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.45 - Static Mode Synchronization Procedure - Find the diagram that Frank talks about.
-
-
 ## Review
 - `2.0 - New Users\2.1 - Installation Guide.md` - l.83 - determine whether this should change or even be listed. The current default directory does not include these paths.**
 - `2.0 - New Users\2.1 - Installation Guide.md` - l.99 - do these get set automatically when you select the add to path option in the executable? If not, describe what the user needs to do and what is done automatically. [JK- not sure. I don't see these set in my path, though I used the simple executable instructions. These instructions may change as well with the new release. Flag for revisit/review by Dev team]**
@@ -58,6 +54,7 @@ This report contains all TODO items found in Markdown files.
 
 ## UNTAGGED
 - `2.0 - New Users\2.3 - Python API Quick Start.md` - l.40 - - API docs - Verify in final version that the following comment on read-only parameters is correct.
+- `2.0 - New Users\2.4 - Video Tutorials.md` - l.10 - Link to Youtube)
 - `2.0 - New Users\Tutorial\2.2.3 - GLM Models.md` - l.605 - - tutorial - Verify that collections should not be included as part of this input section.
 - `2.0 - New Users\Tutorial\2.2.8 - Distributed_Generation.md` - l.144 - Can charging and discharging be controlled? It doesn't look like it based on the code**.)
 - `3.0 - Modeling Reference\Modules\Generators\Energy_storage.md` - l.160 - - Status - update with energy storage models status
@@ -100,6 +97,9 @@ This report contains all TODO items found in Markdown files.
 - `4.0 - Developing Reference\4.7 - Release_Process.md` - l.5 - Write content for process section
 - `4.0 - Developing Reference\Building from Source\4.2.1 - Building_from_Source.md` - l.30 - - Update and verify pre-requisite installation command list for each build platform
 - `4.0 - Developing Reference\Building from Source\4.2.3 - Setting-Up_WSL_for_Windows.md` - l.32 - Describe how to update the PATH variable for WSL
+- `4.0 - Developing Reference\Development Fundamentals\4.3.2 - Creating_a_module.md` - l.111 - - link - link to appropriate publishing class variables page/section.
+- `4.0 - Developing Reference\Development Fundamentals\4.3.2 - Creating_a_module.md` - l.121 - - link - link to appropriate publishing class functions page/section.
+- `4.0 - Developing Reference\Development Fundamentals\4.3.2 - Creating_a_module.md` - l.132 - - link - link to appropriate publishing class functions page/section.
 - `4.0 - Developing Reference\Development Fundamentals\4.3.3 - Creating_a_class.md` - l.28 - add public typedefs
 - `4.0 - Developing Reference\Development Fundamentals\4.3.3 - Creating_a_class.md` - l.29 - declare published variables using GL_* macros
 - `4.0 - Developing Reference\Development Fundamentals\4.3.3 - Creating_a_class.md` - l.31 - add private typedefs
@@ -159,18 +159,18 @@ This report contains all TODO items found in Markdown files.
 - `4.0 - Developing Reference\Software Architecture and Design\4.4.2 - Modules.md` - l.150 - perform check operations and report issues
 - `4.0 - Developing Reference\Software Architecture and Design\4.4.2 - Modules.md` - l.540 - - link - insert link for source doc on **set_callback** for details.
 - `4.0 - Developing Reference\Software Architecture and Design\4.4.3 - Objects.md` - l.120 - - Empty - gld_object: Describe class members
-- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.101 - Add your transient mode_desired code */
-- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.110 - Add preupdate code */
-- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.122 - Add your interupdate code here */
-- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.138 - Add your postupdate code here */
-- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.164 - add your object update code here */
+- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.99 - Add your transient mode_desired code */
+- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.108 - Add preupdate code */
+- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.120 - Add your interupdate code here */
+- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.136 - Add your postupdate code here */
+- `4.0 - Developing Reference\Software Architecture and Design\4.4.5 - Time Management.md` - l.162 - add your object update code here */
 - `4.0 - Developing Reference\Software Architecture and Design\4.4.6 - Parallelization.md` - l.5 - Incomplete
 - `4.0 - Developing Reference\Software Architecture and Design\4.4.7 - Loader.md` - l.3 - Incomplete -
 - `4.0 - Developing Reference\Software Architecture and Design\4.4.8 - Transforms.md` - l.3 - Incomplete
 - `4.0 - Developing Reference\Testing and Debugging\4.5.1 - Assert.md` - l.152 - - Empty - Double Assert section is
 - `4.0 - Developing Reference\Testing and Debugging\4.5.1 - Assert.md` - l.189 - - Empty - Add content for Enumeration Assert
-- `6.0 - References\Unimplemented\Python API\10.0 - User-Facing Class.md` - l.3 - this class is proposed but may or may not be implemented by the initial release of the GridLAB-D™ API. This documentation is being kept here for now as design notes and needs to find an appropriate permanent home.
-- `6.0 - References\Unimplemented\Python API\10.0 - User-Facing Class.md` - l.99 - - Update link to master branch once the features is merged in.
+- `6.0 References\Unimplemented\Python API\10.0 - User-Facing Class.md` - l.3 - this class is proposed but may or may not be implemented by the initial release of the GridLAB-D™ API. This documentation is being kept here for now as design notes and needs to find an appropriate permanent home.
+- `6.0 References\Unimplemented\Python API\10.0 - User-Facing Class.md` - l.99 - - Update link to master branch once the features is merged in.
 
 
 ## Update
@@ -188,4 +188,4 @@ This report contains all TODO items found in Markdown files.
 
 ---
 
-**Summary:** 142 TODO items found across 14 stages.
+**Summary:** 145 TODO items found across 13 stages.
