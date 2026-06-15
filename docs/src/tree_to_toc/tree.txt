@@ -11,8 +11,9 @@
   - Technical Overview: docs/1.0 - Prospective Users/Technical_Overview.md
 - 2.0 - New Users:
   - Quick Install: docs/2.0 - New Users/2.1 - Installation Guide.md
-  - Video Tutorials: docs/2.0 - New Users/2.3 - Video Tutorials.md
-  - Troubleshooting: docs/2.0 - New Users/2.4 - Troubleshooting.md
+  - Python API Quick Start: docs/2.0 - New Users/2.3 - Python API Quick Start.md
+  - Video Tutorials: docs/2.0 - New Users/2.4 - Video Tutorials.md
+  - Troubleshooting: docs/2.0 - New Users/2.5 - Troubleshooting.md
   - Tutorial:
     - GridLAB-D™ Overview: docs/2.0 - New Users/Tutorial/2.2.1 - Overview.md
     - Built-In Distribution Models: docs/2.0 - New Users/Tutorial/2.2.10 - Built-In Distribution Models.md
@@ -165,49 +166,49 @@
       - Integration with the HELICS Co-Simulation Platform: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.4 - GridLAB-D HELICS Integration.md
       - Integration with a Postgres Database: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.5 - Integration with Postgres Databases.md
       - EnergyPlus Integration: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.6 - Integration with EnergyPlus.md
-- 4.0 Developing Reference:
-  - Introduction: docs/4.0 Developing Reference/4.1 - Introduction.md
-  - Style Guide: docs/4.0 Developing Reference/4.6 - Style_guide.md
-  - GridLAB-D™ Release Process: docs/4.0 Developing Reference/4.7 - Release_Process.md
+- 4.0 - Developing Reference:
+  - Introduction: docs/4.0 - Developing Reference/4.1 - Introduction.md
+  - Style Guide: docs/4.0 - Developing Reference/4.6 - Style_guide.md
+  - GridLAB-D™ Release Process: docs/4.0 - Developing Reference/4.7 - Release_Process.md
   - Building from Source:
-    - Building GridLAB-D™ from Source: docs/4.0 Developing Reference/Building from Source/4.2.1 - Building_from_Source.md
-    - Setting-Up the VS Code IDE: docs/4.0 Developing Reference/Building from Source/4.2.2 - Setting-Up_VS_Code.md
-    - Setting-Up WSL for Windows: docs/4.0 Developing Reference/Building from Source/4.2.3 - Setting-Up_WSL_for_Windows.md
+    - Building GridLAB-D™ from Source: docs/4.0 - Developing Reference/Building from Source/4.2.1 - Building_from_Source.md
+    - Setting-Up the VS Code IDE: docs/4.0 - Developing Reference/Building from Source/4.2.2 - Setting-Up_VS_Code.md
+    - Setting-Up WSL for Windows: docs/4.0 - Developing Reference/Building from Source/4.2.3 - Setting-Up_WSL_for_Windows.md
   - Development Fundamentals:
-    - Programming conventions: docs/4.0 Developing Reference/Development Fundamentals/4.3.1 - Programming_conventions.md
-    - Creating a module: docs/4.0 Developing Reference/Development Fundamentals/4.3.2 - Creating_a_module.md
-    - Creating a class: docs/4.0 Developing Reference/Development Fundamentals/4.3.3 - Creating_a_class.md
-    - Creating a solver: docs/4.0 Developing Reference/Development Fundamentals/4.3.4 - Creating_a_solver.md
-    - Device Modeling: docs/4.0 Developing Reference/Development Fundamentals/4.3.5 - GridLAB-D Device Modeling.md
-    - Integrated Testing: docs/4.0 Developing Reference/Development Fundamentals/4.3.6 - Integrated_Testing.md
-    - Issue Tracking: docs/4.0 Developing Reference/Development Fundamentals/4.3.7 - Issue Tracking.md
+    - Programming conventions: docs/4.0 - Developing Reference/Development Fundamentals/4.3.1 - Programming_conventions.md
+    - Creating a module: docs/4.0 - Developing Reference/Development Fundamentals/4.3.2 - Creating_a_module.md
+    - Creating a class: docs/4.0 - Developing Reference/Development Fundamentals/4.3.3 - Creating_a_class.md
+    - Creating a solver: docs/4.0 - Developing Reference/Development Fundamentals/4.3.4 - Creating_a_solver.md
+    - Device Modeling: docs/4.0 - Developing Reference/Development Fundamentals/4.3.5 - GridLAB-D Device Modeling.md
+    - Integrated Testing: docs/4.0 - Developing Reference/Development Fundamentals/4.3.6 - Integrated_Testing.md
+    - Issue Tracking: docs/4.0 - Developing Reference/Development Fundamentals/4.3.7 - Issue Tracking.md
   - Software Architecture and Design:
-    - Introduction: docs/4.0 Developing Reference/Software Architecture and Design/4.4.0 - Introduction.md
-    - gldcore: docs/4.0 Developing Reference/Software Architecture and Design/4.4.1 - gldcore.md
-    - Checkpointing: docs/4.0 Developing Reference/Software Architecture and Design/4.4.10 - Checkpointing.md
-    - Docker Containerization/Build Process: docs/4.0 Developing Reference/Software Architecture and Design/4.4.11 - Docker Containerization.md
-    - JSON Loader: docs/4.0 Developing Reference/Software Architecture and Design/4.4.12 - JSON Loader.md
-    - Multithreaded Random Number Generation: docs/4.0 Developing Reference/Software Architecture and Design/4.4.13 - Multithreaded_Random_Number_Generation.md
-    - Multithreading: docs/4.0 Developing Reference/Software Architecture and Design/4.4.13a - Multithreading.md
-    - Initialization: docs/4.0 Developing Reference/Software Architecture and Design/4.4.14 - Spec_Initialization.md
-    - Miscelaneous Features and Updates: docs/4.0 Developing Reference/Software Architecture and Design/4.4.15 - Stretch Goals.md
-    - Modules: docs/4.0 Developing Reference/Software Architecture and Design/4.4.2 - Modules.md
-    - Objects: docs/4.0 Developing Reference/Software Architecture and Design/4.4.3 - Objects.md
-    - Object Synchronization Process: docs/4.0 Developing Reference/Software Architecture and Design/4.4.4 - Object Synchronization Process.md
-    - Clock Operation: docs/4.0 Developing Reference/Software Architecture and Design/4.4.5 - Time Management.md
-    - GridLAB-D™ Parallelization: docs/4.0 Developing Reference/Software Architecture and Design/4.4.6 - Parallelization.md
-    - Loader: docs/4.0 Developing Reference/Software Architecture and Design/4.4.7 - Loader.md
-    - GridLAB-D™ Data Transforms: docs/4.0 Developing Reference/Software Architecture and Design/4.4.8 - Transforms.md
-    - Powerflow External LU Solver Interface: docs/4.0 Developing Reference/Software Architecture and Design/4.4.9 - Powerflow_External_LU_Solver_Interface.md
+    - Introduction: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.0 - Introduction.md
+    - gldcore: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.1 - gldcore.md
+    - Checkpointing: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.10 - Checkpointing.md
+    - Docker Containerization/Build Process: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.11 - Docker Containerization.md
+    - JSON Loader: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.12 - JSON Loader.md
+    - Multithreaded Random Number Generation: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.13 - Multithreaded_Random_Number_Generation.md
+    - Multithreading: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.13a - Multithreading.md
+    - Initialization: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.14 - Spec_Initialization.md
+    - Miscelaneous Features and Updates: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.15 - Stretch Goals.md
+    - Modules: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.2 - Modules.md
+    - Objects: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.3 - Objects.md
+    - Object Synchronization Process: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.4 - Object Synchronization Process.md
+    - Clock Operation: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.5 - Time Management.md
+    - GridLAB-D™ Parallelization: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.6 - Parallelization.md
+    - Loader: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.7 - Loader.md
+    - GridLAB-D™ Data Transforms: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.8 - Transforms.md
+    - Powerflow External LU Solver Interface: docs/4.0 - Developing Reference/Software Architecture and Design/4.4.9 - Powerflow_External_LU_Solver_Interface.md
   - Testing and Debugging:
-    - Assert: docs/4.0 Developing Reference/Testing and Debugging/4.5.1 - Assert.md
-    - Runtime/gl_* Output  Functions: docs/4.0 Developing Reference/Testing and Debugging/4.5.2 - runtime-functions.md
-    - Testing and Validation: docs/4.0 Developing Reference/Testing and Debugging/4.5.3 - Testing_and_Validation.md
-    - Performance Profiling: docs/4.0 Developing Reference/Testing and Debugging/4.5.5 - performance-profiling.md
-    - Command options: docs/4.0 Developing Reference/Testing and Debugging/4.5.6 - Command_line_arguments.md
-    - Transient Mode: docs/4.0 Developing Reference/Testing and Debugging/4.5.7 - Transient mode.md
-- 5.0 Examples:
-  - Placeholder: docs/5.0 Examples/placeholder.md
+    - Assert: docs/4.0 - Developing Reference/Testing and Debugging/4.5.1 - Assert.md
+    - Runtime/gl_* Output  Functions: docs/4.0 - Developing Reference/Testing and Debugging/4.5.2 - runtime-functions.md
+    - Testing and Validation: docs/4.0 - Developing Reference/Testing and Debugging/4.5.3 - Testing_and_Validation.md
+    - Performance Profiling: docs/4.0 - Developing Reference/Testing and Debugging/4.5.4 - performance-profiling.md
+    - Command options: docs/4.0 - Developing Reference/Testing and Debugging/4.5.5 - Command_line_arguments.md
+    - Transient Mode: docs/4.0 - Developing Reference/Testing and Debugging/4.5.6 - Transient mode.md
+- 5.0 - Examples:
+  - GridLAB-D™ Example Suite: docs/5.0 - Examples/Outline.md
 - 6.0 References:
   - Unimplemented:
     - Introduction: docs/6.0 References/Unimplemented/1.0 - Introduction.md
