@@ -11,7 +11,8 @@
   - Technical Overview: docs/1.0 - Prospective Users/Technical_Overview.md
 - 2.0 - New Users:
   - Quick Install: docs/2.0 - New Users/2.1 - Installation Guide.md
-  - Troubleshooting: docs/2.0 - New Users/2.3 - Troubleshooting.md
+  - Video Tutorials: docs/2.0 - New Users/2.3 - Video Tutorials.md
+  - Troubleshooting: docs/2.0 - New Users/2.4 - Troubleshooting.md
   - Tutorial:
     - GridLAB-D™ Overview: docs/2.0 - New Users/Tutorial/2.2.1 - Overview.md
     - Built-In Distribution Models: docs/2.0 - New Users/Tutorial/2.2.10 - Built-In Distribution Models.md
@@ -40,6 +41,7 @@
         - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/01_Introduction.md
         - GridLAB-D™ QSTS Inverter Model - DELTAMODE (Legacy): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/022_QSTS_Inverter_DELTAMODE_LEGACY.md
         - GridLAB-D™ QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/02_QSTS_Inverter.md
+        - GridLAB-D™ Dynamic Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/03_Dynamic_Inverter.md
         - 999_Inverter_Droop_Control_Disregard: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/999_Inverter_Droop_Control_Disregard.md
         - Updated Comparison Report: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Comparison_Report_Inverter_WiKi_VS_source.md
         - Inverter_WiKi_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_WiKi_table.md
