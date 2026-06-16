@@ -2840,7 +2840,7 @@ static TIMESTAMP sync_eventgen_impl(OBJECT *obj, TIMESTAMP t1,
 extern "C" MODULE_API TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1,
                                               PASSCONFIG pass)
 {
-    return (int)sync_eventgen_impl(obj, t1, pass);
+    return sync_eventgen_impl(obj, t1, pass);
 }
 #else
 extern "C" MODULE_API TIMESTAMP sync_eventgen(OBJECT *obj, ...)

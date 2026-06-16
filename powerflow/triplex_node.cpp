@@ -115,7 +115,6 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
                                 PT_double, "service_status_double", PADDR(service_status_dbl), PT_DESCRIPTION, "In and out of service flag - type double - will indiscriminately override service_status - useful for schedules",
                                 PT_double, "previous_uptime[min]", PADDR(previous_uptime), PT_DESCRIPTION, "Previous time between disconnects of node in minutes",
                                 PT_double, "current_uptime[min]", PADDR(current_uptime), PT_DESCRIPTION, "Current time since last disconnect of node in minutes",
-                                PT_object, "topological_parent", PADDR(TopologicalParent), PT_DESCRIPTION, "topological parent as per GLM configuration",
 
                                 PT_bool, "behaving_as_swing", PADDR(swing_functions_enabled), PT_DESCRIPTION, "Indicator flag for if a bus is behaving as a reference voltage source - valid for a SWING or SWING_PQ",
 

@@ -17,11 +17,11 @@
 #define NORMALRES /* use this to control default timestamp resolution */
 
 #ifdef VERYHIGHRES
-#define TS_SCALE (-9) /* system timescale is 1 nanosecond (1e-9 s)*/
+#define TS_SCALE (-9)                 /* system timescale is 1 nanosecond (1e-9 s)*/
 #define TS_SECOND ((int64)1000000000) /* duration of one second */
 #define TS_RESOLUTION (1e-9)          /* must match scale */
 #elif defined HIGHRES
-#define TS_SCALE (-6) /* system timescale is 1 nanosecond (1e-9 s)*/
+#define TS_SCALE (-6)              /* system timescale is 1 nanosecond (1e-9 s)*/
 #define TS_SECOND ((int64)1000000) /* duration of one second */
 #define TS_RESOLUTION (1e-6)       /* must match scale */
 #elif defined MEDIUMRES
@@ -36,17 +36,13 @@
 
 typedef int64 TIMESTAMP;
 typedef unsigned int64 DELTAT; /**< stores cumulative delta time values in ns */
-typedef unsigned long DT; /**< stores incremental delta time values in ns */
+typedef unsigned long DT;      /**< stores incremental delta time values in ns */
 
 #define TS_ZERO ((int64)0)
-#define TS_MAX                                                                 \
-  (32482080000LL) /* roughly 3000 CE, any date beyond this should be           \
-                     interpreted as TS_NEVER */
+#define TS_MAX (32482080000LL) /* roughly 3000 CE, any date beyond this should be interpreted as TS_NEVER */
 #define TS_INVALID ((int64) - 1)
-#define TS_NEVER ((int64)(((UINT_MAX) - 1) >> 1))
-#define TS_NEVER_DBL                                                           \
-  9223372036854775808.0 /* Double represenation of the TS_NEVER integer -      \
-                           deltamode usage */
+#define TS_NEVER ((int64)LLONG_MAX)
+#define TS_NEVER_DBL 9223372036854775808.0 /* Double represenation of the TS_NEVER integer - deltamode usage */
 #define MINYEAR 1970
 #define MAXYEAR 2969
 #define ISLEAPYEAR(Y) ((Y) % 4 == 0 && ((Y) % 100 != 0 || (Y) % 400 == 0))
@@ -55,57 +51,59 @@ typedef unsigned long DT; /**< stores incremental delta time values in ns */
 #define DT_INVALID (0xffffffff)
 #define DT_SECOND 1000000000
 
-typedef struct s_datetime {
-  short year;             /**< year (1970 to 2970 is allowed) */
-  short month;            /**< month (1-12) */
-  short day;              /**< day (1 to 28/29/30/31) */
-  short hour;             /**< hour (0-23) */
-  short minute;           /**< minute (0-59) */
-  short second;           /**< second (0-59) */
-  int nanosecond;         /**< usecond (0-999999999) */
-  short is_dst;           /**< 0=std, 1=dst */
-  char tz[5];             /**< ptr to tzspec timezone id */
-  unsigned short weekday; /**< 0=Sunday */
-  unsigned short yearday; /**< 0=Jan 1 */
-  TIMESTAMP timestamp;    /**< GMT timestamp */
-  int tzoffset;           /**< time zone offset in seconds (-43200 - 43200) */
-} DATETIME;               /**< the s_datetime structure */
+typedef struct s_datetime
+{
+    short year;             /**< year (1970 to 2970 is allowed) */
+    short month;            /**< month (1-12) */
+    short day;              /**< day (1 to 28/29/30/31) */
+    short hour;             /**< hour (0-23) */
+    short minute;           /**< minute (0-59) */
+    short second;           /**< second (0-59) */
+    int nanosecond;         /**< usecond (0-999999999) */
+    short is_dst;           /**< 0=std, 1=dst */
+    char tz[5];             /**< ptr to tzspec timezone id */
+    unsigned short weekday; /**< 0=Sunday */
+    unsigned short yearday; /**< 0=Jan 1 */
+    TIMESTAMP timestamp;    /**< GMT timestamp */
+    int tzoffset;           /**< time zone offset in seconds (-43200 - 43200) */
+} DATETIME;                 /**< the s_datetime structure */
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/* basic date and time functions */
-char *timestamp_current_timezone(void);
-TIMESTAMP mkdatetime(DATETIME *dt);
-int strdatetime(DATETIME *t, char *buffer, int size);
-int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size);
-int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer,
-                                 int size);
-int convert_from_deltatime_timestamp(double ts_v, char *buffer, int size);
-double timestamp_to_days(TIMESTAMP t);
-double timestamp_to_hours(TIMESTAMP t);
-double timestamp_to_minutes(TIMESTAMP t);
-double timestamp_to_seconds(TIMESTAMP t);
-TIMESTAMP convert_to_timestamp(const char *value);
-TIMESTAMP convert_to_timestamp_delta(const char *value,
-                                     unsigned int *nanoseconds,
-                                     double *dbl_time_value);
-int local_datetime(TIMESTAMP ts, DATETIME *dt);
-int local_datetime_delta(double tsdbl, DATETIME *dt);
+    /* basic date and time functions */
+    char *timestamp_current_timezone(void);
+    TIMESTAMP mkdatetime(DATETIME *dt);
+    int strdatetime(DATETIME *t, char *buffer, int size);
+    int convert_from_timestamp(TIMESTAMP ts, char *buffer, int size);
+    int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer,
+                                     int size);
+    int convert_from_deltatime_timestamp(double ts_v, char *buffer, int size);
+    double timestamp_to_days(TIMESTAMP t);
+    double timestamp_to_hours(TIMESTAMP t);
+    double timestamp_to_minutes(TIMESTAMP t);
+    double timestamp_to_seconds(TIMESTAMP t);
+    TIMESTAMP convert_to_timestamp(const char *value);
+    TIMESTAMP convert_to_timestamp_delta(const char *value,
+                                         unsigned int *nanoseconds,
+                                         double *dbl_time_value);
+    int local_datetime(TIMESTAMP ts, DATETIME *dt);
+    int local_datetime_delta(double tsdbl, DATETIME *dt);
 
-int timestamp_test(void);
+    int timestamp_test(void);
 
-char *timestamp_set_tz(char *tzname);
-TIMESTAMP timestamp_from_local(time_t t);
-time_t timestamp_to_local(TIMESTAMP t);
+    char *timestamp_set_tz(char *tzname);
+    TIMESTAMP timestamp_from_local(time_t t);
+    time_t timestamp_to_local(TIMESTAMP t);
 
-int local_tzoffset(TIMESTAMP t);
+    int local_tzoffset(TIMESTAMP t);
 
-double timestamp_get_part(void *x, const char *name);
-TIMESTAMP earliest_timestamp(TIMESTAMP t, ...);
-TIMESTAMP absolute_timestamp(TIMESTAMP t);
-int is_soft_timestamp(TIMESTAMP t);
+    double timestamp_get_part(void *x, const char *name);
+    TIMESTAMP earliest_timestamp(TIMESTAMP t, ...);
+    TIMESTAMP absolute_timestamp(TIMESTAMP t);
+    int is_soft_timestamp(TIMESTAMP t);
 
 #ifdef __cplusplus
 }

@@ -211,7 +211,6 @@ node::node(MODULE *mod) : powerflow_object(mod)
                                 PT_KEYWORD, "UNDER_VOLTAGE", (enumeration)GFA_UV, PT_DESCRIPTION, "GFA trip for under-voltage",
                                 PT_KEYWORD, "OVER_VOLTAGE", (enumeration)GFA_OV, PT_DESCRIPTION, "GFA trip for over-voltage",
 
-                                PT_object, "topological_parent", PADDR(TopologicalParent), PT_DESCRIPTION, "topological parent as per GLM configuration",
                                 PT_bool, "behaving_as_swing", PADDR(swing_functions_enabled), PT_DESCRIPTION, "Indicator flag for if a bus is behaving as a reference voltage source - valid for a SWING or SWING_PQ",
 
                                 // Checkpointing variables
@@ -312,7 +311,6 @@ int node::create(void)
     prev_NTime = 0;
     SubNode = SNT_NONE;
     SubNodeParent = nullptr;
-    TopologicalParent = nullptr;
     NR_subnode_reference = nullptr;
     Extra_Data = nullptr;
     Extra_Data_Track_FPI = nullptr;
@@ -473,9 +471,6 @@ int node::init(OBJECT *parent)
         CALLBACKS **cbackval = nullptr;
         bool ExtLinkFailure;
         STATUS status_ret_value;
-
-        // Store the topological parent before anyone overwrites it
-        TopologicalParent = obj->parent;
 
         // Check for a swing bus if we haven't found one already
         if (NR_swing_bus == nullptr)
@@ -1109,8 +1104,6 @@ int node::init(OBJECT *parent)
     }
     else if (solver_method == SM_FBS) // Forward back sweep
     {
-        // Store the topological parent before anyone overwrites it
-        TopologicalParent = obj->parent;
 
         if (obj->parent != nullptr)
         {
@@ -1401,19 +1394,6 @@ int node::init(OBJECT *parent)
 
         // Increment the counter for allocation
         pwr_object_count++;
-
-        // Check out parent and toss some warnings
-        if (TopologicalParent != nullptr)
-        {
-            if ((TopologicalParent->flags & OF_DELTAMODE) != OF_DELTAMODE)
-            {
-                gl_warning("Object %s (node:%d) is flagged for deltamode, but it's parent is not.  This may lead to incorrect answers!", obj->name ? obj->name : "Unknown", obj->id);
-                /*  TROUBLESHOOT
-                A childed node's parent is not flagged for deltamode.  This may lead to some erroneous errors in the powerflow.  Please apply the
-                flags DELTAMODE property to the parent, or utilize the all_powerflow_delta module-level flag to fix this.
-                */
-            }
-        }
 
         // update GFA-type
         prev_time_dbl = (double)gl_globalclock;
