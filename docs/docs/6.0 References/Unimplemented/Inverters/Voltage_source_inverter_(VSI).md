@@ -1,5 +1,9 @@
 # Voltage source inverter (VSI)
 
+!!! danger "Deprecated, hence eliminated, feature"
+
+    This is a transient mode feature that used to be part of the `inverter` object. In this mode the inverter would synthesize its own internal voltage and act as a controlled voltage source rather than a current source. However, since the `inverter` object was eventually stripped of transient mode functionalities, this mode has been taken out from here.
+
 This document describes GridLAB-D™ implementation of voltage source inverter (VSI). VSI is implemented in a similar way as the **diesel_dg**. A Norton current source behind an admittance is used to represent the VSI. A Thevenin voltage source is then converted from the Norton source for the calculation of voltage source **e_source** magnitude and angle. 
 
 ![VSI Norton to Thevenin](../../../../../images/500px-VSI_Norton_to_Thevenin.png){ #fig:vsi-norton-to-thevenin }

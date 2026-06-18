@@ -1,6 +1,6 @@
-# Diesel dg
+# Diesel Generator
 
-The **diesel_dg** object represents a synchronous distributed generation. The model supports both a QSTS-only model and subsecond (transient mode) modes of operation. 
+The **diesel_dg** object represents a synchronous distributed generation model of a diesel generator. The model supports both a QSTS-only model and subsecond (transient mode) modes of operation. 
 
 # Properties
 
