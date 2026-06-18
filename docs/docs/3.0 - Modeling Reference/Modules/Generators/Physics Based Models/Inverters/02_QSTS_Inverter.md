@@ -53,7 +53,7 @@ When the inverter type is set to `FOUR_QUADRANT`, the device can operate anywher
 
 These parameters govern what the inverter is and whether it is active in the simulation.
 
-- `generator_status` can be either `OFFLINE` or `ONLINE` and controls whether the inverter participates in the power flow solution at all. When set to `OFFLINE`, the object exists in the model but contributes no injection. It defaults to `ONLINE` at runtime. <mark style="background-color: lightgreen;">CAN WE VERIFY THIS IS ACTUALLY WHAT HAPPENS?????.</mark>
+- `generator_status` can be either `OFFLINE` or `ONLINE` and controls whether the inverter participates in the power flow solution at all. When set to `OFFLINE`, the object exists in the model but contributes no injection. It defaults to `ONLINE` at runtime.
 - `phases` (A, B, C, N, S) declares which AC phases the inverter is connected to. This drives the phase-specific variable mapping performed during the initialization stage. For example, a single-phase rooftop PV on phase B will only inject into that phase's current and power accumulators. The S flag denotes split-phase (triplex) connection.
 - `islanded_state` (boolean) signals to all control modes that the inverter is operating in an islanded network. When true, several control modes alter their behavior. For example, load-following modes account for the `soc_reserve` floor to ensure the battery retains capacity for sustained island operation.
 
