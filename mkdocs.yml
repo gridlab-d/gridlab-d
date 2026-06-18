@@ -37,20 +37,20 @@ plugins:
             show_signature_annotations: true
             annotations_path: source   # put types in the signature
             separate_signature: true
-  # - mkdoxy:
-  #     doxygen-bin-path:
-  #     projects:
-  #      gridlabd:
-  #         src-dirs: assert autotest build climate comm commercial connection control debug generators gldcore GldEditor market matlab matpower mysql network optimize plc powerflow python reliability residential rest tape tape_file tape_memory tape_plot utilities
-  #         full-doc: True 
-  #         doxy-cfg: 
-  #           FILE_PATTERNS: "*.cpp *.h*" 
-  #           RECURSIVE: True 
-  #           WARN_IF_UNDOCUMENTED: True
-  #           WARN_IF_DOC_ERROR: True
-  #           WARN_NO_PARAMDOC: True
-  #           WARN_AS_ERROR: False
-  #           WARN_LOGFILE: docs/doxygen-warnings.log
+  - mkdoxy:
+      doxygen-bin-path:
+      projects:
+       gridlabd:
+          src-dirs: assert autotest build climate comm commercial connection control debug generators gldcore GldEditor market matlab matpower mysql network optimize plc powerflow python reliability residential rest tape tape_file tape_memory tape_plot utilities
+          full-doc: True 
+          doxy-cfg: 
+            FILE_PATTERNS: "*.cpp *.h*" 
+            RECURSIVE: True 
+            WARN_IF_UNDOCUMENTED: True
+            WARN_IF_DOC_ERROR: True
+            WARN_NO_PARAMDOC: True
+            WARN_AS_ERROR: False
+            WARN_LOGFILE: docs/doxygen-warnings.log
 markdown_extensions:
   - fenced_code
   - codehilite:
