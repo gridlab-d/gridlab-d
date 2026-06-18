@@ -6,6 +6,7 @@ theme:
   style_external_links: true
   logo: images/GridLAB-D_WhiteVersion.png
   user_color_mode_toggle:  true
+  navigation_depth: 6
   icon:
     admonition:
       note: octicons/tag-16
@@ -36,20 +37,20 @@ plugins:
             show_signature_annotations: true
             annotations_path: source   # put types in the signature
             separate_signature: true
-  - mkdoxy:
-      doxygen-bin-path:
-      projects:
-       gridlabd:
-          src-dirs: assert autotest build climate comm commercial connection control debug generators gldcore GldEditor market matlab matpower mysql network optimize plc powerflow python reliability residential rest tape tape_file tape_memory tape_plot utilities
-          full-doc: True 
-          doxy-cfg: 
-            FILE_PATTERNS: "*.cpp *.h*" 
-            RECURSIVE: True 
-            WARN_IF_UNDOCUMENTED: True
-            WARN_IF_DOC_ERROR: True
-            WARN_NO_PARAMDOC: True
-            WARN_AS_ERROR: False
-            WARN_LOGFILE: docs/doxygen-warnings.log
+  # - mkdoxy:
+  #     doxygen-bin-path:
+  #     projects:
+  #      gridlabd:
+  #         src-dirs: assert autotest build climate comm commercial connection control debug generators gldcore GldEditor market matlab matpower mysql network optimize plc powerflow python reliability residential rest tape tape_file tape_memory tape_plot utilities
+  #         full-doc: True 
+  #         doxy-cfg: 
+  #           FILE_PATTERNS: "*.cpp *.h*" 
+  #           RECURSIVE: True 
+  #           WARN_IF_UNDOCUMENTED: True
+  #           WARN_IF_DOC_ERROR: True
+  #           WARN_NO_PARAMDOC: True
+  #           WARN_AS_ERROR: False
+  #           WARN_LOGFILE: docs/doxygen-warnings.log
 markdown_extensions:
   - fenced_code
   - codehilite:
@@ -104,24 +105,19 @@ nav:
         - Climate Module: docs/3.0 - Modeling Reference/Modules/Climate/1.0 - Climate.md
         - CSV reader: docs/3.0 - Modeling Reference/Modules/Climate/CSV_reader_(climate_class).md
       - Generators:
-        - Diesel dg: docs/3.0 - Modeling Reference/Modules/Generators/Diesel_dg.md
-        - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Energy_storage.md
-        - Inverters:
-          - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/01_Introduction.md
-          - GridLAB-D™ QSTS Inverter Model - DELTAMODE (Legacy): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/022_QSTS_Inverter_DELTAMODE_LEGACY.md
-          - GridLAB-D™ QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/02_QSTS_Inverter.md
-          - GridLAB-D™ Dynamic Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/03_Dynamic_Inverter.md
-          - 999_Inverter_Droop_Control_Disregard: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/999_Inverter_Droop_Control_Disregard.md
-          - Updated Comparison Report: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Comparison_Report_Inverter_WiKi_VS_source.md
-          - Inverter_WiKi_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_WiKi_table.md
-          - GridLAB-D™ Published Variables: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_publish_variable.md
-          - Inverter_source_table: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Inverter_source_table.md
-          - inverter_dyn: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_inverter_dyn.md
-          - Sec control: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sec_control.md
-          - Sync Ctrl: docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Spec_sync_ctrl.md
-          - Voltage source inverter (VSI): docs/3.0 - Modeling Reference/Modules/Generators/Inverters/Voltage_source_inverter_(VSI).md
-        - Solar Panel: docs/3.0 - Modeling Reference/Modules/Generators/Solar.md
-        - Wind Turbine: docs/3.0 - Modeling Reference/Modules/Generators/Windturb_dg.md
+        - GridLAB-D™ Generators: docs/3.0 - Modeling Reference/Modules/Generators/Generators.md
+        - Physics Based Models:
+          - Diesel Generator: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Diesel_dg.md
+          - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Energy_storage.md
+          - Inverters:
+            - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Inverters/01_Introduction.md
+            - GridLAB-D™ QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Inverters/02_QSTS_Inverter.md
+            - GridLAB-D™ Dynamic Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Inverters/03_Dynamic_Inverter.md
+          - Solar Panel: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Solar.md
+          - Wind Turbine: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Windturb_dg.md
+        - Control Models:
+          - Automatic Generation Control (AGC)/Secondary Control: docs/3.0 - Modeling Reference/Modules/Generators/Control Models/Secondary_control.md
+          - Synchronization Control: docs/3.0 - Modeling Reference/Modules/Generators/Control Models/Synchronization_control.md
       - Powerflow:
         - Power Flow User Guide: docs/3.0 - Modeling Reference/Modules/Powerflow/1.0 - Power_Flow_User_Guide.md
         - Powerflow Tehnical Reference: docs/3.0 - Modeling Reference/Modules/Powerflow/3.0 - Power_Flow_Reference.md
@@ -304,6 +300,7 @@ nav:
       - Inverters:
         - ibr blackboxmodels: docs/6.0 References/Unimplemented/Inverters/Spec_ibr_blackboxmodels.md
         - ibr grayboxmodels: docs/6.0 References/Unimplemented/Inverters/Spec_ibr_grayboxmodels.md
+        - Voltage source inverter (VSI): docs/6.0 References/Unimplemented/Inverters/Voltage_source_inverter_(VSI).md
       - Link:
         - Link (directive): docs/6.0 References/Unimplemented/Link/Link_(directive).md
         - Matlab link: docs/6.0 References/Unimplemented/Link/Matlab_link.md
