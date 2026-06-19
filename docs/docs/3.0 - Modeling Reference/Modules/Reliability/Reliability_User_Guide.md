@@ -129,7 +129,7 @@ IEEE Std 1366-2003. IEEE Guide for Electric Power Distribution Reliability Indic
 
 ## Reliability Module 
 
-The **reliability** module provides the ability to induce events on a system and evaluate their impacts. The **reliability** module collects and outputs module-appropriate metrics to a log file for user evaluation. **reliability** is only an event-inducing and metrics-recording module and requires specific interfaces to different modules of interest. At this time, the only module interface that exists is with the **powerflow** module (see the [Power Flow User Guide]). 
+The **reliability** module provides the ability to induce events on a system and evaluate their impacts. The **reliability** module collects and outputs module-appropriate metrics to a log file for user evaluation. **reliability** is only an event-inducing and metrics-recording module and requires specific interfaces to different modules of interest. At this time, the only module interface that exists is with the **powerflow** module (see the [Power Flow User Guide](../Powerflow/00-Powerflow_Introduction.md)). 
 
 ### Overall settings
 

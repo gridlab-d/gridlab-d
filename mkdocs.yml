@@ -169,6 +169,8 @@ nav:
           - Composition Motor: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/Tech_CompositionMotor.md
           - Series Compensator: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/Series_compensator.md
           - References: docs/3.0 - Modeling Reference/Modules/Powerflow/Theory/References.md
+      - Reliability:
+        - User Guide: docs/3.0 - Modeling Reference/Modules/Reliability/Reliability_User_Guide.md
       - Residential:
         - Introduction: docs/3.0 - Modeling Reference/Modules/Residential/1.0 - Introduction.md
         - house: docs/3.0 - Modeling Reference/Modules/Residential/2.0 - house-e.md

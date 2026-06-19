@@ -1,6 +1,8 @@
 ## Power Metrics
 
-The **power_metrics** object is used by the **reliability** module to calculate relevant **powerflow** metrics. The **power_metrics** object calculates the IEEE 1366-2003 metrics for evaluating the reliability indices of a power system. 
+The **power_metrics** object is used by the **reliability** module to calculate relevant **powerflow** metrics. The **power_metrics** object calculates the IEEE 1366-2003 metrics for evaluating the reliability indices of a power system.
+
+For detailed information about reliability analysis and the metrics computed by this object, see the [Reliability User Guide](../../Reliability/Reliability_User_Guide.md). 
 
 A minimalist **power_metrics** implementation is 
     
