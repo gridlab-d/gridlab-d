@@ -297,31 +297,15 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
     }
 }
 
-static bool checkpoint_replay_active_now()
-{
-    char replay_active[16] = {0};
-    char *value = gl_global_getvar("checkpoint_replay_active", replay_active, sizeof(replay_active));
-    return value != nullptr && atoi(value) != 0;
-}
-
 int complex_assert::prenotify(PROPERTY *prop, char *value)
 {
-
-    // printf("prenotify called for %s\n", prop ? prop->name : "(null)");
-
-    // Only block or handle specific properties if needed
-    // Otherwise, always return 1 (success)
+    // Nothing to do here, return success
     return 1;
 }
 
 int complex_assert::postnotify(PROPERTY *prop, char *value)
 {
-    if (!prop || !prop->name)
-        return 1; // don't fail on nulls
-    if (!checkpoint_replay_active_now() && once == ONCE_DONE && strcmp(prop->name, "value") == 0)
-    {
-        once = ONCE_TRUE;
-    }
+    // Nothing to do here, return success
     return 1;
 }
 
