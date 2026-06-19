@@ -118,7 +118,7 @@ $\mathbf{b}=$ `switch_impedance`,
 $\mathbf{c}=0.0$,
 $\mathbf{d}=1.0$
 
-### NR
+### Newton-Raphson (NR)
 
 The Newton-Raphson method implementation is simplified into four matrices. The specifics of their use are detailed, but equations will be omitted, for brevity. 
 

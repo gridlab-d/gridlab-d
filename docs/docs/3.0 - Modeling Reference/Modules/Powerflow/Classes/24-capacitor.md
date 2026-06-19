@@ -1,6 +1,8 @@
 ## Capacitor
 
-Capacitors are used for reactive power compensation and voltage support scenarios. The **capacitor** implements a switchable set of capacitors. **capacitor** objects are one of two objects in the **powerflow** module that incorporate a form of automatic control. To take full advantage of this functionality, simulations of greater than one time step (time-varying simulations) are recommended. Single-phase powerflow connections (phase `S`) are not supported by capacitors at this time. A typical capacitor implementation is 
+Capacitors are used for reactive power compensation and voltage support scenarios. The **capacitor** implements a switchable set of capacitors. **capacitor** objects are one of two objects in the **powerflow** module that incorporate a form of automatic control. To take full advantage of this functionality, simulations of greater than one time step (time-varying simulations) are recommended. Single-phase powerflow connections (phase `S`) are not supported by capacitors at this time.
+
+For technical details on capacitor modeling, see [Controls and Devices Theory](../Theory/Controls_and_Devices_Theory.md). A typical capacitor implementation is 
     
     
     object capacitor {

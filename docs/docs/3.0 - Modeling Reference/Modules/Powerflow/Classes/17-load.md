@@ -1,6 +1,8 @@
 ## Load
 
-Load objects present a method for taking power out of the system in controlled, known amounts. While implemented as a constant load, **player** objects can be used to vary the load with time. **load** objects provide a means to implement constant current, constant power, and constant impedance losses or generation into the system. The convention is a load is a positive quantity, so generation would need to be represented as a negative number. 
+Load objects present a method for taking power out of the system in controlled, known amounts. While implemented as a constant load, **player** objects can be used to vary the load with time. **load** objects provide a means to implement constant current, constant power, and constant impedance losses or generation into the system. The convention is a load is a positive quantity, so generation would need to be represented as a negative number.
+
+For technical details on load modeling, see [Component Modeling Theory](../Theory/Node_Load_Meter_Theory.md).
 
 Loads can be a mixture of the constant current, constant impedance, and constant power types. A typical, mixed load would be implemented as 
 	

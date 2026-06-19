@@ -2,6 +2,8 @@
 
 The link object is a connection between nodes in a distribution system. The **link** object is not directly useful, but is the basis for objects associated with overhead lines, underground lines, triplex lines, transformers, regulators, switches, and fuses.
 
+For technical details on link modeling, see [Lines and Transformers Theory](../Theory/Lines_and_Transformers_Theory.md).
+
 ### Example Link
 
 A **link** only requires three parameters to be specified by default. Most of the actual functionality comes through derived objects such as lines, transformers, and switches.

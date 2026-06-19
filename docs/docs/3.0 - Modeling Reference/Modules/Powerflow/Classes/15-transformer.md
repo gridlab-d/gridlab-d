@@ -1,6 +1,8 @@
 ## Transformer
 
-Transformers provide a means to change the voltage from one node to another in the distribution system. Similar to the different **line** objects, a **transformer** object requires a configuration object to specify the details of the implementation. A typical transform implementation is 
+Transformers provide a means to change the voltage from one node to another in the distribution system. Similar to the different **line** objects, a **transformer** object requires a configuration object to specify the details of the implementation.
+
+For technical details on transformer modeling, see [Lines and Transformers Theory](../Theory/Lines_and_Transformers_Theory.md). A typical transform implementation is 
     
     
     object transformer {

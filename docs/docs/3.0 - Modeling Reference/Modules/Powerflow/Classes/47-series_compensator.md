@@ -1,6 +1,8 @@
 ## Series Compensator
 
-The series_compensator object  automatically regulates voltage on a distribution line. It sits between two nodes (a "from" node and a "to" node) and works like an adjustable transformer, raising or lowering the downstream voltage to keep it close to a user-defined setpoint on each phase. It supports both standard three-phase and triplex (split-phase) connections, and includes optional features such as frequency-responsive voltage adjustment, configurable control gains and response timing, and an automatic bypass mode that disengages the device when upstream voltage falls outside safe limits. 
+The series_compensator object automatically regulates voltage on a distribution line. It sits between two nodes (a "from" node and a "to" node) and works like an adjustable transformer, raising or lowering the downstream voltage to keep it close to a user-defined setpoint on each phase. It supports both standard three-phase and triplex (split-phase) connections, and includes optional features such as frequency-responsive voltage adjustment, configurable control gains and response timing, and an automatic bypass mode that disengages the device when upstream voltage falls outside safe limits.
+
+For technical details on series compensator modeling, see [Series Compensator Theory](../Theory/Series_compensator.md). 
 
 
 ### Sample

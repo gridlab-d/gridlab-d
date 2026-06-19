@@ -2,6 +2,8 @@
 
 The node object is equivalent to a bus of the distribution system. It provides a connection point for **link**-based objects and a point of known voltages on the system. Three-phase voltage is typically available in either wye-connected or delta-connected form. Wye-connected voltages are contained in `voltage_A`, `voltage_B`, and `voltage_C`. Delta-connected voltages are available in `voltage_AB`, `voltage_BC`, and `voltage_CA`.
 
+For technical details on node modeling, see [Component Modeling Theory](../Theory/Node_Load_Meter_Theory.md).
+
 ### Example Node
 
 A minimalist node could be created with
