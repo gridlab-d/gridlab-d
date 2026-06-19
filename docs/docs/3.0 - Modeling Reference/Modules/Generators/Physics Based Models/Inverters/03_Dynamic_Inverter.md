@@ -8,10 +8,11 @@ To address electromechanical transients, frequency dynamics, and control interac
 
 ### Design Philosophy
 
-At its core, the `inverter_dyn` class — implemented in `inverter_dyn.cpp` — models the inverter as a voltage source (the internal synthesized AC voltage) behind a coupling impedance (a filter reactance and optional resistance). Depending on the selected control mode, the inverter either:
+At its core, the `inverter_dyn` object — implemented in `inverter_dyn.cpp` — models the inverter with different circuit representations depending on the control mode.
 
-- Autonomously synthesizes its own voltage magnitude and frequency reference — the *(grid-forming)* paradigm, or
-- Tracks the grid voltage and phase using a phase-locked loop (PLL) and injects a commanded current — the *(grid-following)* paradigm.
+For the **_grid-forming_** paradigm, the model represents the inverter as a voltage source (the internal synthesized AC voltage) behind a coupling impedance (a filter reactance and optional resistance). Thus, the grid-forming inverter autonomously synthesizes its own voltage magnitude and frequency reference.
+
+In the **_grid-following_** paradigm, although the same voltage-source converter hardware is used, the control strategy makes the model behave as controlled current sources from the network's perspective. Hence, the grid-following inverter tracks the grid voltage and phase using a phase-locked loop (PLL) and injects a commanded current.
 
 These two fundamental paradigms are captured in the `control_mode` enumeration:
 
@@ -27,12 +28,12 @@ These two fundamental paradigms are captured in the `control_mode` enumeration:
 
 Similarly to its QSTS counterpart, the dynamic inverter model connects to the distribution network by parenting to a powerflow node, meter, load, or their triplex (split-phase) equivalents. The object publishes its *Norton equivalent* (current injection and admittance) to the powerflow solver. Once updated, the powerflow solver works out the nodal voltage equations for the whole network. Subsequently, the inverter model reads back the solved terminal voltages and updates its internal state variables (internal angle, frequency, d-q currents, PLL outputs, etc.) so that the system dynamics can move forward in time, through the connection shown in [](#fig:inverter_dyn_connection).
 
-![Dynamic Inverter equivalent circuit network interface [1]](../../../../../images/inverter_dyn_connection.png){ #fig:inverter_dyn_connection }
+![Dynamic Inverter equivalent circuit network interface [1]](../../../../../../images/inverter_dyn_connection.png){ #fig:inverter_dyn_connection }
 
 To be linked with a three-phase distribution network powerflow solver, the voltage source model is converted to its Norton equivalence, as shown in [](#fig:inverter_dyn_Thevenin2Norton) (a) and (b).
 
 ![Dynamic Inverter equivalent circuits: (a) Inverter internal voltage source, (b)
-Norton equivalent current source [1]](../../../../../images/inverter_dyn_Thevenin2Norton.png){ #fig:inverter_dyn_Thevenin2Norton }
+Norton equivalent current source [1]](../../../../../../images/inverter_dyn_Thevenin2Norton.png){ #fig:inverter_dyn_Thevenin2Norton }
 
 ## Parameters and Functionality
 
@@ -62,7 +63,7 @@ $$\displaystyle{}Y = \frac{1}{Z_{f}} \tag{2}$$
 
 to calculate the current and admitance to be injected in the distribution network at the node or load connection point, as shown in [](#fig:inverter_dyn_grid_forming_concept).
 
-![Grid-Forming Inverter model concept [1]](../../../../../images/inverter_dyn_grid_forming_concept.png){ #fig:inverter_dyn_grid_forming_concept }
+![Grid-Forming Inverter model concept [1]](../../../../../../images/inverter_dyn_grid_forming_concept.png){ #fig:inverter_dyn_grid_forming_concept }
 
 Two sub-modes govern how $E$ is computed:
 
@@ -72,7 +73,7 @@ Two sub-modes govern how $E$ is computed:
 #### CERTS Droop Control
 
 ![Grid-Forming Inverter CERTS Droop Control: (a) Q-V droop control and (b) P-f droop control
-and overload mitigation control. [1]](../../../../../images/inverter_dyn_certs_control.png){ #fig:inverter_dyn_certs_control }
+and overload mitigation control. [1]](../../../../../../../images/inverter_dyn_certs_control.png){ #fig:inverter_dyn_certs_control }
 
 The default grid-forming controller implements the CERTS (Consortium for Electric Reliability Technology Solutions) droop control [1, 2] — a decentralized control law where:
 
@@ -170,22 +171,22 @@ As referenced in [\[2\]](#ref2), in `FSET_MODE`, the inverter has a frequency-re
 
 Unlike a synchronous machine, an inverter has hard current limits imposed by the power electronics (IGBT/SiC ratings). `inverter_dyn` implements a **current-limiting strategy** for grid-forming inverters: when the magnitude of the computed output current exceeds `I_max`, the internal voltage reference is modified (via a virtual impedance or direct clamping) to bring the current within limits. The intermediate, unclamped currents are exposed as `I[A/B/C]_Out_PU_temp[]` for diagnostic purposes. Setting the flags `phase_angle_correction` and `virtual_resistance_correction` to true enables two layers of correction to mitigate the impact of current limiting on the inverter's voltage angle and magnitude, respectively, which can help maintain stability during overload conditions.
 
-### Grid-Following (GFL) Inverter — Physical Model
+### Grid-Following (GFL) Inverter — Physical Model { #sec:grid-following-inverter-physical-model }
 
 #### Equivalent Circuit
 
 Although a grid-following inverter uses the same voltage-source converter hardware as a grid-forming inverter (see [](#fig:inverter_dyn_connection)), its control strategy makes it behave as a **controlled current source** from the network's perspective. The terminal voltage is determined by the grid; the inverter modulates its internal voltage $E$ to inject a desired current, as detailed in [1] and shown in [](#fig:inverter_dyn_grid_following_concept).
 
-![Grid-Following Inverter model concept [1]](../../../../../images/inverter_dyn_grid_following_concept.png){ #fig:inverter_dyn_grid_following_concept }
+![Grid-Following Inverter model concept [1]](../../../../../../images/inverter_dyn_grid_following_concept.png){ #fig:inverter_dyn_grid_following_concept }
 
 Following the representation in [1], GridLAB-D™ implements both components of the grid-following control strategy, that is:
 
 - the phase-locked loop (PLL) in [](#fig:inverter_dyn_glf_pll), used to estimate the phase angle $\angle{\delta_g}$ of the grid side voltage. With $\angle{\delta_g}$ obtained, the controller can inject the specified $P$ and $Q$ into the grid.
 - the current control loop in [](#fig:inverter_dyn_glf_current_control) to quickly regulate the current $I_g\angle{\phi_g}$ injected into the grid, so the grid-following inverter can behave as a current source.
 
-![Grid-Following Inverter model — PLL control block per phase ($i \in \{A,B,C\}$) [1]](../../../../../images/inverter_dyn_glf_pll.png){ #fig:inverter_dyn_glf_pll }
+![Grid-Following Inverter model — PLL control block per phase ($i \in \{A,B,C\}$) [1]](../../../../../../images/inverter_dyn_glf_pll.png){ #fig:inverter_dyn_glf_pll }
 
-![Grid-Following Inverter model — Current control block per phase ($i \in \{A,B,C\}$) [1]](../../../../../images/inverter_dyn_glf_current_control.png){ #fig:inverter_dyn_glf_current_control }
+![Grid-Following Inverter model — Current control block per phase ($i \in \{A,B,C\}$) [1]](../../../../../../images/inverter_dyn_glf_current_control.png){ #fig:inverter_dyn_glf_current_control }
 
 The following assumptions are made when implementing grid-following inverter in GridLAB-D™: 
 
@@ -204,7 +205,7 @@ The PLL is the sensing subsystem that tracks the grid's voltage angle so the inv
 
 #### Inner Current Control
 
-In full `GRID_FOLLOWING` mode (not `GFL_CURRENT_SOURCE`), the model includes an **inner current control loop** that outputs the internal voltages $e_{di}$ and $e_{qi}$ for each phase. `kpc` and `kic` are the proportional and integral gains of the current control loop, respectively, while `F_current` represents the feed forward term gain (<mark style="background-color: light green";>$k$ in the diagram in [](#fig:inverter_dyn_glf_current_control) ????</mark>). In the rotating dq reference frame:
+In full `GRID_FOLLOWING` mode (not `GFL_CURRENT_SOURCE`), the model includes an **inner current control loop** that outputs the internal voltages $e_{di}$ and $e_{qi}$ for each phase. `kpc` and `kic` are the proportional and integral gains of the current control loop, respectively, while `F_current` represents the feed forward term gain ($k$ in the diagram in [](#fig:inverter_dyn_glf_current_control)). In the rotating dq reference frame:
 
 - The **d-axis** current reference is derived from the active power command: $i_{gdi\_ref} = \frac{Pref}{u_{gdi}}$, and
 - The **q-axis** current reference is derived from the reactive power command: $i_{gqi\_ref} = \frac{-Qref}{u_{gqi}}$.
@@ -213,7 +214,7 @@ GridLAB-D™ offers two external controllers to synthesize $Pref$ and $Qref$, th
 
 [](#fig:inverter_dyn_gfl_freq_watt) shows the control block of the Frequency-Watt control. It measures the variation of frequency and changes the reference of output power $P$. The frequency is measured by a PLL.
 
-![Grid-Following Inverter model — Frequency-watt control](../../../../../images/300px-Inv_dyn_fig9.png){ #fig:inverter_dyn_gfl_freq_watt }
+![Grid-Following Inverter model — Frequency-watt control](../../../../../../images/300px-Inv_dyn_fig9.png){ #fig:inverter_dyn_gfl_freq_watt }
 
 The first order lag filters of the external frequency-watt controller are defined by the following parameters:
 
@@ -226,7 +227,7 @@ The first order lag filters of the external frequency-watt controller are define
 
 Similarly, [](#fig:inverter_dyn_glf_volt_var) shows the control block of the Volt-Var control. It measures the variation of voltage and changes the reference of reactive power $Q$. 
 
-![Grid-Following Inverter model — Volt-var control](../../../../../images/300px-Inv_dyn_fig10.png){ #fig:inverter_dyn_glf_volt_var }
+![Grid-Following Inverter model — Volt-var control](../../../../../../images/300px-Inv_dyn_fig10.png){ #fig:inverter_dyn_glf_volt_var }
 
 The first order lag filters of the external volt-var controller are defined by the following parameters:
 
@@ -274,9 +275,10 @@ object inverter_dyn {
 
 ### Grid-Following Inverter - Current Source Representation
 
-In the [Grid-Forming Inverter — Physical Model](#sec:grid-forming-inverter-physical-model) section, the grid-following inverter is represented as a voltage source behind impedance ([](#fig:inverter_dyn_Thevenin2Norton)), and the detailed inner current control loop is modeled. However, one drawback of this method from GridLAB-D™ simulation run is the low efficiency as the simulation step has to be set less than 2 ms. There could be also issues with the numerical stability of the solution. Therefore, this section introduces a simplified model of the grid-following inverter, that is the current source representation in which the detailed inner current control loop is ignored. Although the dynamic response of the current loop is ignored, the simulation efficiency can be improved.
+In the [Grid-Forming Inverter — Physical Model](#sec:grid-forming-inverter-physical-model) section, the grid-following inverter is represented as a voltage source behind impedance ([](#fig:inverter_dyn_Thevenin2Norton)), and the detailed inner current control loop is modeled. 
 
-The simplified modeling is achieved by changing the voltage source representation in [](#fig:inverter_dyn_Thevenin2Norton) (a) to the current source representation in [](#fig:inverter_dyn_Thevenin2Norton) (b), while ignoring the shunt admittance $Y_{L}$.
+
+In the detailed [Grid-Following Inverter — Physical Model](#sec:grid-following-inverter-physical-model), the inverter internally models the voltage-source converter hardware and inner current control loop ([](#fig:inverter_dyn_Thevenin2Norton) (a)), which behaves as a controlled current source from the network's perspective ([](#fig:inverter_dyn_Thevenin2Norton) (b)). However, one drawback of this method from GridLAB-D™ simulation run is the low efficiency as the simulation step has to be set less than 2 ms. There could be also issues with the numerical stability of the solution. Therefore, this section introduces a simplified current source representation in which the shunt admittance $Y_{L}$ is ignored. Although the dynamic response of the current loop is ignored, the simulation efficiency can be improved.
 
 To set a grid-following inverter as a current source, the `control_mode` parameter should be set to `GFL_CURRENT_SOURCE`. In this mode, the PLL is still kept as in [](#fig:inverter_dyn_gfl_pll), but the current loop is represented by simple low-pass filters defined by time constant `Tif`.
 
@@ -401,7 +403,7 @@ Because the droop coefficients directly map frequency deviation to active power 
 
 ## References
 
-[1] W. Du, F. K. Tuffner, K. P. Schneider, R. H. Lasseter, J. Xie, Z. Chen, and B. P. Bhattarai, "Modeling of Grid-Forming and Grid-Following Inverters for Dynamic Simulation of Large-Scale Distribution Systems," *IEEE Transactions on Power Delivery*, vol. 36, no. 4, pp. 2035–2045, Aug. 2021. DOI: [10.1109/TPWRD.2020.3018647](https://doi.org/10.1109/TPWRD.2020.3018647). PNNL report no. PNNL-SA-149830. Available via OSTI: <https://www.osti.gov/biblio/1909842>. Available via PNNL: <https://www.pnnl.gov/publications/modeling-grid-forming-and-grid-following-inverters-dynamic-simulation-large-scale>. { #ref:ref1 }
+[1] W. Du, F. K. Tuffner, K. P. Schneider, R. H. Lasseter, J. Xie, Z. Chen, and B. P. Bhattarai, "Modeling of Grid-Forming and Grid-Following Inverters for Dynamic Simulation of Large-Scale Distribution Systems," *IEEE Transactions on Power Delivery*, vol. 36, no. 4, pp. 2035–2045, Aug. 2021. DOI: [10.1109/TPWRD.2020.3018647](https://doi.org/10.1109/TPWRD.2020.3018647). PNNL report no. PNNL-SA-149830. Available via OSTI: <https://www.osti.gov/biblio/1909842>. Available via PNNL: <https://www.pnnl.gov/publications/modeling-grid-forming-and-grid-following-inverters-dynamic-simulation-large-scale>.
 
 [2] R. H. Lasseter, J. H. Eto, B. Schenkman, J. Stevens, H. Volkommer, D. Klapp, E. Linton, H. Hurtado, and J. Roy, "CERTS Microgrid Laboratory Test Bed," *IEEE Transactions on Power Delivery*, vol. 26, no. 1, pp. 325–332, Jan. 2011. LBNL report no. LBNL-3553E. Available via IEEE Xplore: <https://ieeexplore.ieee.org/document/5673682>. Available via OSTI: <https://www.osti.gov/biblio/983805>.
 
