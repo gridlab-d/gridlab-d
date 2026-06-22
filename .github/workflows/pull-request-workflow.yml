@@ -156,8 +156,8 @@ jobs:
         shell: pwsh
         env:
           ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTIONS_CACHE_URL: https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json
-        run: |
+          ACTIONS_CACHE_URL: "https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json"
+        run: >
           cmake -S .
           --log-level=VERBOSE
           --log-context
