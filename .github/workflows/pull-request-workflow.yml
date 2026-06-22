@@ -164,7 +164,6 @@ jobs:
           --log-context
           --debug-output
           -B out/build/ci-windows
-          -G "Visual Studio 17 2022"
           -A x64
           -DCPREFIX_CONFIGURATION_TYPES="Debug;Release"
           -DCMAKE_BUILD_TYPE="Release"
