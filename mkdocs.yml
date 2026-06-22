@@ -108,15 +108,14 @@ nav:
         - Control Models:
           - Automatic Generation Control (AGC)/Secondary Control: docs/3.0 - Modeling Reference/Modules/Generators/Control Models/Secondary_control.md
           - Synchronization Control: docs/3.0 - Modeling Reference/Modules/Generators/Control Models/Synchronization_control.md
-        - GridLAB-D™ Generators: docs/3.0 - Modeling Reference/Modules/Generators/Generators.md
-        - Inverters:
+        - Generators: docs/3.0 - Modeling Reference/Modules/Generators/Generators.md
         - Physics Based Models:
           - Diesel Generator: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Diesel_dg.md
           - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Energy_storage.md
           - Inverters:
             - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Inverters/01_Introduction.md
-            - GridLAB-D™ QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Inverters/02_QSTS_Inverter.md
-            - GridLAB-D™ Dynamic Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Inverters/03_Dynamic_Inverter.md
+            - QSTS Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Inverters/02_QSTS_Inverter.md
+            - Dynamic Inverter Model: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Inverters/03_Dynamic_Inverter.md
           - Solar Panel: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Solar.md
           - Wind Turbine: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Windturb_dg.md
       - Powerflow:

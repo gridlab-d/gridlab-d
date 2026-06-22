@@ -1,4 +1,4 @@
-# GridLAB-D™ Generators
+# Generators
 
 From a power system generation perspective, GridLAB-D™ objects categorize generators by:
 

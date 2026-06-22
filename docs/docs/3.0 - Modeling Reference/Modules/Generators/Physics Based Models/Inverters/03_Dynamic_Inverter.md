@@ -1,4 +1,4 @@
-# GridLAB-D™ Dynamic Inverter Model
+# Dynamic Inverter Model
 
 ## Background and Motivation
 

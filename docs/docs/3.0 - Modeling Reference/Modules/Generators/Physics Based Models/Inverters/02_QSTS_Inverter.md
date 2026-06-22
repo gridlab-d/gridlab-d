@@ -1,4 +1,4 @@
-# GridLAB-D™ QSTS Inverter Model
+# QSTS Inverter Model
 
 ## Background and Motivation
 
