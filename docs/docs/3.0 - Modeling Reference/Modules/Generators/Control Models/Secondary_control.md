@@ -1,4 +1,6 @@
-# Automatic Generation Control (AGC)/Secondary Control
+# Automatic Generation Control 
+ 
+Also known as Secondary Control
 
 ## Background and Motivation
 
