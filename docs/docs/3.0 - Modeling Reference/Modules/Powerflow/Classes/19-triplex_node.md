@@ -1,4 +1,4 @@
-## Triplex Node
+# Triplex Node
 
 Triplex nodes represent special cases of the **node** object. The **triplex_node** object still serves as connection point between different links of the system and a point of measurable voltage. However, **triplex_node**s are casted to represent phases `1`, `2`, and `N` rather than `A`, `B`, and `C` like normal **node** objects. Simplified, they operate in the split-phase level of distribution rather than the three-phase level. 
 

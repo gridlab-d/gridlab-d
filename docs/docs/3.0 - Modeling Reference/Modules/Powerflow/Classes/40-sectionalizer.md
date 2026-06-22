@@ -1,4 +1,4 @@
-﻿## Sectionalizer
+﻿# Sectionalizer
 
 **sectionalizer** objects provide a means to isolate faulted portions of a system. **sectionalizer** objects work in conjuction with the **reliability** module and the **[recloser](27-recloser.md)** objects. **reliability** will automatically open a **sectionalizer** if an upstream **recloser** is present, and has "tries" available. **sectionalizer** objects should work for both solver methods, but the **reliability** functionality only works in the `NR` solver. 
 

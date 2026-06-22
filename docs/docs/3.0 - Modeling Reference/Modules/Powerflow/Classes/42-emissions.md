@@ -1,4 +1,5 @@
-## Emissions
+# Emissions
+
 !!! warning
 
     The Emissions object is not actively maintained and is not validated. It may contain bugs. The module may be removed in a future release.

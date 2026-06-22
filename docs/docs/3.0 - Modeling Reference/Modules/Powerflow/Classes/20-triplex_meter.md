@@ -1,4 +1,4 @@
-## Triplex Meter
+# Triplex Meter
 
 Triplex meters provide similar functionality for triplex systems that **meter** objects do in three-phase systems. A triplex meter provides a measurement point for power and energy on the system at a specific point. Coupled with a **recorder** or **collector**, the **triplex_meter** object provides a method determine how much power and energy have been used by downstream connections, as well as how much current is flowing through the meter object at the present time. A typical implementation would be 
     

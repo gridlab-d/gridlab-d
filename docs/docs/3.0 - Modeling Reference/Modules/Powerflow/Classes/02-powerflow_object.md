@@ -1,4 +1,4 @@
-## Powerflow Object
+# Powerflow Object
 
 Along with all of the properties inherited from either **node** or **link**, all objects within the **powerflow** module inherit two basic properties. These two properties are the phases of the object and the nominal voltage for that area of the system. These are expressed in the `phases` and `nominal_voltage` parameters of **powerflow** objects. 
 

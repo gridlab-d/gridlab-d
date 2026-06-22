@@ -1,4 +1,4 @@
-## Link
+# Link
 
 The link object is a connection between nodes in a distribution system. The **link** object is not directly useful, but is the basis for objects associated with overhead lines, underground lines, triplex lines, transformers, regulators, switches, and fuses.
 

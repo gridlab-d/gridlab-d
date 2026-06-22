@@ -1,4 +1,4 @@
-## Series Reactor
+# Series Reactor
 
 The series reactor is a link object designed to model a series reactance on each of the three phases. 
     

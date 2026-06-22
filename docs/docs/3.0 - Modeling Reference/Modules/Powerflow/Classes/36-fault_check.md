@@ -1,4 +1,4 @@
-## Fault Check
+# Fault Check
 
 The **fault_check** object performs "support/islanding checks" on objects inside the **powerflow** module. Its primary purpose is to determine if a particular node or link is still in service after a reconfiguration or fault event. **fault_check** is set up to operate as an independent topology checking object, but does have ties to the **reliability** module and the **restoration** object's functionality. The **fault_check** object only works with the `NR` `solver_method` at this time. Other solvers may be incorporated at a later date.
 

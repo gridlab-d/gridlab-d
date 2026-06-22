@@ -1,4 +1,4 @@
-## Transformer
+# Transformer
 
 Transformers provide a means to change the voltage from one node to another in the distribution system. Similar to the different **line** objects, a **transformer** object requires a configuration object to specify the details of the implementation.
 

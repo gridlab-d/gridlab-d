@@ -73,7 +73,7 @@ Two sub-modes govern how $E$ is computed:
 #### CERTS Droop Control
 
 ![Grid-Forming Inverter CERTS Droop Control: (a) Q-V droop control and (b) P-f droop control
-and overload mitigation control. [1]](../../../../../../../images/inverter_dyn_certs_control.png){ #fig:inverter_dyn_certs_control }
+and overload mitigation control. [1]](../../../../../../images/inverter_dyn_certs_control.png){ #fig:inverter_dyn_certs_control }
 
 The default grid-forming controller implements the CERTS (Consortium for Electric Reliability Technology Solutions) droop control [1, 2] — a decentralized control law where:
 

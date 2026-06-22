@@ -1,4 +1,4 @@
-## Meter
+# Meter
 
 Meters provide a measurement point for power and energy on the distribution system. Coupled with a **recorder** or **collector**, the **meter** object provides measurements of power, energy, voltage, and current at a specific location. Total cumulative energy, instantaneous power, peak demand, and per-phase measurements are available. The meter also includes optional billing functionality and interval-based statistics for voltage and power.
 

@@ -1,4 +1,4 @@
-## Currdump
+# Currdump
 
 This object allows the user to collect all of the currents in the system into one CSV file at a given run time. In all cases, this is the current flowing INTO the link object (as defined by the to/from convention). Currents are placed in the CSV output file with format:
 

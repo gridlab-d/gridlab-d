@@ -1,4 +1,4 @@
-## Billdump
+# Billdump
 
 Similar to **voltdump**, **billdump** allows users to generate a single file where all customers' bills are written from **triplex_meter** to a single output file in a similar format 
 

@@ -1,4 +1,4 @@
-## Recloser
+# Recloser
 
 **recloser** objects are a special type of **[switch](26-switch.md)** that open at the detection of a fault condition and will close if the fault condition is removed or isolated within a certain period of time. The time is typically determined by the number of closing tries and the time between tries. **recloser** objects work with both the `FBS` and `NR` solver methods, but their reliability functionality only works with the `NR` method. A typical recloser implementation is 
     

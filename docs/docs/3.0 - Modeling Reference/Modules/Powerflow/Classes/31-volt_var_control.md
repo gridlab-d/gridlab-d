@@ -1,4 +1,4 @@
-## Volt Var Control
+# Volt Var Control
 
 With multiple feeders attached to a common point, it is often useful to coordinate the voltage regulators and capacitors on the system. The **volt_var_control** object coordinates selected **regulator** and **capacitor** objects on the system. Using voltage measurements at **node** object points, the **volt_var_control** tries to maintain a desired voltage. In addition to voltage measurements, the **volt_var_control** utilizes a power measurement at a **link** object to determine how to switch various **capacitor** objects on the system in and out of service. Due to differences in the timing of power calculations in the Forward-Back Sweep and Newton-Raphson powerflow solvers, capacitors may switch at slightly different intervals for the same system. The overall control behaves the same in both solver methods, but this difference in capacitor timing may result in different final operating points. A typical Volt-VAr Controller implementation is 
     

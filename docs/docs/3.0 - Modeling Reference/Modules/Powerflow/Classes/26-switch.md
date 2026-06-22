@@ -1,4 +1,4 @@
-## Switch
+# Switch
 
 Switch objects are used to change topology and add or remove elements from a powerflow system. When a switch is opened, no current flow is permitted and the downstream objects will be effectively removed from the system. Further details on switch behavior can be found in the switch section of the [theory](../Theory/Controls_and_Devices_Theory.md#switch) page. A typical switch implementation is 
     

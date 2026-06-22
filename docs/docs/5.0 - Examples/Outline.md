@@ -98,19 +98,19 @@ The `api/` folder contains Python scripts demonstrating the GridLAB-D™ Python 
 
 - **[example_read_write_data.py](../../examples/api/example_read_write_data.py)** — Shows bidirectional data exchange during a running simulation: reads solar power output and writes modified thermostat setpoints to implement a simple pre-cooling controller entirely in Python.
 
-- **[example_app_GridLAB-D™_monitor.py](../../examples/api/example_app_GridLAB-D™_monitor.py)** — A `tkinter`-based GUI that runs a GridLAB-D™ simulation and plots a live time-series of selected object properties as the simulation advances.
+- **[example_app_gld_monitor.py](../../examples/api/example_app_gld_monitor.py)** — A `tkinter`-based GUI that runs a GridLAB-D™ simulation and plots a live time-series of selected object properties as the simulation advances.
 
 - **[example_app_sim_monitor_gui.py](../../examples/api/example_app_sim_monitor_gui.py)** — A more fully featured interactive desktop GUI for loading a `.glm`, configuring start/stop times and step size, selecting objects and properties to plot on multiple axes, and controlling simulation playback (start, stop, step, restart).
 
 - **[example_app_model_edit_gui.py](../../examples/api/example_app_model_edit_gui.py)** — A `tkinter` GUI for batch-editing object properties in a loaded model. Supports class-filtered random property adjustments before running the simulation.
 
-- **[example_app_GridLAB-D™_db_read_write.py](../../examples/api/example_app_GridLAB-D™_db_read_write.py)** — Demonstrates using a PostgreSQL database as the data source and sink for a simulation: reads thermostat setpoint schedules from the database and writes indoor temperature results back to it at each time step.
+- **[example_app_gld_db_read_write.py](../../examples/api/example_app_gld_db_read_write.py)** — Demonstrates using a PostgreSQL database as the data source and sink for a simulation: reads thermostat setpoint schedules from the database and writes indoor temperature results back to it at each time step.
 
-- **[example_app_pp_GridLAB-D™_pf.py](../../examples/api/example_app_pp_GridLAB-D™_pf.py)** — Integrates pandapower (transmission-level powerflow) with GridLAB-D™ (distribution-level) to perform a co-simulated transmission-and-distribution (T+D) powerflow with optional microstepping for convergence.
+- **[example_app_pp_gld_pf.py](../../examples/api/example_app_pp_gld_pf.py)** — Integrates pandapower (transmission-level powerflow) with GridLAB-D™ (distribution-level) to perform a co-simulated transmission-and-distribution (T+D) powerflow with optional microstepping for convergence.
 
-- **[example_multi_GridLAB-D™.py](../../examples/api/example_multi_GridLAB-D™.py)** — Demonstrates launching and running multiple GridLAB-D™ instances in parallel from a single Python script.
+- **[example_multi_gld.py](../../examples/api/example_multi_gld.py)** — Demonstrates launching and running multiple GridLAB-D™ instances in parallel from a single Python script.
 
-- **[example_app_GridLAB-D™_ep/](../../examples/api/example_app_GridLAB-D™_ep/)** — Integrates GridLAB-D™ with EnergyPlus (via its Python API) to co-simulate residential electrical loads alongside detailed whole-building energy models.
+- **[example_app_gld_ep/](../../examples/api/example_app_gld_ep/)** — Integrates GridLAB-D™ with EnergyPlus (via its Python API) to co-simulate residential electrical loads alongside detailed whole-building energy models.
 
 ## Proposed New Examples
 The following list of examples are being proposed for creation and addition to the existing example suite. It is undefined how they may or may not integrate with any proposed or existing tutorial. 

@@ -1,4 +1,4 @@
-## Substation
+# Substation
 
 Substations were used to connect distribution powerflow in the **powerflow** module with PowerWorld through the **network** module. The **substation** object converts the sequence voltage provided by the **network** module to three-phase swing bus voltage for the unbalanced three-phase powerflow solution. The **substation** object also passes the unbalanced three-phase powerflow solution to back to the **network** module as an single power value representing the average load on all three phases of the swing bus. Furthermore, the **substation** object sets which phase is the reference phase for the distribution powerflow. A typical substation implementation is 
     

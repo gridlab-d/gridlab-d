@@ -1,4 +1,4 @@
-## Motor
+# Motor
 
 The **motor** object models a three-phase or single phase induction motor. For detailed technical information on motor modeling approaches, see the additional documentation: [Tech_DeltaSPIM](../Theory/Tech_DeltaSPIM.md) (single-phase dynamic phasor model), [Tech_DeltaTPIM](../Theory/Tech_DeltaTPIM.md) (three-phase dynamic phasor model), and [Tech_CompositionMotor](../Theory/Tech_CompositionMotor.md) (composite motor models for heat pumps and refrigerators).
 

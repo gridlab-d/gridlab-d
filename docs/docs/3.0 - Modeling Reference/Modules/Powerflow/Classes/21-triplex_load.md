@@ -1,4 +1,4 @@
-## Triplex Load
+# Triplex Load
 
 Triplex load is similar to **load** and **ZIPload** in that load can be specified as a direct value, or as a base load, then a ZIP fraction applied to that base load. The load can be placed on phase 1 (120V), phase 2 (120V) or phase 12 (240V). Much like the **load** object, **player** objects can be used to vary the load with time. **triplex_load** objects provide a means to implement constant current, constant power, and constant impedance losses or generation into the system. The convention is a load is a positive quantity, so generation would need to be represented as a negative number. 
 

@@ -128,7 +128,7 @@ There are some specific accessibility tips to note, below. But in general, remem
 
 * **Don’t use directional terms as the only clue to location**. Left, right, up, down, above, and below aren’t very useful for people who use screen-reading software. Instead, use specific language that conveys context, such as “the first item in the following list”, “on the toolbar”, or "figure 2".
 
-* **All images require a descriptive caption**. Images are extremely powerful to help convey information, but an image without an explanation only creates confusion. Always provide a caption for an in-line image, and be as descriptive and specific as possible about what is pictured. Use the fifth header level for figure and table captions (#####).
+* **All images require a descriptive caption**. Images are extremely powerful to help convey information, but an image without an explanation only creates confusion. Always provide a caption for an in-line image, and be as descriptive and specific as possible about what is pictured. 
 
 ### Avoid Biased Language
 

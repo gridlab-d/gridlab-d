@@ -1,4 +1,5 @@
-## Load Tracker
+# Load Tracker
+
 !!! warning
 
     The load_tracker class is deprecated and will be removed in a future release. 

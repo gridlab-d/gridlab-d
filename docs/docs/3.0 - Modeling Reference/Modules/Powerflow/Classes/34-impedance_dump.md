@@ -1,4 +1,4 @@
-## Impedance Dump
+# Impedance Dump
 
 Impedance dump allow the impedance and line equation matrices to be output into an XML file for debugging or further use. 
 

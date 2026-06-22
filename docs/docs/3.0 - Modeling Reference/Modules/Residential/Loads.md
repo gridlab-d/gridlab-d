@@ -213,7 +213,7 @@ The object type used to represent weather in GridLAB-D™ is called “climate�
 ### How does the wind influence solar panels? 
  A slightly off-topic exercise in digging through GridLAB-D™ source code
 
-As you might expect, to determine which climate parameters are important to any other class, you’ll have to look on the [solar panels](../Generators/Solar.md) and/or the [source code](https://github.com/gridlab-d/gridlab-d/blob/master/generators/solar.cpp). The documentation page makes it clear that these types of weather data are used by the solar PV object but to determine why they would be needed, we need to dig into the source code. Opening up “solar.cpp” we find the familiar table listing the class parameters with their names as they would appear in the model file and their default units; for example:
+As you might expect, to determine which climate parameters are important to any other class, you’ll have to look on the [solar panels](../Generators/Physics%20Based%20Models/Solar.md) and/or the [source code](https://github.com/gridlab-d/gridlab-d/blob/master/generators/solar.cpp). The documentation page makes it clear that these types of weather data are used by the solar PV object but to determine why they would be needed, we need to dig into the source code. Opening up “solar.cpp” we find the familiar table listing the class parameters with their names as they would appear in the model file and their default units; for example:
 
 
     ...

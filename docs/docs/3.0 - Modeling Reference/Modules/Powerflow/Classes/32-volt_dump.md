@@ -1,4 +1,4 @@
-## Voltdump
+# Voltdump
 
 This object allows the user to collect all of the voltages in the system into one CSV file at a given run time. This can be used to determine the cause of convergence problems. Voltages are placed in the CSV output file with format:
 

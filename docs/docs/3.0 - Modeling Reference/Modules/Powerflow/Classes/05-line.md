@@ -1,4 +1,4 @@
-## Line
+# Line
 
 The line object represents power lines in a distribution system. The line object has two implementations: `overhead_line`, and `underground_line`. Each line must be called appropriately. Information about the particular line type will be contained in other objects called `line_configuration`.
 

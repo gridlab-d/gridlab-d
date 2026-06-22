@@ -162,6 +162,6 @@ In GridLAB-D™ simulation, the PV panel is modeled as a controllable current so
 
 The P-V curve of this PV panel is given in Figure 1, the maximum power is about 1400kW and the voltage at maximum power point is 850V. ($t=25^{\circ}C, S=600\frac{w}{m^2}$). 
 
-![P-V Curve of PV Panel](../../../../images/300px-PV_fig1.png){ #fig:p-v-curve-of-pv-panel }
+![P-V Curve of PV Panel](../../../../../images/300px-PV_fig1.png){ #fig:p-v-curve-of-pv-panel }
 
 
