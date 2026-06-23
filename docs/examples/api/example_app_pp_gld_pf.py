@@ -243,7 +243,21 @@ for step in range(num_steps - 1):
             "network_node", "positive_sequence_voltage", gld_substation_voltage
         )
         
-        gld.step()
+        time_code, sim_time_str = gld.step()
+        if time_code != 0:
+            raise RuntimeError(f"Simulation step failed at {sim_time_str} with error code {time_code}.")
+        sim_time_dt = datetime.fromisoformat(sim_time_str)
+
+        # Check for errors
+        messages = gld.get_messages()
+        filtered_messages = [
+            message for message in messages
+            if message.get("type") in {"ERROR"}
+        ]
+        if filtered_messages:
+            pprint(filtered_messages)
+        gld.clear_messages()
+        
         complex_load = gld.get_object_property_value("network_node", "distribution_load")
         t_load = complex_load * 1000000 * load_scaling_factor
         net118.load.at[coupling_load_row, "p_mw"] = t_load.real
@@ -261,6 +275,7 @@ for step in range(num_steps - 1):
 
 gld.stop()
 gld.exit_gld()
+print("Simulation complete. Now plotting results...")
 
 if plotting_tool == "matplotlib":
     plot_coupled_signals(sim_time_points, applied_voltage_magnitude, applied_load_magnitude)

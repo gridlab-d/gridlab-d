@@ -42,7 +42,6 @@ db_host = "0.250.250.254"
 house_list = ["house1", "house3", "house5", "house7", "house9"]
 step_size = 900
 
-
 def test_postgres_connection(db_host, db_name, db_user, db_password): 
     """
     Test the connection to the Postgres database using the provided credentials.
