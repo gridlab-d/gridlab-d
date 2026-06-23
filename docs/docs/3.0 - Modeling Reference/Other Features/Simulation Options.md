@@ -44,7 +44,7 @@ The plug-in NppExec allows the user to run console commands from within Notepad+
     cmd /c cd "$(CURRENT_DIRECTORY)" && "gridlabd.exe" "$(FULL_CURRENT_PATH)" 
 
 
-This command will change to the directory of the currently opened file, then run GridLAB-D™ with the current file as input. Next, click `Save...`, type in `GridLAB-D` as the script name, and click `Save` again. To run the command on the currently opened file click `OK`. To subsequently run this command, simply click `F6` , select the correct script, and click `OK`. To run the same script that was previously run, simply click `Ctrl + F6`. GridLAB-D™ will be executed, with the current file as input and the output will be shown on a console window at the bottom of the Notepad++ window. 
+This command will change to the directory of the currently opened file, then run GridLAB-D™ with the current file as input. Next, click `Save...`, type in `GridLAB-D™` as the script name, and click `Save` again. To run the command on the currently opened file click `OK`. To subsequently run this command, simply click `F6` , select the correct script, and click `OK`. To run the same script that was previously run, simply click `Ctrl + F6`. GridLAB-D™ will be executed, with the current file as input and the output will be shown on a console window at the bottom of the Notepad++ window. 
 
 It is useful to define several such scripts, for example, to run GridLAB-D™ with verbose output:   
 
@@ -107,7 +107,7 @@ Option | Description
     The information displayed relates to the following capabilities that may be implemented by a module 
 
     * Version:
-        The major and minor version relate to the API level supported by the module. The major version is changed when features that are not backward compatible are altered. The minor version is changed when features that are backward compatible are changed. In other words, a module can always be loaded only if the major version is the same, however only a module with a same or higher minor version number that GridLAB-D's module API can be loaded.
+        The major and minor version relate to the API level supported by the module. The major version is changed when features that are not backward compatible are altered. The minor version is changed when features that are backward compatible are changed. In other words, a module can always be loaded only if the major version is the same, however only a module with a same or higher minor version number that GridLAB-D™'s module API can be loaded.
 
     * Classes:
         A list of the implemented classes is displayed.

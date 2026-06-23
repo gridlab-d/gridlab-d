@@ -20,16 +20,16 @@ Figure 3 shows the control range of the series compensator. For example, when th
 
 
   
-## Modeling of the Series Compensator in GridLAB-D
+## Modeling of the Series Compensator in GridLAB-D™
 
 Figure 4 and Figure 5 show the main circuit and controller of the series compensator modeled in GridLAB-D™, respectively. As shown in Figure 4, the main circuit of the compensator is modeled as a regulator with a controllable turn ratio, n. By changing the turns ratio n quickly, the output voltage can be maintained constant when there is a disturbance at the input voltage. 
 
-![Modeling of the main circuit of the series compensator in GridLAB-D](../../../../../images/300px-Transformer.png){ #fig:modeling-of-the-main-circuit-of-the-series-compensator-in-gridlab-d }
+![Modeling of the main circuit of the series compensator in GridLAB-D™](../../../../../images/300px-Transformer.png){ #fig:modeling-of-the-main-circuit-of-the-series-compensator-in-gridlab-d }
 
 
 Figure 5 shows the controller designed to control the series compensator. It is a PI controller with maximum and minimum anti-wind-up limiters (nmax and nmin). VLset is the set point voltage, Vout is the load side voltage, Vin is the input voltage. kp and ki are the proportional and integrator gains, respectively. (In most of the cases kp is set 0) The function of the controller can be explained as follows: When the input voltage Vin is between 0.87 pu to 1.13 pu, the controller can always find a turns ratio n to maintain the output voltage at VLset. When the Vin is below 0.87 pu or is above 1.13 pu, the saturation limit of the controller will be reached. The turn ratio will be fixed at nmax=1.13pu or at nmin=0.87pu. Further, if the Vin is below 0.67 pu or is above 1.25 pu, the nmax or nmin will be changed to 1, which represents that the series compensator is bypassed. 
 
-![Modeling of the controller of the series compensator in GridLAB-D](../../../../../images/300px-Controller.png){ #fig:modeling-of-the-controller-of-the-series-compensator-in-gridlab-d }
+![Modeling of the controller of the series compensator in GridLAB-D™](../../../../../images/300px-Controller.png){ #fig:modeling-of-the-controller-of-the-series-compensator-in-gridlab-d }
 
 
 ## Frequency Control

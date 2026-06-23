@@ -1262,7 +1262,7 @@ From the command line,
 
 ## USE GLSOLVERS
 
-Compiler flag to enable use of GridLAB-D's internal solvers. The `USE_GLSOLVERS` compile flag causes the gridlabd.h header file to include the API code that supports use of the internal solvers.
+Compiler flag to enable use of GridLAB-D™'s internal solvers. The `USE_GLSOLVERS` compile flag causes the gridlabd.h header file to include the API code that supports use of the internal solvers.
 
 
     #define USE_GLSOLVERS

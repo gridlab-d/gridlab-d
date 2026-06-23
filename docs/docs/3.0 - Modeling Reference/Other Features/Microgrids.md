@@ -439,7 +439,7 @@ To implement the dynamic equations to produce the frequency information, the mic
 
 ### Object inclusion
 
-Inclusion in the microgrids-enabled dynamic solver capability is handled during GridLAB-D's normal object initialization routines. Objects contributing to the dynamics of the system will flag appropriately for inclusion by the solver during its initialization.[R1.1]
+Inclusion in the microgrids-enabled dynamic solver capability is handled during GridLAB-D™'s normal object initialization routines. Objects contributing to the dynamics of the system will flag appropriately for inclusion by the solver during its initialization.[R1.1]
 
 ### Solver published inputs
 
@@ -501,7 +501,7 @@ The nature of the microgrid capability and the dynamic solver will not initially
 
 ## Solver timing
 
-The actual execution of the solver and how often it is called are key aspects of the proper integration of the dynamic solution capabilities within GridLAB-D™. Solver calls need to be properly timed with the powerflow solution, as well as the requirements of the individual dynamic components. To ensure proper dynamic transitions, a form of the steady state powerflow must be resolved at each timestep of the dynamic simulation for the "non-contributing" objects. Loads and devices not directly participating in the dynamic solver are assumed to maintain fixed load values over the sub-GridLAB-D-standard timesteps. These devices may influence the magnitude and duration of the dynamic response, so they must be included in some form. Functionality for faster, dynamic loads will be in place for future implementations of microgrid devices. Through the continuous updates of the quasi-static powerflow, transitions at normal GridLAB-D™ timesteps should be minimized to be predominately non-dynamic state changes. 
+The actual execution of the solver and how often it is called are key aspects of the proper integration of the dynamic solution capabilities within GridLAB-D™. Solver calls need to be properly timed with the powerflow solution, as well as the requirements of the individual dynamic components. To ensure proper dynamic transitions, a form of the steady state powerflow must be resolved at each timestep of the dynamic simulation for the "non-contributing" objects. Loads and devices not directly participating in the dynamic solver are assumed to maintain fixed load values over the sub-GridLAB-D™-standard timesteps. These devices may influence the magnitude and duration of the dynamic response, so they must be included in some form. Functionality for faster, dynamic loads will be in place for future implementations of microgrid devices. Through the continuous updates of the quasi-static powerflow, transitions at normal GridLAB-D™ timesteps should be minimized to be predominately non-dynamic state changes. 
 
 ### Solver Passes
 
@@ -540,7 +540,7 @@ After these two steps complete, the simulation advances to the next timestep. Th
 
 ### Solution Timesteps
 
-Timestep progression is handled in a manner similar to GridLAB-D's core functionality. All objects requesting a dynamic solution update will request a time for recalculation. The minimum value will drive the simulation forward. The solver shall be implemented as a predictor-corrector solver, so larger timestep progression should be possible. A "maximum dynamic" timestep will also be specified to ensure any unexpected "passive" element (not requesting a timestep update) are handled.[R3.2]
+Timestep progression is handled in a manner similar to GridLAB-D™'s core functionality. All objects requesting a dynamic solution update will request a time for recalculation. The minimum value will drive the simulation forward. The solver shall be implemented as a predictor-corrector solver, so larger timestep progression should be possible. A "maximum dynamic" timestep will also be specified to ensure any unexpected "passive" element (not requesting a timestep update) are handled.[R3.2]
 
 The initial solver time resolution is 1 ms. Timestep updates occur in multiples of 1 ms, but are not allowed to be any less than 1 ms (R3, R3.1).
 
