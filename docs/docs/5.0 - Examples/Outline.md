@@ -86,7 +86,9 @@ The new API will allow for a broad new paradigm for using GridLAB-D™ and these
     - Asynchronous API calls (if that takes a unique syntax) - This would allow GridLAB-D™ to do things like solve the model while the calling script does things (like make a graph), allowing for greater computational efficiency.
     - T+D integration using PyPOWER - This is effectively co-simulation without HELICS and is pretty cool.
 
-The `api/` folder contains Python scripts demonstrating the GridLAB-D™ Python API (`gridlabd` module). The examples are roughly organized from basic usage to more advanced applications.
+The `api/` folder contains Python scripts demonstrating the GridLAB-D™ Python API (`gridlabd` module). The examples are organized into two groups: demonstration of the basic API functionality and those showing the use of the API in various application examples.
+
+- **[example_parallel_runs_manual.py](../../examples/api/example_parallel_runs_manual.py)** — Loads multiple models and steps through them individually. This is a placeholder until true parallel execution can be achieved using Python's multiprocessing library ("example_parallel_model_runs.py").
 
 - **[example_sim_start_stop.py](../../examples/api/example_sim_start_stop.py)** — Loads a model and modifies the simulation start and stop times via the API before running, illustrating pre-run model configuration.
 
@@ -107,8 +109,6 @@ The `api/` folder contains Python scripts demonstrating the GridLAB-D™ Python 
 - **[example_app_gld_db_read_write.py](../../examples/api/example_app_gld_db_read_write.py)** — Demonstrates using a PostgreSQL database as the data source and sink for a simulation: reads thermostat setpoint schedules from the database and writes indoor temperature results back to it at each time step.
 
 - **[example_app_pp_gld_pf.py](../../examples/api/example_app_pp_gld_pf.py)** — Integrates pandapower (transmission-level powerflow) with GridLAB-D™ (distribution-level) to perform a co-simulated transmission-and-distribution (T+D) powerflow with optional microstepping for convergence.
-
-- **[example_multi_gld.py](../../examples/api/example_multi_gld.py)** — Demonstrates launching and running multiple GridLAB-D™ instances in parallel from a single Python script.
 
 - **[example_app_gld_ep/](../../examples/api/example_app_gld_ep/)** — Integrates GridLAB-D™ with EnergyPlus (via its Python API) to co-simulate residential electrical loads alongside detailed whole-building energy models.
 
