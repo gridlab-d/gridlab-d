@@ -108,171 +108,171 @@ jobs:
 #             validate.txt
 #           if-no-files-found: ignore
 
-  win-build-and-validate:
-    runs-on: windows-latest
-    timeout-minutes: 60
+  # win-build-and-validate:
+  #   runs-on: windows-latest
+  #   timeout-minutes: 60
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1.3
-        with:
-          vs-version: '17.0'
-          msbuild-architecture: 'x64'
-          
-      - name: Setup vcpkg (manifest mode + cache)
-        uses: lukka/run-vcpkg@v11
-        with:
-          runVcpkgInstall: true
-          logCollectionRegExps: |
-            .*/CMakeOutput\.log$
-            .*/CMakeError\.log$
-            .*/vcpkg/buildtrees/.+\.log$
-
-      - name: Upload vcpkg & CMake logs (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: vcpkg-and-cmake-logs
-          path: |
-            ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
-            out/build/ci-windows/**/CMakeOutput.log
-            out/build/ci-windows/**/CMakeError.log
-
-
-      - name: Clean install prefix (Windows)
-        shell: pwsh
-        run: |
-          $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
-          if (Test-Path $installRoot) {
-            Write-Host "Removing previous install at $installRoot..."
-            Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
-          }
-
-      - name: Configure CMake (VS2022 + vcpkg toolchain)
-        shell: pwsh
-        env:
-          ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTIONS_CACHE_URL: "https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json"
-        run: >
-          cmake -S .
-          --log-level=VERBOSE
-          --log-context
-          --debug-output
-          -B out/build/ci-windows
-          -A x64
-          -DCPREFIX_CONFIGURATION_TYPES="Debug;Release"
-          -DCMAKE_BUILD_TYPE="Release"
-          -DVCPKG_TARGET_TRIPLET=x64-windows
-          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D"
-          -DGLD_CI_BUILD=ON
-
-      - name: Build GridLAB-D (Release)
-        shell: pwsh
-        run: cmake --build out/build/ci-windows --config Release -t ALL_BUILD
-        env:
-          CFLAGS: "/W0"
-          CXXFLAGS: "/W0"
-
-      - name: Verify gldapi.dll before install
-        shell: pwsh
-        run: |
-         $src = Resolve-Path "out/build/ci-windows/bin/Release/gldapi.dll"
-         Write-Host "Found: $src"
-         Get-Item $src | Format-List *
-
-      - name: Show install prefix
-        shell: pwsh
-        run: |
-          Write-Host "CMAKE_INSTALL_PREFIX=$env:USERPROFILE\.temp\GridLAB-D"
-          if (Test-Path "$env:USERPROFILE\.temp\GridLAB-D") {
-            Get-ChildItem "$env:USERPROFILE\.temp\GridLAB-D" -Recurse | Select-Object FullName
-          } else {
-            Write-Host "Install prefix does not yet exist."
-          }
-
-      - name: Install GridLAB-D (Release)
-        shell: pwsh
-        run: cmake --install out/build/ci-windows --config Release --verbose
-
-      - name: List installed DLLs and EXEs
-        shell: pwsh
-        run: |
-          $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
-          Write-Host "Listing under $installRoot..."
-          Get-ChildItem -Path $installRoot -Include *.dll, *.exe -Recurse | ForEach-Object {
-            Write-Host $_.FullName
-          }
-
-      - name: Run gridlabd --validate
-        shell: pwsh
-        run: |
-          $buildDir = Resolve-Path "out/build/ci-windows"
-          $exe = Get-ChildItem -Path $buildDir -Filter gridlabd.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $exe) { throw "gridlabd.exe not found." }
-          & $exe.FullName --version
-          $binDir   = Split-Path $exe.FullName -Parent
-          $shareDir = Resolve-Path "out/build/ci-windows/share"
-          $libDir   = Resolve-Path "out/build/ci-windows/lib"
-          $gldcore  = Resolve-Path "gldcore"
-          $env:GLPATH = "$pwd;$buildDir;$binDir;$libDir;$shareDir;$gldcore"
-          $env:PATH   = "$env:PATH;$binDir"
-          Write-Host "GRIDLABD=$env:GRIDLABD"
-          Write-Host "GLPATH=$env:GLPATH"
-          & $exe.FullName --redirect none  --validate
-
-      # - name: Run CTest
-      #   shell: pwsh
-      #   working-directory: out/build/ci-windows
-      #   run: ctest -C Release --output-on-failure
-
-      # Python-based validation
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Run Python GridLAB-D validator (Windows) (JSON)
-        shell: pwsh
-        run: |
-          $prefix = "$env:USERPROFILE\.temp\GridLAB-D"
-          $bin    = Join-Path $prefix "bin"
-          $lib    = Join-Path $prefix "lib"
-          $share  = Join-Path $prefix "share"
-          $gldcore= Join-Path $pwd "gldcore"
-
-          # Ensure the validator sees GLD binaries and modules
-          $env:PATH   = "$env:PATH;$bin"
-          $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
-
-          python validate_gld.py -T 1
-
-      - name: Upload validation artefacts (Windows)
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: validate-windows
-          path: |
-            validate.txt
-          if-no-files-found: ignore
-
-  # mac-build:
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - os: macos-latest
-  #           arch: x86_64
-  #   runs-on: ${{matrix.os}}
   #   steps:
-  #     - name: Install Homebrew dependencies
+  #     - name: Checkout
+  #       uses: actions/checkout@v6
+  #       with:
+  #         submodules: recursive
+
+  #     - name: Setup MSBuild
+  #       uses: microsoft/setup-msbuild@v1.1.3
+  #       with:
+  #         vs-version: '17.0'
+  #         msbuild-architecture: 'x64'
+          
+  #     - name: Setup vcpkg (manifest mode + cache)
+  #       uses: lukka/run-vcpkg@v11
+  #       with:
+  #         runVcpkgInstall: true
+  #         logCollectionRegExps: |
+  #           .*/CMakeOutput\.log$
+  #           .*/CMakeError\.log$
+  #           .*/vcpkg/buildtrees/.+\.log$
+
+  #     - name: Upload vcpkg & CMake logs (on failure)
+  #       if: failure()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: vcpkg-and-cmake-logs
+  #         path: |
+  #           ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
+  #           out/build/ci-windows/**/CMakeOutput.log
+  #           out/build/ci-windows/**/CMakeError.log
+
+
+  #     - name: Clean install prefix (Windows)
+  #       shell: pwsh
   #       run: |
-  #         brew update
-  #         env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
+  #         $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
+  #         if (Test-Path $installRoot) {
+  #           Write-Host "Removing previous install at $installRoot..."
+  #           Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
+  #         }
+
+  #     - name: Configure CMake (VS2022 + vcpkg toolchain)
+  #       shell: pwsh
+  #       env:
+  #         ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         ACTIONS_CACHE_URL: "https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json"
+  #       run: >
+  #         cmake -S .
+  #         --log-level=VERBOSE
+  #         --log-context
+  #         --debug-output
+  #         -B out/build/ci-windows
+  #         -A x64
+  #         -DCPREFIX_CONFIGURATION_TYPES="Debug;Release"
+  #         -DCMAKE_BUILD_TYPE="Release"
+  #         -DVCPKG_TARGET_TRIPLET=x64-windows
+  #         -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+  #         -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D"
+  #         -DGLD_CI_BUILD=ON
+
+  #     - name: Build GridLAB-D (Release)
+  #       shell: pwsh
+  #       run: cmake --build out/build/ci-windows --config Release -t ALL_BUILD
+  #       env:
+  #         CFLAGS: "/W0"
+  #         CXXFLAGS: "/W0"
+
+  #     - name: Verify gldapi.dll before install
+  #       shell: pwsh
+  #       run: |
+  #        $src = Resolve-Path "out/build/ci-windows/bin/Release/gldapi.dll"
+  #        Write-Host "Found: $src"
+  #        Get-Item $src | Format-List *
+
+  #     - name: Show install prefix
+  #       shell: pwsh
+  #       run: |
+  #         Write-Host "CMAKE_INSTALL_PREFIX=$env:USERPROFILE\.temp\GridLAB-D"
+  #         if (Test-Path "$env:USERPROFILE\.temp\GridLAB-D") {
+  #           Get-ChildItem "$env:USERPROFILE\.temp\GridLAB-D" -Recurse | Select-Object FullName
+  #         } else {
+  #           Write-Host "Install prefix does not yet exist."
+  #         }
+
+  #     - name: Install GridLAB-D (Release)
+  #       shell: pwsh
+  #       run: cmake --install out/build/ci-windows --config Release --verbose
+
+  #     - name: List installed DLLs and EXEs
+  #       shell: pwsh
+  #       run: |
+  #         $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
+  #         Write-Host "Listing under $installRoot..."
+  #         Get-ChildItem -Path $installRoot -Include *.dll, *.exe -Recurse | ForEach-Object {
+  #           Write-Host $_.FullName
+  #         }
+
+  #     - name: Run gridlabd --validate
+  #       shell: pwsh
+  #       run: |
+  #         $buildDir = Resolve-Path "out/build/ci-windows"
+  #         $exe = Get-ChildItem -Path $buildDir -Filter gridlabd.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+  #         if (-not $exe) { throw "gridlabd.exe not found." }
+  #         & $exe.FullName --version
+  #         $binDir   = Split-Path $exe.FullName -Parent
+  #         $shareDir = Resolve-Path "out/build/ci-windows/share"
+  #         $libDir   = Resolve-Path "out/build/ci-windows/lib"
+  #         $gldcore  = Resolve-Path "gldcore"
+  #         $env:GLPATH = "$pwd;$buildDir;$binDir;$libDir;$shareDir;$gldcore"
+  #         $env:PATH   = "$env:PATH;$binDir"
+  #         Write-Host "GRIDLABD=$env:GRIDLABD"
+  #         Write-Host "GLPATH=$env:GLPATH"
+  #         & $exe.FullName --redirect none  --validate
+
+  #     # - name: Run CTest
+  #     #   shell: pwsh
+  #     #   working-directory: out/build/ci-windows
+  #     #   run: ctest -C Release --output-on-failure
+
+  #     # Python-based validation
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v6
+  #       with:
+  #         python-version: "3.11"
+
+  #     - name: Run Python GridLAB-D validator (Windows) (JSON)
+  #       shell: pwsh
+  #       run: |
+  #         $prefix = "$env:USERPROFILE\.temp\GridLAB-D"
+  #         $bin    = Join-Path $prefix "bin"
+  #         $lib    = Join-Path $prefix "lib"
+  #         $share  = Join-Path $prefix "share"
+  #         $gldcore= Join-Path $pwd "gldcore"
+
+  #         # Ensure the validator sees GLD binaries and modules
+  #         $env:PATH   = "$env:PATH;$bin"
+  #         $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
+
+  #         python validate_gld.py -T 1
+
+  #     - name: Upload validation artefacts (Windows)
+  #       if: always()
+  #       uses: actions/upload-artifact@v7
+  #       with:
+  #         name: validate-windows
+  #         path: |
+  #           validate.txt
+  #         if-no-files-found: ignore
+
+  mac-build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            # arch: x86_64
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Install Homebrew dependencies
+        run: |
+          brew update
+          env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
 
   #     - name: Build HELICS Cache
   #       id: cache-helics
@@ -305,28 +305,27 @@ jobs:
   #         cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
   #         cmake --install ${{github.workspace}}/helics-build/build
 
-  #     - name: Checkout GridLAB-D
-  #       uses: actions/checkout@v5
-  #       with:
-  #         submodules: recursive
+      - name: Checkout GridLAB-D
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
 
-  #     - name: Build GridLAB-D
-  #       run: |
-  #         threads=`sysctl -n hw.logicalcpu`
-  #         cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-  #         -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
-  #         -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DGLD_CI_BUILD=ON
-  #         cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
+      - name: Build GridLAB-D
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+          cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
 
-  #     - name: Install GridLAB-D
-  #       working-directory: ${{github.workspace}}/build-${{matrix.arch}}
-  #       run: cmake --install . --config ${{env.BUILD_TYPE}}
+      - name: Install GridLAB-D
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
+        run: cmake --install . --config ${{env.BUILD_TYPE}}
 
-  #     - name: Run GridLAB-D autotests
-  #       working-directory: ${{github.workspace}}
-  #       run: |
-  #         export PATH=$PATH:~/.temp/GridLAB-D/bin
-  #         gridlabd -T 0 --validate
-  #         # Future Catch2 unit tests (placeholder):
-  #         # ./build-${{matrix.arch}}/tests/unit_tests --reporter junit --out unit-tests-macos.xml
-  #         ctest --verbose
+      - name: Run GridLAB-D autotests
+        working-directory: ${{github.workspace}}
+        run: |
+          export PATH=$PATH:~/.temp/GridLAB-D/bin
+          gridlabd -T 0 --validate
+          # Future Catch2 unit tests (placeholder):
+          # ./build-${{matrix.arch}}/tests/unit_tests --reporter junit --out unit-tests-macos.xml
+          ctest --verbose
