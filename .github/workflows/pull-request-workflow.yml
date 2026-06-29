@@ -345,7 +345,7 @@ jobs:
           threads=`sysctl -n hw.logicalcpu`
           export PATH=$PATH:~/.temp/GridLAB-D/bin
           # gridlabd -T 0 --validate
-          python3 validate_gld.py -T $threads
+          python3 validate_gld.py -T $threads > /dev/null
           cat validate.txt          
           # Future Catch2 unit tests (placeholder):
           # ./build-${{matrix.arch}}/tests/unit_tests --reporter junit --out unit-tests-macos.xml
