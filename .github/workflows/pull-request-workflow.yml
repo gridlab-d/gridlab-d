@@ -265,7 +265,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-15
+          - os: macos-16
             # arch: x86_64
     runs-on: ${{matrix.os}}
     steps:
@@ -328,6 +328,7 @@ jobs:
       - name: Run GridLAB-D autotests
         working-directory: ${{github.workspace}}
         run: |
+          threads=`sysctl -n hw.logicalcpu`
           export PATH=$PATH:~/.temp/GridLAB-D/bin
           # gridlabd -T 0 --validate
           python3 validate_gld.py -T $threads
