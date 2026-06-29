@@ -327,7 +327,7 @@ jobs:
       - name: Build GridLAB-D
         run: |
           threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
           # # -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
           # # -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} \
