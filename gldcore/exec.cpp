@@ -573,6 +573,16 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                 case PT_char32:
                 case PT_char256:
                 case PT_char1024:
+                {
+                    std::string s(value_str);
+                    // class_property_to_string wraps char values containing
+                    // spaces/semicolons in an extra quote layer (see
+                    // convert_from_char1024). Strip one outer pair so
+                    // checkpoints store the plain string value.
+                    if (s.size() >= 2 && s.front() == '"' && s.back() == '"')
+                        s = s.substr(1, s.size() - 2);
+                    return s;
+                }
                 case PT_object:
                     return std::string(value_str);
                 case PT_complex:
@@ -877,7 +887,10 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                         }
                         current_class = current_class->parent;
                     }
-                    instances.push_back(instance);
+                    if (instance.is_object() && !instance.empty()) {
+                        instances.push_back(instance);
+                    }
+                    
                 }
                 checkpoint["objects"][class_pair.first]["instances"] = instances;
             }
@@ -3329,6 +3342,11 @@ static void run_main_simulation_loop(int64 &passes,
     }
     /* deallocate threadpool */
     delete threadpool;
+    // if the simulation is finished and not just being checkpointed, update global_nexttime to be tsnever.
+    std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
+    if (!exec_sync_isrunning(sync_data_nullptr)) {
+        global_nexttime = TS_NEVER;
+    }
 }
 
 /** Single step simulation function

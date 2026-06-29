@@ -16,7 +16,6 @@
 EXPORT_CREATE_C(assert, g_assert);
 EXPORT_INIT_C(assert, g_assert);
 EXPORT_COMMIT_C(assert, g_assert);
-EXPORT_NOTIFY_C(assert, g_assert);
 
 CLASS *g_assert::oclass = nullptr;
 // g_assert *g_assert::defaults = nullptr;
@@ -162,7 +161,3 @@ g_assert::ASSERTSTATUS g_assert::evaluate_status(void) {
                : AS_FALSE;
 }
 
-int g_assert::postnotify(PROPERTY *prop, char *value) {
-  // TODO notify handler for changed value
-  return 1;
-}

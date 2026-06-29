@@ -16,7 +16,6 @@
 EXPORT_CREATE(int_assert);
 EXPORT_INIT(int_assert);
 EXPORT_COMMIT(int_assert);
-EXPORT_NOTIFY(int_assert);
 
 CLASS *int_assert::oclass = nullptr;
 int_assert *int_assert::defaults = nullptr;
@@ -159,7 +158,3 @@ TIMESTAMP int_assert::commit(TIMESTAMP t1, TIMESTAMP t2) {
   }
 }
 
-int int_assert::postnotify(PROPERTY *prop, char *value) {
-    // Nothing to do here, return success
-    return 1;
-}

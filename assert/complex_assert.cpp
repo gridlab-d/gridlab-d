@@ -18,7 +18,6 @@
 EXPORT_CREATE(complex_assert);
 EXPORT_INIT(complex_assert);
 EXPORT_COMMIT(complex_assert);
-EXPORT_NOTIFY(complex_assert);
 
 CLASS *complex_assert::oclass = nullptr;
 static complex_assert defaults_storage; // POD storage for defaults
@@ -295,18 +294,6 @@ TIMESTAMP complex_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
         gl_verbose("Assert test is not being run on %s", get_parent()->get_name());
         return TS_NEVER;
     }
-}
-
-int complex_assert::prenotify(PROPERTY *prop, char *value)
-{
-    // Nothing to do here, return success
-    return 1;
-}
-
-int complex_assert::postnotify(PROPERTY *prop, char *value)
-{
-    // Nothing to do here, return success
-    return 1;
 }
 
 EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0,

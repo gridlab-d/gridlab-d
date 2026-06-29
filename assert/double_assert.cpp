@@ -16,7 +16,6 @@
 EXPORT_CREATE(double_assert);
 EXPORT_INIT(double_assert);
 EXPORT_COMMIT(double_assert);
-EXPORT_NOTIFY(double_assert);
 
 CLASS *double_assert::oclass = nullptr;
 // double_assert *double_assert::defaults = nullptr;
@@ -213,12 +212,6 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
         gl_verbose("Assert test is not being run on %s", get_parent()->get_name());
         return TS_NEVER;
     }
-}
-
-int double_assert::postnotify(PROPERTY *prop, char *value)
-{
-    // Nothing to do here, return success
-    return 1;
 }
 
 // EXPORT for object-level call (as opposed to module-level)
