@@ -346,6 +346,7 @@ jobs:
           export PATH=$PATH:~/.temp/GridLAB-D/bin
           # gridlabd -T 0 --validate
           python3 validate_gld.py -T $threads
+          cat validate.txt          
           # Future Catch2 unit tests (placeholder):
           # ./build-${{matrix.arch}}/tests/unit_tests --reporter junit --out unit-tests-macos.xml
           ctest --verbose
