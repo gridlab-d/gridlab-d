@@ -1,6 +1,6 @@
 # Transmission
 
-The transmission and distribution integration framework provides a means for GridLAB-D's distribution-level powerflow results to interact with a transmission-level model. This allows modeling the impact of aggregating control effects and demand response on the transmission grid, as well as the transmission-level impact of distribution-side resources. GridLAB-D™ interfaces with the commercially available [PowerWorld Corporation's Simulator](http://www.powerworld.com/products/simulator.asp) program, which handles the model and the transmission solver, while providing both transmission-level powerflow and dynamics simulation. 
+The transmission and distribution integration framework provides a means for GridLAB-D™'s distribution-level powerflow results to interact with a transmission-level model. This allows modeling the impact of aggregating control effects and demand response on the transmission grid, as well as the transmission-level impact of distribution-side resources. GridLAB-D™ interfaces with the commercially available [PowerWorld Corporation's Simulator](http://www.powerworld.com/products/simulator.asp) program, which handles the model and the transmission solver, while providing both transmission-level powerflow and dynamics simulation. 
 
 # Classes
 

@@ -222,9 +222,10 @@ nav:
         - GUI for Model Modification: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.1 - GUI for Model Modification.md
         - Runtime Monitoring: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.2 - Runtime Monitoring.md
         - Integrated T+D Powerflow: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.3 - Integrated T+D Powerflow.md
-        - Integration with the HELICS Co-Simulation Platform: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.4 - GridLAB-D HELICS Integration.md
-        - Integration with a Postgres Database: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.5 - Integration with Postgres Databases.md
-        - EnergyPlus Integration: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.6 - Integration with EnergyPlus.md
+        - EnergyPlus Integration: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.4 - Integration with EnergyPlus.md
+        - Integration with the HELICS Co-Simulation Platform: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.5 - GridLAB-D HELICS Integration.md
+        - Integration with a Postgres Database: docs/3.0 - Modeling Reference/Python API/Use Cases and Examples/4.6 - Integration with Postgres Databases.md
+        
   - 4.0 - Developing Reference:
     - Introduction: docs/4.0 - Developing Reference/4.1 - Introduction.md
     - Style Guide: docs/4.0 - Developing Reference/4.6 - Style_guide.md

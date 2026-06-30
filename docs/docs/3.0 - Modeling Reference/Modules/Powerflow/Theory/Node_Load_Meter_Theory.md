@@ -46,7 +46,7 @@ Loads are primarily connected in one of two forms: wye or delta. The connection 
 
 would indicate that a delta connected load exists on the line-to-line connection AB. 
 
-Many IEEE test systems and feeders have all of the loads defined in terms of power, but subclassed as either a power, current, or impedance load. Due to GridLAB-D's ability to explicitly model these load types, the constant current and impedance load values must be translated from their power rating into an Amperage or impedance value. 
+Many IEEE test systems and feeders have all of the loads defined in terms of power, but subclassed as either a power, current, or impedance load. Due to GridLAB-D™'s ability to explicitly model these load types, the constant current and impedance load values must be translated from their power rating into an Amperage or impedance value. 
 
 To calculate the constant current load from a system, use the equation 
 
@@ -72,9 +72,9 @@ Unlike the current calculations, the impedance calculation does not require as m
 
 ## Meter
 
-Meters are also very similar to node objects. Meters provide a method for measuring the instantaneous power or energy over time that is flowing through a node. This is useful for time-varying simulations with `recorder` objects attached. GridLAB-D's normal output methods (.XML, .TXT) will only record the final timestep of a system, so for time varying systems a `recorder` and meter are needed to track power and energy, as well as voltage and current. 
+Meters are also very similar to node objects. Meters provide a method for measuring the instantaneous power or energy over time that is flowing through a node. This is useful for time-varying simulations with `recorder` objects attached. GridLAB-D™'s normal output methods (.XML, .TXT) will only record the final timestep of a system, so for time varying systems a `recorder` and meter are needed to track power and energy, as well as voltage and current. 
 
-Due to the nature of GridLAB-D's solvers, current passing through a node or load is not directly measurable. Rather, a meter must be used to examine this current flow. The complex current flowing through each of the three phases in a system is available via the `measured_current_A`, `measured_current_B`, and `measured_current_C` variables. The A, B, and C letters represent the value obtained from each of the three phases of the system. 
+Due to the nature of GridLAB-D™'s solvers, current passing through a node or load is not directly measurable. Rather, a meter must be used to examine this current flow. The complex current flowing through each of the three phases in a system is available via the `measured_current_A`, `measured_current_B`, and `measured_current_C` variables. The A, B, and C letters represent the value obtained from each of the three phases of the system. 
 
 All power measurements in the meter are based on the fundamental power equation given by 
 

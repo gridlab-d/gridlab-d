@@ -57,7 +57,7 @@ The pw_model closes the PowerWorld model, and severs the connection to SIMAuto o
 
 # Inputs and Outputs
 
-## GridLAB-D
+## GridLAB-D™
 
 ### pw_model class
 

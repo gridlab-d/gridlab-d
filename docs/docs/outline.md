@@ -10,7 +10,7 @@ Splash or Landing Page (Not gridlabd.org)
  - Who should use GLD?
  - How do I cite GLD?
 
-## 0.0 GridLAB-D
+## 0.0 GridLAB-D™
 - **Contact**
 - **Version History**
 - **Projects**

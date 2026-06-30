@@ -76,7 +76,7 @@ Linux/MacOSX Systems
     
     You must include the MySQL client library in the **(DY)LD_LIBRARY_PATH** environment variable.
 
-Although it is not required, use of the [MySQL Workbench](http://www.mysql.com/downloads/workbench/) is highly recommended to facilitate managing and reviewing the results from GridLAB-D's mysql module. 
+Although it is not required, use of the [MySQL Workbench](http://www.mysql.com/downloads/workbench/) is highly recommended to facilitate managing and reviewing the results from GridLAB-D™'s mysql module. 
 
 ## Bugs
 

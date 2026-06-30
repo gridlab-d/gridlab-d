@@ -5,6 +5,9 @@ Run multiple GridLAB-D™ models in parallel and compute daily energy usage.
 This script launches one process per model folder using Python multiprocessing,
 collects measured_real_power from object network_node at 300-second intervals,
 and reports per-model plus fleet-average daily energy.
+
+TODO - API docs - 23 June 2026 This example is not working at this time under
+v1.0.14. See Github issue https://github.com/gridlab-d/gridlab-d/issues/1720.
 """
 
 from __future__ import annotations

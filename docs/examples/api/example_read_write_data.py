@@ -348,7 +348,7 @@ while sim_time_dt < stoptime:
         rated_power = inverter_rated_power_dict.get(inverter_name, 0.0) or 0.0
         if rated_power > 0 and solar_power > 0.5 * rated_power:
             gld.set_property(house, "cooling_setpoint", "60")
-            print (f"{sim_time_dt} - {house}: Solar power {solar_power:.1f} W exceeds 50% of rated power {rated_power:.1f} VA, setting cooling setpoint to 60 degF")
+            # print (f"{sim_time_dt} - {house}: Solar power {solar_power:.1f} W exceeds 50% of rated power {rated_power:.1f} VA, setting cooling setpoint to 60 degF")
         else:
             gld.set_property(
                 house, "cooling_setpoint", str(original_cooling_setpoint_dict[house])
