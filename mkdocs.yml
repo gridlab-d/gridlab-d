@@ -105,10 +105,10 @@ nav:
         - Climate Module: docs/3.0 - Modeling Reference/Modules/Climate/1.0 - Climate.md
         - CSV reader: docs/3.0 - Modeling Reference/Modules/Climate/CSV_reader_(climate_class).md
       - Generators:
+        - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/1.0 - Generators.md
         - Control Models:
           - Automatic Generation Control: docs/3.0 - Modeling Reference/Modules/Generators/Control Models/Secondary_control.md
           - Synchronization Control: docs/3.0 - Modeling Reference/Modules/Generators/Control Models/Synchronization_control.md
-        - Introduction: docs/3.0 - Modeling Reference/Modules/Generators/Generators.md
         - Physics Based Models:
           - Diesel Generator: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Diesel_dg.md
           - Battery Energy storage: docs/3.0 - Modeling Reference/Modules/Generators/Physics Based Models/Energy_storage.md
