@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "gridlabd"
-version = "1.0.14"
+version = "1.0.15"
 description = "Python bindings for GridLAB-D power system simulation"
 readme = "README.md"
 license = {text = "Battelle Open Source License"}
