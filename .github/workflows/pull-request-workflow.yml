@@ -265,7 +265,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-15
+          - os: macos-26
             # arch: x86_64
     runs-on: ${{matrix.os}}
     steps:
@@ -274,15 +274,15 @@ jobs:
           brew update
           env HOMEBREW_NO_AUTO_UPDATE=1 
           brew install boost
-          brew install llvm@21
+          # brew install llvm@21
 
-      - name: Set up Clang 21 Environment
-        run: |
-          # Homebrew installs llvm@21 as keg-only to prevent conflicts
-          # Add the binaries and set the compilers as environment variables
-          echo "CC=/opt/homebrew/opt/llvm@21/bin/clang" >> $GITHUB_ENV
-          echo "CXX=/opt/homebrew/opt/llvm@21/bin/clang++" >> $GITHUB_ENV
-          echo "/opt/homebrew/opt/llvm@21/bin" >> $GITHUB_PATH
+      # - name: Set up Clang 21 Environment
+      #   run: |
+      #     # Homebrew installs llvm@21 as keg-only to prevent conflicts
+      #     # Add the binaries and set the compilers as environment variables
+      #     echo "CC=/opt/homebrew/opt/llvm@21/bin/clang" >> $GITHUB_ENV
+      #     echo "CXX=/opt/homebrew/opt/llvm@21/bin/clang++" >> $GITHUB_ENV
+      #     echo "/opt/homebrew/opt/llvm@21/bin" >> $GITHUB_PATH
 
       - name: Verify Clang Version
         run: |
