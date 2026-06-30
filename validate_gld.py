@@ -68,7 +68,7 @@ def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
 
 
 
-def runAutotest(args: tuple[Path, str]) -> tuple[int, Path]:
+def runAutotest(args: tuple[Path, str]) -> tuple[int, Path, Path, Path]:
     """
     Run a single autotest file using GridLAB-D.
     """
@@ -131,7 +131,9 @@ def runAutotest(args: tuple[Path, str]) -> tuple[int, Path]:
     #     rv = 2
     # return (rv, work_dir / autotestFile.name)
 
-
+    # check = (work_dir / "gridlabd.err").read_text()
+    # if len(check):
+    #     print(check); 
     
     rv = 0
     # Signal termination: negative return code on POSIX
@@ -147,7 +149,7 @@ def runAutotest(args: tuple[Path, str]) -> tuple[int, Path]:
         rv = 1
     elif result.returncode == 0 and "_err" in autotestFile.stem:
         rv = 2
-    return (rv, work_dir / autotestFile.name)
+    return (rv, work_dir / autotestFile.name, (work_dir / "gridlabd.out"), (work_dir / "gridlabd.err"))
 
 
 def getGLDVersionInfo() -> str:
@@ -160,62 +162,91 @@ def getGLDVersionInfo() -> str:
         return result.stdout.strip()
     return "Unknown GridLAB-D version"
 
+def print_file_efficiently(resultsFile: Path):
+    try:
+        content = ""
+        with resultsFile.open('r') as file:
+            for line in file:
+                    content = content + line + "\n"
+    except FileNotFoundError:
+        print(f"The file '{resultsFile}' does not exist.")
 
-def processResults(results: list[tuple], resultsFile: Path, testPerformance: int) -> int:
+def read_file_efficiently(resultsFile: Path):
+    try:
+        with resultsFile.open('r') as file:
+            for line in file:
+                if '[PASS]' not in line:
+                    print(line, end='')
+    except FileNotFoundError:
+        print(f"The file '{resultsFile}' does not exist.")
+
+def processResults(results: list[tuple[int, Path, Path, Path]], resultsFile: Path, errorFile: Path, testPerformance: int) -> int:
     """
     Process the results of the autotest runs and output to validate.txt.
     """
     global autotestFiles
     rv = 0
     gldInfo = getGLDVersionInfo()
-    with resultsFile.open("w") as f:
-        f.write(f"GridLAB-D Version Info:\n\t{gldInfo}\n\n")
-        f.write("Autotest Results:\n")
-        passCount = 0
-        failCount = 0
-        unexpectedPassCount = 0
-        passingTests = []
-        failingTests1 = []
-        failingTests2 = []
-        for resultTuple in results:
-            result, autotestFile = resultTuple
-            if result == 0:
-                passCount += 1
-                passingTests.append(autotestFile)
-            elif result == 1:
-                failCount += 1
-                failingTests1.append(autotestFile)
-            elif result == 2:
-                unexpectedPassCount += 1
-                failingTests2.append(autotestFile)
-        if passCount > 0:
-            f.write(f"\tPassing Tests:")
-            for test in passingTests:
-                f.write(f"\n\t\t[PASS]\t{test}")
-        if failCount > 0 or unexpectedPassCount > 0:
-            f.write(f"\n\tFailing Tests:")
-            for test in failingTests1:
-                f.write(f"\n\t\t[FAIL]\t{test}...failed to run but was expected to pass.")
-            for test in failingTests2:
-                f.write(f"\n\t\t[FAIL]\t{test}...ran successfully but was expected to fail.")
-        f.write("\nResults Summary:\n")
-        f.write(f"\tTotal Tests Run: {len(results)}.\n")
-        f.write(f"\tTotal Tests Pass: {passCount}.\n")
-        f.write(f"\tTotal Tests Fail: {failCount + unexpectedPassCount}.\n")
-        f.write(
-            f"\tPass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n"
-        )
-        f.write(f"\tTotal Test Time: {testPerformance} seconds.")
-        print(
-            "\nResults Summary:\n"
-            f"Total Tests Run: {len(results)}.\n"
-            f"Total Tests Pass: {passCount}.\n"
-            f"Total Tests Fail: {failCount + unexpectedPassCount}.\n"
-            f"Pass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n"
-            f"Total Test Time: {testPerformance} seconds.\n"
-            f"Full results written to {resultsFile}."
-        )
+    with errorFile.open("w") as ef:
+        ef.write(f"GridLAB-D Version Info:\n\t{gldInfo}\n\n")
+        ef.write("Autotest Failed Results:\n")
+        with resultsFile.open("w") as f:
+            f.write(f"GridLAB-D Version Info:\n\t{gldInfo}\n\n")
+            f.write("Autotest Results:\n")
+            passCount = 0
+            failCount = 0
+            unexpectedPassCount = 0
+            passingTests = []
+            failingTests1 = []
+            failingTests2 = []
+            for resultTuple in results:
+                result, autotestFile, out, err = resultTuple
+                if result == 0:
+                    passCount += 1
+                    passingTests.append(autotestFile)
+                elif result == 1:
+                    failCount += 1
+                    failingTests1.append(autotestFile)
+                    ef.write(f"\n== FAIL:\t{autotestFile}")
+                    ef.write(f"\n== OUT:\t{out.read_text()}")
+                    ef.write(f"\n== ERROR:\t{err.read_text()}")
+                elif result == 2:
+                    unexpectedPassCount += 1
+                    failingTests2.append(autotestFile)
+                    ef.write(f"\n== FAIL:\t{autotestFile}")
+                    ef.write(f"\n== OUT:\t{out.read_text()}")
+                    ef.write(f"\n== ERROR:\t{err.read_text()}")
+            if passCount > 0:
+                f.write(f"\tPassing Tests:")
+                for test in passingTests:
+                    f.write(f"\n\t\t[PASS]\t{test}")
+            if failCount > 0 or unexpectedPassCount > 0:
+                f.write(f"\n\tFailing Tests:")
+                for test in failingTests1:
+                    f.write(f"\n\t\t[FAIL]\t{test}...failed to run but was expected to pass.")
+                for test in failingTests2:
+                    f.write(f"\n\t\t[FAIL]\t{test}...ran successfully but was expected to fail.")
+            
+            f.write("\nResults Summary:\n")
+            f.write(f"\tTotal Tests Run: {len(results)}.\n")
+            f.write(f"\tTotal Tests Pass: {passCount}.\n")
+            f.write(f"\tTotal Tests Fail: {failCount + unexpectedPassCount}.\n")
+            f.write(
+                f"\tPass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n"
+            )
+            f.write(f"\tTotal Test Time: {testPerformance} seconds.")
+            print(
+                "\nResults Summary:\n"
+                f"Total Tests Run: {len(results)}.\n"
+                f"Total Tests Pass: {passCount}.\n"
+                f"Total Tests Fail: {failCount + unexpectedPassCount}.\n"
+                f"Pass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n"
+                f"Total Test Time: {testPerformance} seconds.\n"
+                f"Full results written to {resultsFile}."
+            )
+    # read_file_efficiently(resultsFile)
     if failCount > 0 or unexpectedPassCount > 0:
+        read_file_efficiently(errorFile)
         rv = 1
     return rv
 
@@ -236,6 +267,10 @@ def main(module: str, runOptionalTests: bool, threads: int):
     resultsFile.resolve()
     if resultsFile.exists():
         resultsFile.unlink()
+    errorFile = searchDirectoryBase / "validate_errors.txt"
+    errorFile.resolve()
+    if errorFile.exists():
+        errorFile.unlink()
     # Search for autotest files
     if module != "all":
         moduleDirectory = searchDirectoryBase / module
@@ -277,7 +312,7 @@ def main(module: str, runOptionalTests: bool, threads: int):
                 print(f"[progress] {percentDone}% autotests completed...", flush=True, end="\r")
         endTime = time.perf_counter_ns()
         testPerformance = math.ceil((endTime - startTime) / 1.0e9)
-        rv = processResults(results, resultsFile, testPerformance)
+        rv = processResults(results, resultsFile, errorFile, testPerformance)
     elif module != "all":
         print(
             f"No autotest files were found recursively searching from {moduleDirectory}. Exiting."
