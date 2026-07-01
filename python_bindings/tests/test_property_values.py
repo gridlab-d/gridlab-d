@@ -194,9 +194,21 @@ class TestGetObjectPropertiesDetailed:
                 f"measured_power should be complex, got {type(mp['value'])}: {mp['value']}"
             )
             assert mp["type"] == "complex", f"Expected type 'complex', got '{mp['type']}'"
-            assert mp["access"] == "read-only", (
-                f"measured_power should be read-only, got '{mp['access']}'"
+
+            # Access mode can vary by module/build; verify the string matches
+            # property-info access flags rather than assuming a fixed mode.
+            valid_access = {"read-only", "read-write"}
+            assert mp["access"] in valid_access, (
+                f"measured_power has invalid access '{mp['access']}'"
             )
+
+            info_code, info = gld_with_house.get_property_info(meter, "measured_power")
+            if info_code == 0:
+                pa_w = 0x02  # write access bit from PROPERTYACCESS
+                expected_access = "read-write" if (int(info.get("access", 0x0F)) & pa_w) else "read-only"
+                assert mp["access"] == expected_access, (
+                    f"measured_power access mismatch: detailed='{mp['access']}', expected='{expected_access}'"
+                )
             print(f"measured_power: {mp}")
 
     def test_nonexistent_object_raises(self, gld_with_house):

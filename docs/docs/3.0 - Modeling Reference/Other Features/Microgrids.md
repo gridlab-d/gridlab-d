@@ -2,7 +2,7 @@
 
 The microgrids use case in GridLAB-D™ is implemented to allow islanded, smaller power system simulations. These simulations examine sub-second influences on parameters like frequency and voltage. The final capability allows the examination of transients in the voltage and frequency associated with microgrid operations. 
 
-Microgrids functionality in GridLAB-D is primarily an overall capability of the simulation engine. No specific microgrid module exists, but rather objects in several modules support transient-level time scales (~10 ms) and islanded operation.
+Microgrids functionality in GridLAB-D™ is primarily an overall capability of the simulation engine. No specific microgrid module exists, but rather objects in several modules support transient-level time scales (~10 ms) and islanded operation.
 
 Microgrids are typically operated in a manner that there is no strong, stiff source bus on the system. During microgrid operations, connections to the larger, bulk transmission system are disconnected and only local, smaller, often distributed, generation sources are utilized. Under such scenarios, the dynamics of the system are expected to play a more significant part in the stability of the power system.
 
@@ -439,7 +439,7 @@ To implement the dynamic equations to produce the frequency information, the mic
 
 ### Object inclusion
 
-Inclusion in the microgrids-enabled dynamic solver capability is handled during GridLAB-D's normal object initialization routines. Objects contributing to the dynamics of the system will flag appropriately for inclusion by the solver during its initialization.[R1.1]
+Inclusion in the microgrids-enabled dynamic solver capability is handled during GridLAB-D™'s normal object initialization routines. Objects contributing to the dynamics of the system will flag appropriately for inclusion by the solver during its initialization.[R1.1]
 
 ### Solver published inputs
 
@@ -501,7 +501,7 @@ The nature of the microgrid capability and the dynamic solver will not initially
 
 ## Solver timing
 
-The actual execution of the solver and how often it is called are key aspects of the proper integration of the dynamic solution capabilities within GridLAB-D™. Solver calls need to be properly timed with the powerflow solution, as well as the requirements of the individual dynamic components. To ensure proper dynamic transitions, a form of the steady state powerflow must be resolved at each timestep of the dynamic simulation for the "non-contributing" objects. Loads and devices not directly participating in the dynamic solver are assumed to maintain fixed load values over the sub-GridLAB-D-standard timesteps. These devices may influence the magnitude and duration of the dynamic response, so they must be included in some form. Functionality for faster, dynamic loads will be in place for future implementations of microgrid devices. Through the continuous updates of the quasi-static powerflow, transitions at normal GridLAB-D™ timesteps should be minimized to be predominately non-dynamic state changes. 
+The actual execution of the solver and how often it is called are key aspects of the proper integration of the dynamic solution capabilities within GridLAB-D™. Solver calls need to be properly timed with the powerflow solution, as well as the requirements of the individual dynamic components. To ensure proper dynamic transitions, a form of the steady state powerflow must be resolved at each timestep of the dynamic simulation for the "non-contributing" objects. Loads and devices not directly participating in the dynamic solver are assumed to maintain fixed load values over the sub-GridLAB-D™-standard timesteps. These devices may influence the magnitude and duration of the dynamic response, so they must be included in some form. Functionality for faster, dynamic loads will be in place for future implementations of microgrid devices. Through the continuous updates of the quasi-static powerflow, transitions at normal GridLAB-D™ timesteps should be minimized to be predominately non-dynamic state changes. 
 
 ### Solver Passes
 
@@ -540,7 +540,7 @@ After these two steps complete, the simulation advances to the next timestep. Th
 
 ### Solution Timesteps
 
-Timestep progression is handled in a manner similar to GridLAB-D's core functionality. All objects requesting a dynamic solution update will request a time for recalculation. The minimum value will drive the simulation forward. The solver shall be implemented as a predictor-corrector solver, so larger timestep progression should be possible. A "maximum dynamic" timestep will also be specified to ensure any unexpected "passive" element (not requesting a timestep update) are handled.[R3.2]
+Timestep progression is handled in a manner similar to GridLAB-D™'s core functionality. All objects requesting a dynamic solution update will request a time for recalculation. The minimum value will drive the simulation forward. The solver shall be implemented as a predictor-corrector solver, so larger timestep progression should be possible. A "maximum dynamic" timestep will also be specified to ensure any unexpected "passive" element (not requesting a timestep update) are handled.[R3.2]
 
 The initial solver time resolution is 1 ms. Timestep updates occur in multiples of 1 ms, but are not allowed to be any less than 1 ms (R3, R3.1).
 
@@ -661,7 +661,7 @@ Capabilities have slowly been evolving. This section documents what milestones c
 
 ## Version 2.3 - Grizzly
 
-  * transient mode capabilities - ability to transition to simulation timesteps as small as one nanosecond, then transition back into traditional, event-driven GridLAB-D mode.
+  * transient mode capabilities - ability to transition to simulation timesteps as small as one nanosecond, then transition back into traditional, event-driven GridLAB-D™ mode.
   * Player capabilities - the ability to play in subsecond data to influence objects during transient mode execution.
   * Recorder capabilities - the ability to record subsecond data during transient mode operations.
   * Powerflow capabilities - basic support for three-phase, unbalanced powerflow operations in transient mode and in isolated operation

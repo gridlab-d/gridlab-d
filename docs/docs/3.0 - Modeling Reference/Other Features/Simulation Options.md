@@ -30,7 +30,7 @@ The GridLAB-D™ software can be run using the _command-line_ or the _server mod
 
 ### **GridLAB-D™ Command-Line Tool**
 
-GridLAB-D™ takes the path to a GridLAB-D™ model file (GLM file) as input. For more information about creating GLM files refer to the guide to [Creating GLM Files](../../2.0%20-%20New%20Users/Tutorial/2.5.2%20-%20GLM%20Models.md). 
+GridLAB-D™ takes the path to a GridLAB-D™ model file (GLM file) as input. For more information about creating GLM files refer to the guide to [Creating GLM Files](../../2.0%20-%20New%20Users/Tutorial/2.2.3%20-%20GLM%20Models.md). 
 
 **Syntax Highlighting**
 
@@ -44,7 +44,7 @@ The plug-in NppExec allows the user to run console commands from within Notepad+
     cmd /c cd "$(CURRENT_DIRECTORY)" && "gridlabd.exe" "$(FULL_CURRENT_PATH)" 
 
 
-This command will change to the directory of the currently opened file, then run GridLAB-D™ with the current file as input. Next, click `Save...`, type in `GridLAB-D` as the script name, and click `Save` again. To run the command on the currently opened file click `OK`. To subsequently run this command, simply click `F6` , select the correct script, and click `OK`. To run the same script that was previously run, simply click `Ctrl + F6`. GridLAB-D™ will be executed, with the current file as input and the output will be shown on a console window at the bottom of the Notepad++ window. 
+This command will change to the directory of the currently opened file, then run GridLAB-D™ with the current file as input. Next, click `Save...`, type in `GridLAB-D™` as the script name, and click `Save` again. To run the command on the currently opened file click `OK`. To subsequently run this command, simply click `F6` , select the correct script, and click `OK`. To run the same script that was previously run, simply click `Ctrl + F6`. GridLAB-D™ will be executed, with the current file as input and the output will be shown on a console window at the bottom of the Notepad++ window. 
 
 It is useful to define several such scripts, for example, to run GridLAB-D™ with verbose output:   
 
@@ -107,7 +107,7 @@ Option | Description
     The information displayed relates to the following capabilities that may be implemented by a module 
 
     * Version:
-        The major and minor version relate to the API level supported by the module. The major version is changed when features that are not backward compatible are altered. The minor version is changed when features that are backward compatible are changed. In other words, a module can always be loaded only if the major version is the same, however only a module with a same or higher minor version number that GridLAB-D's module API can be loaded.
+        The major and minor version relate to the API level supported by the module. The major version is changed when features that are not backward compatible are altered. The minor version is changed when features that are backward compatible are changed. In other words, a module can always be loaded only if the major version is the same, however only a module with a same or higher minor version number that GridLAB-D™'s module API can be loaded.
 
     * Classes:
         A list of the implemented classes is displayed.
@@ -286,7 +286,7 @@ Option | Description
 
 #### Control
 
-When operating in server mode, GridLAB-D accepts main loop state control messages from HTTP clients connected on the server's port. All control messages are in the form of HTTP 1.1 requests with the standard query format:
+When operating in server mode, GridLAB-D™ accepts main loop state control messages from HTTP clients connected on the server's port. All control messages are in the form of HTTP 1.1 requests with the standard query format:
 
      http://server :port /control/command
 
@@ -338,7 +338,7 @@ The server shall support HTTP 1.1 traffic according to [RFC2616](http://www.w3.o
 
 ### Exit Codes
 
-The GridLAB-D core solver and most GridLAB-D modules use the following exit code: 
+The GridLAB-D™ core solver and most GridLAB-D™ modules use the following exit code: 
 
   * -1 exec failed
   * 0 success
@@ -357,7 +357,7 @@ The GridLAB-D core solver and most GridLAB-D modules use the following exit code
 
 !!! caveat
 
-    Some libraries used by GridLAB-D module do not following the GridLAB-D exit code standard. 
+    Some libraries used by GridLAB-D™ module do not following the GridLAB-D™ exit code standard. 
 
     Some systems cannot distinguish between -1 and 255.
 

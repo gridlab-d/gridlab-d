@@ -1,7 +1,7 @@
 """
 Created on 03/24/2026
 
-This example shows how to control GridLAB-D to advance through simulation 
+This example shows how to control GridLAB-D™ to advance through simulation 
 time using various API calls. 
 
 @author: Trevor Hardy
@@ -21,7 +21,7 @@ script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
 
-# Instanate GridLAB-D and load model
+# Instanate GridLAB-D™ and load model
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
@@ -47,18 +47,9 @@ for step in range(num_steps):
         message for message in messages
         if message.get("type") in {"WARNING", "ERROR"}
     ]
-    # TODO add additional filter that only looks at messages that have the
-    # current simulation time in their timestamp.
-    pprint(filtered_messages)
+    if filtered_messages:
+        pprint(filtered_messages)
     gld.clear_messages()
-
-# Ending the simulation and exiting GridLAB-D
-# Taking one extra step beyond the stated simulation stop time
-# gld.clear_messages()
-# error_code, return_time_str = gld.step()
-# messages = gld.get_messages()
-# print('\n **************************** \n')
-# pprint(messages)
 
 gld.stop()
 gld.exit_gld()

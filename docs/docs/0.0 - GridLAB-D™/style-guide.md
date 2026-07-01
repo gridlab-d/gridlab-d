@@ -22,7 +22,7 @@ Referenced file names should be in quotes and italics, like:
 
 Keep this format even when linking files, for example:
 
-"Navigate to the respository to check out ["*sample_file.glm*"](path) as an example."
+"Navigate to the respository to check out *sample_file.glm* as an example."
 
 Remember that both an asterix and an underscore will italicize text, and both may be used in this documentation.
 
@@ -54,13 +54,13 @@ and
 
 ![Distribution system switching capacitors [local path reference]](../../images/Dist_syst_switching_capacitors.png){ #fig:local-reference-ex }
 
-Tables are introduced by preceeding them with the keyword ```Table:``` followed by the table caption and anchor for referencing.
+Tables are introduced by preceeding them with the keyword ```Table:``` followed by the table caption and anchor for referencing. Note that paramaters and variable names in the first column of a table are **bold** rather than in `back-ticks` for ease of reading.
 
 Table: Table example { #tbl:table-ex }
 
 |Parameter Name|Unit|Type|Description|
 |---|---|---|---|
-|```voltage```|V|float|Terminal voltage|
+|**voltage**|V|float|Terminal voltage|
 
 !!! note 
 
@@ -79,9 +79,9 @@ Points to the page "Command Line Options"
 
 It maybe even more useful to have a link go to a *specific header* within a file. To do that, just add the `#Header` immediately following the `.md` part of the link. If there are spaces within the file name, you must use `-` in their place.
 
-For example, to point specifically to Global Variables section of the previous file:
+For example, to point specifically to Modhelp section of the previous file:
 
-[Global Variables](../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md#Global-Variables)
+[Global Variables](../3.0%20-%20Modeling%20Reference/Other%20Features/CommandLineOptions.md#ModHelp)
 
 ## Writing Style
 
@@ -128,7 +128,7 @@ There are some specific accessibility tips to note, below. But in general, remem
 
 * **Don’t use directional terms as the only clue to location**. Left, right, up, down, above, and below aren’t very useful for people who use screen-reading software. Instead, use specific language that conveys context, such as “the first item in the following list”, “on the toolbar”, or "figure 2".
 
-* **All images require a descriptive caption**. Images are extremely powerful to help convey information, but an image without an explanation only creates confusion. Always provide a caption for an in-line image, and be as descriptive and specific as possible about what is pictured. Use the fifth header level for figure and table captions (#####).
+* **All images require a descriptive caption**. Images are extremely powerful to help convey information, but an image without an explanation only creates confusion. Always provide a caption for an in-line image, and be as descriptive and specific as possible about what is pictured. 
 
 ### Avoid Biased Language
 

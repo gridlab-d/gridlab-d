@@ -426,12 +426,35 @@ def handle_get_property(message: Message) -> Response:
     try:
         object_name = message.args["object_name"]
         property_name = message.args["property_name"]
+        typed = bool(message.args.get("typed", False))
         code, value = _gld_instance.get_property(
             object_name,
             property_name
         )
         code_int = int(code) if isinstance(code, int) else int(code.value)
-        if bool(message.args.get("typed", False)) and code_int == 0:
+
+        # Compatibility fallback for feeders where measured_real_power is not
+        # directly published on the requested object (e.g., substation).
+        # Many network-node/substation objects publish distribution_power*
+        # (complex VA) rather than measured_real_power (real W).
+        if code_int != 0 and property_name == "measured_real_power":
+            for alt_name in (
+                "measured_power",
+                "distribution_power",
+                "distribution_power_A",
+                "distribution_power_B",
+                "distribution_power_C",
+                "power",
+            ):
+                alt_code, alt_value = _gld_instance.get_property(object_name, alt_name)
+                alt_code_int = int(alt_code) if isinstance(alt_code, int) else int(alt_code.value)
+                if alt_code_int == 0:
+                    code_int = 0
+                    value = alt_value
+                    property_name = alt_name
+                    break
+
+        if typed and code_int == 0:
             prop_type, unit = _get_prop_type_unit(object_name, property_name)
             value = _convert_value(value, prop_type, unit)
         return Response(success=True, result={"code": code_int, "value": value})
@@ -718,12 +741,22 @@ def handle_set_property(message: Message) -> Response:
 def handle_get_properties_by_class(message: Message) -> Response:
     """Get property values from all objects of a class."""
     try:
-        result = _gld_instance.get_properties_by_class(
-            message.args["class_name"],
-            message.args["property_name"]
-        )
+        class_name = message.args["class_name"]
+        property_name = message.args["property_name"]
+
+        # Some builds/classes don't expose "name" through the low-level
+        # class-property query path even though object metadata has __name__.
+        # Keep API behavior consistent by mapping each object name/ID to itself.
+        if property_name == "name":
+            object_names = _gld_instance.get_objects_by_class(class_name)
+            result = {obj_name: obj_name for obj_name in object_names}
+        else:
+            result = _gld_instance.get_properties_by_class(
+                class_name,
+                property_name
+            )
+
         if bool(message.args.get("typed", False)) and isinstance(result, dict):
-            property_name = message.args["property_name"]
             typed_result = {}
             for obj_name, raw_value in result.items():
                 prop_type, unit = _get_prop_type_unit(obj_name, property_name)

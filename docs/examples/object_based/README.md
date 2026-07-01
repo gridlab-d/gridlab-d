@@ -1,4 +1,4 @@
 - Model name: objects.glm
 - Model source: [GLD Tutorial Chapter 2](https://github.com/gridlab-d/course/blob/master/Tutorial/Chapter%202%20-%20Key%20Attributes/Sample%20Model/sample_model.glm)
 - Supporting narrative source: [GLD Tutorial Chapter 2](https://gridlab-d.shoutwiki.com/wiki/GridLAB-D_Wiki:GridLAB-D_Tutorial_Chapter_2_-_GridLAB-D_Key_Attributes)
-- Example purpose: Concrete example of a GridLAB-D model for user to inspect and learn about classes and objects. Model is not intended to be run by the user and relies on the narrative to understand the basics of GridLAB-D objects.
+- Example purpose: Concrete example of a GridLAB-D™ model for user to inspect and learn about classes and objects. Model is not intended to be run by the user and relies on the narrative to understand the basics of GridLAB-D™ objects.

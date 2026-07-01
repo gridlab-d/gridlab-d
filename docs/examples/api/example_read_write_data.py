@@ -1,17 +1,17 @@
 """
 Created on 03/25/2026
 
-This example shows how to read data out of GridLAB-D while the simulation is
+This example shows how to read data out of GridLAB-D™ while the simulation is
 running and write or edit parameter values of objects in the running model. 
 This effectively demonstrates the ability to create controllers in Python that
-interact with the GridLAB-D model during runtime.
+interact with the GridLAB-D™ model during runtime.
 
 As an example, this code seeks to increase energy self-consumption by reading 
 the power output of the solar panel and if it is sufficiently large, decrease
 the cooling setpoint. This provides a pre-cooling function when there is local
 generation available. When the solar power output is low, the setpoint is 
 returned to normal. To effectively demonstrate this, the simulation duration is
-extended to two days.
+extended to two days (as compared to many of the other examples).
 
 @author: Trevor Hardy
 trevor.hardy@pnnl.gov
@@ -246,7 +246,7 @@ def plot_solar_power_and_setpoint(timestamps, avg_solar_power, avg_cooling_setpo
     # Plot solar power on the first y-axis
     color1 = 'tab:blue'
     ax1.set_xlabel('Time')
-    ax1.set_ylabel('Average Solar Power (W)', color=color1)
+    ax1.set_ylabel('All House Average Solar Power (W)', color=color1)
     line1 = ax1.plot(timestamps, avg_solar_power, color=color1, label='Avg Solar Power')
     ax1.tick_params(axis='y', labelcolor=color1)
     ax1.grid(True, alpha=0.3)
@@ -254,12 +254,12 @@ def plot_solar_power_and_setpoint(timestamps, avg_solar_power, avg_cooling_setpo
     # Create a second y-axis for cooling setpoint
     ax2 = ax1.twinx()
     color2 = 'tab:red'
-    ax2.set_ylabel('Average Cooling Setpoint (°F)', color=color2)
+    ax2.set_ylabel('All House Average Cooling Setpoint (°F)', color=color2)
     line2 = ax2.plot(timestamps, avg_cooling_setpoint, color=color2, label='Avg Cooling Setpoint')
     ax2.tick_params(axis='y', labelcolor=color2)
     
     # Add title and legend
-    fig.suptitle('Average Solar Power and Cooling Setpoint Over Time')
+    fig.suptitle('All House Average Solar Power and Cooling Setpoint Over Time')
     
     # Combine legends from both axes
     lines = line1 + line2
@@ -275,7 +275,7 @@ script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
 
-# Initilize GridLAB-D and load the model
+# Initilize GridLAB-D™ and load the model
 gld = gridlabd.GridLabD()
 model_path = Path("house_with_solar")
 gld.set_working_directory(str(model_path))
@@ -286,9 +286,6 @@ if load_code != 0:
 # Read in current start and stop time
 starttime = datetime.fromisoformat(gld.get_starttime())
 stoptime = datetime.fromisoformat(gld.get_stoptime())
-# TODO: remove the next two lines once  Github #1733 is resolved
-starttime = starttime.replace(tzinfo=timezone(timedelta(hours=-7)))
-stoptime = stoptime.replace(tzinfo=timezone(timedelta(hours=-7)))
 
 # Calculate new simulation duration, set stop time, and confirm changes
 stoptime = starttime + timedelta(days=2)
@@ -311,7 +308,7 @@ cooling_setpoint_dict = gld.get_properties_by_class("house", "cooling_setpoint")
 original_cooling_setpoint_dict = parse_cooling_setpoint_data(cooling_setpoint_dict)
 
 while sim_time_dt < stoptime:
-    print(f"Current simulation time: {sim_time_dt}")
+    #print(f"Current simulation time: {sim_time_dt}")
     error_code, sim_time = gld.step()
     if error_code != 0:
         raise RuntimeError(f"Simulation step failed at {sim_time} with error code {error_code}.")
@@ -351,6 +348,7 @@ while sim_time_dt < stoptime:
         rated_power = inverter_rated_power_dict.get(inverter_name, 0.0) or 0.0
         if rated_power > 0 and solar_power > 0.5 * rated_power:
             gld.set_property(house, "cooling_setpoint", "60")
+            # print (f"{sim_time_dt} - {house}: Solar power {solar_power:.1f} W exceeds 50% of rated power {rated_power:.1f} VA, setting cooling setpoint to 60 degF")
         else:
             gld.set_property(
                 house, "cooling_setpoint", str(original_cooling_setpoint_dict[house])

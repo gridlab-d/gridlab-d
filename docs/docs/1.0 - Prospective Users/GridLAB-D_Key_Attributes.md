@@ -25,11 +25,9 @@ GridLAB-D™ can be thought of as a core simulator with a collection of modules 
 
 Because of the modular nature of GridLAB-D™, there are a few terms that should be clarified as they will frequently come up during discussion of the design and use of GridLAB-D™.
 
-* “Model” - An engineering or mathematical term (rather than programming). There are two somewhat-related ways in which this term is used in the GridLAB-D™ world,
-
-* **TODO - Clarification - The following is a sentence fragment. What is a general term? Is this supposed to be related to "Model?" If so, it should not be its own bullet** A general term to describe how a particular part of GridLAB-D™ functions or is represented in code. For example, "How does GridLAB-D™ model solar panels?"
-
-* A "model file" (commonly ending in ".glm") containing the description of the distribution system being studied. This file contains the specific statement used to model a distribution system as a whole. For example, "Where is the model you used for that assignment?"
+* “Model” - An engineering or mathematical term (rather than programming). There are two somewhat-related ways in which this term is used in the GridLAB-D™ world. 
+    * One way is a general term to describe how a particular part of GridLAB-D™ functions or how it is represented in code. For example, "How does GridLAB-D™ model solar panels?"
+    * A second way a "Model" is used is within a "model file" (commonly ending in ".glm") containing the description of the distribution system being studied. This file contains the specific statement used to model a distribution system as a whole. For example, "Where is the model you used for that assignment?"
 
 * "Class" - A C++ programing term with a similar usage as "model". Much of GridLAB-D™ is written in C++ and sometimes GridLAB-D™ developers and programmers will use this term somewhat interchangeably with "model", particularly after a long day of programming and trouble-shooting. To be specific, a "class" is the collection of code that contains the equations, parameter declarations, and algorithms that define how a particular entity will behave in GridLAB-D™.
 
@@ -42,17 +40,17 @@ For example, in GridLAB-D™ there are classes that define the operation of capa
 When looking at a GridLAB-D™ model file (“.glm”), almost all the text in the file is devoted to defining objects. All of these objects are specific instances of classes (models) and their parameter definitions and relationships between each other constitute the system as a whole that is being modeled.
 
 ## Multiple supported timescales
-GridLAB-D is designed to help the user simulate a wide range of behaviors. The existence of two separate modes of operation increases flexibility.  
+GridLAB-D™ is designed to help the user simulate a wide range of behaviors. The existence of two separate modes of operation increases flexibility.  
 
 ### Quasi-static mode
-Events unfolding within the power grid over time scales of minutes or hours (e.g., a gradual increase in consumer demand) are usually modeled as a succession of steady states; a method known as quasi-static time-series simulation. GridLAB-D offers a quasi-static mode to enable the execution of such simulations. This is the main mode of operation for GridLAB-D and the default mode when a new GridLAB-D instance is started. 
+Events unfolding within the power grid over time scales of minutes or hours (e.g., a gradual increase in consumer demand) are usually modeled as a succession of steady states; a method known as quasi-static time-series simulation. GridLAB-D™ offers a quasi-static mode to enable the execution of such simulations. This is the main mode of operation for GridLAB-D™ and the default mode when a new GridLAB-D™ instance is started. 
 
 ### Transient mode
-While quasi-static time-series simulations are a common need for power grid studies, they manage computational burden by excluding transient events, as such events necessitate highly-detailed grid models to be accurately captured. Thus, the simplifying assumption of quasi-static mode is not suitable for rapidly-evolving events (e.g., faults, generator transients) which the  electric grid regularly experiences and which need to be modeled accurately. GridLAB-D is capable of simulating events occurring at nanosecond granularity (although current models support up to 100-microsecond granularity) through its transient mode. 
+While quasi-static time-series simulations are a common need for power grid studies, they manage computational burden by excluding transient events, as such events necessitate highly-detailed grid models to be accurately captured. Thus, the simplifying assumption of quasi-static mode is not suitable for rapidly-evolving events (e.g., faults, generator transients) which the  electric grid regularly experiences and which need to be modeled accurately. GridLAB-D™ is capable of simulating events occurring at nanosecond granularity (although current models support up to 100-microsecond granularity) through its transient mode. 
 
 ### Combining quasi-static and transient modes
-GridLAB-D users can pick the appropriate mode of operation depending on their needs. For example, a user interested in modeling the energization of a transformer should choose transient mode simulations, while a user interested in observing the behavior of the system over a day of operations should remain in the main quasi-static mode of operation. 
+GridLAB-D™ users can pick the appropriate mode of operation depending on their needs. For example, a user interested in modeling the energization of a transformer should choose transient mode simulations, while a user interested in observing the behavior of the system over a day of operations should remain in the main quasi-static mode of operation. 
 
-However, real power systems experience events that cannot be neatly split into one of these two categories. For example, a user may be interested in simulating the behavior of a system during an hour in which a fault happens and then is cleared. Tools focused on highly-detailed dynamic simulations are usually either incapable of simulating a full hour of grid operation or need large amounts of time. On the other hand, tools specializing in quasi-static time-series simulations cannot accurately capture the dynamic behavior of the system during a fault. GridLAB-D can seamlessly transition between quasi-static and dynamic simulations to take advantage of the benefits each simulation mode offers in different situations, thus offering both low computational burden and high-fidelity modeling depending on the specific simulation needs at each moment.
+However, real power systems experience events that cannot be neatly split into one of these two categories. For example, a user may be interested in simulating the behavior of a system during an hour in which a fault happens and then is cleared. Tools focused on highly-detailed dynamic simulations are usually either incapable of simulating a full hour of grid operation or need large amounts of time. On the other hand, tools specializing in quasi-static time-series simulations cannot accurately capture the dynamic behavior of the system during a fault. GridLAB-D™ can seamlessly transition between quasi-static and dynamic simulations to take advantage of the benefits each simulation mode offers in different situations, thus offering both low computational burden and high-fidelity modeling depending on the specific simulation needs at each moment.
 
-The new users section offers more details on how GridLAB-D transitions between its two modes.
+The new users section offers more details on how GridLAB-D™ transitions between its two modes.

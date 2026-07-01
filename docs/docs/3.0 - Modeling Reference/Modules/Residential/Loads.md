@@ -37,7 +37,7 @@ If no implicit enduses are desired (you are using explicit enduse devices, or de
 
 Explicit enduses are distinct objects within a house that have their own internal state-based models.  They will typically adjust their conditions based on inputs from the house itself (environmental properties like temperature), usage patterns provided (water usage, occupancy, time of day), and local electrical paramters (voltage).  Explicit enduse load models are often used to capture how different system conditions or user behaviors can impact the studied system, such as modifying a setpoint temperature, having the device respond to demand response or transactive signals, or even how lower voltage conditions on a feeder may impact operations.
 
-Unlike the **implicit_enduse** load, explicit enduse loads are individual objects that have to be instantiated inside the GridLAB-D model within the **house** object of interest.  As a simple example, this house has an explicit enduse load of a [waterheater](./Waterheater.md) defined:
+Unlike the **implicit_enduse** load, explicit enduse loads are individual objects that have to be instantiated inside the GridLAB-D™ model within the **house** object of interest.  As a simple example, this house has an explicit enduse load of a [waterheater](./Waterheater.md) defined:
 
     object house {
       name house1;
@@ -55,7 +55,7 @@ Unlike the **implicit_enduse** load, explicit enduse loads are individual object
       };
 	}
 
-This example includes the `water_demand` that is controlled via a [schedule](../../../2.0%20-%20New%20Users/Tutorial/2.5.5%20-%20Schedules%20and%20Loadshapes.md) called "daily_use".
+This example includes the `water_demand` that is controlled via a [schedule](../../../2.0%20-%20New%20Users/Tutorial/2.2.7%20-%20Schedules%20and%20Loadshapes.md) called "daily_use".
 
 Available explicit enduse loads that are validated include:
 
@@ -67,7 +67,7 @@ Available explicit enduse loads that are validated include:
 * [lights](./Lights.md)
 * [thermal storage](./Thermal_Energy_Storage_model_guide.md)
 
-To populate explicit enduse loads on a feeder or larger test system, it is highly recommended to use one of the TESP population scripts to automate that process. Refer to the [Feeder Generator API](../../../2.0%20-%20New%20Users/Tutorial/2.5.8%20-%20Built-In%20Distribution%20Models.md#Feeder-Generator-API) for more details. 
+To populate explicit enduse loads on a feeder or larger test system, it is highly recommended to use one of the TESP population scripts to automate that process. Refer to the [Feeder Generator API](../../../2.0%20-%20New%20Users/Tutorial/2.2.10%20-%20Built-In%20Distribution%20Models.md#feeder-generator-api) for more details. 
 
 ### Experimental/low TRL explicit enduse models
 
@@ -80,7 +80,7 @@ The differences a given house's load with and without the use of implicit enduse
 
 ![Implicit end use comparison](../../../../images/Implicit_enduse_comparison.png){ #fig:ImplicitEndUSe }
 
-Generic end uses can be implemented using the **residential_enduse** object. This object requires a schedule and a loadshape definition (see [Built in schedules and loadshapes](../../../2.0%20-%20New%20Users/Tutorial/2.5.5%20-%20Schedules%20and%20Loadshapes.md)). All other end uses are (or will soon be) inheriting the properties and methods of the **residential_enduse** object. 
+Generic end uses can be implemented using the **residential_enduse** object. This object requires a schedule and a loadshape definition (see [Built in schedules and loadshapes](../../../2.0%20-%20New%20Users/Tutorial/2.2.7%20-%20Schedules%20and%20Loadshapes.md)). All other end uses are (or will soon be) inheriting the properties and methods of the **residential_enduse** object. 
 
 
 ### Explicit End Use Loads
@@ -213,7 +213,7 @@ The object type used to represent weather in GridLAB-D™ is called “climate�
 ### How does the wind influence solar panels? 
  A slightly off-topic exercise in digging through GridLAB-D™ source code
 
-As you might expect, to determine which climate parameters are important to any other class, you’ll have to look on the [solar panels](../Generators/Solar.md) and/or the [source code](https://github.com/gridlab-d/gridlab-d/blob/master/generators/solar.cpp). The documentation page makes it clear that these types of weather data are used by the solar PV object but to determine why they would be needed, we need to dig into the source code. Opening up “solar.cpp” we find the familiar table listing the class parameters with their names as they would appear in the model file and their default units; for example:
+As you might expect, to determine which climate parameters are important to any other class, you’ll have to look on the [solar panels](../Generators/Physics%20Based%20Models/Solar.md) and/or the [source code](https://github.com/gridlab-d/gridlab-d/blob/master/generators/solar.cpp). The documentation page makes it clear that these types of weather data are used by the solar PV object but to determine why they would be needed, we need to dig into the source code. Opening up “solar.cpp” we find the familiar table listing the class parameters with their names as they would appear in the model file and their default units; for example:
 
 
     ...
@@ -360,7 +360,7 @@ Though the number of weather stations supported in the TMY3 dataset is drastical
 
 Though all the TMY datasets contain hourly values for a whole year, GridLAB-D™ allows users to interpolate between these hourly data points; both linear and quadratic interpolation are supported. The interpolation function is useful as it can prevent large step changes in climate from occurring at the top of each hour, particularly in models that are running a finer time step than hourly. Depending on the other types of objects included in a model and their settings, having large step changes in things like solar radiation or temperature can create a ringing response throughout the system as a while that are not reflective of reality. The environment being modeled by the climate class does not contain step changes every sixty minutes.
 
-And to be clear, interpolation is not creating detail at this finer time scale. Some climate variables, such as the solar radiation parameters, may change frequently and widely between the stated hourly values in the TMY data; clouds being the biggest cause of such variation. Turning on GridLAB-D's interpolation function does not generate these more frequent variations, it simply provides a smooth transition between the given hourly data points. If these frequent changes in solar radiation parameters are needed and [such data is available](http://www.nrel.gov/midc/oahu_archive/), using player files to play this data in is a good option.
+And to be clear, interpolation is not creating detail at this finer time scale. Some climate variables, such as the solar radiation parameters, may change frequently and widely between the stated hourly values in the TMY data; clouds being the biggest cause of such variation. Turning on GridLAB-D™'s interpolation function does not generate these more frequent variations, it simply provides a smooth transition between the given hourly data points. If these frequent changes in solar radiation parameters are needed and [such data is available](http://www.nrel.gov/midc/oahu_archive/), using player files to play this data in is a good option.
 
 ## Residential Loads
 
@@ -487,7 +487,7 @@ Near the top of the file you'll see two particular statements that set-up this a
     #include "appliance_schedules.glm";
 
 
-The first statement turns off all the `implcit_enduses`; if we left did nothing else the only load in each house would be the HVAC unit with no energy being consumed when the HVAC was off, as we've seen in an earlier example. To replace all those other loads we're going to use a combination of [ZIPloads](./ZIPload.md), [schedules](../../../2.0%20-%20New%20Users/Tutorial/2.5.5%20-%20Schedules%20and%20Loadshapes.md) and a new statement called `schedule_skew`.
+The first statement turns off all the `implcit_enduses`; if we left did nothing else the only load in each house would be the HVAC unit with no energy being consumed when the HVAC was off, as we've seen in an earlier example. To replace all those other loads we're going to use a combination of [ZIPloads](./ZIPload.md), [schedules](../../../2.0%20-%20New%20Users/Tutorial/2.2.7%20-%20Schedules%20and%20Loadshapes.md) and a new statement called `schedule_skew`.
 
 First, to explain a tiny bit `#include` is a simple way to split up models into multiple files. It is entirely possible to never use them and simply put the entire model definition, all ten, twenty, or one hundred thousand lines in a single file; this has been done. The other extreme, which also is done, is to make the main model file a list of `#include`s with virtually no other content in that file. Which definitions go in which files is somewhat a matter of style but there is a strong case to made to separate out parts of the model that do lend themselves to modularity. In this case, having a single file that defines appliance schedules is very convenient as it can be copied and used by multiple models simply by `#include`-ing it. 
 

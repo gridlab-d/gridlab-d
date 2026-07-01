@@ -1,7 +1,7 @@
 """
-This is an early prototype of what a user-facing GridLAB-D class might look
+This is an early prototype of what a user-facing GridLAB-D™ class might look
 like. The core functionality it provides is the ability to interact with a
-loaded and running GridLAB-D model as if it were just a normal Python 
+loaded and running GridLAB-D™ model as if it were just a normal Python 
 dictionary. 
 
 TODO - If this ends up being the direction we want to go, we should talk with
@@ -44,7 +44,7 @@ class _GLDObj:
 
 class GLDModel:
     """
-    GLDModel is the data structure for holding the GridLAB-D model in a form
+    GLDModel is the data structure for holding the GridLAB-D™ model in a form
     that is easy for users to interact with. Its only method is a private one
     that takes the output from GridLAB-D's `get_model()` function and converts
     it into this format.
@@ -60,9 +60,9 @@ class GLDModel:
     without a per-class attribute: `glm.["house"]["house1"]["Rwall"]`
 
     TODO - It would be nice to allow users to use the same instance of the
-    model to do modifications before loading it into GridLAB-D (when additions
+    model to do modifications before loading it into GridLAB-D™ (when additions
     to the model are permitted) and after running the model begins. This will 
-    require changes in the GridLAB-D API to allow the model to load (and thus
+    require changes in the GridLAB-D™ API to allow the model to load (and thus
     be parsed and structures so it can be pulled with `.get_model()`) and also
     to be re-loaded prior to the simulation beginning after the user has made
     changes. If those changes existed we could do some fancy stuff that would 
@@ -167,7 +167,7 @@ class GLDModel:
 
     def _load_dicts(self, input_model, gld):
         """
-        Takes input model and from the GridLAB-D API and loads it into
+        Takes input model and from the GridLAB-D™ API and loads it into
         the data structure defined for this class
         """
         for class_name in input_model.keys():
@@ -175,7 +175,7 @@ class GLDModel:
                 attr_dict = getattr(self, class_name, None)
                 if attr_dict is None:
                     raise AttributeError(f"No attribute in GLDModel named '{class_name}'; "
-                                        "this probably isn't a valid GridLAB-D class.")
+                                        "this probably isn't a valid GridLAB-D™ class.")
                 else:
                     try:
                         obj_name = obj_dict["__name__"]
@@ -190,13 +190,13 @@ class GLDModel:
 
 class GLD:
     """
-    GLD is intended to be the user-facing class for the GridLAB-D API. It
+    GLD is intended to be the user-facing class for the GridLAB-D™ API. It
     largely wraps the existing APIs and in some cases, adds some nice support
     functionality to make said APIs easier to use. 
 
-    It also holds the GLDModel object and the GridLAB-D object. The later is 
-    the object created with the GridLAB-D API and is effectively one instance
-    of the GridLAB-D engine and its corresponding model. When using this 
+    It also holds the GLDModel object and the GridLAB-D™ object. The later is 
+    the object created with the GridLAB-D™ API and is effectively one instance
+    of the GridLAB-D™ engine and its corresponding model. When using this 
     class, the model being used by the engine is accessible through the `glm`
     attribute.
     """

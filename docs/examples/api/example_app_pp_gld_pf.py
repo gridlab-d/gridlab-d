@@ -1,15 +1,15 @@
 """
 Created on 03/27/2026
 
-This example integrates pandapower and GridLAB-D to perform an integrated
+This example integrates pandapower and GridLAB-D™ to perform an integrated
 transmission (bulk power system) and distribution powerflow.
 
 Includes functionality to support microstepping to achieve better convergence
 of the physical state of the system as modeled in each tool. Iteration at the 
-same time step is not supported by GridLAB-D so instead we microstep through 
+same time step is not supported by GridLAB-D™ so instead we microstep through 
 time (1 second steps). Pandapower is stateless so for just solving powerflow
 so no need to do anything fancy there, just rerun the powerflow with the 
-updated load from GridLAB-D at each microstep. Users can set the number of 
+updated load from GridLAB-D™ at each microstep. Users can set the number of 
 microsteps to take at each main time step with the `microstep_max` parameter.
 Minimum value of `microstep_max` is 1, which means the simulation will just 
 step forward in increments of the main time step size (i.e. no microstepping).
@@ -59,7 +59,7 @@ def plot_coupled_signals(sim_time_points, voltage_magnitude, load_magnitude):
         load_magnitude,
         color="tab:red",
         linewidth=2,
-        label="|GridLAB-D Load Applied to Pandapower|",
+        label="|GridLAB-D™ Load Applied to Pandapower|",
     )
 
     ax_voltage.set_xlabel("Simulated Time")
@@ -109,7 +109,7 @@ def plot_coupled_signals_plotly(
             x=sim_time_points,
             y=load_magnitude,
             mode="lines",
-            name="|GridLAB-D Load Applied to Pandapower|",
+            name="|GridLAB-D™ Load Applied to Pandapower|",
             line={"color": "firebrick", "width": 3},
         ),
         secondary_y=True,
@@ -141,7 +141,7 @@ os.chdir(script_dir)
 
 # Since pandapower isn't going to move through times (and just run the same
 # powerflow at each time step, only getting a slightly updated load from
-# GridLAB-D each time), only the load on the GridLAB-D side should
+# GridLAB-D™ each time), only the load on the GridLAB-D™ side should
 # appreciably change.
 starttime = datetime(2026, 7, 1, 0, 0, 0)
 stoptime = datetime(2026, 7, 2, 0, 0, 0)
@@ -186,10 +186,10 @@ gld.step()
 gen_at_bus = net118.gen[net118.gen.bus == pp_bus_coupling_index]
 
 
-# Diagnostics to confirm the bus we're coupling GridLAB-D to will have a
+# Diagnostics to confirm the bus we're coupling GridLAB-D™ to will have a
 # varying voltage. Generally not needed during normal runs.
 # Checking to see if a generator is at the bus we're attaching the
-# GridLAB-D load to.
+# GridLAB-D™ load to.
 # if gen_at_bus.empty:
 #     print(f"No pandapower generator found at bus index {pp_bus_coupling_index}.")
 # pv_buses = net118.gen.bus.unique()
@@ -197,8 +197,8 @@ gen_at_bus = net118.gen[net118.gen.bus == pp_bus_coupling_index]
 # slack_buses = net118.ext_grid.bus.unique()
 # print(f"Slack buses: {slack_buses}")
 
-# Voltage from pandapower will be applied to GridLAB-D, thus the scaling
-# factor is calculated as the ratio of GridLAB-D voltage to pandapower
+# Voltage from pandapower will be applied to GridLAB-D™, thus the scaling
+# factor is calculated as the ratio of GridLAB-D™ voltage to pandapower
 # voltage
 gld_voltage_str = gld.get_object_property_value(
     "network_node", "positive_sequence_voltage"
@@ -207,8 +207,8 @@ gld_voltage = complex(gld_voltage_str.replace("i", "j"))
 pp_voltage = net118.bus.at[pp_bus_coupling_index, "vn_kv"] * 1000 * math.sqrt(3)
 voltage_scaling_factor = abs(gld_voltage) / abs(pp_voltage)
 pp_base_voltage = net118.bus.at[pp_bus_coupling_index, "vn_kv"] * 1000 * math.sqrt(3)
-# Load from GridLAB-D will be applied to pandapower, thus the scaling
-# factor is calculated as the ratio of pandapower load to GridLAB-D load
+# Load from GridLAB-D™ will be applied to pandapower, thus the scaling
+# factor is calculated as the ratio of pandapower load to GridLAB-D™ load
 gld_load = gld.get_object_property_value("network_node", "distribution_load")
 pp_load = (
     complex(
@@ -243,7 +243,21 @@ for step in range(num_steps - 1):
             "network_node", "positive_sequence_voltage", gld_substation_voltage
         )
         
-        gld.step()
+        time_code, sim_time_str = gld.step()
+        if time_code != 0:
+            raise RuntimeError(f"Simulation step failed at {sim_time_str} with error code {time_code}.")
+        sim_time_dt = datetime.fromisoformat(sim_time_str)
+
+        # Check for errors
+        messages = gld.get_messages()
+        filtered_messages = [
+            message for message in messages
+            if message.get("type") in {"ERROR"}
+        ]
+        if filtered_messages:
+            pprint(filtered_messages)
+        gld.clear_messages()
+        
         complex_load = gld.get_object_property_value("network_node", "distribution_load")
         t_load = complex_load * 1000000 * load_scaling_factor
         net118.load.at[coupling_load_row, "p_mw"] = t_load.real
@@ -261,6 +275,7 @@ for step in range(num_steps - 1):
 
 gld.stop()
 gld.exit_gld()
+print("Simulation complete. Now plotting results...")
 
 if plotting_tool == "matplotlib":
     plot_coupled_signals(sim_time_points, applied_voltage_magnitude, applied_load_magnitude)

@@ -2,7 +2,7 @@
 Created on 02/11/2026
 
 This example tests the return data types when getting parameter values from
-GridLAB-D via the APIs.
+GridLAB-D™ via the APIs.
 
 https://github.com/gridlab-d/gridlab-d/issues/1564
 

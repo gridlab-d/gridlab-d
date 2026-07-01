@@ -120,7 +120,7 @@ if __name__ == '__main__':
     streamHandle.setLevel(logging.DEBUG)
     logging.basicConfig(level=logging.DEBUG,
                         handlers=[fileHandle, streamHandle])
-    parser = argparse.ArgumentParser(description="Runs GridLAB-D either by stepping or freely,")
+    parser = argparse.ArgumentParser(description="Runs GridLAB-D™ either by stepping or freely,")
     parser.add_argument('-m', '--min_step_size',
                          help="simulation step size in seconds",
                          nargs='?',
