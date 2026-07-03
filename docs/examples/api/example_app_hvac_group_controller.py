@@ -61,11 +61,36 @@ def run_controller(gld, target_hvac_on):
         hvac_change_list = hvac_on_house_list
     hvacs_to_change = random.sample(hvac_change_list, abs(hvac_count_to_change))
     for house_idx in hvacs_to_change:
+        gld.set_property(house_list[house_idx], "system_mode", "4") # 1=OFF, 2=HEAT, 4=COOL
+        get_result, cooling_setpoint = gld.get_property(house_list[house_idx], 'cooling_setpoint')
+        if get_result != 0:
+            print(f"Failed to get cooling setpoint for {house_list[house_idx]} with error code {get_result}.")
+        print(f"{house_list[house_idx]} old cooling setpoint:  {cooling_setpoint}")
+        
+        get_result, system_mode = gld.get_property(house_list[house_idx], 'system_mode')
+        if get_result != 0:
+            print(f"Failed to get system mode for {house_list[house_idx]} with error code {get_result}.")
+        print(f"{house_list[house_idx]} HVAC mode: {system_mode}")
+        
+        get_result, cooling_system_type = gld.get_property(house_list[house_idx], 'cooling_system_type')
+        if get_result != 0:
+            print(f"Failed to get cooling system type for {house_list[house_idx]} with error code {get_result}.")
+        print(f"{house_list[house_idx]} HVAC type: {cooling_system_type}")
+       
         if hvac_count_to_change > 0:
-            new_setpoint = 55
+            new_setpoint = "55"
         else:
-            new_setpoint = 90
-        gld.set_property(house_list[house_idx], "cooling_setpoint", new_setpoint)
+            new_setpoint = "90"
+        print(f"{house_list[house_idx]} new target setpoint: {new_setpoint}")
+        set_result = gld.set_property(house_list[house_idx], "cooling_setpoint", new_setpoint)
+        if set_result != 0:
+            print(f"Failed to set cooling setpoint for {house_list[house_idx]} with error code {set_result}.")  
+        get_result, cooling_setpoint = gld.get_property(house_list[house_idx], 'cooling_setpoint')
+        
+        if get_result != 0:
+            print(f"Failed to get cooling setpoint for {house_list[house_idx]} with error code {get_result}.")
+        print(f"{house_list[house_idx]} new cooling setpoint:  {cooling_setpoint}")
+        dummy = 0
     return num_hvac_on
 
 
