@@ -26,7 +26,9 @@ This package provides Python bindings for GridLAB-D, a power system simulation p
    pytest -v
    ```
 
-## Building Wheels for Distribution
+## Building Wheels for Manual Distribution
+
+NOTE: This step is not needed with the github actions CI/CD pipeline implemented
 
 To create wheel (.whl) and source distribution (.tar.gz) files for PyPI:
 
@@ -53,7 +55,7 @@ To create wheel (.whl) and source distribution (.tar.gz) files for PyPI:
 import gridlabd
 
 # Create a GridLAB-D instance
-gld = gridlabd.GridLabD()S
+gld = gridlabd.GridLabD()
 
 # Load a model file
 result = gld.load("path/to/model.glm")
@@ -96,7 +98,9 @@ if houses:
 # Get all objects with all their properties
 all_houses = gld.get_all_objects("house")
 for house in all_houses:
-    print(f"House {house['__name__']}: floor_area={house['floor_area']}")
+    house_name = house.get("__name__", house.get("__id__", "(unnamed)"))
+    floor_area = house.get("floor_area", "N/A")
+    print(f"House {house_name}: floor_area={floor_area}")
 
 # Get entire model as nested dictionary
 model = gld.get_model()
@@ -118,7 +122,7 @@ houses = gld.get_objects_by_class("house")
 
 # Set a property value
 if houses:
-    result, value = gld.set_property(houses[0], "air_temperature", "72 degF")
+    result = gld.set_property(houses[0], "air_temperature", "72 degF")
     print(f"Set temperature result: {result}")
     
     # Verify the change
@@ -180,6 +184,7 @@ print(f"Found {len(errors)} errors")
 # Show C++ output on stderr (useful for debugging)
 gld = gridlabd.GridLabD(verbose=True)
 gld.load("model.glm")
+gld.setup_after_load()
 gld.run()
 
 # Messages are still captured even in verbose mode
