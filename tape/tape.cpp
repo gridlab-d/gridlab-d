@@ -281,6 +281,47 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]) {
   PUBLISH_STRUCT(player, int32, loop);
   PUBLISH_STRUCT(player, bool, all_events_delta);
 
+  /* Publish the player's internal read cursor as hidden properties so it is
+   * saved into checkpoints and restored on reload. These are not real model
+   * inputs (PA_HIDDEN keeps them out of --modhelp); they let a restored player
+   * resume mid-file instead of re-reading from the top. See
+   * player_restore_position() in player.cpp. Nested struct members can't use
+   * PUBLISH_STRUCT, so offsets are computed directly. */
+  {
+    struct player *_p = nullptr;
+    if (gl_publish_variable(
+            player_class,
+            PT_int32, "player_status", (char *)&(_p->status) - (char *)_p,
+            PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION,
+            "CHECKPOINT_VAR: internal tape read state (TAPESTATUS)",
+            PT_timestamp, "player_next_ts", (char *)&(_p->next.ts) - (char *)_p,
+            PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION,
+            "CHECKPOINT_VAR: timestamp of the pending (not-yet-applied) tape row",
+            PT_int64, "player_next_ns", (char *)&(_p->next.ns) - (char *)_p,
+            PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION,
+            "CHECKPOINT_VAR: nanosecond component of the pending tape row",
+            PT_char1024, "player_next_value",
+            (char *)&(_p->next.value) - (char *)_p, PT_ACCESS, PA_HIDDEN,
+            PT_DESCRIPTION, "CHECKPOINT_VAR: value string of the pending tape row",
+            PT_int32, "player_loopnum", (char *)&(_p->loopnum) - (char *)_p,
+            PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION,
+            "CHECKPOINT_VAR: remaining loop count at checkpoint time",
+            PT_timestamp, "player_dtrack_ts",
+            (char *)&(_p->delta_track.ts) - (char *)_p, PT_ACCESS, PA_HIDDEN,
+            PT_DESCRIPTION,
+            "CHECKPOINT_VAR: trailing (last-applied) tape row timestamp",
+            PT_timestamp, "player_dtrack_ns",
+            (char *)&(_p->delta_track.ns) - (char *)_p, PT_ACCESS, PA_HIDDEN,
+            PT_DESCRIPTION,
+            "CHECKPOINT_VAR: trailing (last-applied) tape row nanoseconds",
+            PT_char1024, "player_dtrack_value",
+            (char *)&(_p->delta_track.value) - (char *)_p, PT_ACCESS, PA_HIDDEN,
+            PT_DESCRIPTION, "CHECKPOINT_VAR: trailing (last-applied) tape row value",
+            nullptr) < 1)
+      GL_THROW(const_cast<char *>(
+          "Could not publish player checkpoint cursor properties"));
+  }
+
   /* register the other classes as needed, */
   recorder_class =
       gl_register_class(module, const_cast<char *>("recorder"),

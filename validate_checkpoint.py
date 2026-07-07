@@ -50,7 +50,17 @@ IGNORED_CHECKPOINT_FIELD_NAMES = {
     "randomseed",
     "rng_state",
     "starttime",
-    "nexttime"
+    "nexttime",
+    # Player look-ahead cursor: these hold the next-to-be-applied tape row, which
+    # is read one step ahead of the applied value. A full run and a checkpoint
+    # restore captured at different sub-steps legitimately differ on this pending
+    # row even though every applied value matches, so exclude it from comparison.
+    "player_next_value",
+    "player_next_ts",
+    "player_next_ns",
+    "player_dtrack_value",
+    "player_dtrack_ts",
+    "player_dtrack_ns",
 }
 
 IGNORED_CHECKPOINT_PATHS = {
