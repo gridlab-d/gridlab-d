@@ -133,7 +133,7 @@ jobs:
       - name: Install Dependencies
         run: |
           cd vcpkg
-          ./vcppkg install
+          ./vcpkg install
 
 #      - name: Setup vcpkg (manifest mode + cache)
 #        uses: lukka/run-vcpkg@v11
