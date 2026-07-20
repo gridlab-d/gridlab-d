@@ -119,30 +119,40 @@ jobs:
           submodules: recursive
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1.3
+        uses: microsoft/setup-msbuild@v2
         with:
           # vs-version: '17.0'
           msbuild-architecture: 'x64'
 
-      - name: Setup vcpkg (manifest mode + cache)
-        uses: lukka/run-vcpkg@v11
-        with:
-          runVcpkgInstall: true
-          logCollectionRegExps: |
-            .*/CMakeOutput\.log$
-            .*/CMakeError\.log$
-            .*/vcpkg/buildtrees/.+\.log$
+      - name: Set up vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          cd vcpkg
+          ./bootstrap-vcpkg.bat
 
-      - name: Upload vcpkg & CMake logs (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: vcpkg-and-cmake-logs
-          path: |
-            ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
-            out/build/ci-windows/**/CMakeOutput.log
-            out/build/ci-windows/**/CMakeError.log
+      - name: Install Dependencies
+        run: |
+          cd vcpkg
+          ./vcppkg install
 
+#      - name: Setup vcpkg (manifest mode + cache)
+#        uses: lukka/run-vcpkg@v11
+#        with:
+#          runVcpkgInstall: true
+#          logCollectionRegExps: |
+#            .*/CMakeOutput\.log$
+#            .*/CMakeError\.log$
+#            .*/vcpkg/buildtrees/.+\.log$
+#
+#      - name: Upload vcpkg & CMake logs (on failure)
+#        if: failure()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: vcpkg-and-cmake-logs
+#          path: |
+#            ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
+#            out/build/ci-windows/**/CMakeOutput.log
+#            out/build/ci-windows/**/CMakeError.log
 
       - name: Clean install prefix (Windows)
         shell: pwsh
