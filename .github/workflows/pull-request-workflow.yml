@@ -119,10 +119,7 @@ jobs:
           submodules: recursive
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1.3
-        with:
-          vs-version: '17.0'
-          msbuild-architecture: 'x64'
+        uses: microsoft/setup-msbuild@v2
           
       - name: Setup vcpkg (manifest mode + cache)
         uses: lukka/run-vcpkg@v11
@@ -226,40 +223,40 @@ jobs:
           Write-Host "GLPATH=$env:GLPATH"
           & $exe.FullName --redirect none  --validate
 
-  #     # - name: Run CTest
-  #     #   shell: pwsh
-  #     #   working-directory: out/build/ci-windows
-  #     #   run: ctest -C Release --output-on-failure
+      # - name: Run CTest
+      #   shell: pwsh
+      #   working-directory: out/build/ci-windows
+      #   run: ctest -C Release --output-on-failure
 
-  #     # Python-based validation
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v6
-  #       with:
-  #         python-version: "3.11"
+      # Python-based validation
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
 
-  #     - name: Run Python GridLAB-D validator (Windows) (JSON)
-  #       shell: pwsh
-  #       run: |
-  #         $prefix = "$env:USERPROFILE\.temp\GridLAB-D"
-  #         $bin    = Join-Path $prefix "bin"
-  #         $lib    = Join-Path $prefix "lib"
-  #         $share  = Join-Path $prefix "share"
-  #         $gldcore= Join-Path $pwd "gldcore"
+      - name: Run Python GridLAB-D validator (Windows) (JSON)
+        shell: pwsh
+        run: |
+          $prefix = "$env:USERPROFILE\.temp\GridLAB-D"
+          $bin    = Join-Path $prefix "bin"
+          $lib    = Join-Path $prefix "lib"
+          $share  = Join-Path $prefix "share"
+          $gldcore= Join-Path $pwd "gldcore"
 
-  #         # Ensure the validator sees GLD binaries and modules
-  #         $env:PATH   = "$env:PATH;$bin"
-  #         $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
+          # Ensure the validator sees GLD binaries and modules
+          $env:PATH   = "$env:PATH;$bin"
+          $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
 
-  #         python validate_gld.py -T 1
+          python validate_gld.py -T 1
 
-  #     - name: Upload validation artefacts (Windows)
-  #       if: always()
-  #       uses: actions/upload-artifact@v7
-  #       with:
-  #         name: validate-windows
-  #         path: |
-  #           validate.txt
-  #         if-no-files-found: ignore
+      - name: Upload validation artefacts (Windows)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: validate-windows
+          path: |
+            validate.txt
+          if-no-files-found: ignore
 
   mac-build:
     strategy:
