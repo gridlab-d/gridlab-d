@@ -12,7 +12,7 @@ void glengine::debug(const int level, const char *fmt, ...) {
     char output[1024];
     va_list ptr;
     va_start(ptr, fmt);
-    vsprintf_s(output, sizeof(output), fmt, ptr);
+    vsnprintf(output, sizeof(output), fmt, ptr);
     va_end(ptr);
     cerr << "DEBUG(" << level << ") [glengine]: " << output << endl;
   }
@@ -22,7 +22,7 @@ void glengine::warning(const char *fmt, ...) {
   char output[1024];
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf_s(output, sizeof(output), fmt, ptr);
+  vsnprintf(output, sizeof(output), fmt, ptr);
   va_end(ptr);
   cerr << "WARNING  [glengine]: " << output << endl;
 }
@@ -33,7 +33,7 @@ void glengine::warning(const char *fmt, ...) {
         char output[1024];
         va_list ptr;
         va_start(ptr,fmt);
-        vsprintf_s(output,sizeof(output),fmt,ptr);
+        vsnprintf(output,sizeof(output),fmt,ptr);
         va_end(ptr);
         return fprintf(stderr,"ERROR    [glengine] %s\n",output);
 }*/
@@ -42,7 +42,7 @@ void glengine::exception(const char *fmt, ...) {
   static char output[1024];
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf_s(output, sizeof(output), fmt, ptr);
+  vsnprintf(output, sizeof(output), fmt, ptr);
   va_end(ptr);
   throw (const char *)output;
 }
