@@ -53,7 +53,7 @@ simple::simple(MODULE *module) {
             PT_KEYWORD, "EXTREMUM", OG_EXTREMUM, PT_KEYWORD, "MINIMUM",
             OG_MINIMUM, PT_KEYWORD, "MAXIMUM", OG_MAXIMUM, nullptr) < 1) {
       static char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
 
@@ -392,7 +392,7 @@ EXPORT int create_simple(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(simple::oclass);
     if (*obj != nullptr) {
-      simple *my = /*OBJECTDATA(obj,<>)*/ object_data<simple>(*obj);
+      simple *my = object_data<simple>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -404,7 +404,7 @@ EXPORT int create_simple(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_simple(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj,<>)*/ object_data<simple>(obj)->init(parent);
+      return object_data<simple>(obj)->init(parent);
     else
       return 0;
   }
@@ -413,7 +413,7 @@ EXPORT int init_simple(OBJECT *obj, OBJECT *parent) {
 
 EXPORT int isa_simple(OBJECT *obj, char *classname) {
   if (obj != 0 && classname != 0) {
-    return /*OBJECTDATA(obj,<>)*/ object_data<simple>(obj)->isa(classname);
+    return object_data<simple>(obj)->isa(classname);
   } else {
     return 0;
   }
@@ -421,7 +421,7 @@ EXPORT int isa_simple(OBJECT *obj, char *classname) {
 
 static TIMESTAMP sync_simple_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  simple *my = /*OBJECTDATA(obj,<>)*/ object_data<simple>(obj);
+  simple *my = object_data<simple>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:

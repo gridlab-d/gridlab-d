@@ -145,7 +145,7 @@ pw_load::pw_load(MODULE *module) {
             "Complex value of total power of the PowerWorld load",
             nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
       /* TROUBLESHOOT */
     }
@@ -201,7 +201,7 @@ int pw_load::get_powerworld_busangle() {
       throw _com_error(hr);
     }
     char pbn_str[32];
-    sprintf(pbn_str, "%i", powerworld_bus_num);
+    snprintf(pbn_str, sizeof(pbn_str), "%i", powerworld_bus_num);
     // pvariant[0] = this->powerworld_bus_num;
     pvariant[0] = _com_util::ConvertStringToBSTR(pbn_str);
     pvariant[1] = _variant_t();
@@ -304,7 +304,7 @@ int pw_load::get_powerworld_nomvolt() {
       throw _com_error(hr);
     }
     char pbn_str[32];
-    sprintf(pbn_str, "%i", powerworld_bus_num);
+    snprintf(pbn_str, sizeof(pbn_str), "%i", powerworld_bus_num);
     // pvariant[0] = this->powerworld_bus_num;
     pvariant[0] = _com_util::ConvertStringToBSTR(pbn_str);
     pvariant[1] = _variant_t();
@@ -427,7 +427,7 @@ int pw_load::get_powerworld_voltage() {
       throw _com_error(hr);
     }
     char pbn_str[32];
-    sprintf(pbn_str, "%i", powerworld_bus_num);
+    snprintf(pbn_str, sizeof(pbn_str), "%i", powerworld_bus_num);
     // pvariant[0] = this->powerworld_bus_num;
     pvariant[0] = _com_util::ConvertStringToBSTR(pbn_str);
     pvariant[1] = tempbstr =

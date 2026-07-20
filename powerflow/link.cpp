@@ -437,8 +437,8 @@ int link_object::init(OBJECT *parent)
 	powerflow_object::init(parent);
 
 	gld::set phase_f_test, phase_t_test, phases_test;
-	node *fNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
-	node *tNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+	node *fNode = object_data<node>(from);
+	node *tNode = object_data<node>(to);
 
 	if (mean_repair_time < 0.0)
 	{
@@ -555,7 +555,7 @@ int link_object::init(OBJECT *parent)
 		// Also link other end of line to from, so we can steal its currents later
 		if (gl_object_isa(obj, "triplex_line", "powerflow"))
 		{
-			node *tnode = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+			node *tnode = object_data<node>(to);
 
 			tnode->Triplex_Data = &tn[0];
 		}
@@ -669,9 +669,10 @@ int link_object::init(OBJECT *parent)
 		fNode->busphasesOut |= phases_test;
 	}
 
+
 	/* record this link on the nodes' incidence counts */
-	/*OBJECTDATA(obj,<>)*/ object_data<node>(from)->k++;
-	/*OBJECTDATA(obj,<>)*/ object_data<node>(to)->k++;
+	object_data<node>(from)->k++;
+	object_data<node>(to)->k++;
 
 	// See if limits are enabled - if so, populate them
 	if (use_link_limits)
@@ -2818,8 +2819,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 	{
 		if (prev_LTime == 0) // First run, build up the pointer matrices
 		{
-			node *fnode = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
-			node *tnode = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+			node *fnode = object_data<node>(from);
+			node *tnode = object_data<node>(to);
 			unsigned int *LinkTableLoc = nullptr;
 			unsigned int TempTableIndex;
 			unsigned char working_phase;
@@ -3535,8 +3536,8 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 #ifdef SUPPORT_OUTAGES
 	node *fNode;
 	node *tNode;
-	fNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
-	tNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+	fNode = object_data<node>(from);
+	tNode = object_data<node>(to);
 #endif
 	OBJECT *obj = object_header(this);
 
@@ -3740,7 +3741,7 @@ bool link_object::perform_limit_checks(double *over_limit_value,
 					}
 
 					// Get this as a power value, for accumulation
-					nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+					nTo = object_data<node>(to);
 
 					// Find "overcurrent"
 					temp_current_diff = read_I_out[0].Mag() - *link_limits[0][0];
@@ -3785,7 +3786,7 @@ bool link_object::perform_limit_checks(double *over_limit_value,
 					}
 
 					// Get this as a power value, for accumulation
-					nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+					nTo = object_data<node>(to);
 
 					// Find "overcurrent"
 					temp_current_diff = read_I_out[1].Mag() - *link_limits[0][1];
@@ -3835,7 +3836,7 @@ bool link_object::perform_limit_checks(double *over_limit_value,
 						}
 
 						// Get this as a power value, for accumulation
-						nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+						nTo = object_data<node>(to);
 
 						// Find "overcurrent"
 						temp_current_diff = read_I_out[0].Mag() - *link_limits[0][0];
@@ -3883,7 +3884,7 @@ bool link_object::perform_limit_checks(double *over_limit_value,
 						}
 
 						// Get this as a power value, for accumulation
-						nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+						nTo = object_data<node>(to);
 
 						// Find "overcurrent"
 						temp_current_diff = read_I_out[1].Mag() - *link_limits[0][1];
@@ -3931,7 +3932,7 @@ bool link_object::perform_limit_checks(double *over_limit_value,
 						}
 
 						// Get this as a power value, for accumulation
-						nTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+						nTo = object_data<node>(to);
 
 						// Find "overcurrent"
 						temp_current_diff = read_I_out[2].Mag() - *link_limits[0][2];
@@ -4175,8 +4176,8 @@ int link_object::kmldump(int (*stream)(const char *, ...))
 	else
 	{
 		// values
-		node *pFrom = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
-		node *pTo = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
+		node *pFrom = object_data<node>(from);
+		node *pTo = object_data<node>(to);
 		int phase[3] = {has_phase(PHASE_A), has_phase(PHASE_B), has_phase(PHASE_C)};
 		gld::complex flow[3];
 		gld::complex current[3];
@@ -4576,7 +4577,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 			tnode = object_data<node>(tobjval);
 
 			// Childed or not - reference the "actual from" node (not powerflow from)
-			ofnode = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
+			ofnode = object_data<node>(from);
 
 			if (SpecialLnk == VFD)
 			{

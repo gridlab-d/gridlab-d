@@ -528,20 +528,16 @@ EXPORT int create_energy_storage(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_energy_storage(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj, energy_storage)*/ object_data<energy_storage>(
-                 obj)
-          ->init(parent);
+      return object_data<energy_storage>(obj)->init(parent);
     else
       return 0;
   }
   INIT_CATCHALL(energy_storage);
 }
 
-static TIMESTAMP sync_energy_storage_impl(OBJECT *obj, TIMESTAMP t1,
-                                          PASSCONFIG pass) {
+static TIMESTAMP sync_energy_storage_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  energy_storage *my =
-      /*OBJECTDATA(obj, energy_storage)*/ object_data<energy_storage>(obj);
+  energy_storage *my = object_data<energy_storage>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -582,8 +578,7 @@ extern "C" MODULE_API TIMESTAMP sync_energy_storage(OBJECT *obj, ...) {
 EXPORT SIMULATIONMODE
 interupdate_energy_storage(OBJECT *obj, unsigned int64 delta_time,
                            unsigned long dt, unsigned int iteration_count_val) {
-  energy_storage *my =
-      /*OBJECTDATA(obj, energy_storage)*/ object_data<energy_storage>(obj);
+  energy_storage *my = object_data<energy_storage>(obj);
   SIMULATIONMODE status = SM_ERROR;
   try {
     status = my->inter_deltaupdate(delta_time, dt, iteration_count_val);

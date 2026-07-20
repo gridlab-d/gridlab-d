@@ -165,12 +165,12 @@ void substation::fetch_complex(gld::complex **prop, const char *name,
     char tname[32];
     char *namestr = (hdr->name ? hdr->name : tname);
     char msg[256];
-    sprintf(tname, "substation:%i", hdr->id);
+    snprintf(tname, sizeof(tname), "substation:%i", hdr->id);
     if (name == nullptr || name[0] == '\0')
-      sprintf(msg, "%s: substation unable to find property: name is nullptr",
+      snprintf(msg, sizeof(msg), "%s: substation unable to find property: name is nullptr",
               namestr);
     else
-      sprintf(msg, "%s: substation unable to find %s", namestr, name);
+      snprintf(msg, sizeof(msg), "%s: substation unable to find %s", namestr, name);
     throw(msg);
   }
 }
@@ -182,13 +182,13 @@ void substation::fetch_double(double **prop, const char *name, OBJECT *parent) {
     char tname[32];
     char *namestr = (hdr->name ? hdr->name : tname);
     char msg[256];
-    sprintf(tname, "substation:%i", hdr->id);
+    snprintf(tname, sizeof(tname), "substation:%i", hdr->id);
     if (name == nullptr || name[0] == '\0')
-      sprintf(msg,
+      snprintf(msg, sizeof(msg),
               "%s: substation unable to find property: name is not defined",
               namestr);
     else
-      sprintf(msg, "%s: substation unable to find %s", namestr, name);
+      snprintf(msg, sizeof(msg), "%s: substation unable to find %s", namestr, name);
     throw std::runtime_error(msg);
   }
 }
@@ -548,9 +548,23 @@ SIMULATIONMODE substation::inter_deltaupdate_substation(
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int isa_substation(OBJECT *obj, char *classname) {
+EXPORT int isa_substation_impl(OBJECT *obj, char *classname) {
   return object_data<substation>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_substation(OBJECT *obj, char *classname) {
+  return isa_substation_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_substation(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_substation_impl(obj, classsname);
+}
+#endif
 
 EXPORT int create_substation(OBJECT **obj, OBJECT *parent) {
   try {

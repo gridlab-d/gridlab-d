@@ -622,7 +622,7 @@ EXPORT int init_ZIPload(OBJECT *obj)
 	INIT_CATCHALL(ZIPload);
 }
 
-EXPORT int isa_ZIPload(OBJECT *obj, char *classname)
+EXPORT int isa_ZIPload_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<ZIPload>(obj)->isa(classname);
@@ -630,6 +630,20 @@ EXPORT int isa_ZIPload(OBJECT *obj, char *classname)
 		return 0;
 	}
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_ZIPload(OBJECT *obj, char *classname) {
+  return isa_ZIPload_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_ZIPload(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_ZIPload_impl(obj, classsname);
+}
+#endif
 
 static TIMESTAMP sync_ZIPload_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
     try {
@@ -657,8 +671,7 @@ static TIMESTAMP sync_ZIPload_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0,
-                                             PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_ZIPload_impl(obj, t0, pass);
 }
 #else

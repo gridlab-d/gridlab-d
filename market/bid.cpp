@@ -4,9 +4,7 @@ EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity,
                         double price, KEY bid_id) {
   char biddername[64];
   if (obj->oclass == supervisory_control::oclass) {
-    supervisory_control *mkt =
-        /*OBJECTDATA(obj, supervisory_control)*/ object_data<
-            supervisory_control>(obj);
+    supervisory_control *mkt = object_data<supervisory_control>(obj);
     return mkt->submit(from, quantity, price, bid_id);
   } else {
     gl_error("%s submitted a bid to an object that is not an auction",
@@ -16,9 +14,7 @@ EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity,
 }
 void submit_bid_state(
     char *from, char *to, const char *function_name, const char *function_class,
-    void *bidding_buffer,
-    size_t bid_len) //(char *obj, char *from, double quantity, double price,
-                    //unsigned int is_on, KEY bid_id)
+    void *bidding_buffer, size_t bid_len)
 {
   char biddername[64];
   int rv;
@@ -37,7 +33,7 @@ void submit_bid_state(
       if (bidding_info->state == BS_UNKNOWN) { // not a stateful bid
         gl_verbose("%s submits stateless bid for Q:%.2f at P:%.4f", from,
                    bidding_info->quantity, bidding_info->price);
-        auction *mkt = /*OBJECTDATA(obj,<>)*/ object_data<auction>(obj);
+        auction *mkt = object_data<auction>(obj);
         rv = mkt->submit(from, bidding_info->quantity, bidding_info->price,
                          bidding_info->bid_id, bidding_info->state,
                          bidding_info->rebid, bidding_info->market_id);
@@ -45,7 +41,7 @@ void submit_bid_state(
         gl_verbose("%s submits stateful (%s) bid for Q:%.2f at P:%.4f", from,
                    bidding_info->state, bidding_info->quantity,
                    bidding_info->price);
-        auction *mkt = /*OBJECTDATA(obj,<>)*/ object_data<auction>(obj);
+        auction *mkt = object_data<auction>(obj);
         rv = mkt->submit(from, bidding_info->quantity, bidding_info->price,
                          bidding_info->bid_id, bidding_info->state,
                          bidding_info->rebid, bidding_info->market_id);
@@ -59,7 +55,7 @@ void submit_bid_state(
       bidding_info->bid_accepted = false;
     } else if (obj->oclass == supervisory_control::oclass) {
       supervisory_control *mkt =
-          /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(obj);
+          object_data<supervisory_control>(obj);
       OBJECT *fObj = nullptr;
       int is_on = 0;
       fObj = gl_get_object(from);

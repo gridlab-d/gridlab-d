@@ -1227,7 +1227,7 @@ EXPORT int create_sec_control(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(sec_control::oclass);
 		if (*obj != NULL)
 		{
-			sec_control *my = /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(*obj);
+			sec_control *my = object_data<sec_control>(*obj);
 			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
@@ -1242,7 +1242,7 @@ EXPORT int init_sec_control(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != NULL)
-			return /*OBJECTDATA(obj,<>)*/ object_data<sec_control>(obj)->init(parent);
+			return object_data<sec_control>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -1294,10 +1294,24 @@ extern "C" MODULE_API TIMESTAMP sync_sec_control(OBJECT *obj, ...) {
 #endif
 
 
-EXPORT int isa_sec_control(OBJECT *obj, char *classname)
+EXPORT int isa_sec_control_impl(OBJECT *obj, char *classname)
 {
 	return object_data<sec_control>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_sec_control(OBJECT *obj, char *classname) {
+  return isa_sec_control_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_sec_control(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_sec_control_impl(obj, classsname);
+}
+#endif
 
 EXPORT STATUS preupdate_sec_control(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {

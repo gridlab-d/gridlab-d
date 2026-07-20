@@ -67,8 +67,7 @@ extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop,
                            char *buffer, int size);
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0,
-                                              PASSCONFIG pass);
+extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
 #else
 extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, ...);
 #endif

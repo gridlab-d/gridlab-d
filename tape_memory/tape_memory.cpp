@@ -77,7 +77,7 @@ char *read_player(struct player *my, char *buffer, unsigned int size) {
   else {
     double *ptr = (double *)my->memory->buffer->prop->addr + my->memory->index;
     my->memory->index += 2;
-    sprintf(temp, "%" FMT_INT64 "d,%lg", (TIMESTAMP)ptr[0], ptr[1]);
+    snprintf(temp, sizeof(temp), "%" FMT_INT64 "d,%lg", (TIMESTAMP)ptr[0], ptr[1]);
     strncpy(
         buffer, temp,
         ((size < sizeof(temp)) ? size : sizeof(temp))); // inlined min() -d3p988

@@ -39,7 +39,7 @@ player::player(MODULE *module) {
             "connection", get_connection_offset(), PT_DESCRIPTION,
             "database connection", nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
 
@@ -112,10 +112,10 @@ int player::init(OBJECT *parent) {
     scale = 1.0;
     if (unit.is_valid() && target.get_unit() != nullptr) {
       target.get_unit()->convert(unit, scale);
-      sprintf(field, "%s[%s]", propname, propunit);
+      snprintf(field, sizeof(field), "%s[%s]", propname, propunit);
     } else if (propunit[0] == '\0' && options & MO_USEUNITS &&
                target.get_unit())
-      sprintf(field, "%s[%s]", propname, target.get_unit()->get_name());
+      snprintf(field, sizeof(field), "%s[%s]", propname, target.get_unit()->get_name());
     break;
   default:
     exception("property '%s' is not valid", get_property());

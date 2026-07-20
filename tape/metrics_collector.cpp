@@ -388,9 +388,9 @@ int metrics_collector::init(OBJECT *parent) {
     }
     // Get the name of the waterheater for actual load
     char tname[32];
-    sprintf(tname, "%i", parent->id);
+    snprintf(tname, sizeof(tname), "%i", parent->id);
     char *namestr = (parent->name ? parent->name : tname);
-    sprintf(waterheaterName, "waterheater_%s_actual_load", namestr);
+    snprintf(waterheaterName, sizeof(waterheaterName), "waterheater_%s_actual_load", namestr);
   } else if (strcmp(parent_string, "inverter") == 0) {
     if (parent->name != nullptr) {
       strcpy(parent_name, parent->name);
@@ -1754,8 +1754,7 @@ EXPORT int init_metrics_collector(OBJECT *obj) {
   return rv;
 }
 
-static TIMESTAMP sync_metrics_collector_impl(OBJECT *obj, TIMESTAMP t0,
-                                             PASSCONFIG pass) {
+static TIMESTAMP sync_metrics_collector_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   TIMESTAMP rv = 0;
   metrics_collector *my = object_data<metrics_collector>(obj);
   try {
@@ -1817,8 +1816,22 @@ EXPORT int commit_metrics_collector(OBJECT *obj) {
   return rv;
 }
 
-EXPORT int isa_metrics_collector(OBJECT *obj, char *classname) {
+EXPORT int isa_metrics_collector_impl(OBJECT *obj, char *classname) {
   return object_data<metrics_collector>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_metrics_collector(OBJECT *obj, char *classname) {
+  return isa_metrics_collector_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_metrics_collector(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_metrics_collector_impl(obj, classsname);
+}
+#endif
 
 // EOF

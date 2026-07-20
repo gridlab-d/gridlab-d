@@ -111,7 +111,7 @@ EXPORT int create_stub_bidder(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(stub_bidder::oclass);
     if (*obj != nullptr) {
-      stub_bidder *my = /*OBJECTDATA(obj,<>)*/ object_data<stub_bidder>(*obj);
+      stub_bidder *my = object_data<stub_bidder>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     }
@@ -125,7 +125,7 @@ EXPORT int create_stub_bidder(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_stub_bidder(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr) {
-      return /*OBJECTDATA(obj,<>)*/ object_data<stub_bidder>(obj)->init(parent);
+      return object_data<stub_bidder>(obj)->init(parent);
     }
   } catch (const char *msg) {
     char name[64];
@@ -136,18 +136,31 @@ EXPORT int init_stub_bidder(OBJECT *obj, OBJECT *parent) {
   return 1;
 }
 
-EXPORT int isa_stub_bidder(OBJECT *obj, char *classname) {
+EXPORT int isa_stub_bidder_impl(OBJECT *obj, char *classname) {
   if (obj != 0 && classname != 0) {
-    return /*OBJECTDATA(obj,<>)*/ object_data<stub_bidder>(obj)->isa(classname);
+    return object_data<stub_bidder>(obj)->isa(classname);
   } else {
     return 0;
   }
 }
 
-static TIMESTAMP sync_stub_bidder_impl(OBJECT *obj, TIMESTAMP t1,
-                                       PASSCONFIG pass) {
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_stub_bidder(OBJECT *obj, char *classname) {
+  return isa_stub_bidder_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_stub_bidder(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_stub_bidder_impl(obj, classsname);
+}
+#endif
+
+static TIMESTAMP sync_stub_bidder_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  stub_bidder *my = /*OBJECTDATA(obj,<>)*/ object_data<stub_bidder>(obj);
+  stub_bidder *my = object_data<stub_bidder>(obj);
   switch (pass) {
   case PC_BOTTOMUP:
     t2 = my->sync(obj->clock, t1);
@@ -160,12 +173,10 @@ static TIMESTAMP sync_stub_bidder_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_stub_bidder(OBJECT *obj, TIMESTAMP t1,
-                                                 PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_stub_bidder(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_stub_bidder_impl(obj, t1, pass);
 }
 #else
-// variadic
 extern "C" MODULE_API TIMESTAMP sync_stub_bidder(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);

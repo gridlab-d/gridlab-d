@@ -1026,7 +1026,7 @@ EXPORT int init_house_a(OBJECT *obj) {
   INIT_CATCHALL(house_a);
 }
 
-EXPORT TIMESTAMP sync_house_a(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+static TIMESTAMP sync_house_a_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   try {
     house *my = OBJECTDATA(obj, house);
     TIMESTAMP t1 = TS_NEVER;
@@ -1051,7 +1051,23 @@ EXPORT TIMESTAMP sync_house_a(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   SYNC_CATCHALL(house_a);
 }
 
-EXPORT TIMESTAMP plc_house_a(OBJECT *obj, TIMESTAMP t0) {
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_house_a(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_house_a_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_house_a(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_house_a_impl(obj, t0, pass);
+}
+#endif
+
+EXPORT TIMESTAMP plc_house_a_impl(OBJECT *obj, TIMESTAMP t0) {
   // this will be disabled if a PLC object is attached to the waterheater
   if (obj->clock <= ROUNDOFF)
     obj->clock = t0; // set the clock if it has not been set yet
@@ -1060,4 +1076,19 @@ EXPORT TIMESTAMP plc_house_a(OBJECT *obj, TIMESTAMP t0) {
   return my->sync_thermostat(obj->clock, t0);
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP plc_house_a(OBJECT *obj, TIMESTAMP t0)
+{
+    return plc_house_a_impl(obj, t0);
+}
+#else
+extern "C" MODULE_API TIMESTAMP plc_house_a(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    va_end(args);
+    return plc_house_a_impl(obj, t0);
+}
+#endif
 /**@}**/

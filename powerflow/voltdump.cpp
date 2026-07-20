@@ -110,7 +110,7 @@ void voltdump::dump(TIMESTAMP t) {
                      "voltC_mag,voltC_angle\n");
 
   obj = 0;
-  while (obj = gl_find_next(nodes, obj)) {
+  while ((obj = gl_find_next(nodes, obj))) {
     if (gl_object_isa(obj, "triplex_node", "powerflow")) {
 
       // Map the properties of interest - first current
@@ -202,7 +202,7 @@ void voltdump::dump(TIMESTAMP t) {
     node_voltage_values[2] = node_voltage_value_link[2]->get_complex();
 
     if (obj->name == nullptr) {
-      sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
+      snprintf(namestr, sizeof(namestr), "%s:%i", obj->oclass->name, obj->id);
     }
     if (mode == VDM_RECT) {
       fprintf(outfile, "%s,%f,%f,%f,%f,%f,%f\n",
@@ -287,8 +287,7 @@ static TIMESTAMP sync_voltdump_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_voltdump(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_voltdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_voltdump_impl(obj, t1, pass);
 }
 #else
@@ -310,8 +309,22 @@ EXPORT TIMESTAMP commit_voltdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) {
   I_CATCHALL(commit, voltdump);
 }
 
-EXPORT int isa_voltdump(OBJECT *obj, char *classname) {
+EXPORT int isa_voltdump_impl(OBJECT *obj, char *classname) {
   return object_data<voltdump>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_voltdump(OBJECT *obj, char *classname) {
+  return isa_voltdump(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_voltdump(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_voltdump_impl(obj, classsname);
+}
+#endif
 
 /**@}*/

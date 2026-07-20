@@ -49,7 +49,7 @@ pw_recorder::pw_recorder(MODULE *module) {
             get_limit_offset(), PT_DESCRIPTION,
             "Number of data points to write before stopping", nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
     memset(this, 0, sizeof(pw_recorder));
@@ -203,7 +203,7 @@ int pw_recorder::init(OBJECT *parent) {
   // check if outfile defined
   //	* if not, auto-generate
   if (0 == outfile_name[0]) {
-    sprintf(outfile_name, "%s-%u.csv", gl_name(my(), objname, 63), my()->id);
+    snprintf(outfile_name, sizeof(outfile_name), "%s-%u.csv", gl_name(my(), objname, 63), my()->id);
     gl_verbose("pw_recorder::init(): '%s' does not define a filename, "
                "auto-generating '%s'");
   }

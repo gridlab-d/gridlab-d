@@ -884,7 +884,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
       } else if (proptype == PT_HAS_NOTIFY ||
                  proptype == PT_HAS_NOTIFY_OVERRIDE) {
         char notify_fname[256];
-        sprintf(notify_fname, "notify_%s_%s", prop->oclass->name, prop->name);
+        snprintf(notify_fname, sizeof(notify_fname), "notify_%s_%s", prop->oclass->name, prop->name);
         prop->notify =
             (FUNCTIONADDR)DLSYM(prop->oclass->module->hLib, notify_fname);
         if (prop->notify == 0) {
@@ -901,7 +901,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
       } else {
         char tcode[32];
         const char *ptypestr = class_get_property_typename(proptype);
-        sprintf(tcode, "%d", proptype);
+        snprintf(tcode, sizeof(tcode), "%d", proptype);
         if (strcmp(ptypestr, "//UNDEF//") == 0)
           ptypestr = tcode;
         errno = EINVAL;
@@ -1436,7 +1436,7 @@ static int buffer_write(
     return 0;
 
   va_start(ptr, format);
-  count = vsprintf(temp, format, ptr);
+  count = vsnprintf(temp, sizeof(temp), format, ptr);
   va_end(ptr);
 
   if (count < len) {

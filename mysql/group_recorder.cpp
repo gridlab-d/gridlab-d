@@ -809,8 +809,7 @@ int group_recorder::on_limit_hit() {
   return 0;
 }
 
-static TIMESTAMP sync_group_recorder_impl(OBJECT *obj, TIMESTAMP t0,
-                                          PASSCONFIG pass) {
+static TIMESTAMP sync_group_recorder_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   group_recorder *my = OBJECTDATA(obj, group_recorder);
   TIMESTAMP rv = 0;
   try {

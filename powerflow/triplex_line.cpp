@@ -574,8 +574,7 @@ EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent) {
   CREATE_CATCHALL(triplex_line);
 }
 
-static TIMESTAMP sync_triplex_line_impl(OBJECT *obj, TIMESTAMP t0,
-                                        PASSCONFIG pass) {
+static TIMESTAMP sync_triplex_line_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   try {
     triplex_line *pObj = object_data<triplex_line>(obj);
     TIMESTAMP t1 = TS_NEVER;
@@ -619,9 +618,23 @@ EXPORT int init_triplex_line(OBJECT *obj) {
   INIT_CATCHALL(triplex_line);
 }
 
-EXPORT int isa_triplex_line(OBJECT *obj, char *classname) {
+EXPORT int isa_triplex_line_impl(OBJECT *obj, char *classname) {
   return object_data<triplex_line>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_triplex_line(OBJECT *obj, char *classname) {
+  return isa_triplex_line_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_triplex_line(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_triplex_line_impl(obj, classsname);
+}
+#endif
 
 EXPORT int recalc_triplex_line(OBJECT *obj) {
   object_data<triplex_line>(obj)->recalc();

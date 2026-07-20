@@ -131,7 +131,7 @@ EXPORT int create_line(OBJECT **obj) {
   try {
     *obj = gl_create_object(line::oclass);
     if (*obj != nullptr)
-      return /*OBJECTDATA(obj,<>)*/ object_data<line>(*obj)->create();
+      return object_data<line>(*obj)->create();
   } catch (char *msg) {
     gl_error("create_line: %s", msg);
   }
@@ -141,7 +141,7 @@ EXPORT int create_line(OBJECT **obj) {
 EXPORT int init_line(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj,<>)*/ object_data<line>(obj)->init(parent);
+      return object_data<line>(obj)->init(parent);
   } catch (char *msg) {
     gl_error("init_line(obj=%d;%s): %s", obj->id,
              obj->name ? obj->name : "unnamed", msg);
@@ -151,7 +151,7 @@ EXPORT int init_line(OBJECT *obj, OBJECT *parent) {
 
 static TIMESTAMP sync_line_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  line *my = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
+  line *my = object_data<line>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -178,8 +178,7 @@ static TIMESTAMP sync_line_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t1,
-                                          PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_line_impl(obj, t1, pass);
 }
 #else

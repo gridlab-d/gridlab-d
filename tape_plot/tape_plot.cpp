@@ -466,9 +466,9 @@ EXPORT void close_recorder(struct recorder *my) {
   const char *plotcmd = "gnuplot";
 #endif
   if (my->output == SCREEN)
-    sprintf(gnuplot, "%s -persist", plotcmd);
+    snprintf(gnuplot, sizeof(gnuplot), "%s -persist", plotcmd);
   else
-    strcpy(gnuplot, plotcmd);
+    snprintf(gnuplot, sizeof(gnuplot), "%s", plotcmd);
   char fname[sizeof(char32)];
   char type[sizeof(char32)];
   char command[sizeof(char1024)];
@@ -483,7 +483,7 @@ EXPORT void close_recorder(struct recorder *my) {
     fprintf(my->fp, "# end of tape\n");
     fclose(my->fp);
     sscanf(my->file, "%32[^:]:%32[^:]", type, fname);
-    sprintf(command, "%s %s", gnuplot, fname);
+    snprintf(command, sizeof(command), "%s %s", gnuplot, fname);
     result = system(command);
   }
   my->fp = nullptr;
@@ -654,7 +654,7 @@ EXPORT void close_collector(struct collector *my) {
     fprintf(my->fp, "# end of tape\n");
     fclose(my->fp);
     sscanf(my->file, "%32[^:]:%32[^:]", type, fname);
-    sprintf(command, "%s %s", gnuplot, fname);
+    snprintf(command, sizeof(command), "%s %s", gnuplot, fname);
     result = system(command);
   }
   my->fp = nullptr;

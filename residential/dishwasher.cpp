@@ -1511,7 +1511,7 @@ EXPORT int init_dishwasher(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
-EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
+EXPORT int isa_dishwasher_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<dishwasher>(obj)->isa(classname);
@@ -1520,12 +1520,17 @@ EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
 	}
 }
 
-//EXPORT TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0)
-//{
-//	dishwasher *my = object_data<dishwasher>(obj);
-//	TIMESTAMP t1 = my->sync(obj->clock, t0);
-//	obj->clock = t0;
-//	return t1;
-//}
-
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_dishwasher(OBJECT *obj, char *classname) {
+  return isa_dishwasher_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_dishwasher(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_dishwasher_impl(obj, classsname);
+}
+#endif
 /**@}**/

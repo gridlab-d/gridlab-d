@@ -91,7 +91,7 @@ int plc::init(OBJECT *parent) {
 #endif
 
   if (strcmp(source, "") == 0 && parent != nullptr) /* default source */
-    sprintf(source.get_string(), "%s.plc", parent->oclass->name);
+    snprintf(source.get_string(), sizeof(source.get_string()), "%s.plc", parent->oclass->name);
   if (controller->compile(source) < 0)
     GL_THROW("%s: PLC compile failed", source.get_string());
   if (controller->init(parent) < 0)

@@ -506,7 +506,6 @@ extern "C" MODULE_API TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCO
   return sync_sync_ctrl_impl(obj, t0, pass);
 }
 #else
-// variadic
 extern "C" MODULE_API TIMESTAMP sync_sync_ctrl(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
@@ -517,16 +516,30 @@ extern "C" MODULE_API TIMESTAMP sync_sync_ctrl(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_sync_ctrl(OBJECT *obj, char *classname) {
-  return /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj)->isa(classname);
+EXPORT int isa_sync_ctrl_impl(OBJECT *obj, char *classname) {
+  return object_data<sync_ctrl>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_sync_ctrl(OBJECT *obj, char *classname) {
+  return isa_sync_ctrl_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_sync_ctrl(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_sync_ctrl_impl(obj, classsname);
+}
+#endif
 
 // Deltamode export
 EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj,
                                             unsigned int64 delta_time,
                                             unsigned long dt,
                                             unsigned int iteration_count_val) {
-  sync_ctrl *my = /*OBJECTDATA(obj,<>)*/ object_data<sync_ctrl>(obj);
+  sync_ctrl *my = object_data<sync_ctrl>(obj);
   SIMULATIONMODE status = SM_ERROR;
   try {
     status =

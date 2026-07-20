@@ -2287,7 +2287,7 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj)->init(parent);
+			return object_data<windturb_dg>(obj)->init(parent);			
 		else
 			return 0;
 	}
@@ -2296,7 +2296,7 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 
 static TIMESTAMP sync_windturb_dg_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 	TIMESTAMP t1 = TS_NEVER;
-	windturb_dg *my = /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj);
+	windturb_dg *my = object_data<windturb_dg>(obj);
 	try
 	{
 		switch (pass)
@@ -2320,12 +2320,10 @@ static TIMESTAMP sync_windturb_dg_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0,
-                                                 PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_windturb_dg_impl(obj, t0, pass);
 }
 #else
-// variadic
 extern "C" MODULE_API TIMESTAMP sync_windturb_dg(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
@@ -2342,7 +2340,7 @@ EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iterati
 	STATUS temp_status;
 
 	// Map the node
-	windturb_dg *my = /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj);
+	windturb_dg *my = object_data<windturb_dg>(obj);
 
 	// Call the function, where we can update the current injection
 	temp_status = my->updateCurrInjection(iteration_count, converged_failure);

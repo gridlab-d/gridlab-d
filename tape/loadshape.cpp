@@ -153,7 +153,7 @@ int loadshape::init(OBJECT *parent)
 		if(period_ex > 0){ /* using 'period_ex' */
 			period_len = period_ex;
 		} else {
-			sprintf(errmsg, "No period length data found");
+			snprintf(errmsg, sizeof(errmsg), "No period length data found");
 			gl_error(errmsg);
 			state = TS_ERROR;
 			return 1;
@@ -162,7 +162,7 @@ int loadshape::init(OBJECT *parent)
 		if(sample_len > 0){
 			period_len = period_ex * sample_len;
 		} else {
-			sprintf(errmsg, "Cannot use explicit period length (in samples) without defining the sample length with sample_mode or sample_rate");
+			snprintf(errmsg, sizeof(errmsg), "Cannot use explicit period length (in samples) without defining the sample length with sample_mode or sample_rate");
 			gl_error(errmsg);
 			state = TS_ERROR;
 			return 1;
@@ -172,7 +172,7 @@ int loadshape::init(OBJECT *parent)
 	/* if defered sample length... */
 	if(samples > 0 && period_len > 0){
 		if(period_len % samples > 0){
-			sprintf(errmsg, "Cannot create %i equal sample periods given a period length of %i seconds!", samples, period_len);
+			snprintf(errmsg, sizeof(errmsg), "Cannot create %i equal sample periods given a period length of %i seconds!", samples, period_len);
 			gl_error(errmsg);
 			state = TS_ERROR;
 			return 1;

@@ -50,9 +50,42 @@ EXPORT int create_weather(OBJECT **obj, OBJECT *parent) {
 }
 
 /// Synchronize the cliamte object
-EXPORT TIMESTAMP sync_weather(OBJECT *obj, TIMESTAMP t0) {
+static TIMESTAMP sync_weather_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return TS_NEVER; // really doesn't do anything
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_weather(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  return sync_weather_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_weather(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_weather_impl(obj, t0, pass);
+}
+#endif
+
+EXPORT int isa_weather_impl(OBJECT *obj, char *classname) {
+  return strcmp(classname, "weather") == 0;
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_weather(OBJECT *obj, char *classname) {
+  return isa_weather_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_weather(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_weather_impl(obj, classsname);
+}
+#endif
 
 weather::unique_ptr_type create_weather() {
   return weather::unique_ptr_type(new weather());

@@ -147,7 +147,7 @@ void billdump::dump(TIMESTAMP t) {
         node_prev_monthly_energy = node_monthly_energy->get_double();
 
         if (obj->name == nullptr) {
-          sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
+          snprintf(namestr, sizeof(namestr), "%s:%i", obj->oclass->name, obj->id);
         }
         fprintf(outfile, "%s,%f,%f\n", (obj->name ? obj->name : namestr),
                 node_prev_monthly_bill, node_prev_monthly_energy);
@@ -198,7 +198,7 @@ void billdump::dump(TIMESTAMP t) {
         node_prev_monthly_energy = node_monthly_energy->get_double();
 
         if (obj->name == nullptr) {
-          sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
+          snprintf(namestr, sizeof(namestr), "%s:%i", obj->oclass->name, obj->id);
         }
         fprintf(outfile, "%s,%f,%f\n", (obj->name ? obj->name : namestr),
                 node_prev_monthly_bill, node_prev_monthly_energy);
@@ -242,7 +242,7 @@ EXPORT int create_billdump(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(billdump::oclass);
     if (*obj != nullptr) {
-      billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(*obj);
+      billdump *my = object_data<billdump>(*obj);
       // gl_set_parent(*obj, parent);
       return my->create();
     } else
@@ -253,7 +253,7 @@ EXPORT int create_billdump(OBJECT **obj, OBJECT *parent) {
 
 EXPORT int init_billdump(OBJECT *obj) {
   try {
-    billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
+    billdump *my = object_data<billdump>(obj);
     return my->init(obj->parent);
   }
   INIT_CATCHALL(billdump);
@@ -262,7 +262,7 @@ EXPORT int init_billdump(OBJECT *obj) {
 static TIMESTAMP sync_billdump_impl(OBJECT *obj, TIMESTAMP t1,
                                     PASSCONFIG pass) {
   try {
-    billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
+    billdump *my = object_data<billdump>(obj);
     TIMESTAMP rv;
     obj->clock = t1;
     rv = my->runtime > t1 ? my->runtime : TS_NEVER;
@@ -272,8 +272,7 @@ static TIMESTAMP sync_billdump_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_billdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_billdump_impl(obj, t1, pass);
 }
 #else
@@ -289,15 +288,29 @@ extern "C" MODULE_API TIMESTAMP sync_billdump(OBJECT *obj, ...) {
 
 EXPORT TIMESTAMP commit_billdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) {
   try {
-    billdump *my = /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj);
+    billdump *my = object_data<billdump>(obj);
     return my->commit(t1);
   }
   I_CATCHALL(commit, billdump);
 }
 
-EXPORT int isa_billdump(OBJECT *obj, char *classname) {
-  return /*OBJECTDATA(obj,<>)*/ object_data<billdump>(obj)->isa(classname);
+EXPORT int isa_billdump_impl(OBJECT *obj, char *classname) {
+  return object_data<billdump>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_billdump(OBJECT *obj, char *classname) {
+  return isa_billdump_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_billdump(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_billdump_impl(obj, classsname);
+}
+#endif
 
 /**@}*/
 

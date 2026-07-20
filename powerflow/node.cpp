@@ -390,7 +390,6 @@ int node::create(void)
 int node::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
-
 #ifdef __APPLE__
     parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
 #endif
@@ -5934,7 +5933,7 @@ STATUS node::shunt_update_fxn(void)
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF OTHER EXPORT FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-EXPORT int isa_node(OBJECT *obj, char *classname)
+static int isa_node_impl(OBJECT *obj, char *classname)
 {
 	if (obj != 0 && classname != 0)
 	{
@@ -5945,6 +5944,22 @@ EXPORT int isa_node(OBJECT *obj, char *classname)
 		return 0;
 	}
 }
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_node(OBJECT *obj, char *classname)
+{
+    return isa_node_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_node(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    char *classsname = va_arg(args, char *);
+    va_end(args);
+    return isa_node_impl(obj, classsname);
+}
+#endif
+
 
 EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value)
 {

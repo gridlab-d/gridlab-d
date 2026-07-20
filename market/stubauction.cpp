@@ -234,7 +234,7 @@ EXPORT int create_stubauction(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(stubauction::oclass);
     if (*obj != nullptr) {
-      stubauction *my = /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(*obj);
+      stubauction *my = object_data<stubauction>(*obj);
       // gl_set_parent(*obj, parent);
       return my->create();
     } else
@@ -246,25 +246,38 @@ EXPORT int create_stubauction(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_stubauction(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(obj)->init(parent);
+      return object_data<stubauction>(obj)->init(parent);
     else
       return 0;
   }
   INIT_CATCHALL(stubauction);
 }
 
-EXPORT int isa_stubauction(OBJECT *obj, char *classname) {
+EXPORT int isa_stubauction_impl(OBJECT *obj, char *classname) {
   if (obj != 0 && classname != 0) {
-    return /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(obj)->isa(classname);
+    return object_data<stubauction>(obj)->isa(classname);
   } else {
     return 0;
   }
 }
 
-static TIMESTAMP sync_stubauction_impl(OBJECT *obj, TIMESTAMP t1,
-                                       PASSCONFIG pass) {
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_stubauction(OBJECT *obj, char *classname) {
+  return isa_stubauction_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_stubauction(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_stubauction_impl(obj, classsname);
+}
+#endif
+
+static TIMESTAMP sync_stubauction_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  stubauction *my = /*OBJECTDATA(obj,<>)*/ object_data<stubauction>(obj);
+  stubauction *my = object_data<stubauction>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -287,11 +300,10 @@ static TIMESTAMP sync_stubauction_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1,
-                                                 PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_stubauction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_stubauction_impl(obj, t1, pass);
 }
-#else // variadic
+#else
 extern "C" MODULE_API TIMESTAMP sync_stubauction(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);

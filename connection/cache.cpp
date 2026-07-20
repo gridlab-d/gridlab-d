@@ -134,7 +134,7 @@ void cache::dump(void) {
   for (n = 0; n < tail; n++) {
     cacheitem *item = get_item(n);
     char name[1024];
-    sprintf(name, "%s.%s/%s", item->get_object()->name,
+    snprintf(name, sizeof(name), "%s.%s/%s", item->get_object()->name,
             item->get_property()->name, item->get_remote());
     gl_debug("%6d %-16s %-32s", item->get_id(), name, item->get_buffer());
   }

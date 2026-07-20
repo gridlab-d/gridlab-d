@@ -220,6 +220,10 @@ TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1) {
 
 TIMESTAMP rectifier::postsync(TIMESTAMP t0, TIMESTAMP t1) { return TS_NEVER; }
 
+int rectifier::isa(char *classname) {
+  return strcmp(classname, "rectifier") == 0;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -228,7 +232,7 @@ EXPORT int create_rectifier(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(rectifier::oclass);
     if (*obj != nullptr) {
-      rectifier *my = /*OBJECTDATA(obj,<>)*/ object_data<rectifier>(*obj);
+      rectifier *my = object_data<rectifier>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -240,17 +244,34 @@ EXPORT int create_rectifier(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_rectifier(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj,<>)*/ object_data<rectifier>(obj)->init(parent);
+      return object_data<rectifier>(obj)->init(parent);
     else
       return 0;
   }
   INIT_CATCHALL(rectifier);
 }
 
-static TIMESTAMP sync_rectifier_impl(OBJECT *obj, TIMESTAMP t1,
-                                     PASSCONFIG pass) {
+EXPORT int isa_rectifier_impl(OBJECT *obj, char *classname) {
+  return object_data<rectifier>(obj)->isa(classname);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_rectifier(OBJECT *obj, char *classname) {
+  return isa_rectifier_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_rectifier(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_rectifier_impl(obj, classsname);
+}
+#endif
+
+static TIMESTAMP sync_rectifier_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  rectifier *my = /*OBJECTDATA(obj,<>)*/ object_data<rectifier>(obj);
+  rectifier *my = object_data<rectifier>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -274,12 +295,10 @@ static TIMESTAMP sync_rectifier_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_rectifier(OBJECT *obj, TIMESTAMP t1,
-                                               PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_rectifier(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_rectifier_impl(obj, t1, pass);
 }
 #else
-// variadic
 extern "C" MODULE_API TIMESTAMP sync_rectifier(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);

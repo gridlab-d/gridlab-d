@@ -148,12 +148,12 @@ void collect::fetch_double(double **prop, const char *name, OBJECT *parent) {
     char tname[32];
     char *namestr = (hdr->name ? hdr->name : tname);
     char msg[256];
-    sprintf(tname, "collect:%i", hdr->id);
+    snprintf(tname, sizeof(tname), "collect:%i", hdr->id);
     if (*name == static_cast<char>(0))
-      sprintf(msg, "%s: collect unable to find property: name is nullptr",
+      snprintf(msg, sizeof(msg), "%s: collect unable to find property: name is nullptr",
               namestr);
     else
-      sprintf(msg, "%s: collect unable to find %s", namestr, name);
+      snprintf(msg, sizeof(msg), "%s: collect unable to find %s", namestr, name);
     throw(msg);
   }
 }
@@ -165,12 +165,12 @@ void collect::fetch_int(int **prop, const char *name, OBJECT *parent) {
     char tname[32];
     char *namestr = (hdr->name ? hdr->name : tname);
     char msg[256];
-    sprintf(tname, "collect:%i", hdr->id);
+    snprintf(tname, sizeof(tname), "collect:%i", hdr->id);
     if (*name == static_cast<char>(0))
-      sprintf(msg, "%s: collect unable to find property: name is nullptr",
+      snprintf(msg, sizeof(msg), "%s: collect unable to find property: name is nullptr",
               namestr);
     else
-      sprintf(msg, "%s: collect unable to find %s", namestr, name);
+      snprintf(msg, sizeof(msg), "%s: collect unable to find %s", namestr, name);
     throw(std::runtime_error(msg));
   }
 }

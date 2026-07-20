@@ -385,7 +385,7 @@ int glengine::send(const char *fmt, ...) {
   memset(buffer, 0, 1500); // safety!
   va_list ptr;
   va_start(ptr, fmt);
-  size_t len = vsprintf(buffer, fmt, ptr);
+  size_t len = vsnprintf(buffer, sizeof(buffer), fmt, ptr);
   va_end(ptr);
   int slen = interface->send(buffer, len);
   if (slen < 0)

@@ -152,7 +152,7 @@ int server::init(OBJECT *parent) {
   gl_warning("connecting server on port %d", port);
   struct mg_context *ctx;
   char portString[10];
-  sprintf(portString, "%d", port);
+  snprintf(portString, sizeof(portString), "%d", port);
 
   char path[1024];
   if (callback->file.find_file("rest/gui_root", nullptr, X_OK, path,

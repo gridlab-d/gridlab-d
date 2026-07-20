@@ -26,7 +26,6 @@
 EXPORT_CREATE(climate)
 EXPORT_INIT(climate)
 EXPORT_SYNC(climate)
-EXPORT_ISA(climate)
 
 #define RAD(x) (x * PI) / 180
 
@@ -108,7 +107,7 @@ EXPORT int64 calculate_solar_radiation_shading_position_radians(OBJECT *obj, dou
 		// throw "climate/calc_solar: null object pointer in argument";
 		return 0;
 	}
-	cli = /*OBJECTDATA(obj, climate)*/ object_data<climate>(obj);
+	cli = object_data<climate>(obj);
 	if (gl_object_isa(obj, "climate", "climate") == 0)
 	{
 		// throw "climate/calc_solar: input object is not a climate object";
@@ -154,7 +153,7 @@ EXPORT int64 calc_solar_solpos_shading_position_rad(OBJECT *obj, double tilt, do
 	{
 		return 0;
 	}
-	cli = /*OBJECTDATA(obj, climate)*/ object_data<climate>(obj);
+	cli = object_data<climate>(obj);
 	if (gl_object_isa(obj, "climate", "climate") == 0)
 	{
 		return 0;
@@ -236,7 +235,7 @@ EXPORT int64 calc_solar_ideal_shading_position_radians(OBJECT *obj, double tilt,
 	{
 		return 0;
 	}
-	cli = /*OBJECTDATA(obj, climate)*/ object_data<climate>(obj);
+	cli = object_data<climate>(obj);
 	if (gl_object_isa(obj, "climate", "climate") == 0)
 	{
 		return 0;
@@ -732,14 +731,6 @@ int climate::create(void)
 	this->cloud_aerosol_transmissivity = defaults_storage.cloud_aerosol_transmissivity;
 
 	return 1;
-}
-
-int climate::isa(char *classname)
-{
-	if (classname != 0)
-		return (0 == strcmp(classname, "climate"));
-	else
-		return 0;
 }
 
 int climate::init(OBJECT *parent)
@@ -2101,7 +2092,7 @@ void climate::write_out_cloud_pattern(char pattern)
 	ofstream out_file;
 
 	char buffer[100];
-	sprintf(buffer, "cloud_pattern_%010lld.csv", prev_NTime);
+	snprintf(buffer, sizeof(buffer), "cloud_pattern_%010lld.csv", prev_NTime);
 	std::string file_string = buffer;
 	out_file.open(file_string.c_str(), ios::out);
 
@@ -2354,9 +2345,9 @@ void climate::update_forecasts(TIMESTAMP t0)
 		gl_forecast_save(fc,t0,dt,Nh,t);
 #ifdef NEVER
 		char buffer[1024];
-		int len = sprintf(buffer,"%d",fc->starttime);
+		int len = snprintf(buffer, sizeof(buffer), "%d",fc->starttime);
 		for ( h=3; h<72; h+=3 )
-			len += sprintf(buffer+len,",%.1f",fc->values[h]);
+			len += snprintf(buffer+len, sizeof(buffer)-len, ",%.1f",fc->values[h]);
 		printf("%s\n",buffer);
 #endif
 	}
@@ -2670,5 +2661,23 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	else
 		return tmy_rv;
 }
+
+EXPORT int isa_climate_impl(OBJECT *obj, char *classname) {
+  return strcmp(classname, "climate") == 0;
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_climate(OBJECT *obj, char *classname) {
+  return isa_climate_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_climate(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_climate_impl(obj, classsname);
+}
+#endif
 
 /**@}**/

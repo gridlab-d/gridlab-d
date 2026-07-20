@@ -38,7 +38,7 @@
 //	{
 //		node *my = (node*)(obj+1);
 //		char name[32];
-//		sprintf(name,"Bus %d", obj->id+1);
+//		snprintf(name, sizeof(name), "Bus %d", obj->id+1);
 //		count += fprintf(fp,"%4d %-12.12s %2d %2d %2d %5.3f %6.2f %7.1f
 //%8.1f %7.1f %7.1f %6.1f %6.1f %6.1f %6.1f %8.5f %8.5f %d\n", obj->id+1,name,
 //			my->flow_area_num, my->loss_zone_num, my->type,

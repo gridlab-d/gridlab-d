@@ -74,20 +74,20 @@ int write_term(char *buffer, double a, char *x, int n, bool first) {
     if (n == 0) // z^0 term
     {
       if (fabs(a - 1) < 1e-6)
-        len += sprintf(buffer + len, "%s", first ? "1" : "+1");
+        len += snprintf(buffer + len, sizeof(buffer) - len, "%s", first ? "1" : "+1");
       else if (fabs(-a - 1) < 1e-6)
-        len += sprintf(buffer + len, "%s", "-1");
+        len += snprintf(buffer + len, sizeof(buffer) - len, "%s", "-1");
       else
-        len += sprintf(buffer + len, first ? "%.4f" : "%+.4f", a);
+        len += snprintf(buffer + len, sizeof(buffer) - len, first ? "%.4f" : "%+.4f", a);
     } else // z^n term
     {
       if (fabs(a - 1) > 1e-6) // non-unitary coefficient
-        len += sprintf(buffer + len, "%.4f", a);
+        len += snprintf(buffer + len, sizeof(buffer) - len, "%.4f", a);
       else if (fabs(-a - 1) < 1e-6) // -1 coefficient
-        len += sprintf(buffer + len, "-");
-      len += sprintf(buffer + len, "%s", x); // domain variable
+        len += snprintf(buffer + len, sizeof(buffer) - len, "-");
+      len += snprintf(buffer + len, sizeof(buffer) - len, "%s", x); // domain variable
       if (n > 1)                             // higher-order
-        len += sprintf(buffer + len, "^%d", n);
+        len += snprintf(buffer + len, sizeof(buffer) - len, "^%d", n);
     }
   }
   return len;

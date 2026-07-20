@@ -418,8 +418,22 @@ extern "C" MODULE_API TIMESTAMP sync_pqload(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_pqload(OBJECT *obj, char *classname) {
+EXPORT int isa_pqload_impl(OBJECT *obj, char *classname) {
   return object_data<pqload>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_pqload(OBJECT *obj, char *classname) {
+  return isa_pqload_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_pqload(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_pqload_impl(obj, classsname);
+}
+#endif
 
 /**@}*/

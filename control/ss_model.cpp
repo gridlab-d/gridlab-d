@@ -55,7 +55,7 @@ ss_model::ss_model(MODULE *module) {
 
             nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
 
@@ -235,19 +235,19 @@ int ss_model::init(OBJECT *parent) {
   for (i = 0; i < n; i++) {
     if (tf.Y[i] != 0)
       if (i < n - 1)
-        len += sprintf(H + len, "%+.3fs^%d", tf.Y[i], n - i - 1);
+        len += snprintf(H + len, sizeof(H) - len, "%+.3fs^%d", tf.Y[i], n - i - 1);
       else
-        len += sprintf(H + len, "%+.3f", tf.Y[i]);
+        len += snprintf(H + len, sizeof(H) - len, "%+.3f", tf.Y[i]);
   }
-  len += sprintf(H + len, "%s", ") / (");
+  len += snprintf(H + len, sizeof(H) - len, "%s", ") / (");
   for (i = 0; i < n; i++) {
     if (tf.U[i] != 0)
       if (i < n - 1)
-        len += sprintf(H + len, "%+.3fs^%d", tf.U[i], n - i - 1);
+        len += snprintf(H + len, sizeof(H) - len, "%+.3fs^%d", tf.U[i], n - i - 1);
       else
-        len += sprintf(H + len, "%+.3f", tf.U[i]);
+        len += snprintf(H + len, sizeof(H) - len, "%+.3f", tf.U[i]);
   }
-  len += sprintf(H + len, "%s", ")");
+  len += snprintf(H + len, sizeof(H) - len, "%s", ")");
   gl_debug("%s: H(s) = %s", get_name(), (char *)H);
 
   // update A,B,C,D string (descriptive)
@@ -257,20 +257,20 @@ int ss_model::init(OBJECT *parent) {
   D[0] = '[';
   for (len = 1, i = 0; i < n - 1; i++) {
     for (j = 0; j < n - 1; j++)
-      len += sprintf(A + len, " %.3f ", ss.A[i][j]);
+      len += snprintf(A + len, sizeof(A) - len, " %.3f ", ss.A[i][j]);
     if (i < n - 2)
-      len += sprintf(A + len, " %s", ";");
+      len += snprintf(A + len, sizeof(A) - len, " %s", ";");
   }
   strcat(A, " ]");
   for (len = 1, i = 0; i < n - 1; i++) {
-    len += sprintf(B + len, " %.3f ", ss.B[i][0]);
+    len += snprintf(B + len, sizeof(B) - len, " %.3f ", ss.B[i][0]);
   }
   strcat(B, " ]");
   for (len = 1, i = 0; i < n - 1; i++) {
-    len += sprintf(C + len, " %.3f ", ss.C[0][i]);
+    len += snprintf(C + len, sizeof(C) - len, " %.3f ", ss.C[0][i]);
   }
   strcat(C, " ]");
-  sprintf(D + 1, " %.2f ]", ss.D[0]);
+  snprintf(D + 1, sizeof(D) - 1, " %.2f ]", ss.D[0]);
   gl_debug("%s: A = %s", get_name(), (char *)A);
   gl_debug("%s: B = %s", get_name(), (char *)B);
   gl_debug("%s: C = %s", get_name(), (char *)C);

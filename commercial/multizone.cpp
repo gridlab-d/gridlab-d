@@ -165,7 +165,7 @@ EXPORT int create_multizone(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_multizone(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj, multizone)*/ object_data<multizone>(obj)->init(
+      return object_data<multizone>(obj)->init(
           parent);
     else
       return 0;
@@ -176,7 +176,7 @@ EXPORT int init_multizone(OBJECT *obj, OBJECT *parent) {
 static TIMESTAMP sync_multizone_impl(OBJECT *obj, TIMESTAMP t1,
                                      PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  multizone *my = /*OBJECTDATA(obj, multizone)*/ object_data<multizone>(obj);
+  multizone *my = object_data<multizone>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:

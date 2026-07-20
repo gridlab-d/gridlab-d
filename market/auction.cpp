@@ -39,7 +39,7 @@ EXPORT int64 get_market_for_time(OBJECT *obj, TIMESTAMP ts) {
             */
     return -1;
   }
-  pAuc = /*OBJECTDATA(obj,<>)*/ object_data<auction>(obj);
+  pAuc = object_data<auction>(obj);
   // find when the current market started
   market_time = gl_globalclock + pAuc->period + pAuc->latency -
                 ((gl_globalclock + pAuc->period) % pAuc->period);
@@ -224,7 +224,7 @@ auction::auction(MODULE *module) {
 
             nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
     gl_publish_function(oclass, "submit_bid_state",
@@ -943,22 +943,22 @@ void auction::record_curve(double bu, double su) {
     char tstr[256];
     switch (cleared_frame.clearing_type) {
     case CT_NULL:
-      sprintf(tstr, "null");
+      snprintf(tstr, sizeof(tstr), "null");
       break;
     case CT_SELLER:
-      sprintf(tstr, "marginal_seller");
+      snprintf(tstr, sizeof(tstr), "marginal_seller");
       break;
     case CT_BUYER:
-      sprintf(tstr, "marginal_buyer");
+      snprintf(tstr, sizeof(tstr), "marginal_buyer");
       break;
     case CT_PRICE:
-      sprintf(tstr, "marginal_price");
+      snprintf(tstr, sizeof(tstr), "marginal_price");
       break;
     case CT_EXACT:
-      sprintf(tstr, "exact_p_and_q");
+      snprintf(tstr, sizeof(tstr), "exact_p_and_q");
       break;
     case CT_FAILURE:
-      sprintf(tstr, "failure");
+      snprintf(tstr, sizeof(tstr), "failure");
       break;
     }
     fprintf(curve_file, "# marginal quantity of %f %s (%f %%)\n",
@@ -1001,7 +1001,7 @@ void auction::clear_market(void) {
 
     if (pRefload == nullptr) {
       char msg[256];
-      sprintf(msg,
+      snprintf(msg, sizeof(msg),
               "unable to retreive property '%s' from capacity reference object "
               "'%s'",
               capacity_reference_property->name,
@@ -1020,7 +1020,7 @@ void auction::clear_market(void) {
         if (gl_convert(capacity_reference_property->unit->name, unit,
                        &refload) == 0) {
           char msg[256];
-          sprintf(msg,
+          snprintf(msg, sizeof(msg),
                   "capacity_reference_property %s uses units of %s and is "
                   "incompatible with auction units (%s)",
                   capacity_reference_property->name,
@@ -1079,7 +1079,7 @@ void auction::clear_market(void) {
     double caprefq;
     if (pCaprefq == nullptr) {
       char msg[256];
-      sprintf(msg,
+      snprintf(msg, sizeof(msg),
               "unable to retreive property '%s' from capacity reference object "
               "'%s'",
               capacity_reference_property->name,
@@ -1092,7 +1092,7 @@ void auction::clear_market(void) {
         if (gl_convert(capacity_reference_property->unit->name, unit,
                        &caprefq) == 0) {
           char msg[256];
-          sprintf(msg,
+          snprintf(msg, sizeof(msg),
                   "capacity_reference_property %s uses units of %s and is "
                   "incompatible with auction units (%s)",
                   capacity_reference_property->name,
@@ -1827,7 +1827,7 @@ void auction::record_bid(char *from, double quantity, double real_price,
         break;
       }
       tStr = (gl_strtime(&dt, buffer, sizeof(buffer)) ? buffer : unk);
-      sprintf(bigbuffer, "%d,%s,%s,%f,%f,%s", (int32)market_id, tStr, from,
+      snprintf(bigbuffer, sizeof(bigbuffer), "%d,%s,%s,%f,%f,%s", (int32)market_id, tStr, from,
               real_price, quantity, pState);
       fprintf(trans_file, "%s\n", bigbuffer);
       --trans_log_count;
@@ -2036,7 +2036,7 @@ EXPORT int create_auction(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(auction::oclass);
     if (*obj != nullptr) {
-      auction *my = /*OBJECTDATA(obj,<>)*/ object_data<auction>(*obj);
+      auction *my = object_data<auction>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -2048,24 +2048,38 @@ EXPORT int create_auction(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_auction(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj,<>)*/ object_data<auction>(obj)->init(parent);
+      return object_data<auction>(obj)->init(parent);
     else
       return 0;
   }
   INIT_CATCHALL(auction);
 }
 
-EXPORT int isa_auction(OBJECT *obj, char *classname) {
+EXPORT int isa_auction_impl(OBJECT *obj, char *classname) {
   if (obj != 0 && classname != 0) {
-    return /*OBJECTDATA(obj,<>)*/ object_data<auction>(obj)->isa(classname);
+    return object_data<auction>(obj)->isa(classname);
   } else {
     return 0;
   }
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_auction(OBJECT *obj, char *classname) {
+  return isa_auction_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_auction(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_auction_impl(obj, classsname);
+}
+#endif
+
 static TIMESTAMP sync_auction_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  auction *my = /*OBJECTDATA(obj, auction)*/ object_data<auction>(obj);
+  auction *my = object_data<auction>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -2087,12 +2101,10 @@ static TIMESTAMP sync_auction_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_auction(OBJECT *obj, TIMESTAMP t1,
-                                             PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_auction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_auction_impl(obj, t1, pass);
 }
 #else
-// variadic
 extern "C" MODULE_API TIMESTAMP sync_auction(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);

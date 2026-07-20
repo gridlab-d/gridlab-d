@@ -28,7 +28,7 @@ extern "C" int xoutput(char *format, ...) {
   int count;
   va_list ptr;
   va_start(ptr, format);
-  count = sprintf(text, format, ptr);
+  count = snprintf(text, sizeof(text), format, ptr);
   va_end(ptr);
 
   static int x = 0;

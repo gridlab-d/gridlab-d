@@ -1531,9 +1531,9 @@ inline char *gl_name(OBJECT *my, char *buffer, size_t size) {
   if (my == NULL || buffer == NULL)
     return NULL;
   if (my->name == NULL)
-    sprintf(temp, "%s:%d", my->oclass->name, my->id);
+    snprintf(temp, sizeof(temp), "%s:%d", my->oclass->name, my->id);
   else
-    sprintf(temp, "%s", my->name);
+    snprintf(temp, sizeof(temp), "%s", my->name);
   if (size < strlen(temp))
     return NULL;
   strcpy(buffer, temp);
@@ -1547,7 +1547,7 @@ inline void gl_throw(char *msg, ...) ///< printf-style argument list
   va_list ptr;
   va_start(ptr, msg);
   static char buffer[1024];
-  vsprintf(buffer, msg, ptr);
+  vsnprintf(buffer, sizeof(buffer), msg, ptr);
   throw buffer;
   va_end(ptr);
 }
@@ -1830,8 +1830,8 @@ private:
     static char buf[1024];
     va_list ptr;
     va_start(ptr, msg);
-    sprintf(buf, "%s", name ? name : "");
-    vsprintf(buf + strlen(buf), msg, ptr);
+    snprintf(buf, sizeof(buf), "%s", name ? name : "");
+    vsnprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), msg, ptr);
     throw (const char *)buf;
     va_end(ptr);
   };
@@ -2259,7 +2259,7 @@ public:
     char tmp[256];
     va_list ptr;
     va_start(ptr, fmt);
-    vsprintf(buffer, fmt, ptr);
+    vsnprintf(buffer, sizeof(buffer), fmt, ptr);
     (*callback->output_error)("%s: %s", gl_name(my, tmp, sizeof(tmp)), buffer);
     va_end(ptr);
   };
@@ -2268,7 +2268,7 @@ public:
     char tmp[256];
     va_list ptr;
     va_start(ptr, fmt);
-    vsprintf(buffer, fmt, ptr);
+    vsnprintf(buffer, sizeof(buffer), fmt, ptr);
     (*callback->output_warning)("%s: %s", gl_name(my, tmp, sizeof(tmp)),
                                 buffer);
     va_end(ptr);

@@ -205,8 +205,8 @@ controller::controller(MODULE *module)
 int controller::create()
 {
   ////memset(this, 0, sizeof(controller));
-  sprintf((char *)(&avg_target), "avg24");
-  sprintf((char *)(&std_target), "std24");
+  snprintf((char *)(&avg_target), sizeof((char *)(&avg_target)), "avg24");
+  snprintf((char *)(&std_target), sizeof((char *)(&std_target)), "std24");
   slider_setting_heat = -0.001;
   slider_setting_cool = -0.001;
   slider_setting = -0.001;
@@ -248,12 +248,12 @@ void controller::cheat()
   case SM_NONE:
     break;
   case SM_HOUSE_HEAT:
-    sprintf(target, "air_temperature");
-    sprintf(setpoint, "heating_setpoint");
-    sprintf(demand, "heating_demand");
-    sprintf(total, "total_load");
-    sprintf(load, "hvac_load");
-    sprintf(state, "power_state");
+    snprintf(target, sizeof(target), "air_temperature");
+    snprintf(setpoint, sizeof(setpoint), "heating_setpoint");
+    snprintf(demand, sizeof(demand), "heating_demand");
+    snprintf(total, sizeof(total), "total_load");
+    snprintf(load, sizeof(load), "hvac_load");
+    snprintf(state, sizeof(state), "power_state");
     ramp_low = -2;
     ramp_high = -2;
     range_low = -5;
@@ -261,12 +261,12 @@ void controller::cheat()
     dir = -1;
     break;
   case SM_HOUSE_COOL:
-    sprintf(target, "air_temperature");
-    sprintf(setpoint, "cooling_setpoint");
-    sprintf(demand, "cooling_demand");
-    sprintf(total, "total_load");
-    sprintf(load, "hvac_load");
-    sprintf(state, "power_state");
+    snprintf(target, sizeof(target), "air_temperature");
+    snprintf(setpoint, sizeof(setpoint), "cooling_setpoint");
+    snprintf(demand, sizeof(demand), "cooling_demand");
+    snprintf(total, sizeof(total), "total_load");
+    snprintf(load, sizeof(load), "hvac_load");
+    snprintf(state, sizeof(state), "power_state");
     ramp_low = 2;
     ramp_high = 2;
     range_low = 0;
@@ -274,12 +274,12 @@ void controller::cheat()
     dir = 1;
     break;
   case SM_HOUSE_PREHEAT:
-    sprintf(target, "air_temperature");
-    sprintf(setpoint, "heating_setpoint");
-    sprintf(demand, "heating_demand");
-    sprintf(total, "total_load");
-    sprintf(load, "hvac_load");
-    sprintf(state, "power_state");
+    snprintf(target, sizeof(target), "air_temperature");
+    snprintf(setpoint, sizeof(setpoint), "heating_setpoint");
+    snprintf(demand, sizeof(demand), "heating_demand");
+    snprintf(total, sizeof(total), "total_load");
+    snprintf(load, sizeof(load), "hvac_load");
+    snprintf(state, sizeof(state), "power_state");
     ramp_low = -2;
     ramp_high = -2;
     range_low = -5;
@@ -287,12 +287,12 @@ void controller::cheat()
     dir = -1;
     break;
   case SM_HOUSE_PRECOOL:
-    sprintf(target, "air_temperature");
-    sprintf(setpoint, "cooling_setpoint");
-    sprintf(demand, "cooling_demand");
-    sprintf(total, "total_load");
-    sprintf(load, "hvac_load");
-    sprintf(state, "power_state");
+    snprintf(target, sizeof(target), "air_temperature");
+    snprintf(setpoint, sizeof(setpoint), "cooling_setpoint");
+    snprintf(demand, sizeof(demand), "cooling_demand");
+    snprintf(total, sizeof(total), "total_load");
+    snprintf(load, sizeof(load), "hvac_load");
+    snprintf(state, sizeof(state), "power_state");
     ramp_low = 2;
     ramp_high = 2;
     range_low = -3;
@@ -300,34 +300,30 @@ void controller::cheat()
     dir = 1;
     break;
   case SM_WATERHEATER:
-    sprintf(target, "temperature");
-    sprintf(setpoint, "tank_setpoint");
-    sprintf(demand, "heating_element_capacity");
-    sprintf(total, "actual_load");
-    sprintf(load, "actual_load");
-    sprintf(state, "power_state");
+    snprintf(target, sizeof(target), "temperature");
+    snprintf(setpoint, sizeof(setpoint), "tank_setpoint");
+    snprintf(demand, sizeof(demand), "heating_element_capacity");
+    snprintf(total, sizeof(total), "actual_load");
+    snprintf(load, sizeof(load), "actual_load");
+    snprintf(state, sizeof(state), "power_state");
     ramp_low = -2;
     ramp_high = -2;
     range_low = 0;
     range_high = 10;
     break;
   case SM_DOUBLE_RAMP:
-    sprintf(target, "air_temperature");
-    sprintf((char *)(&heating_setpoint), "heating_setpoint");
-    sprintf((char *)(&heating_demand), "heating_demand");
-    sprintf((char *)(&heating_total),
-            "total_load"); // using total instead of heating_total
-    sprintf((char *)(&heating_load),
-            "hvac_load"); // using load instead of heating_load
-    sprintf((char *)(&cooling_setpoint), "cooling_setpoint");
-    sprintf((char *)(&cooling_demand), "cooling_demand");
-    sprintf((char *)(&cooling_total),
-            "total_load"); // using total instead of cooling_total
-    sprintf((char *)(&cooling_load),
-            "hvac_load"); // using load instead of cooling_load
-    sprintf((char *)(&deadband), "thermostat_deadband");
-    sprintf(load, "hvac_load");
-    sprintf(total, "total_load");
+    snprintf(target, sizeof(target), "air_temperature");
+    snprintf((char *)(&heating_setpoint), sizeof((char *)(&heating_setpoint)), "heating_setpoint");
+    snprintf((char *)(&heating_demand), sizeof((char *)(&heating_demand)), "heating_demand");
+    snprintf((char *)(&heating_total), sizeof((char *)(&heating_total)), "total_load"); // using total instead of heating_total
+    snprintf((char *)(&heating_load), sizeof((char *)(&heating_load)), "hvac_load"); // using load instead of heating_load
+    snprintf((char *)(&cooling_setpoint), sizeof((char *)(&cooling_setpoint)), "cooling_setpoint");
+    snprintf((char *)(&cooling_demand), sizeof((char *)(&cooling_demand)), "cooling_demand");
+    snprintf((char *)(&cooling_total), sizeof((char *)(&cooling_total)),            "total_load"); // using total instead of cooling_total
+    snprintf((char *)(&cooling_load), sizeof((char *)(&cooling_load)), "hvac_load"); // using load instead of cooling_load
+    snprintf((char *)(&deadband), sizeof((char *)(&deadband)), "thermostat_deadband");
+    snprintf(load, sizeof(load), "hvac_load");
+    snprintf(total, sizeof(total), "total_load");
     heat_ramp_low = -2;
     heat_ramp_high = -2;
     heat_range_low = -5;
@@ -376,7 +372,7 @@ int controller::init(OBJECT *parent)
   char *namestr = (hdr->name ? hdr->name : tname);
   gld_property *pInitPrice = nullptr;
 
-  sprintf(tname, "controller:%i", hdr->id);
+  snprintf(tname, sizeof(tname), "controller:%i", hdr->id);
 
   cheat();
 
@@ -844,9 +840,9 @@ int controller::init(OBJECT *parent)
   }
   else if (control_mode == CN_DOUBLE_RAMP)
   {
-    sprintf(aux_state, "is_AUX_on");
-    sprintf(heat_state, "is_HEAT_on");
-    sprintf(cool_state, "is_COOL_on");
+    snprintf(aux_state, sizeof(aux_state), "is_AUX_on");
+    snprintf(heat_state, sizeof(heat_state), "is_HEAT_on");
+    snprintf(cool_state, sizeof(cool_state), "is_COOL_on");
     if (fetch_property(&pHeatingSetpoint, (char *)(&heating_setpoint),
                        parent) == 0)
     {
@@ -3604,7 +3600,7 @@ EXPORT int init_controller(OBJECT *obj, OBJECT *parent)
   {
     if (obj != nullptr)
     {
-      return /*OBJECTDATA(obj,<>)*/ object_data<controller>(obj)->init(parent);
+      return object_data<controller>(obj)->init(parent);
     }
     else
       return 0;
@@ -3616,7 +3612,7 @@ EXPORT int isa_controller(OBJECT *obj, char *classname)
 {
   if (obj != 0 && classname != 0)
   {
-    return /*OBJECTDATA(obj,<>)*/ object_data<controller>(obj)->isa(classname);
+    return object_data<controller>(obj)->isa(classname);
   }
   else
   {
@@ -3628,7 +3624,7 @@ static TIMESTAMP sync_controller_impl(OBJECT *obj, TIMESTAMP t1,
                                       PASSCONFIG pass)
 {
   TIMESTAMP t2 = TS_NEVER;
-  controller *my = /*OBJECTDATA(obj,<>)*/ object_data<controller>(obj);
+  controller *my = object_data<controller>(obj);
   try
   {
     switch (pass)
@@ -3656,8 +3652,7 @@ static TIMESTAMP sync_controller_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API int sync_controller(OBJECT *obj, TIMESTAMP t1,
-                                          PASSCONFIG pass)
+extern "C" MODULE_API int sync_controller(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
   return sync_controller_impl(obj, t1, pass);
 }

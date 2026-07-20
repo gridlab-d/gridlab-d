@@ -252,7 +252,7 @@ bool loader::class_properties(CLASS *oclass, ojson properties, string source_cod
                     }
                     if (sname.length() < 64)
                     {
-                        strcpy(propname, sname.data());
+                        snprintf(propname, sizeof(propname), "%s", sname.data());
                     }
                     else
                     {
@@ -303,7 +303,7 @@ bool loader::class_properties(CLASS *oclass, ojson properties, string source_cod
                 // 		KEYWORD *key;
                 // 		for (key=prop->keywords; key!=nullptr; key=key->next) {
                 // 			char key_defined[64];
-				// 			sprintf(key_defined,"#define %s (0x%x)\n", key->name, key->value);
+				// 			snprintf(key_defined, sizeof(key_defined), "#define %s (0x%x)\n", key->name, key->value);
 				// 			source_code = source_code + key_defined;
                 // 		}
                 // 	}

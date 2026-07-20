@@ -2467,7 +2467,7 @@ EXPORT int create_fault_check(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(fault_check::oclass);
     if (*obj != nullptr) {
-      fault_check *my = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(*obj);
+      fault_check *my = object_data<fault_check>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -2478,7 +2478,7 @@ EXPORT int create_fault_check(OBJECT **obj, OBJECT *parent) {
 
 EXPORT int init_fault_check(OBJECT *obj, OBJECT *parent) {
   try {
-    fault_check *my = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(obj);
+    fault_check *my = object_data<fault_check>(obj);
     return my->init(parent);
   }
   INIT_CATCHALL(fault_check);
@@ -2493,10 +2493,9 @@ EXPORT int init_fault_check(OBJECT *obj, OBJECT *parent) {
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-static TIMESTAMP sync_fault_check_impl(OBJECT *obj, TIMESTAMP t0,
-                                       PASSCONFIG pass) {
+static TIMESTAMP sync_fault_check_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   try {
-    fault_check *pObj = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(obj);
+    fault_check *pObj = object_data<fault_check>(obj);
     TIMESTAMP t1 = TS_NEVER;
 	switch (pass) {
     case PC_PRETOPDOWN:
@@ -2515,33 +2514,43 @@ static TIMESTAMP sync_fault_check_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0,
-                                                 PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_fault_check_impl(obj, t0, pass);
 }
 #else
-extern "C" TIMESTAMP sync_fault_check(OBJECT *obj, ...) {
+extern "C" MODULE_API TIMESTAMP sync_fault_check(OBJECT *obj, ...) {
   va_list args;
-  TIMESTAMP t0;
-  PASSCONFIG pass;
-
   va_start(args, obj);
-  t0 = va_arg(args, TIMESTAMP);
-  pass = va_arg(args, PASSCONFIG);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
   va_end(args);
   return sync_fault_check_impl(obj, t0, pass);
 }
 #endif
 
-EXPORT int isa_fault_check(OBJECT *obj, char *classname) {
-  return /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(obj)->isa(classname);
+EXPORT int isa_fault_check_impl(OBJECT *obj, char *classname) {
+  return object_data<fault_check>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_fault_check(OBJECT *obj, char *classname) {
+  return isa_fault_check_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_fault_check(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_fault_check_impl(obj, classsname);
+}
+#endif
 
 // Function to remove/restore out of service items following a reliability fault
 EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink,
                                  bool rest_mode) {
   fault_check *thsfltchk =
-      /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(thisobj);
+      object_data<fault_check>(thisobj);
 
   // Perform the removal
   thsfltchk->support_check_alterations(baselink, rest_mode);
@@ -2625,7 +2634,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number) {
           // Propogate downstream and momentary flag objects
           // map the fault_check object - do as recursion and function is in
           // space
-          fltyobj = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(
+          fltyobj = object_data<fault_check>(
               fault_check_object);
 
           // Call the function
@@ -2684,7 +2693,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number) {
 EXPORT STATUS powerflow_disable_island(OBJECT *thisobj, int island_number) {
   // Fault check object link
   fault_check *fltyobj =
-      /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(fault_check_object);
+      object_data<fault_check>(fault_check_object);
 
   // Call the function
   return fltyobj->disable_island(island_number);
@@ -2696,7 +2705,7 @@ EXPORT STATUS powerflow_rescan_topo(OBJECT *thisobj,
                                     int bus_that_called_reset) {
   // Fault check object link
   fault_check *fltyobj =
-      /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(fault_check_object);
+      object_data<fault_check>(fault_check_object);
 
   // Call the function
   return fltyobj->rescan_topology(bus_that_called_reset);

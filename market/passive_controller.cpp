@@ -265,13 +265,13 @@ void passive_controller::fetch_double(double **prop, const char *name,
     char tname[32];
     char *namestr = (hdr->name ? hdr->name : tname);
     char msg[256];
-    sprintf(tname, "passive_controller:%i", hdr->id);
+    snprintf(tname, sizeof(tname), "passive_controller:%i", hdr->id);
     if (*name == static_cast<char>(0))
-      sprintf(msg,
+      snprintf(msg, sizeof(msg),
               "%s: passive_controller unable to find property: name is nullptr",
               namestr);
     else
-      sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
+      snprintf(msg, sizeof(msg), "%s: passive_controller unable to find %s", namestr, name);
     throw(std::runtime_error(msg));
   }
 }
@@ -284,13 +284,13 @@ void passive_controller::fetch_int(int **prop, const char *name,
     char tname[32];
     char *namestr = (hdr->name ? hdr->name : tname);
     char msg[256];
-    sprintf(tname, "passive_controller:%i", hdr->id);
+    snprintf(tname, sizeof(tname), "passive_controller:%i", hdr->id);
     if (*name == static_cast<char>(0))
-      sprintf(msg,
+      snprintf(msg, sizeof(msg),
               "%s: passive_controller unable to find property: name is nullptr",
               namestr);
     else
-      sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
+      snprintf(msg, sizeof(msg), "%s: passive_controller unable to find %s", namestr, name);
     throw(std::runtime_error(msg));
   }
 }
@@ -481,7 +481,7 @@ int passive_controller::init(OBJECT *parent) {
       // get the rated power consumed by the parent
       fetch_double(&ratedPowerParent, "heating_element_capacity", parent);
       // cheating a little to get the unit of supervisor
-      market = /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(
+      market = object_data<supervisory_control>(
           observation_object);
     }
 
@@ -1790,7 +1790,7 @@ EXPORT int create_passive_controller(OBJECT **obj, OBJECT *parent) {
     *obj = gl_create_object(passive_controller::oclass);
     if (*obj != nullptr) {
       passive_controller *my =
-          /*OBJECTDATA(obj,<>)*/ object_data<passive_controller>(*obj);
+          object_data<passive_controller>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -1802,7 +1802,7 @@ EXPORT int create_passive_controller(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_passive_controller(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr) {
-      return /*OBJECTDATA(obj,<>)*/ object_data<passive_controller>(obj)->init(
+      return object_data<passive_controller>(obj)->init(
           parent);
     } else
       return 0;
@@ -1812,18 +1812,17 @@ EXPORT int init_passive_controller(OBJECT *obj, OBJECT *parent) {
 
 EXPORT int isa_passive_controller(OBJECT *obj, char *classname) {
   if (obj != 0 && classname != 0) {
-    return /*OBJECTDATA(obj,<>)*/ object_data<passive_controller>(obj)->isa(
+    return object_data<passive_controller>(obj)->isa(
         classname);
   } else {
     return 0;
   }
 }
 
-static TIMESTAMP sync_passive_controller_impl(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass) {
+static TIMESTAMP sync_passive_controller_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
   passive_controller *my =
-      /*OBJECTDATA(obj,<>)*/ object_data<passive_controller>(obj);
+      object_data<passive_controller>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:

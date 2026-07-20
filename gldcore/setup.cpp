@@ -128,13 +128,13 @@ static int edit_globals(void) {
                     var[sel]->prop);
     break;
   default:
-    // sprintf(status,"key=%d", key);
+    // snprintf(status, sizeof(status), "key=%d", key);
     break;
   }
   if (var[sel]->prop->access == PA_PUBLIC)
-    strcpy(status, "Hit <Return> to edit this variable.");
+    snprintf(status, sizeof(status), "Hit <Return> to edit this variable.");
   else
-    strcpy(status, "This variable cannot be changed.");
+    snprintf(status, sizeof(status), "This variable cannot be changed.");
 
   return key; // pass up for global input handling, 0 does nothing
 }
@@ -166,7 +166,7 @@ static void show_help(void) {
 }
 static bool do_quit(void) {
   char fname[1024];
-  sprintf(fname, "gridlabd-%s.conf", getenv("USER"));
+  snprintf(fname, sizeof(fname), "gridlabd-%s.conf", getenv("USER"));
   mvprintw(height, 0, "Save to '%s' (Y/N)? [Y]", fname);
   return true;
 }
@@ -186,7 +186,7 @@ SETUPGROUP group[] = {
 extern "C" int setup(int argc, char *argv[]) {
 #ifdef HAVE_CURSES
   if (!loadall(nullptr))
-    sprintf(status, "ERROR: %s", "unable to load configuration files");
+    snprintf(status, sizeof(status), "ERROR: %s", "unable to load configuration files");
 
   bool done = false;
   int tab = 0;

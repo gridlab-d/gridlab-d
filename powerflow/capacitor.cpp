@@ -2210,7 +2210,7 @@ EXPORT int create_capacitor(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(capacitor::oclass);
     if (*obj != nullptr) {
-      capacitor *my = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(*obj);
+      capacitor *my = object_data<capacitor>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -2227,7 +2227,7 @@ EXPORT int create_capacitor(OBJECT **obj, OBJECT *parent) {
  */
 EXPORT int init_capacitor(OBJECT *obj) {
   try {
-    capacitor *my = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
+    capacitor *my = object_data<capacitor>(obj);
     return my->init(obj->parent);
   }
   INIT_CATCHALL(capacitor);
@@ -2242,10 +2242,9 @@ EXPORT int init_capacitor(OBJECT *obj) {
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-static TIMESTAMP sync_capacitor_impl(OBJECT *obj, TIMESTAMP t0,
-                                     PASSCONFIG pass) {
+static TIMESTAMP sync_capacitor_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   try {
-    capacitor *pObj = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
+    capacitor *pObj = object_data<capacitor>(obj);
     TIMESTAMP t1 = TS_NEVER;
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -2269,7 +2268,6 @@ extern "C" MODULE_API TIMESTAMP sync_capacitor(OBJECT *obj, TIMESTAMP t0,
   return sync_capacitor_impl(obj, t0, pass);
 }
 #else
-// variadic
 extern "C" MODULE_API TIMESTAMP sync_capacitor(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
@@ -2288,9 +2286,23 @@ extern "C" MODULE_API TIMESTAMP sync_capacitor(OBJECT *obj, ...) {
  *
  * @return 0 if obj is a subtype of this class
  */
-EXPORT int isa_capacitor(OBJECT *obj, char *classname) {
-  return /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj)->isa(classname);
+EXPORT int isa_capacitor_impl(OBJECT *obj, char *classname) {
+  return object_data<capacitor>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_capacitor(OBJECT *obj, char *classname) {
+  return isa_capacitor_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_capacitor(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_capacitor_impl(obj, classsname);
+}
+#endif
 
 // Deltamode export
 EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj,
@@ -2298,7 +2310,7 @@ EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj,
                                             unsigned long dt,
                                             unsigned int iteration_count_val,
                                             bool interupdate_pos) {
-  capacitor *my = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
+  capacitor *my = object_data<capacitor>(obj);
   SIMULATIONMODE status = SM_ERROR;
   try {
     status = my->inter_deltaupdate_capacitor(
@@ -2313,7 +2325,7 @@ EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj,
 
 // KML Export
 EXPORT int capacitor_kmldata(OBJECT *obj, int (*stream)(const char *, ...)) {
-  capacitor *n = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
+  capacitor *n = object_data<capacitor>(obj);
   int rv = 1;
 
   rv = n->kmldata(stream);

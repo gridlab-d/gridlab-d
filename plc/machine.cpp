@@ -101,7 +101,7 @@ int exec_cmd(char *format, ...) {
   char cmd[1024];
   va_list ptr;
   va_start(ptr, format);
-  vsprintf(cmd, format, ptr);
+  vsnprintf(cmd, sizeof(cmd), format, ptr);
   va_end(ptr);
   gl_debug("Running '%s'", cmd);
   return system(cmd);
@@ -163,9 +163,9 @@ int machine::compile(char *source) {
   if (getenv("PATH"))
     strcpy(oldpath, getenv("PATH"));
   if (strcmp(oldpath, "") == 0)
-    sprintf(newpath, "PATH=%s", path);
+    snprintf(newpath, sizeof(newpath), "PATH=%s", path);
   else
-    sprintf(newpath, "PATH=%s;%s", path, oldpath);
+    snprintf(newpath, sizeof(newpath), "PATH=%s;%s", path, oldpath);
   putenv(newpath);
 
   /* build the basename */
@@ -175,13 +175,13 @@ int machine::compile(char *source) {
   if (pDot != nullptr && pDot > pSlash)
     *pDot = '\0';
   basename = (pSlash == nullptr ? name : pSlash + 1);
-  sprintf(cfile, "%s/%s.c", tmpdir, basename);
-  sprintf(ofile, "%s/%s.o", tmpdir, basename);
+  snprintf(cfile, sizeof(cfile), "%s/%s.c", tmpdir, basename);
+  snprintf(ofile, sizeof(ofile), "%s/%s.o", tmpdir, basename);
 
 #ifdef _WIN32
-  sprintf(lfile, "%s/%s.dll", tmpdir, basename);
+  snprintf(lfile, sizeof(lfile), "%s/%s.dll", tmpdir, basename);
 #else
-  sprintf(lfile, "%s/lib%s.so", tmpdir, basename);
+  snprintf(lfile, sizeof(lfile), "%s/lib%s.so", tmpdir, basename);
 #endif
 
   /* build source code */

@@ -223,7 +223,7 @@ int central_dg_control::init(OBJECT *parent) {
     if (index >= battery_count) {
       break;
     }
-    battery_set[index] = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
+    battery_set[index] = object_data<battery>(obj);
     if (battery_set[index] == nullptr) {
       gl_error("Unable to map object as battery.");
       /*  TROUBLESHOOT
@@ -232,9 +232,7 @@ int central_dg_control::init(OBJECT *parent) {
       */
       return 0;
     }
-    inverter_set[inverter_filled_to + 1] =
-        /*OBJECTDATA(obj->parent, inverter)*/ object_data<inverter>(
-            obj->parent);
+    inverter_set[inverter_filled_to + 1] = object_data<inverter>(obj->parent);
     if (inverter_set[inverter_filled_to + 1] == nullptr) {
       gl_error("Unable to map object as inverter.");
       /*  TROUBLESHOOT
@@ -265,7 +263,7 @@ int central_dg_control::init(OBJECT *parent) {
     if (index >= solar_count) {
       break;
     }
-    solar_set[index] = /*OBJECTDATA(obj, solar)*/ object_data<solar>(obj);
+    solar_set[index] = object_data<solar>(obj);
     if (solar_set[index] == nullptr) {
       gl_error("Unable to map object as solar.");
       /*  TROUBLESHOOT
@@ -274,9 +272,7 @@ int central_dg_control::init(OBJECT *parent) {
       */
       return 0;
     }
-    inverter_set[inverter_filled_to + 1] =
-        /*OBJECTDATA(obj->parent, inverter)*/ object_data<inverter>(
-            obj->parent);
+    inverter_set[inverter_filled_to + 1] = object_data<inverter>(obj->parent);
     if (inverter_set[inverter_filled_to + 1] == nullptr) {
       gl_error("Unable to map object as inverter.");
       /*  TROUBLESHOOT

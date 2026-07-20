@@ -284,7 +284,7 @@ EXPORT int init_lights(OBJECT *obj)
 	INIT_CATCHALL(lights);
 }
 
-EXPORT int isa_lights(OBJECT *obj, char *classname)
+EXPORT int isa_lights_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<lights>(obj)->isa(classname);
@@ -292,6 +292,20 @@ EXPORT int isa_lights(OBJECT *obj, char *classname)
 		return 0;
 	}
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_lights(OBJECT *obj, char *classname) {
+  return isa_lights_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_lights(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_lights_impl(obj, classsname);
+}
+#endif
 
 static TIMESTAMP sync_lights_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
     try {

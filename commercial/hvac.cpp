@@ -40,8 +40,24 @@ EXPORT int create_hvac(OBJECT **obj, OBJECT *parent) {
   return 0;
 }
 
-EXPORT TIMESTAMP sync_hvac(OBJECT *obj, TIMESTAMP t0) {
-  TIMESTAMP t1 = /*OBJECTDATA(obj, hvac)*/ object_data<hvac>(obj)->sync(t0);
+static TIMESTAMP sync_hvac_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  TIMESTAMP t1 = object_data<hvac>(obj)->sync(t0);
   obj->clock = t0;
   return t1;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_hvac(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_hvac_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_hvac(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_hvac_impl(obj, t0, pass);
+}
+#endif

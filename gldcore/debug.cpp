@@ -248,7 +248,7 @@ static char *get_objname(OBJECT *obj) {
   static char buf[1024];
   if (obj->name)
     return obj->name;
-  sprintf(buf, "%s:%d", obj->oclass->name, obj->id);
+  snprintf(buf, sizeof(buf), "%s:%d", obj->oclass->name, obj->id);
   return buf;
 }
 
@@ -276,7 +276,7 @@ static STATUS exec_cmd(const char *format, ...) {
   char cmd[1024];
   va_list ptr;
   va_start(ptr, format);
-  vsprintf(cmd, format, ptr);
+  vsnprintf(cmd, sizeof(cmd), format, ptr);
   va_end(ptr);
   output_debug("Running '%s'", cmd);
   return system(cmd) == 0 ? SUCCESS : FAILED;
@@ -632,7 +632,7 @@ static void list_object(OBJECT *obj, PASSCONFIG pass) {
   if (list_details) {
     char valid_to[64] = "";
     convert_from_timestamp(obj->valid_to, valid_to, sizeof(valid_to));
-    sprintf(details, "%s %c%c%c %s/%s/%d ", valid_to,
+    snprintf(details, sizeof(details), "%s %c%c%c %s/%s/%d ", valid_to,
             obj->flags & OF_RECALC ? 'c' : '-',
             obj->flags & OF_RERANK ? 'r' : '-',
             obj->flags & OF_FOREIGN ? 'f' : '-', obj->oclass->module->name,

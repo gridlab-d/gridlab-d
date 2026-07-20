@@ -285,7 +285,7 @@ int exec_init()
 #if 0 /* isn't cooperating for strange reasons -mh */
 #ifdef _WIN32
 	glpathlen=strlen("GLPATH=");
-	sprintf(glpathvar, "GLPATH=");
+	snprintf(glpathvar, sizeof(glpathvar), "GLPATH=");
 	ExpandEnvironmentStrings(getenv("GLPATH"), glpathvar+glpathlen, (DWORD)(1024-glpathlen));
 #endif
 #endif
@@ -476,7 +476,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_directory)
 			}
 
 			/* create current checkpoint save filename */
-			sprintf(json_fn, "%s_%s", modelname_noext, "checkpoint.json");
+			snprintf(json_fn, sizeof(json_fn), "%s_%s", modelname_noext, "checkpoint.json");
 
 			const char *json_dir = (output_directory && strlen(output_directory) > 0) ? output_directory : ".";
 			/* check if output directory exists */
@@ -1080,9 +1080,9 @@ static void ss_do_object_sync(int thread, void *item)
                 convert_from_timestamp(this_t < 0 ? -this_t : this_t, syncdate,
                                        sizeof(syncdate));
                 if (obj->name == nullptr)
-                    sprintf(objname, "%s:%d", obj->oclass->name, obj->id);
+                    snprintf(objname, sizeof(objname), "%s:%d", obj->oclass->name, obj->id);
                 else
-                    strcpy(objname, obj->name);
+                    snprintf(objname, sizeof(objname), "%s", obj->name);
                 fprintf(fp, "%s,%s,%d,%d,%s,%s\n", lastdate, passname.c_str(),
                         global_iteration_limit - iteration_counter, thread, objname,
                         syncdate);

@@ -182,7 +182,7 @@ int main(int argc,     /**< the number entries on command-line argument list \p 
     for (i = 0; i < argc; i++)
     {
         if (pos < (int)(sizeof(global_command_line) - strlen(argv[i])))
-            pos += sprintf(global_command_line + pos, "%s%s", pos > 0 ? " " : "", argv[i]);
+            pos += snprintf(global_command_line + pos, sizeof(global_command_line) - pos, "%s%s", pos > 0 ? " " : "", argv[i]);
     }
 
     /* main initialization */

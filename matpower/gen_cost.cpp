@@ -167,8 +167,7 @@ static TIMESTAMP sync_gen_cost_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_gen_cost(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_gen_cost(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_gen_cost_impl(obj, t1, pass);
 }
 #else

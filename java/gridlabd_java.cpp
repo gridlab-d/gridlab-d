@@ -94,8 +94,8 @@ JavaVM *init_jvm() {
   if (sizeof(void *) == sizeof(int64))
     p = PT_int64;
   char cpath[1025], lpath[1025];
-  sprintf(cpath, "-Djava.class.path=%s", get_classpath());
-  sprintf(lpath, "-Djava.library.path=%s", get_libpath());
+  snprintf(cpath, sizeof(cpath), "-Djava.class.path=%s", get_classpath());
+  snprintf(lpath, sizeof(lpath), "-Djava.library.path=%s", get_libpath());
   options[0].optionString = cpath;
   options[1].optionString = lpath;
   // options[0].optionString = "-Djava.class.path=Win32/Debug/";

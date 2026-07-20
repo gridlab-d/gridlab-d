@@ -3992,8 +3992,7 @@ static TIMESTAMP sync_load_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_load(OBJECT *obj, TIMESTAMP t0,
-                                          PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_load(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_load_impl(obj, t0, pass);
 }
 #else
@@ -4007,9 +4006,24 @@ extern "C" MODULE_API TIMESTAMP sync_load(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_load(OBJECT *obj, char *classname) {
+EXPORT int isa_load_impl(OBJECT *obj, char *classname) {
   return object_data<load>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_load(OBJECT *obj, char *classname) {
+  return isa_load_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API int isa_load(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_load_impl(obj, classsname);
+}
+#endif
+
 
 EXPORT int notify_load(OBJECT *obj, int update_mode, PROPERTY *prop,
                        char *value) {

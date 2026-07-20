@@ -7912,7 +7912,7 @@ EXPORT int create_inverter_dyn(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_inverter_dyn(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj)->init(
+      return object_data<inverter_dyn>(obj)->init(
           parent);
     else
       return 0;
@@ -7920,10 +7920,9 @@ EXPORT int init_inverter_dyn(OBJECT *obj, OBJECT *parent) {
   INIT_CATCHALL(inverter_dyn);
 }
 
-static TIMESTAMP sync_inverter_dyn_impl(OBJECT *obj, TIMESTAMP t1,
-                                        PASSCONFIG pass) {
+static TIMESTAMP sync_inverter_dyn_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  inverter_dyn *my = /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj);
+  inverter_dyn *my = object_data<inverter_dyn>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -7962,13 +7961,27 @@ extern "C" MODULE_API TIMESTAMP sync_inverter_dyn(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_inverter_dyn(OBJECT *obj, char *classname) {
-  return /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj)->isa(classname);
+EXPORT int isa_inverter_dyn_impl(OBJECT *obj, char *classname) {
+  return object_data<inverter_dyn>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_inverter_dyn(OBJECT *obj, char *classname) {
+  return isa_inverter_dyn_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_inverter_dyn(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_inverter_dyn_impl(obj, classsname);
+}
+#endif
 
 EXPORT STATUS preupdate_inverter_dyn(OBJECT *obj, TIMESTAMP t0,
                                      unsigned int64 delta_time) {
-  inverter_dyn *my = /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj);
+  inverter_dyn *my = object_data<inverter_dyn>(obj);
   STATUS status_output = FAILED;
 
   try {
@@ -7984,7 +7997,7 @@ EXPORT STATUS preupdate_inverter_dyn(OBJECT *obj, TIMESTAMP t0,
 EXPORT SIMULATIONMODE
 interupdate_inverter_dyn(OBJECT *obj, unsigned int64 delta_time,
                          unsigned long dt, unsigned int iteration_count_val) {
-  inverter_dyn *my = /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj);
+  inverter_dyn *my = object_data<inverter_dyn>(obj);
   SIMULATIONMODE status = SM_ERROR;
   try {
     status = my->inter_deltaupdate(delta_time, dt, iteration_count_val);
@@ -8019,7 +8032,7 @@ EXPORT STATUS inverter_dyn_NR_current_injection_update(
   STATUS temp_status;
 
   // Map the node
-  inverter_dyn *my = /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj);
+  inverter_dyn *my = object_data<inverter_dyn>(obj);
 
   // Call the function, where we can update the IGenerated injection
   temp_status = my->updateCurrInjection(iteration_count, converged_failure);
@@ -8034,8 +8047,7 @@ EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj,
   STATUS temp_status;
 
   // Map us
-  inverter_dyn *this_inv =
-      /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(this_obj);
+  inverter_dyn *this_inv = object_data<inverter_dyn>(this_obj);
 
   // Call the function to register us
   temp_status = this_inv->DC_object_register(DC_obj);

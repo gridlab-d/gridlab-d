@@ -29,8 +29,7 @@
 
 char *version_copyright(void) {
   static char buffer[1024];
-  sprintf(
-      buffer,
+  snprintf(buffer, sizeof(buffer),
       "Copyright (C) 2004-%d\nBattelle Memorial Institute\nAll Rights Reserved",
       REV_YEAR);
   return buffer;

@@ -472,7 +472,7 @@ EXPORT int init_network(OBJECT *obj) {
   }
 }
 
-EXPORT int isa_network(OBJECT *obj, char *classname) {
+EXPORT int isa_network_impl(OBJECT *obj, char *classname) {
   if (obj != 0 && classname != 0) {
     return OBJECTDATA(obj, network)->isa(classname);
   } else {
@@ -480,7 +480,21 @@ EXPORT int isa_network(OBJECT *obj, char *classname) {
   }
 }
 
-EXPORT TIMESTAMP sync_network(OBJECT *obj, TIMESTAMP t1) {
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_network(OBJECT *obj, char *classname) {
+  return isa_network_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_network(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_network_impl(obj, classsname);
+}
+#endif
+
+static TIMESTAMP sync_network_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   network *my = OBJECTDATA(obj, network);
   try {
     TIMESTAMP t2 = my->sync(obj->clock, t1);
@@ -498,6 +512,21 @@ EXPORT TIMESTAMP sync_network(OBJECT *obj, TIMESTAMP t1) {
     return 0;
   }
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_network(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  return sync_network_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_network(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_network_impl(obj, t0, pass);
+}
+#endif
 
 EXPORT TIMESTAMP commit_network(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) {
   network *my = OBJECTDATA(obj, network);

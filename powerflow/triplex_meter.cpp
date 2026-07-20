@@ -1212,9 +1212,23 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int isa_triplex_meter(OBJECT *obj, char *classname) {
+EXPORT int isa_triplex_meter_impl(OBJECT *obj, char *classname) {
   return object_data<triplex_meter>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_triplex_meter(OBJECT *obj, char *classname) {
+  return isa_triplex_meter_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_triplex_meter(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_triplex_meter_impl(obj, classsname);
+}
+#endif
 
 // EXPORT int create_triplex_meter(OBJECT **obj, OBJECT *parent)
 //{

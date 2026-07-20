@@ -545,7 +545,7 @@ static const char *GetLastErrorMsg(void)
         *p = ' ';
     while ((p = strchr((char *)lpMsgBuf, '\r')) != nullptr)
         *p = ' ';
-    sprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw);
+    snprintf(szBuf, sizeof(szBuf), "%s (error code %d)", lpMsgBuf, dw);
 
     LocalFree(lpMsgBuf);
     return szBuf;
@@ -554,7 +554,7 @@ static DIR *opendir(const char *dirname)
 {
     WIN32_FIND_DATA fd;
     char search[MAX_PATH];
-    sprintf(search, "%s/*", dirname);
+    snprintf(search, sizeof(search), "%s/*", dirname);
     HANDLE dh = FindFirstFile(search, &fd);
     if (dh == INVALID_HANDLE_VALUE)
     {
@@ -949,7 +949,7 @@ static bool destroy_dir(char *name)
         if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
         {
             char file[1024];
-            sprintf(file, "%s/%s", name, dp->d_name);
+            snprintf(file, sizeof(file), "%s/%s", name, dp->d_name);
             if (unlink(file) != 0)
             {
                 output_error("destroy_dir(char *name='%s'): unlink('%s') returned '%s'", name, dp->d_name, strerror(errno));
@@ -1038,7 +1038,7 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
     // Define the output capture file path - GridLAB-D writes errors to
     // gridlabd.err when --redirect all is used
     char output_capture_file[1024];
-    sprintf(output_capture_file, "%s/gridlabd.out", dir);
+    snprintf(output_capture_file, sizeof(output_capture_file), "%s/gridlabd.out", dir);
 
     char cwd[1024];
     char_result = getcwd(cwd, sizeof(cwd));
@@ -1069,7 +1069,7 @@ static counters run_test(char *file, double *elapsed_time = nullptr)
         // std::cerr << "Thread " << std::hash<std::thread::id>{}(std::this_thread::get_id()) << "using directory " << dir << std::endl;
     }
     char out[1024];
-    sprintf(out, "%s/%s%s", dir, name, fileExtension.c_str());
+    snprintf(out, sizeof(out), "%s/%s%s", dir, name, fileExtension.c_str());
     if (!copyfile(file, out))
     {
         output_error("run_test(char *file='%s'): unable to copy to test folder %s\n** %s", file, dir);
@@ -1453,7 +1453,7 @@ static void *(run_test_proc)(int arg) // *arg)
             result_code[item->id].store(code);
 
             char buffer[2048];
-            sprintf(buffer, "%s%s%6.1f%s%s", flags[code], report_col, dt, report_col, item->name);
+            snprintf(buffer, sizeof(buffer), "%s%s%6.1f%s%s", flags[code], report_col, dt, report_col, item->name);
             report_data("%s", buffer);
             report_newrow();
         }
@@ -1468,7 +1468,7 @@ static size_t process_dir(const char *path, bool runglms = false)
 {
     // check for block file
     char blockfile[1024];
-    sprintf(blockfile, "%s/validate.no", path);
+    snprintf(blockfile, sizeof(blockfile), "%s/validate.no", path);
     if (access(blockfile, 00) == 0 && !global_isdefined("force_validate"))
     {
         output_debug("processing directory '%s' blocked by presence of 'validate.no' file", path);
@@ -1491,7 +1491,7 @@ static size_t process_dir(const char *path, bool runglms = false)
     while ((dp = readdir(dirp)) != nullptr)
     {
         char item[1024];
-        size_t len = sprintf(item, "%s/%s", path, dp->d_name);
+        size_t len = snprintf(item, sizeof(item), "%s/%s", path, dp->d_name);
         char *ext = strrchr(item, '.');
         if (dp->d_name[0] == '.')
             continue; // ignore anything that starts with a dot

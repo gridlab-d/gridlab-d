@@ -62,7 +62,7 @@ g_assert::g_assert(MODULE *module) {
             "the upper bound to compare with for interval tests",
             nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw std::runtime_error(msg);
     }
 

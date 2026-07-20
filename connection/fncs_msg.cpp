@@ -1672,7 +1672,7 @@ extern "C" void outgoing_fncs_function(char *from, char *to, char *funcName,
     // TODO: deliver message to fncs
     stringstream payload;
     char buffer[sizeof(len)];
-    sprintf(buffer, "%ld", len);
+    snprintf(buffer, sizeof(buffer), "%ld", len);
     payload << "\"{\"from\":\"" << from << "\", " << "\"to\":\"" << to << "\", "
             << "\"function\":\"" << funcName << "\", " << "\"data\":\""
             << message << "\", " << "\"data length\":\"" << buffer << "\"}\"";

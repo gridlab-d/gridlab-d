@@ -8,7 +8,6 @@
 
 #include "generators.h"
 
-EXPORT int isa_sync_ctrl(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *, unsigned int64,
                                             unsigned long, unsigned int);
 

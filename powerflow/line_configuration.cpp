@@ -104,7 +104,7 @@ EXPORT int create_line_configuration(OBJECT **obj, OBJECT *parent) {
     *obj = gl_create_object(line_configuration::oclass);
     if (*obj != nullptr) {
       line_configuration *my =
-          /*OBJECTDATA(obj,<>)*/ object_data<line_configuration>(*obj);
+          object_data<line_configuration>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -112,8 +112,7 @@ EXPORT int create_line_configuration(OBJECT **obj, OBJECT *parent) {
   }
   CREATE_CATCHALL(line_configuration);
 }
-static TIMESTAMP sync_line_configuration_impl(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass) {
+static TIMESTAMP sync_line_configuration_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return TS_NEVER;
 }
 
@@ -134,8 +133,21 @@ extern "C" MODULE_API TIMESTAMP sync_line_configuration(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_line_configuration(OBJECT *obj, char *classname) {
+EXPORT int isa_line_configuration_impl(OBJECT *obj, char *classname) {
   return strcmp(classname, "line_configuration") == 0;
 }
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_line_configuration(OBJECT *obj, char *classname) {
+  return isa_line_configuration_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_line_configuration(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_line_configuration_impl(obj, classsname);
+}
+#endif
 
 /**@}**/

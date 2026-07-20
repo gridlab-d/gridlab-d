@@ -500,22 +500,22 @@ EXPORT int logfile_extra(OBJECT *myhdr, char *BufferArray) {
 
   // See what it is and print appropriately
   if (time_interval_val == 1.0) // Seconds
-    sprintf(BufferArray,
+    snprintf(BufferArray, sizeof(BufferArray),
             "1366 metrics based around 1-second base (outage-seconds)\n\n");
   else if (time_interval_val == 60.0) // Minutes
-    sprintf(BufferArray,
+    snprintf(BufferArray, sizeof(BufferArray),
             "1366 metrics based around 1-minute base (outage-minutes)\n\n");
   else if (time_interval_val == 3600.0) // Hours
-    sprintf(BufferArray,
+    snprintf(BufferArray, sizeof(BufferArray),
             "1366 metrics based around 1-hour base (outage-hours)\n\n");
   else if (time_interval_val == 86400.0) // Days
-    sprintf(BufferArray,
+    snprintf(BufferArray, sizeof(BufferArray),
             "1366 metrics based around 1-day base (outage-days)\n\n");
   else if (time_interval_val == 31536000.0) // Years
-    sprintf(BufferArray,
+    snprintf(BufferArray, sizeof(BufferArray),
             "1366 metrics based around 1-year base (outage-years)\n\n");
   else // Some "odd" interval - represent in seconds
-    sprintf(BufferArray, "1366 metrics uses time base of %.0f seconds\n\n",
+    snprintf(BufferArray, sizeof(BufferArray), "1366 metrics uses time base of %.0f seconds\n\n",
             time_interval_val);
 
   return 1; // Always succeeds
@@ -582,8 +582,22 @@ extern "C" MODULE_API TIMESTAMP sync_power_metrics(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_power_metrics(OBJECT *obj, char *classname) {
+EXPORT int isa_power_metrics_impl(OBJECT *obj, char *classname) {
   return object_data<power_metrics>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_power_metrics(OBJECT *obj, char *classname) {
+  return isa_power_metrics_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_power_metrics(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_power_metrics_impl(obj, classsname);
+}
+#endif
 
 /**@}**/

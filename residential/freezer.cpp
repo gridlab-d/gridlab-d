@@ -363,7 +363,7 @@ EXPORT int init_freezer(OBJECT *obj) {
 	INIT_CATCHALL(freezer);
 }
 
-EXPORT int isa_freezer(OBJECT *obj, char *classname)
+EXPORT int isa_freezer_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<freezer>(obj)->isa(classname);
@@ -372,8 +372,22 @@ EXPORT int isa_freezer(OBJECT *obj, char *classname)
 	}
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_freezer(OBJECT *obj, char *classname) {
+  return isa_freezer_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_freezer(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_freezer_impl(obj, classsname);
+}
+#endif
+
 /*	determine if we're turning the motor on or off and nothing else. */
-EXPORT TIMESTAMP plc_freezer(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP plc_freezer_impl(OBJECT *obj, TIMESTAMP t0)
 {
 	// this will be disabled if a PLC object is attached to the freezer
 
@@ -382,5 +396,21 @@ EXPORT TIMESTAMP plc_freezer(OBJECT *obj, TIMESTAMP t0)
 
 	return TS_NEVER;  
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP plc_freezer(OBJECT *obj, TIMESTAMP t0)
+{
+    return plc_freezer_impl(obj, t0);
+}
+#else
+extern "C" MODULE_API TIMESTAMP plc_freezer(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    va_end(args);
+    return plc_freezer_impl(obj, t0);
+}
+#endif
 
 /**@}**/

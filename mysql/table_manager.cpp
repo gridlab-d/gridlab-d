@@ -20,7 +20,7 @@ table_manager::table_manager(database *db_in, int threshold_in, int column_in,
                              bool single_table_mode)
     : query_engine(db_in, threshold_in, column_in) {
   char *table_temp_name = new char[1024];
-  sprintf(table_temp_name, "%s_%d", table_name_in->get_string(),
+  snprintf(table_temp_name, sizeof(table_temp_name), "%s_%d", table_name_in->get_string(),
           table_index_in);
   table_index = table_index_in;
   table_root = table_name_in;

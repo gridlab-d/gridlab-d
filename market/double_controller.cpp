@@ -82,8 +82,8 @@ double_controller::double_controller(MODULE *module) {
 
 int double_controller::create() {
   // memset(this, 0, sizeof(double_controller));
-  sprintf(avg_target, "avg24");
-  sprintf(std_target, "std24");
+  snprintf(avg_target, sizeof(avg_target), "avg24");
+  snprintf(std_target, sizeof(std_target), "std24");
   controller_bid.rebid = false;
   controller_bid.bid_accepted = true;
   return 1;
@@ -119,7 +119,7 @@ void double_controller::fetch(double **value, char *name, OBJECT *parent,
   if (*prop == nullptr) {
     char tname[32];
     char *namestr = (hdr->name ? hdr->name : tname);
-    sprintf(tname, "double_controller:%i", hdr->id);
+    snprintf(tname, sizeof(tname), "double_controller:%i", hdr->id);
     GL_THROW("%s: double_controller unable to find property \'%s\'", namestr,
              name);
   } else {
@@ -127,7 +127,7 @@ void double_controller::fetch(double **value, char *name, OBJECT *parent,
     if (*value == 0) {
       char tname[32];
       char *namestr = (hdr->name ? hdr->name : tname);
-      sprintf(tname, "double_controller:%i", hdr->id);
+      snprintf(tname, sizeof(tname), "double_controller:%i", hdr->id);
       GL_THROW("%s: property \'%s\' is not a double", namestr, name);
     }
   }
@@ -143,7 +143,7 @@ int double_controller::init(OBJECT *parent) {
   char tname[32];
   char *namestr = (hdr->name ? hdr->name : tname);
 
-  sprintf(tname, "double_controller:%i", hdr->id);
+  snprintf(tname, sizeof(tname), "double_controller:%i", hdr->id);
 
   cheat();
 
@@ -590,7 +590,7 @@ EXPORT int create_double_controller(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_double_controller(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr) {
-      return /*OBJECTDATA(obj,<>)*/ object_data<double_controller>(obj)->init(
+      return object_data<double_controller>(obj)->init(
           parent);
     } else
       return 0;
@@ -600,18 +600,17 @@ EXPORT int init_double_controller(OBJECT *obj, OBJECT *parent) {
 
 EXPORT int isa_double_controller(OBJECT *obj, char *classname) {
   if (obj != 0 && classname != 0) {
-    return /*OBJECTDATA(obj,<>)*/ object_data<double_controller>(obj)->isa(
+    return object_data<double_controller>(obj)->isa(
         classname);
   } else {
     return 0;
   }
 }
 
-static TIMESTAMP sync_double_controller_impl(OBJECT *obj, TIMESTAMP t1,
-                                             PASSCONFIG pass) {
+static TIMESTAMP sync_double_controller_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
   double_controller *my =
-      /*OBJECTDATA(obj,<>)*/ object_data<double_controller>(obj);
+      object_data<double_controller>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:

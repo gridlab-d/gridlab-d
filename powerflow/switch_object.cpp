@@ -2304,10 +2304,24 @@ extern "C" MODULE_API TIMESTAMP sync_switch(OBJECT *obj, ...)
 }
 #endif
 
-EXPORT int isa_switch(OBJECT *obj, char *classname)
+EXPORT int isa_switch_impl(OBJECT *obj, char *classname)
 {
     return object_data<switch_object>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_switch(OBJECT *obj, char *classname) {
+  return isa_switch_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_switch(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_switch_impl(obj, classsname);
+}
+#endif
 
 // Function to change switch states
 EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change,

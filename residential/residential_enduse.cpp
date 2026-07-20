@@ -175,7 +175,7 @@ EXPORT int init_residential_enduse(OBJECT *obj)
     INIT_CATCHALL(residential_enduse);
 }
 
-EXPORT int isa_residential_enduse(OBJECT *obj, char *classname)
+EXPORT int isa_residential_enduse_impl(OBJECT *obj, char *classname)
 {
     if (obj != 0 && classname != 0)
     {
@@ -186,6 +186,20 @@ EXPORT int isa_residential_enduse(OBJECT *obj, char *classname)
         return 0;
     }
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_residential_enduse(OBJECT *obj, char *classname) {
+  return isa_residential_enduse_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_residential_enduse(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_residential_enduse_impl(obj, classsname);
+}
+#endif
 
 static TIMESTAMP sync_residential_enduse_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
  {

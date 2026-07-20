@@ -2595,7 +2595,7 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj)->init(parent);
+			return object_data<battery>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -2605,7 +2605,7 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 static TIMESTAMP sync_battery_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	battery *my = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
+	battery *my = object_data<battery>(obj);
 	try
 	{
 		switch (pass)
@@ -2649,7 +2649,7 @@ extern "C" MODULE_API TIMESTAMP sync_battery(OBJECT *object, ...)
 
 EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
-	battery *my = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
+	battery *my = object_data<battery>(obj);
 	STATUS status_output = FAILED;
 
 	try
@@ -2666,7 +2666,7 @@ EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_
 
 EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	battery *my = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
+	battery *my = object_data<battery>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -2682,7 +2682,7 @@ EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time
 
 EXPORT STATUS postupdate_battery(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	battery *my = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
+	battery *my = object_data<battery>(obj);
 	STATUS status = FAILED;
 	try
 	{

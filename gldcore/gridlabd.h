@@ -328,7 +328,7 @@ inline void GL_THROW(char *format, ...)
 	static char buffer[1024];
 	va_list ptr;
 	va_start(ptr, format);
-	vsprintf(buffer, format, ptr);
+	vsnprintf(buffer, sizeof(buffer), format, ptr);
 	va_end(ptr);
 	throw std::runtime_error(buffer);
 }
@@ -338,7 +338,7 @@ inline void GL_THROW(const char *format, ...)
 	static char buffer[1024];
 	va_list ptr;
 	va_start(ptr, format);
-	vsprintf(buffer, format, ptr);
+	vsnprintf(buffer, sizeof(buffer), format, ptr);
 	va_end(ptr);
 	throw std::runtime_error(buffer);
 }
@@ -614,7 +614,7 @@ inline bool gl_object_isa(OBJECT *obj, const char *type, const char *modname = n
   // Prefer the per-class ISA first (it works in your LLDB probe)
   if (obj->oclass && obj->oclass->isa)
     is_type = (obj->oclass->isa(obj, const_cast<char *>(type)) != 0);
-
+    
   // If that didn’t match, try the core callback ancestry search
   if (!is_type && callback && callback->object_isa)
     is_type = ((*callback->object_isa)(obj, type) != 0);
@@ -1253,9 +1253,9 @@ inline char *gl_name(OBJECT *my, char *buffer, size_t size)
 	if (my == NULL || buffer == NULL)
 		return NULL;
 	if (my->name == NULL)
-		sprintf(temp, "%s:%d", my->oclass->name, my->id);
+		snprintf(temp, sizeof(temp), "%s:%d", my->oclass->name, my->id);
 	else
-		sprintf(temp, "%s", my->name);
+		snprintf(temp, sizeof(temp), "%s", my->name);
 	if (size < strlen(temp))
 		return NULL;
 	strcpy(buffer, temp);
@@ -2608,7 +2608,7 @@ public: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s: ", get_name()), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s: ", get_name()), sizeof(buf) - snprintf(buf, sizeof(buf), "%s: ", get_name()), msg, ptr);
 		va_end(ptr);
 		throw (const char *)buf;
 	};
@@ -2617,7 +2617,7 @@ public: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s: ", get_name()), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s: ", get_name()), sizeof(buf) - snprintf(buf, sizeof(buf), "%s: ", get_name()), msg, ptr);
 		va_end(ptr);
 		gl_error("%s", buf);
 	};
@@ -2626,7 +2626,7 @@ public: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s: ", get_name()), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s: ", get_name()), sizeof(buf) - snprintf(buf, sizeof(buf), "%s: ", get_name()), msg, ptr);
 		va_end(ptr);
 		gl_warning("%s", buf);
 	};
@@ -2635,7 +2635,7 @@ public: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s: ", get_name()), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s: ", get_name()), sizeof(buf) - snprintf(buf, sizeof(buf), "%s: ", get_name()), msg, ptr);
 		va_end(ptr);
 		gl_debug("%s", buf);
 	};
@@ -2726,7 +2726,7 @@ public: // constructors/casts
 			return;
 		}
 		char1024 vn;
-		sprintf(vn, "%s::%s", m, n);
+		snprintf(vn, sizeof(vn), "%s::%s", m, n);
 		GLOBALVAR *v = callback->global.find(vn.get_string());
 		pstruct.prop = (v ? v->prop : NULL);
 	};
@@ -2743,11 +2743,11 @@ public: // read accessors
 	{
 		if (pstruct.part[0] != '\0')
 		{
-			sprintf(return_val, "%s_%s", pstruct.prop->name, pstruct.part);
+			snprintf(return_val, sizeof(return_val), "%s_%s", pstruct.prop->name, pstruct.part);
 		}
 		else
 		{
-			sprintf(return_val, "%s", pstruct.prop->name);
+			snprintf(return_val, sizeof(return_val), "%s", pstruct.prop->name);
 		}
 		return return_val;
 	};
@@ -3050,7 +3050,7 @@ private: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s.%s: ", /*OBJECTDATA(obj, gld_object)*/ object_data<gld_object>(obj)->get_name(), pstruct.prop->name), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s.%s: ", object_data<gld_object>(obj)->get_name(), pstruct.prop->name), sizeof(buf) - snprintf(buf, sizeof(buf), "%s.%s: ", object_data<gld_object>(obj)->get_name(), pstruct.prop->name), msg, ptr);
 		va_end(ptr);
 		throw (const char *)buf;
 	};
@@ -3234,7 +3234,7 @@ public:
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf, msg, ptr);
+		vsnprintf(buf, sizeof(buf), msg, ptr);
 		va_end(ptr);
 		throw (const char *)buf;
 	};
@@ -3453,8 +3453,7 @@ public:
 // Core impl generator (mimics your expansion)
 // ------------------------------
 #define EXPORT_SYNC_IMPL_C(NAME, CLASS)                                        \
-  static TIMESTAMP sync_##NAME##_impl(OBJECT *object, TIMESTAMP t0,            \
-                                      PASSCONFIG pass)                         \
+  static TIMESTAMP sync_##NAME##_impl(OBJECT *object, TIMESTAMP t0, PASSCONFIG pass) \
   {                                                                            \
     try                                                                        \
     {                                                                          \
@@ -3507,8 +3506,7 @@ public:
 #ifndef __APPLE__
 
 #define EXPORT_SYNC_C(NAME, CLASS)                                          \
-  extern "C" MODULE_API TIMESTAMP sync_##NAME(OBJECT *object, TIMESTAMP t0, \
-                                              PASSCONFIG pass)              \
+  extern "C" MODULE_API TIMESTAMP sync_##NAME(OBJECT *object, TIMESTAMP t0, PASSCONFIG pass) \
   {                                                                         \
     return sync_##NAME##_impl(object, t0, pass);                            \
   }
@@ -3560,10 +3558,10 @@ public:
 #define EXPORT_SYNC(NAME) EXPORT_SYNC2(NAME, NAME)
 
 #define EXPORT_ISA_C(X, C)                                                                         \
-	EXPORT int isa_##X(OBJECT *obj, char *name)                                                    \
-	{                                                                                              \
-		return (obj != 0 && name != 0) ? /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->isa(name) : 0; \
-	}
+ 	EXPORT int isa_##X(OBJECT *obj, char *name)                                                    \
+ 	{                                                                                              \
+ 		return (obj != 0 && name != 0) ? /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->isa(name) : 0; \
+ 	}
 /// Implement class isa export
 #define EXPORT_ISA(X) EXPORT_ISA_C(X, X)
 
@@ -3683,10 +3681,10 @@ private:
 		static char buffer[1024] = "";
 		va_list ptr;
 		va_start(ptr, fmt);
-		int len = vsprintf(buffer, fmt, ptr);
+		int len = vsnprintf(buffer, sizeof(buffer), fmt, ptr);
 		va_end(ptr);
 		if (errno != 0)
-			sprintf(buffer + len, " (%s)", strerror(errno));
+			snprintf(buffer + len, sizeof(buffer) - len, " (%s)", strerror(errno));
 		throw (const char *)buffer;
 	};
 

@@ -533,8 +533,7 @@ static TIMESTAMP sync_schedule_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_schedule(OBJECT *obj, TIMESTAMP t0,
-                                              PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_schedule(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_schedule_impl(obj, t0, pass);
 }
 #else

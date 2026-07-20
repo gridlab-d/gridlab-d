@@ -69,8 +69,7 @@ int init_recorder(OBJECT *obj);
 #ifndef __APPLE__
 extern "C" MODULE_API TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0,
                                             PASSCONFIG pass);
-extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0,
-                                              PASSCONFIG pass);
+extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
 #else
 extern "C" MODULE_API TIMESTAMP sync_player(OBJECT *obj, ...);
 extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, ...);
@@ -239,9 +238,9 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]) {
 
   /* globals for the tape module*/
 #ifdef _WIN32
-  sprintf(tape_gnuplot_path, "c:/Program Files/GnuPlot/bin/wgnuplot.exe");
+  snprintf(tape_gnuplot_path, sizeof(tape_gnuplot_path), "c:/Program Files/GnuPlot/bin/wgnuplot.exe");
 #else
-  sprintf(tape_gnuplot_path, "/usr/bin/gnuplot");
+  snprintf(tape_gnuplot_path, sizeof(tape_gnuplot_path), "/usr/bin/gnuplot");
 #endif
   gl_global_create(const_cast<char *>("tape::gnuplot_path"), PT_char1024,
                    &tape_gnuplot_path, nullptr);
@@ -570,24 +569,24 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0,
           gl_global_getvar(const_cast<char *>("dateformat"), global_dateformat,
                            sizeof(global_dateformat));
         if (strcmp(global_dateformat, "ISO") == 0)
-          sprintf(recorder_timestamp, "%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",
+          snprintf(recorder_timestamp, sizeof(recorder_timestamp), "%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",
                   rec_date_time.year, rec_date_time.month, rec_date_time.day,
                   rec_date_time.hour, rec_date_time.minute,
                   rec_date_time.second, rec_microseconds, rec_date_time.tz);
         else if (strcmp(global_dateformat, "US") == 0)
-          sprintf(recorder_timestamp, "%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",
+          snprintf(recorder_timestamp, sizeof(recorder_timestamp), "%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",
                   rec_date_time.month, rec_date_time.day, rec_date_time.year,
                   rec_date_time.hour, rec_date_time.minute,
                   rec_date_time.second, rec_microseconds, rec_date_time.tz);
         else if (strcmp(global_dateformat, "EURO") == 0)
-          sprintf(recorder_timestamp, "%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",
+          snprintf(recorder_timestamp, sizeof(recorder_timestamp), "%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",
                   rec_date_time.day, rec_date_time.month, rec_date_time.year,
                   rec_date_time.hour, rec_date_time.minute,
                   rec_date_time.second, rec_microseconds, rec_date_time.tz);
         else
-          sprintf(recorder_timestamp, "%.09f", recorder_delta_clock);
+          snprintf(recorder_timestamp, sizeof(recorder_timestamp), "%.09f", recorder_delta_clock);
       } else
-        sprintf(recorder_timestamp, "%.09f", recorder_delta_clock);
+        snprintf(recorder_timestamp, sizeof(recorder_timestamp), "%.09f", recorder_delta_clock);
 
       /* Initialize loop */
       index_item = delta_tape_objects;
@@ -846,27 +845,27 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt) {
             gl_global_getvar(const_cast<char *>("dateformat"),
                              global_dateformat, sizeof(global_dateformat));
           if (strcmp(global_dateformat, "ISO") == 0)
-            sprintf(recorder_timestamp,
-                    "%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",
+            snprintf(recorder_timestamp,
+                    sizeof(recorder_timestamp), "%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",
                     rec_date_time.year, rec_date_time.month, rec_date_time.day,
                     rec_date_time.hour, rec_date_time.minute,
                     rec_date_time.second, rec_microseconds, rec_date_time.tz);
           else if (strcmp(global_dateformat, "US") == 0)
-            sprintf(recorder_timestamp,
-                    "%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",
+            snprintf(recorder_timestamp,
+                    sizeof(recorder_timestamp), "%02d-%02d-%04d %02d:%02d:%02d.%.06d %s",
                     rec_date_time.month, rec_date_time.day, rec_date_time.year,
                     rec_date_time.hour, rec_date_time.minute,
                     rec_date_time.second, rec_microseconds, rec_date_time.tz);
           else if (strcmp(global_dateformat, "EURO") == 0)
-            sprintf(recorder_timestamp,
-                    "%02d-%02d-%04d %02d:%02d:%02d.%.06d %s", rec_date_time.day,
+            snprintf(recorder_timestamp,
+                    sizeof(recorder_timestamp), "%02d-%02d-%04d %02d:%02d:%02d.%.06d %s", rec_date_time.day,
                     rec_date_time.month, rec_date_time.year, rec_date_time.hour,
                     rec_date_time.minute, rec_date_time.second,
                     rec_microseconds, rec_date_time.tz);
           else
-            sprintf(recorder_timestamp, "%.09f", recorder_delta_clock);
+            snprintf(recorder_timestamp, sizeof(recorder_timestamp), "%.09f", recorder_delta_clock);
         } else
-          sprintf(recorder_timestamp, "%.09f", recorder_delta_clock);
+          snprintf(recorder_timestamp, sizeof(recorder_timestamp), "%.09f", recorder_delta_clock);
 
         /*Deflag */
         recorder_init_items = true;

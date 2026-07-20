@@ -105,9 +105,23 @@ int sectionalizer::init(OBJECT *parent) {
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int isa_sectionalizer(OBJECT *obj, char *classname) {
+EXPORT int isa_sectionalizer_impl(OBJECT *obj, char *classname) {
   return object_data<sectionalizer>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_sectionalizer(OBJECT *obj, char *classname) {
+  return isa_sectionalizer_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_sectionalizer(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_sectionalizer_impl(obj, classsname);
+}
+#endif
 
 EXPORT int create_sectionalizer(OBJECT **obj, OBJECT *parent) {
   try {

@@ -472,8 +472,7 @@ EXPORT int isa_controller2(OBJECT *obj, char *classname) {
   }
 }
 
-static TIMESTAMP sync_controller2_impl(OBJECT *obj, TIMESTAMP t1,
-                                       PASSCONFIG pass) {
+static TIMESTAMP sync_controller2_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
   controller2 *my = OBJECTDATA(obj, controller2);
   try {
@@ -501,12 +500,10 @@ static TIMESTAMP sync_controller2_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_controller2(OBJECT *obj, TIMESTAMP t1,
-                                                 PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_controller2(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_controller2_impl(obj, t1, pass);
 }
 #else
-// variadic
 extern "C" MODULE_API TIMESTAMP sync_controller2(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);

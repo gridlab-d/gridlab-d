@@ -9808,10 +9808,24 @@ extern "C" MODULE_API TIMESTAMP sync_inverter(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_inverter(OBJECT *obj, char *classname)
+EXPORT int isa_inverter_impl(OBJECT *obj, char *classname)
 {
-	return /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj)->isa(classname);
+	return object_data<inverter>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_inverter(OBJECT *obj, char *classname) {
+  return isa_inverter_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_inverter(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_inverter_impl(obj, classsname);
+}
+#endif
 
 EXPORT STATUS preupdate_inverter(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {

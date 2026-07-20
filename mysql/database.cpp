@@ -90,7 +90,7 @@ database::database(MODULE *module) {
             "timestamps in database include summer time offsets",
             nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
 
@@ -359,14 +359,14 @@ char *database::get_sqldata(char *buffer, size_t size, gld_property &prop,
   case PT_enduse:
     if (prop.get_unit()) {
       double *value = (double *)prop.get_addr();
-      if (sprintf(buffer, "%g", *value * scale) > size)
+      if (snprintf(buffer, sizeof(buffer), "%g", *value * scale) > size)
         return nullptr;
       return buffer;
     }
   }
   char tmp[65536];
   if (prop.to_string(tmp, sizeof(tmp)) < size)
-    sprintf(buffer, "'%s'", tmp);
+    snprintf(buffer, sizeof(buffer), "'%s'", tmp);
   else
     strcpy(buffer, "nullptr");
   return buffer;
@@ -382,21 +382,21 @@ char *database::get_sqldata(char *buffer, size_t size, gld_property &prop,
     if (unit != nullptr && unit->is_valid() && prop.get_unit() != unit) {
       double value = prop.get_double((UNIT *)unit);
       if (isnan(value))
-        sprintf(buffer, "%s", "nullptr");
+        snprintf(buffer, sizeof(buffer), "%s", "nullptr");
       else
-        sprintf(buffer, "%g", value);
+        snprintf(buffer, sizeof(buffer), "%g", value);
     } else
-      sprintf(buffer, "%g", prop.get_double());
+      snprintf(buffer, sizeof(buffer), "%g", prop.get_double());
     return buffer;
   case PT_complex:
     if (prop.get_partname()[0] != '\0') {
-      sprintf(buffer, "%f", prop.get_part(prop.get_partname()));
+      snprintf(buffer, sizeof(buffer), "%f", prop.get_part(prop.get_partname()));
       return buffer;
     }
   }
   char tmp[65536];
   if (prop.to_string(tmp, sizeof(tmp)) < size)
-    sprintf(buffer, "'%s'", tmp);
+    snprintf(buffer, sizeof(buffer), "'%s'", tmp);
   else
     strcpy(buffer, "nullptr");
   return buffer;

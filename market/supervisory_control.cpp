@@ -72,14 +72,13 @@ void supervisory_control::fetch_double(double **prop, char *name,
     char tname[32];
     char *namestr = (hdr->name ? hdr->name : tname);
     char msg[256];
-    sprintf(tname, "supervisory_control:%i", hdr->id);
+    snprintf(tname, sizeof(tname), "supervisory_control:%i", hdr->id);
     if (*name == static_cast<char>(0))
-      sprintf(
-          msg,
+      snprintf(msg, sizeof(msg),
           "%s: supervisory_control unable to find property: name is nullptr",
           namestr);
     else
-      sprintf(msg, "%s: supervisory_control unable to find %s", namestr, name);
+      snprintf(msg, sizeof(msg), "%s: supervisory_control unable to find %s", namestr, name);
     throw(std::runtime_error(msg));
   }
 }
@@ -206,7 +205,7 @@ EXPORT int create_supervisory_control(OBJECT **obj, OBJECT *parent) {
     *obj = gl_create_object(supervisory_control::oclass);
     if (*obj != nullptr) {
       supervisory_control *my =
-          /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(*obj);
+          object_data<supervisory_control>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -218,7 +217,7 @@ EXPORT int create_supervisory_control(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_supervisory_control(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(obj)->init(
+      return object_data<supervisory_control>(obj)->init(
           parent);
     else
       return 0;
@@ -226,20 +225,33 @@ EXPORT int init_supervisory_control(OBJECT *obj, OBJECT *parent) {
   INIT_CATCHALL(supervisory_control);
 }
 
-EXPORT int isa_supervisory_control(OBJECT *obj, char *classname) {
+EXPORT int isa_supervisory_control_impl(OBJECT *obj, char *classname) {
   if (obj != 0 && classname != 0) {
-    return /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(obj)->isa(
+    return object_data<supervisory_control>(obj)->isa(
         classname);
   } else {
     return 0;
   }
 }
 
-static TIMESTAMP sync_supervisory_control_impl(OBJECT *obj, TIMESTAMP t1,
-                                               PASSCONFIG pass) {
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_supervisory_control(OBJECT *obj, char *classname) {
+  return isa_supervisory_control_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_supervisory_control(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_supervisory_control_impl(obj, classsname);
+}
+#endif
+
+static TIMESTAMP sync_supervisory_control_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
   supervisory_control *my =
-      /*OBJECTDATA(obj,<>)*/ object_data<supervisory_control>(obj);
+      object_data<supervisory_control>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -261,12 +273,10 @@ static TIMESTAMP sync_supervisory_control_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_supervisory_control(OBJECT *obj,
-                                                         TIMESTAMP t1,
-                                                         PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_supervisory_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_supervisory_control_impl(obj, t1, pass);
 }
-#else // variadic
+#else
 extern "C" MODULE_API TIMESTAMP sync_supervisory_control(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);

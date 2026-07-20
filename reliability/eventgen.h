@@ -211,6 +211,7 @@ public:
   eventgen(MODULE *module);
   int create(void);
   int init(OBJECT *parent);
+  int isa(char *classname);
   int precommit(TIMESTAMP t1);
   TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
   TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);

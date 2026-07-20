@@ -364,7 +364,7 @@ int generator_controller::init(OBJECT *parent) {
     return 2; // defer
   }
   // Get this object
-  auction_object = /*OBJECTDATA(obj,<>)*/ object_data<auction>(market_object);
+  auction_object = object_data<auction>(market_object);
 
   // Pull the market information
   market_period = (TIMESTAMP)(auction_object->dPeriod);
@@ -2097,7 +2097,7 @@ EXPORT int create_generator_controller(OBJECT **obj, OBJECT *parent) {
     *obj = gl_create_object(generator_controller::oclass);
     if (*obj != nullptr) {
       generator_controller *my =
-          /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(*obj);
+          object_data<generator_controller>(*obj);
       // gl_set_parent(*obj, parent);
       return my->create();
     }
@@ -2111,7 +2111,7 @@ EXPORT int create_generator_controller(OBJECT **obj, OBJECT *parent) {
 
 EXPORT int init_generator_controller(OBJECT *obj, OBJECT *parent) {
   try {
-    return /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(obj)->init(
+    return object_data<generator_controller>(obj)->init(
         parent);
   } catch (const char *msg) {
     gl_error("%s %s (id=%d): %s", obj->name ? obj->name : "unnamed",
@@ -2133,7 +2133,7 @@ static TIMESTAMP sync_generator_controller_impl(OBJECT *obj, TIMESTAMP t1,
                                                 PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
   generator_controller *my =
-      /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(obj);
+      object_data<generator_controller>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -2177,7 +2177,7 @@ extern "C" MODULE_API int sync_generator_controller(OBJECT *obj, ...) {
 #endif
 
 EXPORT int isa_generator_controller(OBJECT *obj, char *classname) {
-  return /*OBJECTDATA(obj,<>)*/ object_data<generator_controller>(obj)->isa(
+  return object_data<generator_controller>(obj)->isa(
       classname);
 }
 

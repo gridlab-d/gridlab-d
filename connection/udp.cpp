@@ -177,7 +177,7 @@ size_t udp::send(const char *msg, size_t len) {
     tlim = 9;
   else if (tlim < 1)
     tlim = 1;
-  sprintf(temp, "%-1d %-3d %-7lu %-5.5s %-3.1f %-1d %-3d   ", header_version,
+  snprintf(temp, sizeof(temp), "%-1d %-3d %-7lu %-5.5s %-3.1f %-1d %-3d   ", header_version,
           header_size, len, message_format, message_version, tlim, 0);
   if (len > 1500 - strlen(temp)) {
     error("udp::send(const char *msg='%-10.10s', size_t len=%d): message is "
@@ -186,7 +186,7 @@ size_t udp::send(const char *msg, size_t len) {
     return 0;
   }
   char sendbuf[2048];
-  int totlen = sprintf(sendbuf, "%s%s", temp, msg);
+  int totlen = snprintf(sendbuf, sizeof(sendbuf), "%s%s", temp, msg);
   struct sockaddr_in &serv_addr = *(struct sockaddr_in *)sockdata;
   size_t sndlen = sendto(sd, sendbuf, totlen, 0, (struct sockaddr *)&serv_addr,
                          sizeof(serv_addr));
@@ -348,13 +348,13 @@ void udp::set_portnum(unsigned int n) { portnum = n; }
 void udp::set_uri(const char *fmt, ...) {
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf(uri, fmt, ptr);
+  vsnprintf(uri, sizeof(uri), fmt, ptr);
   va_end(ptr);
 }
 void udp::set_errormsg(const char *fmt, ...) {
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf(errormsg, fmt, ptr);
+  vsnprintf(errormsg, sizeof(errormsg), fmt, ptr);
   va_end(ptr);
 }
 void udp::set_debug_level(unsigned int n) { debug_level = n; }
@@ -364,12 +364,12 @@ void udp::set_sockdata(struct sockaddr_in *p, size_t n) {
 void udp::set_output(const char *fmt, ...) {
   va_list ptr;
   va_start(ptr, fmt);
-  position = vsprintf(output, fmt, ptr);
+  position = vsnprintf(output, sizeof(output), fmt, ptr);
   va_end(ptr);
 }
 void udp::add_output(const char *fmt, ...) {
   va_list ptr;
   va_start(ptr, fmt);
-  position += vsprintf(output + position, fmt, ptr);
+  position += vsnprintf(output + position, sizeof(output) - position, fmt, ptr);
   va_end(ptr);
 }

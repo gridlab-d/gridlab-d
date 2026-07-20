@@ -341,8 +341,7 @@ EXPORT int isa_network_interface(OBJECT *obj, char *classname) {
   }
 }
 
-static TIMESTAMP sync_network_interface_impl(OBJECT *obj, TIMESTAMP t1,
-                                             PASSCONFIG pass) {
+static TIMESTAMP sync_network_interface_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   network_interface *my = OBJECTDATA(obj, network_interface);
   try {
     TIMESTAMP t2 = TS_NEVER;

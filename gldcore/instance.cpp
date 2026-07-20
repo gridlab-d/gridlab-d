@@ -212,11 +212,11 @@ void *instance_runproc(void *ptr) {
   case CI_MMAP:
 #ifdef _WIN32
     /* run new instance */
-    sprintf(cmd, "\"%s/gridlabd.exe\" %s %s --slave %s:%" FMT_INT64 "x %s &",
+    snprintf(cmd, sizeof(cmd), "\"%s/gridlabd.exe\" %s %s --slave %s:%" FMT_INT64 "x %s &",
             global_execdir, global_verbose_mode ? "--verbose" : "",
             global_debug_output ? "--debug" : "", global_hostname,
             inst->cacheid, inst->model);
-    output_verbose("starting new instance with command '%s'", cmd.get_string());
+    output_verbose("starting new instance with command '%s'", cmd);
     rc = system(cmd);
     break;
 #else
@@ -452,7 +452,7 @@ void instance_master_done_socket(instance *inst) {
 
   // write data from cache to buffer
   memset(inst->buffer, 0, inst->buffer_size);
-  sprintf(inst->buffer, MSG_DATA);
+  snprintf(inst->buffer, inst->buffer_size, MSG_DATA);
   offset = (int)strlen(MSG_DATA);
   memcpy(inst->buffer + offset, inst->cache, sizeof(MESSAGE));
   offset += sizeof(MESSAGE);
@@ -607,13 +607,13 @@ void instance_master_done(TIMESTAMP t1) {
 //obj3.prop3,obj4.prop4\0".
 //	//	a space separates the writers from the readers.
 //	for ( lnk=inst->write ; lnk!=nullptr ; lnk=lnk->next ){
-//		sprintf(inst->message->name_buffer+name_offset, "%s.%s%c",
+//		snprintf(inst->message->name_buffer+name_offset, sizeof(inst->message->name_buffer+name_offset), "%s.%s%c",
 //lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? ' ' : ',')); 		lnk->addr =
 //(char *)(inst->message->data_buffer + prop_offset); 		name_offset +=
 //lnk->name_size; 		prop_offset += lnk->prop_size;
 //	}
 //	for ( lnk=inst->read ; lnk!=nullptr ; lnk=lnk->next ){
-//		sprintf(inst->message->name_buffer+name_offset, "%s.%s%c",
+//		snprintf(inst->message->name_buffer+name_offset, sizeof(inst->message->name_buffer+name_offset), "%s.%s%c",
 //lnk->remote.obj, lnk->remote.prop, (lnk->next == 0 ? '\0' : ',')); 		lnk->addr =
 //(char *)(inst->message->data_buffer + prop_offset); 		name_offset +=
 //lnk->name_size; 		prop_offset += lnk->prop_size;

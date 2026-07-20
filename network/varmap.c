@@ -69,7 +69,7 @@
 //			}
 //			else {
 //				double *v = p->addr;
-//				sprintf(value,"%lg",*v);
+//				snprintf(value, sizeof(value), "%lg", *v);
 //				return (void*)1;
 //			}
 //		}

@@ -418,8 +418,7 @@ static TIMESTAMP sync_node_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0,
-                                          PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_node_impl(obj, t0, pass);
 }
 #else

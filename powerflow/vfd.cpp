@@ -1087,9 +1087,23 @@ extern "C" MODULE_API TIMESTAMP sync_vfd(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_vfd(OBJECT *obj, char *classname) {
+EXPORT int isa_vfd_impl(OBJECT *obj, char *classname) {
   return object_data<vfd>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_vfd(OBJECT *obj, char *classname) {
+  return isa_vfd_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_vfd(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_vfd_impl(obj, classsname);
+}
+#endif
 
 // Deltamode export
 EXPORT SIMULATIONMODE interupdate_vfd(OBJECT *obj, unsigned int64 delta_time,

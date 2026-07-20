@@ -67,7 +67,7 @@ int json_translate(char *local, size_t local_len, char *remote,
       }
     } else if (var->dir == DXD_WRITE) // from local to remote
     {
-      return sprintf(remote,
+      return snprintf(remote, remote_len,
                      "<property><name>%s</name><value>%s</value></property>",
                      var->remote_name, local);
     } else

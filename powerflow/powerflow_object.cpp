@@ -356,8 +356,22 @@ extern "C" MODULE_API TIMESTAMP sync_powerflow_object(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_powerflow_object(OBJECT *obj, char *classname) {
+EXPORT int isa_powerflow_object_impl(OBJECT *obj, char *classname) {
   return object_data<powerflow_object>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_powerflow_object(OBJECT *obj, char *classname) {
+  return isa_powerflow_object_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_powerflow_object(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_powerflow_object_impl(obj, classsname);
+}
+#endif
 
 /**@}**/

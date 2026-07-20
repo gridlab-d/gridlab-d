@@ -54,14 +54,14 @@ static size_t count = 0;
 
 char *stream_context() {
   static char buffer[64];
-  // sprintf(buffer,"block %d, token %d",b,t);
+  // snprintf(buffer, sizeof(buffer), "block %d, token %d",b,t);
   return buffer;
 }
 int stream_error(const char *format, ...) {
   char buffer[1024];
   va_list ptr;
   va_start(ptr, format);
-  vsprintf(buffer, format, ptr);
+  vsnprintf(buffer, sizeof(buffer), format, ptr);
   va_end(ptr);
   // output_error("- stream(%d:%d) - %s", b,t,buffer);
   return -1;
@@ -71,7 +71,7 @@ int stream_warning(char *format, ...) {
   char buffer[1024];
   va_list ptr;
   va_start(ptr, format);
-  vsprintf(buffer, format, ptr);
+  vsnprintf(buffer, sizeof(buffer), format, ptr);
   va_end(ptr);
   // output_warning("- stream(%d:%d) - %s", b,t,buffer);
   return -1;

@@ -137,7 +137,7 @@ int group_recorder::init(OBJECT *obj) {
       gl_error("group_recorder::init(): no filename defined in strict mode");
       return 0;
     } else {
-      sprintf(filename, "%256s-%256i.csv", oclass->name, obj->id);
+      snprintf(filename, sizeof(filename), "%256s-%256i.csv", oclass->name, obj->id);
       gl_warning(
           "group_recorder::init(): no filename defined, auto-generating '%s'",
           filename.get_string());
@@ -688,7 +688,7 @@ int group_recorder::read_line() {
           part_value = 0.0; // Prevent using uninitialized variable
           break;
         }
-        // sprintf(buffer, "%f", part_value);
+        // snprintf(buffer, sizeof(buffer), "%f", part_value);
         snprintf(buffer, sizeof(buffer), "%f", part_value); // <-- USE SNPRINTF
       }
       offset = strlen(buffer);
@@ -928,8 +928,7 @@ EXPORT int init_group_recorder(OBJECT *obj) {
   return rv;
 }
 
-static TIMESTAMP sync_group_recorder_impl(OBJECT *obj, TIMESTAMP t0,
-                                          PASSCONFIG pass) {
+static TIMESTAMP sync_group_recorder_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   group_recorder *my = object_data<group_recorder>(obj);
   TIMESTAMP rv = 0;
   try {
@@ -984,9 +983,23 @@ EXPORT int commit_group_recorder(OBJECT *obj) {
   return rv;
 }
 
-EXPORT int isa_group_recorder(OBJECT *obj, char *classname) {
+EXPORT int isa_group_recorder_impl(OBJECT *obj, char *classname) {
   return object_data<group_recorder>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_group_recorder(OBJECT *obj, char *classname) {
+  return isa_group_recorder_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_group_recorder(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_group_recorder_impl(obj, classsname);
+}
+#endif
 
 // Deltamode -- object-level call
 EXPORT SIMULATIONMODE update_group_recorder(OBJECT *obj, TIMESTAMP t0,

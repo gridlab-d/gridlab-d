@@ -2337,7 +2337,7 @@ extern "C" MODULE_API TIMESTAMP sync_motor(OBJECT *obj, ...)
 *
 * @return 0 if obj is a subtype of this class
 */
-EXPORT int isa_motor(OBJECT *obj, char *classname)
+EXPORT int isa_motor_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<motor>(obj)->isa(classname);
@@ -2345,6 +2345,20 @@ EXPORT int isa_motor(OBJECT *obj, char *classname)
 		return 0;
 	}
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_motor(OBJECT *obj, char *classname) {
+  return isa_motor_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_motor(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_motor_impl(obj, classsname);
+}
+#endif
 
 /** 
 * DELTA MODE

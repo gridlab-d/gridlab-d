@@ -662,7 +662,7 @@ int house_e::create()
 			for ( ; eu->implicit_name!=nullptr ; eu++)
 			{
                 char name[64];
-                sprintf(name, "residential-%s-default", euname);
+                snprintf(name, sizeof(name), "residential-%s-default", euname);
                 // matched enduse and doesn't already exist
 				if (strcmp(eu->schedule_name,name)==0)
 				{
@@ -896,7 +896,7 @@ int house_e::init_climate()
             // Flag us -- should already be false, but be paranoid
             proper_climate_found = false;
 		}
-		else //climate data was found
+		else // climate data was found
         {
             // force rank of object w.r.t climate
             OBJECT *obj = nullptr;
@@ -4483,7 +4483,7 @@ EXPORT int init_house(OBJECT *obj)
 	INIT_CATCHALL(house_e);
 }
 
-EXPORT int isa_house(OBJECT *obj, char *classname)
+EXPORT int isa_house_impl(OBJECT *obj, char *classname)
 {
     if (obj != 0 && classname != 0)
     {
@@ -4494,6 +4494,20 @@ EXPORT int isa_house(OBJECT *obj, char *classname)
         return 0;
     }
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_house(OBJECT *obj, char *classname) {
+  return isa_house_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_house(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_house_impl(obj, classsname);
+}
+#endif
 
 static TIMESTAMP sync_house_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {

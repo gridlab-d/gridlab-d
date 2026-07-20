@@ -2351,7 +2351,7 @@ EXPORT int init_evcharger_det(OBJECT *obj)
 	INIT_CATCHALL(evcharger_det);
 }
 
-EXPORT int isa_evcharger_det(OBJECT *obj, char *classname)
+EXPORT int isa_evcharger_det_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<evcharger_det>(obj)->isa(classname);
@@ -2359,6 +2359,20 @@ EXPORT int isa_evcharger_det(OBJECT *obj, char *classname)
 		return 0;
 	}
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_evcharger_det(OBJECT *obj, char *classname) {
+  return isa_evcharger_det_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_evcharger_det(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_evcharger_det_impl(obj, classsname);
+}
+#endif
 
 static TIMESTAMP sync_evcharger_det_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 	TIMESTAMP t1;

@@ -83,7 +83,7 @@ recorder::recorder(MODULE *module) {
             PT_char1024, "custom_sql", get_custom_sql_offset(), PT_DESCRIPTION,
             "Custom SQL", nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
 
@@ -222,11 +222,11 @@ int recorder::init(OBJECT *parent) {
         n_properties++;
         char tmp[2][2][128];
         char name_buffer[64];
-        sprintf(tmp[0][0], "%s", prop.get_sql_safe_name(name_buffer));
-        sprintf(tmp[0][1], "`%s` %s", prop.get_sql_safe_name(name_buffer),
+        snprintf(tmp[0][0], sizeof(tmp[0][0]), "%s", prop.get_sql_safe_name(name_buffer));
+        snprintf(tmp[0][1], sizeof(tmp[0][1]), "`%s` %s", prop.get_sql_safe_name(name_buffer),
                 db->get_sqltype(prop, get_minified()));
-        sprintf(tmp[1][0], "%s_units", prop.get_sql_safe_name(name_buffer));
-        sprintf(tmp[1][1], "`%s_units` %s", prop.get_sql_safe_name(name_buffer),
+        snprintf(tmp[1][0], sizeof(tmp[1][0]), "%s_units", prop.get_sql_safe_name(name_buffer));
+        snprintf(tmp[1][1], sizeof(tmp[1][1]), "`%s_units` %s", prop.get_sql_safe_name(name_buffer),
                 (get_minified() ? "VARCHAR(10)" : "CHAR(10)"));
 
         if (unit.is_valid()) {
@@ -275,11 +275,11 @@ int recorder::init(OBJECT *parent) {
         n_properties++;
         char tmp[2][2][128];
         char name_buffer[64];
-        sprintf(tmp[0][0], "%s", prop.get_sql_safe_name(name_buffer));
-        sprintf(tmp[0][1], "`%s` %s", prop.get_sql_safe_name(name_buffer),
+        snprintf(tmp[0][0], sizeof(tmp[0][0]), "%s", prop.get_sql_safe_name(name_buffer));
+        snprintf(tmp[0][1], sizeof(tmp[0][1]), "`%s` %s", prop.get_sql_safe_name(name_buffer),
                 db->get_sqltype(prop, get_minified()));
-        sprintf(tmp[1][0], "%s_units", prop.get_sql_safe_name(name_buffer));
-        sprintf(tmp[1][1], "`%s_units` %s", prop.get_sql_safe_name(name_buffer),
+        snprintf(tmp[1][0], sizeof(tmp[1][0]), "%s_units", prop.get_sql_safe_name(name_buffer));
+        snprintf(tmp[1][1], sizeof(tmp[1][1]), "`%s_units` %s", prop.get_sql_safe_name(name_buffer),
                 (get_minified() ? "VARCHAR(10)" : "CHAR(10)"));
 
         if (unit.is_valid()) {
@@ -495,7 +495,7 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
         char fieldlist[65536] = "", valuelist[65536] = "";
         size_t fieldlen = 0;
         if (header_fieldnames[0] != '\0')
-          fieldlen = sprintf(fieldlist, ",%s", (const char *)header_fieldnames);
+          fieldlen = snprintf(fieldlist, sizeof(fieldlist), ",%s", (const char *)header_fieldnames);
         strcpy(valuelist, header_data);
         size_t valuelen = strlen(valuelist);
         for (size_t n = 0; n < property_target.size() && curr != 0;
@@ -566,7 +566,7 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
       char fieldlist[65536] = "", valuelist[65536] = "";
       size_t fieldlen = 0;
       if (header_fieldnames[0] != '\0')
-        fieldlen = sprintf(fieldlist, ",%s", (const char *)header_fieldnames);
+        fieldlen = snprintf(fieldlist, sizeof(fieldlist), ",%s", (const char *)header_fieldnames);
       strcpy(valuelist, header_data);
       size_t valuelen = strlen(valuelist);
       for (size_t n = 0; n < property_target.size(); n++) {

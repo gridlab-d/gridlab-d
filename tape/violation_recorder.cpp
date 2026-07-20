@@ -124,7 +124,7 @@ int violation_recorder::init(OBJECT *obj) {
           "violation_recorder::init(): no filename defined in strict mode");
       return 0;
     } else {
-      sprintf(filename, "%s-violation-log.csv", oclass->name);
+      snprintf(filename, sizeof(filename), "%s-violation-log.csv", oclass->name);
       gl_warning("violation_recorder::init(): no filename defined, "
                  "auto-generating '%s'",
                  filename.get_string());
@@ -138,7 +138,7 @@ int violation_recorder::init(OBJECT *obj) {
       gl_error("violation_recorder::init(): no summary defined in strict mode");
       return 0;
     } else {
-      sprintf(summary, "%s-violation-summary.csv", oclass->name);
+      snprintf(summary, sizeof(summary), "%s-violation-summary.csv", oclass->name);
       gl_warning("violation_recorder::init(): no summary defined, "
                  "auto-generating '%s'",
                  summary.get_string());
@@ -1806,7 +1806,7 @@ int violation_recorder::write_to_stream(TIMESTAMP t1, bool echo, char *fmt,
   char buffer[1024];
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf(buffer, fmt, ptr); /* note the lack of check on buffer overrun */
+  vsnprintf(buffer, sizeof(buffer), fmt, ptr); /* note the lack of check on buffer overrun */
   va_end(ptr);
   // print line to file
   if (0 >= fprintf(rec_file, "%s,%s\n", time_str, buffer)) {
@@ -2178,8 +2178,7 @@ EXPORT int init_violation_recorder(OBJECT *obj) {
   return rv;
 }
 
-static TIMESTAMP sync_violation_recorder_impl(OBJECT *obj, TIMESTAMP t0,
-                                              PASSCONFIG pass) {
+static TIMESTAMP sync_violation_recorder_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   violation_recorder *my = object_data<violation_recorder>(obj);
   TIMESTAMP rv = 0;
   try {
@@ -2237,9 +2236,23 @@ EXPORT int commit_violation_recorder(OBJECT *obj) {
   return rv;
 }
 
-EXPORT int isa_violation_recorder(OBJECT *obj, char *classname) {
+EXPORT int isa_violation_recorder_impl(OBJECT *obj, char *classname) {
   return object_data<violation_recorder>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_violation_recorder(OBJECT *obj, char *classname) {
+  return isa_violation_recorder_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_violation_recorder(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_violation_recorder_impl(obj, classsname);
+}
+#endif
 
 EXPORT STATUS finalize_violation_recorder(OBJECT *obj) {
   violation_recorder *my = object_data<violation_recorder>(obj);

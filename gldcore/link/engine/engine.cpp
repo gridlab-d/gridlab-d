@@ -171,7 +171,7 @@ bool recv_init(ENGINELINK *engine) {
 
 bool send_init(ENGINELINK *engine) {
   char buffer[1500];
-  int len = sprintf(buffer, "GRIDLABD %d.%d.%d (%s)", REV_MAJOR, REV_MINOR,
+  int len = snprintf(buffer, sizeof(buffer), "GRIDLABD %d.%d.%d (%s)", REV_MAJOR, REV_MINOR,
                     REV_PATCH, BRANCH);
 
   return engine_send(engine, buffer, len + 1) > 0;
@@ -179,7 +179,7 @@ bool send_init(ENGINELINK *engine) {
 
 bool send_protocol(ENGINELINK *engine) {
   char buffer[1500];
-  int len = sprintf(buffer, "PROTOCOL %s", engine->protocol);
+  int len = snprintf(buffer, sizeof(buffer), "PROTOCOL %s", engine->protocol);
   return engine_send(engine, buffer, len + 1) > 0;
 }
 
@@ -192,14 +192,14 @@ bool send_cachesize(ENGINELINK *engine) {
   if (engine->cachesize == 0)
     recalc_cachesize(engine);
   char buffer[1500];
-  int len = sprintf(buffer, "CACHESIZE %d", engine->cachesize);
+  int len = snprintf(buffer, sizeof(buffer), "CACHESIZE %d", engine->cachesize);
 
   return engine_send(engine, buffer, len + 1) > 0;
 }
 
 bool send_timeout(ENGINELINK *engine) {
   char buffer[1500];
-  int len = sprintf(buffer, "TIMEOUT %d", engine->recv_timeout);
+  int len = snprintf(buffer, sizeof(buffer), "TIMEOUT %d", engine->recv_timeout);
   return engine_send(engine, buffer, len) > 0;
 }
 
@@ -209,10 +209,10 @@ bool send_status(ENGINELINK *engine, ENGINELINKSTATUS status,
   int len;
 
   if (msg == nullptr) {
-    len = sprintf(buffer, "%s", enginelinkstatus[status]);
+    len = snprintf(buffer, sizeof(buffer), "%s", enginelinkstatus[status]);
     return engine_send(engine, buffer, len + 1) > 0;
   } else {
-    len = sprintf(buffer, "%s\n%s", enginelinkstatus[status], msg);
+    len = snprintf(buffer, sizeof(buffer), "%s\n%s", enginelinkstatus[status], msg);
     return engine_send(engine, buffer, len + 1) > 0;
   }
 }
@@ -242,7 +242,7 @@ bool recv_sync(ENGINELINK *engine, TIMESTAMP *t) {
 bool send_time(ENGINELINK *engine, TIMESTAMP t0) {
 
   char buffer[1500];
-  int len = sprintf(buffer, "SYNC %lld", t0);
+  int len = snprintf(buffer, sizeof(buffer), "SYNC %lld", t0);
   if (engine_send(engine, buffer, len + 1) <= 0)
     return false;
   return true;
@@ -253,7 +253,7 @@ bool send_exports(ENGINELINK *engine) {
   int len;
   SYNCDATA *item;
   for (item = engine->send; item != nullptr; item = item->next) {
-    len = sprintf(buffer, "%d %s", item->index,
+    len = snprintf(buffer, sizeof(buffer), "%d %s", item->index,
                   item->prop->get_string().get_buffer());
     if (engine_send(engine, buffer, len + 1) <= 0)
       return false;
@@ -304,7 +304,7 @@ bool add_global(ENGINELINK *engine, unsigned int index, GLOBALVAR *var) {
   if (gl_name(prop->get_object(), buffname, 255) == nullptr) {
     strcpy(buffname, "nullptr");
   }
-  int len = sprintf(buffer, "GLOBAL %d %d %lu %s %s %s", index,
+  int len = snprintf(buffer, sizeof(buffer), "GLOBAL %d %d %lu %s %s %s", index,
                     (PROPERTYTYPE)prop->get_type(), // TODO convert this to text
                     prop->get_size(), buffname, prop->get_name(),
                     prop->get_string().get_buffer());
@@ -319,7 +319,7 @@ bool add_import(ENGINELINK *engine, unsigned int index,
   if (gl_name(prop->get_object(), buffname, 255) == nullptr) {
     strcpy(buffname, "nullptr");
   }
-  int len = sprintf(buffer, "IMPORT %d %d %lu %s %s %s", index,
+  int len = snprintf(buffer, sizeof(buffer), "IMPORT %d %d %lu %s %s %s", index,
                     (PROPERTYTYPE)prop->get_type(), // TODO convert this to text
                     prop->get_size(), buffname, prop->get_name(),
                     prop->get_string().get_buffer());
@@ -334,7 +334,7 @@ bool add_export(ENGINELINK *engine, unsigned int index,
   if (gl_name(prop->get_object(), buffname, 255) == nullptr) {
     strcpy(buffname, "nullptr");
   }
-  int len = sprintf(buffer, "EXPORT %d %d %lu %s %s %s", index,
+  int len = snprintf(buffer, sizeof(buffer), "EXPORT %d %d %lu %s %s %s", index,
                     (PROPERTYTYPE)prop->get_type(), // TODO convert this to text
                     prop->get_size(), buffname, prop->get_name(),
                     prop->get_string().get_buffer());

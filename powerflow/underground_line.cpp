@@ -78,21 +78,19 @@ int underground_line::create(void)
 
 int underground_line::init(OBJECT *parent)
 {
-  OBJECT *obj_this = object_header(this);
+  OBJECT *obj = object_header(this);
 
 #ifdef __APPLE__
-  parent =
-      obj_this
-          ->parent; // AppleClang seems to have an issue with the parent pointer
+  parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
 #endif
-  double *temp_rating_value = nullptr;
+
+double *temp_rating_value = nullptr;
   double temp_rating_continuous = 10000.0;
   double temp_rating_emergency = 20000.0;
   char index;
   int type_A, type_B, type_C, type_N;
   int cond_present, cond_present_CN, cable_types_value;
   OBJECT *temp_obj;
-  OBJECT *obj = object_header(this);
 
   int result = line::init(parent);
 
@@ -1718,10 +1716,23 @@ EXPORT int init_underground_line(OBJECT *obj)
   INIT_CATCHALL(underground_line);
 }
 
-EXPORT int isa_underground_line(OBJECT *obj, char *classname)
+EXPORT int isa_underground_line_impl(OBJECT *obj, char *classname)
 {
   return object_data<underground_line>(obj)->isa(classname);
 }
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_underground_line(OBJECT *obj, char *classname) {
+  return isa_underground_line_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_underground_line(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classsname = va_arg(args, char *);
+  va_end(args);
+  return isa_underground_line_impl(obj, classsname);
+}
+#endif
 
 EXPORT int recalc_underground_line(OBJECT *obj)
 {
