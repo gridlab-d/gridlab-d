@@ -1647,9 +1647,9 @@ extern "C" MODULE_API int isa_regulator(OBJECT *obj, char *classname) {
 extern "C" MODULE_API int isa_regulator(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_regulator_impl(obj, classsname);
+  return isa_regulator_impl(obj, classname);
 }
 #endif
 

@@ -754,8 +754,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop,
   return count;
 }
 
-static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   TIMESTAMP return_value;
   struct recorder *my = object_data<struct recorder>(obj);
   typedef enum { NONE = '\0', LT = '<', EQ = '=', GT = '>' } COMPAREOP;

@@ -202,8 +202,7 @@ EXPORT int init_recloser(OBJECT *obj)
 }
 
 // Syncronizing function
-static TIMESTAMP sync_recloser_impl(OBJECT *obj, TIMESTAMP t0,
-                                    PASSCONFIG pass)
+static TIMESTAMP sync_recloser_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     try
     {

@@ -226,8 +226,7 @@ EXPORT int init_currdump(OBJECT *obj) {
   }
 }
 
-static TIMESTAMP sync_currdump_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_currdump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   currdump *my = object_data<currdump>(obj);
   TIMESTAMP rv;
   obj->clock = t1;
@@ -272,9 +271,9 @@ extern "C" MODULE_API int isa_currdump(OBJECT *obj, char *classname) {
 extern "C" MODULE_API int isa_currdump(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_currdump_impl(obj, classsname);
+  return isa_currdump_impl(obj, classname);
 }
 #endif
 

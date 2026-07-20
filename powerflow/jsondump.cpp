@@ -3820,8 +3820,7 @@ EXPORT int init_jsondump(OBJECT *obj) {
   }
 }
 
-static TIMESTAMP sync_jsondump_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_jsondump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   try {
     jsondump *my = object_data<jsondump>(obj);
     TIMESTAMP rv;
@@ -3891,9 +3890,9 @@ extern "C" MODULE_API int isa_jsondump(OBJECT *obj, char *classname) {
 extern "C" MODULE_API int isa_jsondump(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_jsondump_impl(obj, classsname);
+  return isa_jsondump_impl(obj, classname);
 }
 #endif
 

@@ -259,8 +259,7 @@ EXPORT int init_billdump(OBJECT *obj) {
   INIT_CATCHALL(billdump);
 }
 
-static TIMESTAMP sync_billdump_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_billdump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   try {
     billdump *my = object_data<billdump>(obj);
     TIMESTAMP rv;
@@ -306,9 +305,9 @@ extern "C" MODULE_API int isa_billdump(OBJECT *obj, char *classname) {
 extern "C" MODULE_API int isa_billdump(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_billdump_impl(obj, classsname);
+  return isa_billdump_impl(obj, classname);
 }
 #endif
 

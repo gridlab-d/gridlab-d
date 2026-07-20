@@ -164,9 +164,9 @@ extern "C" MODULE_API int isa_overhead_line_conductor(OBJECT *obj, char *classna
 extern "C" MODULE_API int isa_overhead_line_conductor(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_overhead_line_conductor_impl(obj, classsname);
+  return isa_overhead_line_conductor_impl(obj, classname);
 }
 #endif
 

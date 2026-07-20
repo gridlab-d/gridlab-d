@@ -728,7 +728,7 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset) {
     return 1;
   } else {
     if (tzname != nullptr) {
-      snprintf(tzname, sizeof(tzname) "%s%d:%02d%s", buf1, hours, minutes, buf2);
+      snprintf(tzname, sizeof(tzname), "%s%d:%02d%s", buf1, hours, minutes, buf2);
     }
 
     if (offset != nullptr) {

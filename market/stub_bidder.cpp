@@ -152,9 +152,9 @@ extern "C" MODULE_API int isa_stub_bidder(OBJECT *obj, char *classname) {
 extern "C" MODULE_API int isa_stub_bidder(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_stub_bidder_impl(obj, classsname);
+  return isa_stub_bidder_impl(obj, classname);
 }
 #endif
 

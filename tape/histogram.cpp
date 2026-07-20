@@ -665,15 +665,15 @@ EXPORT int isa_histogram_impl(OBJECT *obj, char *classname) {
 
 #ifndef __APPLE__
 extern "C" MODULE_API int isa_histogram(OBJECT *obj, char *classname) {
-  return isa_histogram(obj, classname);
+  return isa_histogram_impl(obj, classname);
 }
 #else
 extern "C" MODULE_API int isa_histogram(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_histogram_impl(obj, classsname);
+  return isa_histogram_impl(obj, classname);
 }
 #endif
 

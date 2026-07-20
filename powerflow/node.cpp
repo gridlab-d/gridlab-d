@@ -3610,8 +3610,7 @@ static TIMESTAMP sync_node_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API int sync_node(OBJECT *obj, TIMESTAMP t0,
-                                    PASSCONFIG pass)
+extern "C" MODULE_API int sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     return sync_node_impl(obj, t0, pass);
 }
@@ -5954,9 +5953,9 @@ extern "C" MODULE_API int isa_node(OBJECT *obj, ...)
 {
     va_list args;
     va_start(args, obj);
-    char *classsname = va_arg(args, char *);
+    char *classname = va_arg(args, char *);
     va_end(args);
-    return isa_node_impl(obj, classsname);
+    return isa_node_impl(obj, classname);
 }
 #endif
 

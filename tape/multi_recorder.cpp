@@ -935,9 +935,9 @@ extern "C" MODULE_API int isa_multi_recorder(OBJECT *obj, char *classname) {
 extern "C" MODULE_API int isa_multi_recorder(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_multi_recorder_impl(obj, classsname);
+  return isa_multi_recorder_impl(obj, classname);
 }
 #endif
 

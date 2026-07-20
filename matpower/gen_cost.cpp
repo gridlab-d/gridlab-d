@@ -137,8 +137,7 @@ EXPORT int init_gen_cost(OBJECT *obj, OBJECT *parent) {
   return 0;
 }
 
-static TIMESTAMP sync_gen_cost_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_gen_cost_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
   gen_cost *my = OBJECTDATA(obj, gen_cost);
   try {

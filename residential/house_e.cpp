@@ -4503,9 +4503,9 @@ extern "C" MODULE_API int isa_house(OBJECT *obj, char *classname) {
 extern "C" MODULE_API int isa_house(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_house_impl(obj, classsname);
+  return isa_house_impl(obj, classname);
 }
 #endif
 

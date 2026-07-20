@@ -274,8 +274,7 @@ EXPORT int init_voltdump(OBJECT *obj) {
   INIT_CATCHALL(voltdump);
 }
 
-static TIMESTAMP sync_voltdump_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_voltdump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   try {
     voltdump *my = object_data<voltdump>(obj);
     TIMESTAMP rv;
@@ -315,15 +314,15 @@ EXPORT int isa_voltdump_impl(OBJECT *obj, char *classname) {
 
 #ifndef __APPLE__
 extern "C" MODULE_API int isa_voltdump(OBJECT *obj, char *classname) {
-  return isa_voltdump(obj, classname);
+  return isa_voltdump_impl(obj, classname);
 }
 #else
 extern "C" MODULE_API int isa_voltdump(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_voltdump_impl(obj, classsname);
+  return isa_voltdump_impl(obj, classname);
 }
 #endif
 

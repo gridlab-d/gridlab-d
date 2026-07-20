@@ -865,15 +865,15 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				if (functions & FN_PRECOMMIT)
 					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:precommit_%s ", oclass->name);
 				if (functions & FN_PRESYNC || functions & FN_SYNC || functions & FN_POSTSYNC)
-					vsnprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:sync_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:sync_%s ", oclass->name);
 				if (functions & FN_ISA)
-					vsnprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:isa_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:isa_%s ", oclass->name);
 				if (functions & FN_NOTIFY)
-					vsnprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:notify_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:notify_%s ", oclass->name);
 				if (functions & FN_PLC)
-					vsnprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:plc_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:plc_%s ", oclass->name);
 				if (functions & FN_RECALC)
-					vsnprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:recalc_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:recalc_%s ", oclass->name);
 				if (functions & FN_COMMIT)
 					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:commit_%s ", oclass->name);
 				if (functions & FN_FINALIZE)

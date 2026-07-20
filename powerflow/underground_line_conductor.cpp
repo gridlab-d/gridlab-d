@@ -263,9 +263,9 @@ extern "C" MODULE_API int isa_underground_line_conductor(OBJECT *obj, char *clas
 extern "C" MODULE_API int isa_underground_line_conductor(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_underground_line_conductor_impl(obj, classsname);
+  return isa_underground_line_conductor_impl(obj, classname);
 }
 #endif
 /**@}**/

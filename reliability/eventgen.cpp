@@ -2574,14 +2574,13 @@ extern "C" MODULE_API int isa_eventgen(OBJECT *obj, char *classname) {
 extern "C" MODULE_API int isa_eventgen(OBJECT *obj, ...) {
   va_list args;
   va_start(args, obj);
-  char *classsname = va_arg(args, char *);
+  char *classname = va_arg(args, char *);
   va_end(args);
-  return isa_eventgen_impl(obj, classsname);
+  return isa_eventgen_impl(obj, classname);
 }
 #endif
 
-static TIMESTAMP sync_eventgen_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_eventgen_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   try {
     TIMESTAMP t2 = TS_NEVER;
     eventgen *my = object_data<eventgen>(obj);
