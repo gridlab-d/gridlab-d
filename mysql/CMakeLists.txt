@@ -23,18 +23,11 @@ add_library(${GLD_MODULE_NAME}
         )
 
 if (HAVE_MYSQL)
-    include_directories(${MYSQL_INCLUDE_DIRECTORIES} ${MYSQL_INCLUDE_DIRECTORIES}/include)
-    target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${MYSQL_LIBRARY})
-endif ()
-
-if (HAVE_MYSQL)
     target_include_directories(${GLD_MODULE_NAME} PRIVATE
             ${MYSQL_INCLUDE_DIRECTORIES}
             ${MYSQL_INCLUDE_DIRECTORIES}/include
             )
-    target_link_libraries(${GLD_MODULE_NAME}
-            ${MYSQL_LIBRARY}
-            )
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${MYSQL_LIBRARY})
     target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_HELICS)
 endif ()
 
