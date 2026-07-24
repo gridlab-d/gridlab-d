@@ -1,7 +1,30 @@
 SET(GLD_MODULE_NAME mysql)
 
 if (GLD_USE_MYSQL)
-    find_package(MySQL REQUIRED HINTS ${GLD_MYSQL_DIR} ${MYSQL_DIR} $ENV{GLD_MYSQL_DIR} $ENV{MYSQL_DIR})
+    find_package(MySQL QUIET HINTS ${GLD_MYSQL_DIR} ${MYSQL_DIR} $ENV{GLD_MYSQL_DIR} $ENV{MYSQL_DIR})
+
+    if (NOT MYSQL_FOUND)
+        find_package(PkgConfig QUIET)
+        if (PkgConfig_FOUND)
+            pkg_search_module(MYSQL_PC QUIET mysqlclient libmariadb mariadb)
+        endif ()
+
+        if (MYSQL_PC_FOUND)
+            set(MYSQL_FOUND TRUE)
+            set(MYSQL_INCLUDE_DIRECTORIES ${MYSQL_PC_INCLUDE_DIRS})
+            set(MYSQL_LIBRARY ${MYSQL_PC_LIBRARIES})
+            link_directories(${MYSQL_PC_LIBRARY_DIRS})
+        endif ()
+    endif ()
+
+    if (NOT MYSQL_FOUND)
+        message(FATAL_ERROR
+            "MySQL not found via FindMySQL.cmake or pkg-config (mysqlclient/mariadb/libmariadb). "
+            "Set GLD_MYSQL_DIR, MYSQL_DIR, or the matching environment variables, "
+            "or install the MySQL/MariaDB client development package.")
+    endif ()
+
+    set(HAVE_MYSQL ${MYSQL_FOUND})
 endif ()
 
 add_library(${GLD_MODULE_NAME}
