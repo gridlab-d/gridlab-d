@@ -35,7 +35,7 @@ if (HAVE_MYSQL)
     target_link_libraries(${GLD_MODULE_NAME}
             ${MYSQL_LIBRARY}
             )
-    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_HELICS)
+    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_MYSQL)
 endif ()
 
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
