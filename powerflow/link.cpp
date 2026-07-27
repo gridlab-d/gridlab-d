@@ -164,17 +164,6 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
                 PT_complex, "fault_voltage_B[A]", PADDR(Vf_out[1]), PT_DESCRIPTION, "fault voltage, phase B",
                 PT_complex, "fault_voltage_C[A]", PADDR(Vf_out[2]), PT_DESCRIPTION, "fault voltage, phase C",
                 PT_bool, "overloaded_status", PADDR(overloaded_status), PT_DESCRIPTION, "overloaded status (true/false)",
-                PT_set, "flow_direction", PADDR(flow_direction), PT_DESCRIPTION, "flag used for describing direction of the flow of power",
-                PT_KEYWORD, "UNKNOWN", (gld::set)FD_UNKNOWN,
-                PT_KEYWORD, "AF", (gld::set)FD_A_NORMAL,
-                PT_KEYWORD, "AR", (gld::set)FD_A_REVERSE,
-                PT_KEYWORD, "AN", (gld::set)FD_A_NONE,
-                PT_KEYWORD, "BF", (gld::set)FD_B_NORMAL,
-                PT_KEYWORD, "BR", (gld::set)FD_B_REVERSE,
-                PT_KEYWORD, "BN", (gld::set)FD_B_NONE,
-                PT_KEYWORD, "CF", (gld::set)FD_C_NORMAL,
-                PT_KEYWORD, "CR", (gld::set)FD_C_REVERSE,
-                PT_KEYWORD, "CN", (gld::set)FD_C_NONE,
                 PT_double, "mean_repair_time[s]", PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
                 PT_double, "continuous_rating_A[A]", PADDR(link_rating[0][0]), PT_DESCRIPTION, "Continuous rating for phase A of this link object (set individual line segments)",
                 PT_double, "continuous_rating_B[A]", PADDR(link_rating[0][1]), PT_DESCRIPTION, "Continuous rating for phase B of this link object (set individual line segments)",
@@ -242,7 +231,6 @@ int link_object::create(void)
     indiv_power_in[0] = indiv_power_in[1] = indiv_power_in[2] = 0.0;
     indiv_power_out[0] = indiv_power_out[1] = indiv_power_out[2] = 0.0;
     indiv_power_loss[0] = indiv_power_loss[1] = indiv_power_loss[2] = 0.0;
-    flow_direction = FD_UNKNOWN;
     voltage_ratio = 1.0;
     SpecialLnk = NORMAL;
     prev_LTime = 0;
@@ -5522,9 +5510,6 @@ void link_object::calculate_power_splitphase()
             indiv_power_out[2] = t->voltage[2] * ~tc[2];
         }
     }
-    // Set direction flag.  Can be a little odd in split phase, since circulating
-    // currents.
-    set_flow_directions();
 
     power_in = indiv_power_in[0] + indiv_power_in[1] + indiv_power_in[2];
     power_out = indiv_power_out[0] + indiv_power_out[1] + indiv_power_out[2];
@@ -5564,26 +5549,6 @@ void link_object::calculate_power_splitphase()
     }
     // Calculate overall losses
     power_loss = indiv_power_loss[0] + indiv_power_loss[1] + indiv_power_loss[2];
-}
-
-void link_object::set_flow_directions(void)
-{
-    int i;
-    flow_direction = FD_UNKNOWN; // clear the flows
-    for (i = 0; i < 3; i++)
-    {
-        static int shift[] = {0, 4, 8};
-        double power_in = indiv_power_in[i].Mag();
-        double power_out = indiv_power_out[i].Mag();
-        if (power_in - power_out > ROUNDOFF)
-            flow_direction |=
-                ((int64)FD_A_NORMAL << shift[i]); // "Normal" flow direction
-        else if (power_in - power_out < -ROUNDOFF)
-            flow_direction |=
-                ((int64)FD_A_REVERSE << shift[i]); // "Reverse" flow direction
-        else
-            flow_direction |= ((int64)FD_A_NONE << shift[i]); // "No" flow direction
-    }
 }
 
 void link_object::calculate_power()
@@ -5677,8 +5642,6 @@ void link_object::calculate_power()
         // Calculate overall losses
         power_loss = power_in - power_out;
     }
-
-    set_flow_directions();
 }
 
 // Retrieve value of a double

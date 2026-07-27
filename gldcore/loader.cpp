@@ -119,7 +119,6 @@ STATUS loader::loadDirectives()
     {
         for (auto &[name, value] : j_obj["#set"].items())
         {
-            global_strictnames = true;
             if (convert(value, propValue) == FAILED)
             {
                 result = FAILED;
@@ -501,7 +500,7 @@ STATUS loader::loadClock()
             global_stoptime = tsval;
         }
     }
-      
+
     return rv;
 }
 

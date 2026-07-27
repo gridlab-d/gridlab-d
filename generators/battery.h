@@ -158,7 +158,6 @@ public:
     enumeration battery_type;
     double soc;      // state of charge of the battery
     double bat_load; // current load of the battery
-    double last_bat_load;
     double b_soc_reserve;
 
     TIMESTAMP state_change_time;

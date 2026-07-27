@@ -26,8 +26,7 @@ private:
     gld::complex AMx[3][3];      // Impedance matrix for Synchronous Generator
     gld::complex invAMx[3][3];   // Inverse of SG impedance matrix
     gld::complex IndTPMat[2][2]; // Induction Generator two port matrix
-    gld::complex
-        Vapu; // Per unit voltage and current for Induction Generator at terminals
+    gld::complex Vapu;           // Per unit voltage and current for Induction Generator at terminals
     gld::complex Vbpu;
     gld::complex Vcpu;
     gld::complex Iapu;
@@ -40,15 +39,13 @@ private:
     double std_air_press;
     gld_property *pCircuit_V[3]; //< pointer to the three voltages on three lines
     gld_property *pLine_I[3];    //< pointer to the three current on three lines
-    gld_property
-        *pLine12; //< pointer to line current 12, used in triplex metering
+    gld_property *pLine12;       //< pointer to line current 12, used in triplex metering
 
     int number_of_phases_out; // Used to flag three phase or triplex parent
 
     gld::complex value_Circuit_V[3]; //< value holder for voltage values
     gld::complex value_Line_I[3];    //< value holder for current values
-    gld::complex
-        value_Line12; //< value holder for line current 12 in triplex metering
+    gld::complex value_Line12;       //< value holder for line current 12 in triplex metering
 
     bool parent_is_valid; //< Flag to pointers
     bool parent_is_triplex;
@@ -161,8 +158,6 @@ public:
     double ref_height;
     double Cp;
 
-    int64 time_advance;
-
     double avg_ws;     // Default value for wind speed
     double cut_in_ws;  // Values are used to find GENERIC Cp
     double cut_out_ws; // |
@@ -174,11 +169,8 @@ public:
 
     double q; // number of gearboxes
 
-    double
-        Pconv;         // Power converted from mechanical to electrical before elec losses
+    double Pconv;      // Power converted from mechanical to electrical before elec losses
     double GenElecEff; // Generator electrical efficiency used for testing
-
-    unsigned int *n;
 
     gld::complex voltage_A; // terminal voltage
     gld::complex voltage_B;
@@ -207,11 +199,8 @@ public:
     double Max_Ef;    // maximum induced voltage in p.u., e.g. 1.2
     double Min_Ef;    // minimum induced voltage in p.u., e.g. 0.8
     double Max_P;     // maximum real power capacity in kW
-    double Min_P;     // minimum real power capacity in kW
     double Max_Q;     // maximum reactive power capacity in kVar
-    double Min_Q;     // minimum reactive power capacity in kVar
-    double
-        pf; // desired power factor - TO DO: implement later use with controller
+    double pf;        // desired power factor - TO DO: implement later use with controller
 
     // Induction Generator
     gld::complex Vrotor_A; // induced "rotor" voltage in pu

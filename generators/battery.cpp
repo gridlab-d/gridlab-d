@@ -153,6 +153,10 @@ battery::battery(MODULE *module)
                                 PT_bool, "parent_is_triplex", PADDR(parent_is_triplex), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_triplex",
                                 PT_bool, "parent_is_inverter", PADDR(parent_is_inverter), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_inverter",
                                 PT_bool, "climate_object_found", PADDR(climate_object_found), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for climate_object_found",
+                                PT_complex, "last_current_A", PADDR(last_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_current[0]",
+                                PT_complex, "last_current_B", PADDR(last_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_current[1]",
+                                PT_complex, "last_current_C", PADDR(last_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_current[2]",
+                                PT_bool, "Iteration_Toggle", PADDR(Iteration_Toggle), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Iteration_Toggle",
 
                                 nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
@@ -2264,6 +2268,10 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
                 state_change_time = t1 + (TIMESTAMP)ceil((1 - soc) * e_max * 3600 / internal_battery_load);
             }
             return state_change_time;
+        }
+        if (bat_load == 0.0 && (battery_state == BS_CHARGING || battery_state == BS_DISCHARGING))
+        {
+            battery_state = BS_WAITING;
         }
         return TS_NEVER;
     }

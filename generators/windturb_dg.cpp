@@ -199,7 +199,6 @@ int windturb_dg::create(void)
     Min_Ef = 0.8;
     avg_ws = 8;             // This is wind speed in m/s at reference height (ref_height=10m)
     wind_speed_hub_ht = 10; // This is wind speed at 37 m hub height
-    time_advance = 3600;    // amount of time to advance for WS data import in secs.
 
     /* set the default values of all properties here */
     Ridealgas = 8.31447;
@@ -1279,7 +1278,7 @@ int windturb_dg::init(OBJECT *parent)
             invAMx[0][0] = tst3; // Admittance matrix (inverse of Impedance matrix)
             invAMx[1][1] = tst3;
             invAMx[2][2] = tst3;
-            invAMx[0][1] = AMx[0][2] = AMx[1][0] = AMx[1][2] = AMx[2][0] = AMx[2][1] = tst4;
+            invAMx[0][1] = invAMx[0][2] = invAMx[1][0] = invAMx[1][2] = invAMx[2][0] = invAMx[2][1] = tst4;
         }
         else
             GL_THROW("Unknown generator type specified");

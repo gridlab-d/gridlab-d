@@ -349,11 +349,11 @@ inverter::inverter(MODULE *module)
                                 PT_complex, "last_current_A", PADDR(last_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (used to remove from parent so XML files look proper) - element 0",
                                 PT_complex, "last_current_B", PADDR(last_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (used to remove from parent so XML files look proper) - element 1",
                                 PT_complex, "last_current_C", PADDR(last_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (used to remove from parent so XML files look proper) - element 2",
-                                PT_complex, "last_current_D", PADDR(last_current[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (used to remove from parent so XML files look proper) - element 3",
+                                PT_complex, "last_current_12", PADDR(last_current[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (used to remove from parent so XML files look proper) - element 3",
                                 PT_complex, "last_power_A", PADDR(last_power[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (as constant power) - used to remove from parent so XML looks right - element 0",
                                 PT_complex, "last_power_B", PADDR(last_power[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (as constant power) - used to remove from parent so XML looks right - element 1",
                                 PT_complex, "last_power_C", PADDR(last_power[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (as constant power) - used to remove from parent so XML looks right - element 2",
-                                PT_complex, "last_power_D", PADDR(last_power[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (as constant power) - used to remove from parent so XML looks right - element 3",
+                                PT_complex, "last_power_12", PADDR(last_power[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Previously applied power output (as constant power) - used to remove from parent so XML looks right - element 3",
                                 PT_bool, "inverter_first_step", PADDR(inverter_first_step), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for inverter_first_step",
                                 PT_int64, "first_iteration_current_injection", PADDR(first_iteration_current_injection), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode",
                                 PT_double, "m12", PADDR(m12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for m12",
@@ -401,7 +401,11 @@ inverter::inverter(MODULE *module)
                                 PT_complex, "prev_value_IGenerated_A", PADDR(prev_value_IGenerated[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_value_IGenerated[0]",
                                 PT_complex, "prev_value_IGenerated_B", PADDR(prev_value_IGenerated[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_value_IGenerated[1]",
                                 PT_complex, "prev_value_IGenerated_C", PADDR(prev_value_IGenerated[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_value_IGenerated[2]",
-
+                                PT_complex, "VA_Out_past", PADDR(VA_Out_past), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for VA_Out_past",
+                                PT_double, "P_Out_t0", PADDR(P_Out_t0), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for P_Out_t0",
+                                PT_double, "Q_Out_t0", PADDR(Q_Out_t0), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Q_Out_t0",
+                                PT_double, "power_factor_t0", PADDR(power_factor_t0), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for power_factor_t0",
+                                PT_timestamp, "inverter_start_time", PADDR(inverter_start_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for inverter_start_time",
                                 nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 

@@ -110,34 +110,34 @@
 #include "compile.h"
 
 #ifdef _WIN32
-    #ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
-    #define WEXITSTATUS(X) (X & 127)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#define WEXITSTATUS(X) (X & 127)
 
-    // if you use modern TCP/IP helpers
-    #include <ws2tcpip.h>
-    // CRT utils on Windows
-    #include <direct.h>
+// if you use modern TCP/IP helpers
+#include <ws2tcpip.h>
+// CRT utils on Windows
+#include <direct.h>
 #else
-    #include <algorithm>
-    #include <arpa/inet.h>
-    #include <cerrno>
-    #include <chrono>
-    #include <cmath>
-    #include <list>
-    #include <netinet/in.h>
-    #include <ratio>
-    #include <set>
-    #include <sys/socket.h>
-    #include <sys/stat.h>
-    #include <sys/types.h>
-    #include <unistd.h>
-    #include <vector>
+#include <algorithm>
+#include <arpa/inet.h>
+#include <cerrno>
+#include <chrono>
+#include <cmath>
+#include <list>
+#include <netinet/in.h>
+#include <ratio>
+#include <set>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <vector>
 
-    #define SOCKET int
-    #define INVALID_SOCKET (-1)
-    #define closesocket close
+#define SOCKET int
+#define INVALID_SOCKET (-1)
+#define closesocket close
 #endif
 
 #include "class.h"
@@ -543,6 +543,11 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     }
                     return val;
                 }
+                case PT_int16:
+                {
+                    int16 val = static_cast<int16>(std::stoi(value_str));
+                    return val;
+                }
                 case PT_int32:
                 {
                     int32 val = (int32)strtol(value_str, nullptr, 10);
@@ -810,6 +815,15 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                                 }
                                 break;
                             }
+                            case PT_int16:
+                            {
+                                int16 *iptr = object_get_int16(obj, pmap);
+                                if (iptr != nullptr)
+                                {
+                                    instance[pmap->name] = *iptr;
+                                }
+                                break;
+                            }
                             case PT_int32:
                             {
                                 int32 *iptr = object_get_int32(obj, pmap);
@@ -836,6 +850,15 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                                 TIMESTAMP *tptr = (TIMESTAMP *)object_get_addr(obj, pmap->name);
                                 if (tptr != nullptr)
                                     instance[pmap->name] = static_cast<int64_t>(*tptr);
+                                break;
+                            }
+                            case PT_enumeration:
+                            {
+                                enumeration *eptr = object_get_enum(obj, pmap);
+                                if (eptr != nullptr)
+                                {
+                                    instance[pmap->name] = static_cast<int>(*eptr);
+                                }
                                 break;
                             }
                             default:
@@ -887,10 +910,10 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                         }
                         current_class = current_class->parent;
                     }
-                    if (instance.is_object() && !instance.empty()) {
+                    if (instance.is_object() && !instance.empty())
+                    {
                         instances.push_back(instance);
                     }
-                    
                 }
                 checkpoint["objects"][class_pair.first]["instances"] = instances;
             }
@@ -3344,7 +3367,8 @@ static void run_main_simulation_loop(int64 &passes,
     delete threadpool;
     // if the simulation is finished and not just being checkpointed, update global_nexttime to be tsnever.
     std::shared_ptr<sync_data> sync_data_nullptr = nullptr;
-    if (!exec_sync_isrunning(sync_data_nullptr)) {
+    if (!exec_sync_isrunning(sync_data_nullptr))
+    {
         global_nexttime = TS_NEVER;
     }
 }
