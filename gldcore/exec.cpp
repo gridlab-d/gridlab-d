@@ -102,6 +102,7 @@
 #include <string>
 #include <fstream>
 #include <map>
+#include <unordered_map>
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
@@ -527,8 +528,15 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             checkpoint["clock"]["timezone"] = tz;
             checkpoint["_checkpoint"] = true;
 
-            // ── Collect objects by class ──
-            std::map<std::string, std::vector<OBJECT *>> objects_by_class;
+            // ── Collect objects by class, preserving first-seen class order ──
+            // (not sorted alphabetically) so that reloading the checkpoint
+            // recreates objects in the same order as the original run. Object
+            // creation order drives deferred-init retry order, which in turn
+            // determines things like circuit attach order on shared parents
+            // (see house_e::attach()) -- an alphabetical resort here would
+            // make a restored run diverge from the original.
+            std::vector<std::string> object_class_order;
+            std::unordered_map<std::string, std::vector<OBJECT *>> objects_by_class;
 
             auto parse_property_value = [](PROPERTYTYPE ptype, const char *value_str, const void *raw_addr = nullptr) -> nlohmann::json
             {
@@ -630,13 +638,16 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
             {
                 std::string class_name = iterator_object->oclass->name;
 
+                if (objects_by_class.find(class_name) == objects_by_class.end())
+                    object_class_order.push_back(class_name);
                 objects_by_class[class_name].push_back(iterator_object);
                 iterator_object = object_get_next(iterator_object);
             }
 
             // ── Build objects section ──
-            for (auto &class_pair : objects_by_class)
+            for (const std::string &class_name : object_class_order)
             {
+                std::pair<const std::string &, std::vector<OBJECT *> &> class_pair(class_name, objects_by_class[class_name]);
                 nlohmann::json instances = nlohmann::json::array();
                 for (OBJECT *obj : class_pair.second)
                 {
