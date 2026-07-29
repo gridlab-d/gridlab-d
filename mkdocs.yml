@@ -91,7 +91,6 @@ nav:
       - Built-in Schedules and Loadshapes: docs/2.0 - New Users/Tutorial/2.2.7 - Schedules and Loadshapes.md
       - Distributed Generation: docs/2.0 - New Users/Tutorial/2.2.8 - Distributed_Generation.md
       - Advanced Distribution Models: docs/2.0 - New Users/Tutorial/2.2.9 - Advanced_Distribution_Models.md
-    - Python API Quick Start: docs/2.0 - New Users/2.3 - Python API Quick Start.md
     - Video Tutorials: docs/2.0 - New Users/2.4 - Video Tutorials.md
     - Troubleshooting: docs/2.0 - New Users/2.5 - Troubleshooting.md
   - 3.0 - Modeling Reference:
