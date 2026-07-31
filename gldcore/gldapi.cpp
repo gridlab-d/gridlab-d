@@ -8,7 +8,11 @@
 #include "kml.h"
 #include "legal.h"
 #include "local.h"
-// #include <module.h>
+#include "load.h"
+#include "object.h"
+#include "save.h"
+#include "kill.h"
+#include "cpp_threadpool.h"
 
 // External declarations for message capture functions in output.cpp
 extern std::vector<std::map<std::string, std::string>>
@@ -17,14 +21,7 @@ extern void output_clear_captured_messages();
 extern void output_enable_capture(bool enable);
 extern void output_set_message_capture_limit(size_t limit);
 extern size_t output_get_message_capture_limit();
-// #include <module.h>
 
-#include "globals.h"
-#include "kill.h"
-#include "load.h"
-#include "object.h"
-#include "save.h"
-#include "cpp_threadpool.h"
 #include <array>
 #include <cstdlib>
 #include <cstring>
@@ -37,7 +34,6 @@ extern size_t output_get_message_capture_limit();
 #include <algorithm>
 #include <map>
 #include <chrono>
-#include <sys/wait.h>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -45,10 +41,11 @@ extern size_t output_get_message_capture_limit();
 
 
 #ifdef _WIN32
-#include <direct.h>
-#define getcwd _getcwd
+    #include <direct.h>
+    #define getcwd _getcwd
 #else
-#include <unistd.h>
+    #include <sys/wait.h>
+    #include <unistd.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -275,7 +272,7 @@ GridLabD::GridLabD() : selected_timestep(0) {
   if (browser != nullptr)
     strncpy(global_browser, browser, sizeof(global_browser) - 1);
 
-#if defined WIN32 && _DEBUG
+#if defined(_WIN32) && _DEBUG
   atexit(pause_at_exit);
 #endif
 
@@ -367,7 +364,7 @@ GLDErrorCode GridLabD::load_glm(const std::string &filepath) {
   return load_glm(static_cast<int>(argv.size()), argv.data());
 }
 
-void set_clocks(std::optional<double> start_time,
+static void set_clocks(std::optional<double> start_time,
                 std::optional<double> stop_time) {
   if (start_time.has_value()) {
     output_verbose("Setting start_time: %.2f", start_time.value());
@@ -580,7 +577,7 @@ GLDErrorCode GridLabD::edit_object(const std::string &name,
 }
 
 // Common helper to check environment and handle failures
-GLDErrorCode check_environment_and_handle_failure() {
+static GLDErrorCode check_environment_and_handle_failure() {
   if (strcmp(global_environment, "batch") != 0) {
     output_fatal("%s environment not recognized or supported",
                  global_environment);
@@ -611,7 +608,7 @@ GLDErrorCode check_environment_and_handle_failure() {
 }
 
 // Common helper to handle simulation failure with optional dump
-GLDErrorCode handle_simulation_failure(const char *context_message) {
+static GLDErrorCode handle_simulation_failure(const char *context_message) {
   output_fatal("shutdown after simulation stopped prematurely");
   /*	TROUBLESHOOT
       The simulation stopped because an unexpected condition was encountered.
@@ -637,7 +634,7 @@ GLDErrorCode handle_simulation_failure(const char *context_message) {
 }
 
 // Common helper to ensure simulation is initialized for stepping
-GLDErrorCode ensure_simulation_initialized() {
+static GLDErrorCode ensure_simulation_initialized() {
   if (!exec_is_initialized()) {
     output_verbose("Simulation not initialized, attempting to initialize...");
 
@@ -719,7 +716,8 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
 
   // If selected_timestep is 0, use default event-driven behavior (single step)
   if (selected_timestep == 0) {
-    output_verbose("Using default event-driven stepping (selected_timestep = 0)");
+    output_verbose(
+        "Using default event-driven stepping (selected_timestep = 0)");
     TIMESTAMP prev_clock = global_clock;
 
     STATUS result = exec_step();
@@ -745,8 +743,9 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
     target_clock = global_stoptime;
   }
 
-  output_verbose("Stepping from time %.2f to target %.2f (step size: %d seconds)",
-                 (double)start_clock, (double)target_clock, selected_timestep);
+  output_verbose(
+      "Stepping from time %.2f to target %.2f (step size: %d seconds)",
+      (double)start_clock, (double)target_clock, selected_timestep);
 
   // Cap the next event time so exec_step doesn't overshoot the target.
   global_step_time = target_clock;
@@ -789,8 +788,8 @@ GLDErrorCode GridLabD::step(double &simulation_time) {
   // Update the simulation time
   simulation_time = (double)global_clock;
 
-  output_verbose("Completed step: advanced from %.2f to %.2f", (double)start_clock,
-         simulation_time);
+  output_verbose("Completed step: advanced from %.2f to %.2f",
+                 (double)start_clock, simulation_time);
 
   return GLD_SUCCESS;
 }
@@ -1029,10 +1028,9 @@ GLDErrorCode GridLabD::get_property(const std::string &object_name,
 
 // Get property metadata (type, units, description)
 GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
-                                        const std::string &property_name,
-                                        int &prop_type,
-                                        std::string &unit_str,
-                                        std::string &description) {
+                                         const std::string &property_name,
+                                         int &prop_type, std::string &unit_str,
+                                         std::string &description) {
   // Find the object by name
   OBJECT *obj = nullptr;
 
@@ -1055,7 +1053,7 @@ GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
 
   // Find the property
   PROPERTY *prop = object_get_property(obj, property_name.c_str(), nullptr);
-  
+
   if (prop == nullptr) {
     output_error("Property '%s' not found on object '%s'",
                  property_name.c_str(), object_name.c_str());
@@ -1299,8 +1297,9 @@ GridLabD::get_properties_by_class(const std::string &class_name,
     obj = object_get_next(obj);
   }
 
-  output_verbose("Retrieved property '%s.%s' from %zu objects", class_name.c_str(),
-                 property_name.c_str(), property_map.size());
+  output_verbose("Retrieved property '%s.%s' from %zu objects",
+                 class_name.c_str(), property_name.c_str(),
+                 property_map.size());
 
   return property_map;
 }
@@ -1534,6 +1533,7 @@ namespace {
     }
 }
 
+/*
 GLDErrorCode GridLabD::validate(const std::string& repo_root, const std::vector<std::string>& modules) {
     namespace fs = std::filesystem;
     TestSummary summary;
@@ -1686,7 +1686,7 @@ GLDErrorCode GridLabD::validate(const std::string& repo_root, const std::vector<
     print_test_summary(summary);
     
     return (summary.failed_tests > 0) ? GLD_OPERATION_FAILED : GLD_SUCCESS;
-}
+}*/
 
 /**
  * Self-contained API health check that validates core functionality.

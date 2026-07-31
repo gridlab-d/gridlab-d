@@ -18,9 +18,9 @@ typedef struct s_object_list OBJECT;
 void exec_sighandler(int sig);
 int exec_debug(std::shared_ptr<struct sync_data> &data, int pass, int index,
                OBJECT *obj);
-#ifdef WIN32
-const char *strsignal(int sig);
-#endif // WIN32
+#ifdef _WIN32
+    const char *strsignal(int sig);
+#endif // _WIN32
 
 #endif
 /**@}*/

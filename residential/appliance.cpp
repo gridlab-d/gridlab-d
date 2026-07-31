@@ -43,30 +43,13 @@ int appliance::create()
 	return res;
 }
 
-int appliance::shared_init(OBJECT *parent)
-{
-	// These variables need intialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	transition_probabilities = nullptr;
-	n_states = 0;
-	state = 0;
-	next_t = TS_NEVER;
-	return 1;
-}
-
-int appliance::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
 int appliance::init(OBJECT *parent)
 {
-	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
+  OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+  parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 
 	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 

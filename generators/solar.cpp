@@ -527,6 +527,11 @@ int solar::init_climate()
 int solar::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent;
+#endif
+
 	int climate_result;
 	gld_property *temp_property_pointer = nullptr;
 	unsigned test_rlock = 0;
@@ -1668,8 +1673,8 @@ EXPORT int create_solar(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(solar::oclass);
 		if (*obj != nullptr)
 		{
-			solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(*obj);
-			gl_set_parent(*obj, parent);
+			solar *my = object_data<solar>(*obj);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -1683,17 +1688,17 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj)->init(parent);
+			return object_data<solar>(obj)->init(parent);
 		else
 			return 0;
 	}
 	INIT_CATCHALL(solar);
 }
 
-EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_solar_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj);
+	solar *my = object_data<solar>(obj);
 	try
 	{
 		switch (pass)
@@ -1718,10 +1723,26 @@ EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	return t2;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+    return sync_solar_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_solar(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = (PASSCONFIG)va_arg(args, int);
+    va_end(args);
+    return sync_solar_impl(obj, t1, pass);
+}
+#endif
+
 // DELTAMODE Linkage
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj);
+	solar *my = object_data<solar>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1738,7 +1759,7 @@ EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, 
 // DC Object calls from inverter linkage
 EXPORT STATUS dc_object_update_solar(OBJECT *us_obj, OBJECT *calling_obj, bool init_mode)
 {
-	solar *me_solar = /*OBJECTDATA(us_obj,<>)*/ object_data<solar>(us_obj);
+	solar *me_solar = object_data<solar>(us_obj);
 	STATUS temp_status;
 
 	// Call our update function

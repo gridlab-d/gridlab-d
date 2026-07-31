@@ -7,19 +7,38 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
 
-#include <string>
 #include <filesystem>
+#include <string>
 
-#include "version.h"
 #include "class.h"
-#include "validate.h"
 #include "sanitize.h"
+#include "validate.h"
+#include "version.h"
+
+// ---- Cross-platform symbol visibility ----
+#if defined(_WIN32)
+#if defined(GLD_SHARED)
+#if defined(GLD_BUILD)
+#define GLD_API __declspec(dllexport)
+#else
+#define GLD_API __declspec(dllimport)
+#endif
+#else
+#define GLD_API
+#endif
+#else
+#if defined(GLD_SHARED) && (defined(__GNUC__) || defined(__clang__))
+#define GLD_API __attribute__((visibility("default")))
+#else
+#define GLD_API
+#endif
+#endif
 
 #ifdef _MAIN_C
-#define GLOBAL
+#define GLOBAL GLD_API
 #define INIT(A) = A
 #else
-#define GLOBAL extern
+#define GLOBAL extern GLD_API
 #define INIT(A)
 #endif
 
@@ -38,15 +57,21 @@ extern "C"
 #define env_pathsep "/"
 #endif
 
+#ifdef _MSC_VER
+#include <string.h>
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
+#endif
+
 #include <cctype>
 #include <cstring>
 
 #ifdef _WIN32
 	// Windows-specific: Use strtok_s (secure version of strtok)
-#define strtok_r strtok_s
+    #define strtok_r strtok_s
 #else
-// Unix-like systems: Use strtok_r
-#include <string.h>
+    // Unix-like systems: Use strtok_r
+    #include <string.h>
 #endif
 
 	int stricmp_portable(const char *str1, const char *str2);
@@ -64,7 +89,8 @@ extern "C"
 		PROPERTY *prop;
 		struct s_globalvar *next;
 		uint32 flags;
-		void (*callback)(const char *); // this function will be called whenever the globalvar is set
+		// this function will be called whenever the globalvar is set
+		void (*callback)(const char *);
 		unsigned int lock;
 	} GLOBALVAR;
 
@@ -205,43 +231,39 @@ extern "C"
 	GLOBAL char global_object_format[32] INIT("%s:%d");
 	GLOBAL char global_object_scan[32] INIT("%[^:]:%d"); /**< the format to use when scanning for object ids */
 
+    GLOBAL int global_minimum_timestep INIT(1); /**< the minimum timestep allowed */
+    GLOBAL int global_maximum_synctime INIT(60); /**< the maximum time allotted to any single sync call */
 
-GLOBAL int global_minimum_timestep INIT(1); /**< the minimum timestep allowed */
-GLOBAL int global_maximum_synctime INIT(60); /**< the maximum time allotted to any single sync call */
+    /* API-specific timing globals for Python bindings and external API control */
+    /* NOTE: These globals are reserved for coordinating API-level time control across instances.
+     * Currently, the GridLabD class uses instance variables (e.g., selected_timestep) for
+     * per-instance control, which is preferred for object-oriented encapsulation.
+     * These globals are available for future enhancements where cross-instance coordination
+     * or global API state tracking is needed. */
 
-/* API-specific timing globals for Python bindings and external API control */
-/* NOTE: These globals are reserved for coordinating API-level time control across instances.
- * Currently, the GridLabD class uses instance variables (e.g., selected_timestep) for 
- * per-instance control, which is preferred for object-oriented encapsulation.
- * These globals are available for future enhancements where cross-instance coordination
- * or global API state tracking is needed. */
+    GLOBAL TIMESTAMP global_api_step_amount INIT(0);
+    /**< Reserved for future use: Could track the last step amount requested via API step() function.
+     * Currently unused - step() uses instance variable selected_timestep instead. */
 
-GLOBAL TIMESTAMP global_api_step_amount INIT(0); 
-/**< Reserved for future use: Could track the last step amount requested via API step() function.
- * Currently unused - step() uses instance variable selected_timestep instead. */
+    GLOBAL TIMESTAMP global_api_step_target INIT(TS_NEVER);
+    /**< Reserved for future use: Could track the target time for API step_to() operations.
+     * Currently unused - step_to() calculates target_clock locally. */
 
-GLOBAL TIMESTAMP global_api_step_target INIT(TS_NEVER); 
-/**< Reserved for future use: Could track the target time for API step_to() operations.
- * Currently unused - step_to() calculates target_clock locally. */
+    GLOBAL unsigned int global_api_clock_nanoseconds INIT(0);
+    GLOBAL TIMESTAMP global_step_time INIT(TS_NEVER);
 
-GLOBAL unsigned int global_api_clock_nanoseconds INIT(0); 
+    /**< Target time for the current step() or step_to() operation from the API.
+     * Updated by gldapi step() and step_to() functions to indicate the user's desired target time.
+     * Used by exec.cpp to ensure sync events don't overshoot the user's requested step target. */
 
-
-GLOBAL TIMESTAMP global_step_time INIT(TS_NEVER);
-
-/**< Target time for the current step() or step_to() operation from the API.
-
- * Updated by gldapi step() and step_to() functions to indicate the user's desired target time.
-
- * Used by exec.cpp to ensure sync events don't overshoot the user's requested step target. */
-/**< Nanoseconds component for sub-second precision in API time operations.
- * Currently referenced in step_to() for sub-second time comparisons, but always remains 0
- * since nothing updates it yet. Future enhancement: populate from timestamp conversion functions
- * like convert_to_timestamp_delta() to enable true sub-second stepping precision. */
-GLOBAL char global_platform[8] /**< the host operating platform */
+    /**< Nanoseconds component for sub-second precision in API time operations.
+     * Currently referenced in step_to() for sub-second time comparisons, but always remains 0
+     * since nothing updates it yet. Future enhancement: populate from timestamp conversion functions
+     * like convert_to_timestamp_delta() to enable true sub-second stepping precision. */
+    GLOBAL char global_platform[8] /**< the host operating platform */
 
 #ifdef _WIN32
-		INIT("WINDOWS");
+	INIT("WINDOWS");
 #elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
 	INIT("MACOSX");
 #else
@@ -319,10 +341,8 @@ GLOBAL char global_platform[8] /**< the host operating platform */
 	GLOBAL TIMESTAMP global_mainlooppauseat INIT(TS_NEVER); /**< time at which to pause main loop */
 
 	GLOBAL char global_infourl[1024] INIT("http://gridlab-d.sourceforge.net/info.php?title=Special:Search/"); /**< URL for info calls */
-
 	GLOBAL char global_hostname[1024] INIT("localhost"); /**< machine hostname */
 	GLOBAL char global_hostaddr[32] INIT("127.0.0.1");	 /**< machine ip addr */
-
 	GLOBAL int global_autostartgui INIT(1); /**< autostart GUI when no command args are given */
 
 	/* delta mode support */

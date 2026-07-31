@@ -490,6 +490,13 @@ int inverter::create(void)
 int inverter::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+  parent = obj->parent; // AppleClang bug workaround - parent is coming in as
+                        // null, but is actually set in the object header, so
+                        // pull it from there
+#endif
+
 	PROPERTY *pval = nullptr;
 	bool *dyn_gen_posting;
 	unsigned iindex, jindex;
@@ -5102,7 +5109,7 @@ EXPORT int create_inverter(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			inverter *my = /*OBJECTDATA(*obj, inverter)*/ object_data<inverter>(*obj);
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -5123,7 +5130,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 	INIT_CATCHALL(inverter);
 }
 
-EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_inverter_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
 	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
@@ -5149,6 +5156,21 @@ EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	SYNC_CATCHALL(inverter);
 	return t2;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+    return sync_inverter_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_inverter(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    return sync_inverter_impl(obj, t1, pass);
+}
+#endif
 
 EXPORT int isa_inverter(OBJECT *obj, char *classname)
 {

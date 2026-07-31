@@ -7,19 +7,18 @@
 
 #include "globals.h"
 
-
 typedef struct s_memory {
-	GLOBALVAR *buffer;
-	unsigned short index;
+  GLOBALVAR *buffer;
+  unsigned short index;
 } MEMORY;
 
 int memory_open_player(struct player *my, char *fname, char *flags);
-char *memory_read_player(struct player *my,char *buffer,unsigned int size);
+char *memory_read_player(struct player *my, char *buffer, unsigned int size);
 int memory_rewind_player(struct player *my);
 void memory_close_player(struct player *my);
 
 int memory_open_shaper(struct shaper *my, char *fname, char *flags);
-char *memory_read_shaper(struct shaper *my,char *buffer,unsigned int size);
+char *memory_read_shaper(struct shaper *my, char *buffer, unsigned int size);
 int memory_rewind_shaper(struct shaper *my);
 void memory_close_shaper(struct shaper *my);
 

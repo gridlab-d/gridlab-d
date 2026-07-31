@@ -1,10 +1,10 @@
 // init.cpp
 //	Copyright (C) 2008 Battelle Memorial Institute
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "gridlabd.h"
 
@@ -12,38 +12,32 @@
 
 char libpath[1024] = ".";
 char incpath[1024] = ".";
-TIMESTAMP *pGlobalClock=nullptr;
+TIMESTAMP *pGlobalClock = nullptr;
 
-EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
-{
-	if (set_callback(fntable)==nullptr)
-	{
-		errno = EINVAL;
-		return nullptr;
-	}
-	pGlobalClock = fntable->global_clock;
-	gl_global_getvar("execdir",libpath,sizeof(libpath));
-	strcat(libpath,"/plc/lib");
-	gl_global_create("plc::libpath",PT_char1024,libpath,nullptr);
+EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]) {
+  if (set_callback(fntable) == nullptr) {
+    errno = EINVAL;
+    return nullptr;
+  }
+  pGlobalClock = fntable->global_clock;
+  gl_global_getvar("execdir", libpath, sizeof(libpath));
+  strcat(libpath, "/plc/lib");
+  gl_global_create("plc::libpath", PT_char1024, libpath, nullptr);
 
-	gl_global_getvar("execdir",incpath,sizeof(incpath));
-	strcat(incpath,"/plc/include");
-	gl_global_create("plc::incpath",PT_char1024,incpath,nullptr);
+  gl_global_getvar("execdir", incpath, sizeof(incpath));
+  strcat(incpath, "/plc/include");
+  gl_global_create("plc::incpath", PT_char1024, incpath, nullptr);
 
-	new plc(module);
-	new comm(module);
+  new plc(module);
+  new comm(module);
 
-	/* always return the first class registered */
-	return plc::oclass;
+  /* always return the first class registered */
+  return plc::oclass;
 }
 
-
-CDECL int do_kill()
-{
-	/* if global memory needs to be released, this is a good time to do it */
-	return 0;
+CDECL int do_kill() {
+  /* if global memory needs to be released, this is a good time to do it */
+  return 0;
 }
 
-EXPORT int check(){
-	return 0;
-}
+EXPORT int check() { return 0; }

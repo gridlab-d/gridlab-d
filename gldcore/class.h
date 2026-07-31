@@ -8,11 +8,11 @@
 #ifndef _CLASS_H
 #define _CLASS_H
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #ifdef HAVE_CONFIG_H
@@ -99,7 +99,6 @@ struct s_class_list {
 	FUNCTION *fmap;
 	FUNCTIONADDR create;
 	FUNCTIONADDR init;
-	FUNCTIONADDR checkpoint_init;
 	FUNCTIONADDR precommit;
 	FUNCTIONADDR sync;
 	FUNCTIONADDR commit;

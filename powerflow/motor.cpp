@@ -186,7 +186,7 @@ int motor::create()
 	motor_trip = 0;  // share the variable with TPIM
 	Pbase = -999;
 	n = 1.22;              
-	Rds = 0.0365;           
+	Rds =0.0365;           
 	Rqs = 0.0729;          
 	Rr =-999;
 	Xm=-999;
@@ -194,12 +194,12 @@ int motor::create()
 	Xc1 = -2.779;           
 	Xc2 = -0.7;            
 	Xd_prime = 0.1033;      
-	Xq_prime = 0.1489;       
+	Xq_prime =0.1489;       
 	bsat = 0.7212;  
 	Asat = 5.6;
-	H = -999;
-	Jm = -999;
-	To_prime = 0.1212;   
+	H=-999;
+	Jm=-999;
+	To_prime =0.1212;   
 	trip_time = 10;        
 	reconnect_time = 300;
 	iteration_count = 1000;  // share the variable with TPIM
@@ -296,7 +296,12 @@ int motor::create()
 
 int motor::init(OBJECT *parent)
 {
-	OBJECT *obj = object_header(this);
+    OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	int result;
 	bool temp_house_motor_state;
 	double temp_house_capacity_info, temp_house_cop;
@@ -1398,7 +1403,7 @@ void motor::SPIMupdateVars() {
 	psi_f_prev = psi_f; 
 	psi_b_prev = psi_b;
 	Iqs_prev = Iqs;
-	Ids_prev = Ids;
+	Ids_prev =Ids;
 	If_prev = If;
 	Ib_prev = Ib;
 	Is_prev = Is;
@@ -1437,7 +1442,7 @@ void motor::SPIMreinitializeVars() {
 	psi_f = psi_f_prev; 
 	psi_b = psi_b_prev;
 	Iqs = Iqs_prev;
-	Ids = Ids_prev;
+	Ids =Ids_prev;
 	If = If_prev;
 	Ib = Ib_prev;
 	Is = Is_prev;
@@ -2247,8 +2252,8 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(motor::oclass);
 		if (*obj!=nullptr)
 		{
-			motor *my = /*OBJECTDATA(obj,<>)*/ object_data<motor>(*obj);
-			gl_set_parent(*obj,parent);
+			motor *my = object_data<motor>(*obj);
+			//gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -2266,7 +2271,7 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 EXPORT int init_motor(OBJECT *obj)
 {
 	try {
-		motor *my = /*OBJECTDATA(obj,<>)*/ object_data<motor>(obj);
+		motor *my = object_data<motor>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(motor);
@@ -2280,10 +2285,10 @@ EXPORT int init_motor(OBJECT *obj)
 * @param pass the current pass for this sync call
 * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
 */
-EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_motor_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
-	motor *my = /*OBJECTDATA(obj,<>)*/ object_data<motor>(obj);
+	motor *my = object_data<motor>(obj);
 	try
 	{
 		switch (pass) {
@@ -2307,6 +2312,23 @@ EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return t1;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_motor_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_motor(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_motor_impl(obj, t0, pass);
+}
+#endif
+
 /**
 * Allows the core to discover whether obj is a subtype of this class.
 *
@@ -2318,7 +2340,7 @@ EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int isa_motor(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return /*OBJECTDATA(obj,<>)*/ object_data<motor>(obj)->isa(classname);
+		return object_data<motor>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
@@ -2329,7 +2351,7 @@ EXPORT int isa_motor(OBJECT *obj, char *classname)
 */
 EXPORT SIMULATIONMODE interupdate_motor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	motor *my = /*OBJECTDATA(obj,<>)*/ object_data<motor>(obj);
+	motor *my = object_data<motor>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{

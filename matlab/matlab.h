@@ -8,7 +8,7 @@
 #include "gridlabd.h"
 
 /*** DO NOT DELETE THE NEXT LINE ***/
-//NEWCLASS
+// NEWCLASS
 
 /* optional exports */
 #ifdef OPTIONAL

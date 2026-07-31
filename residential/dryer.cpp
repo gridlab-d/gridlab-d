@@ -70,7 +70,6 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 				PT_KEYWORD,"MOTOR_COIL_ONLY",(enumeration)DRYER_MOTOR_COIL_ONLY,
 				PT_KEYWORD,"CONTROL_ONLY",(enumeration)DRYER_CONTROL_ONLY,
 
-			
 			PT_double,"energy_baseline[kWh]",PADDR(energy_baseline),			
 			PT_double,"energy_used[kWh]",PADDR(energy_used),
 			PT_double,"next_t",PADDR(next_t),
@@ -85,7 +84,6 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 
 			PT_bool,"dryer_on",PADDR(dryer_on),
 			PT_bool,"dryer_ready",PADDR(dryer_ready),
-
 			PT_bool,"dryer_check",PADDR(dryer_check),
 
 			PT_bool,"motor_coil_only_check1",PADDR(motor_coil_only_check1),
@@ -109,7 +107,6 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 			PT_double,"pulse_interval_9[s]", PADDR(pulse_interval[8]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pulse interval",
 			PT_double,"pulse_interval_10[s]", PADDR(pulse_interval[9]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for pulse interval",
 
-			
 			PT_double,"energy_needed[kWh]",PADDR(energy_needed),
 			PT_double,"daily_dryer_demand[kWh]",PADDR(daily_dryer_demand),
 			PT_double,"actual_dryer_demand[kWh]",PADDR(actual_dryer_demand),
@@ -119,7 +116,6 @@ dryer::dryer(MODULE *module) : residential_enduse(module)
 			PT_double,"cycle_time[s]",PADDR(cycle_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle time",
 			PT_double,"state_time[s]",PADDR(state_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for state time",
 			PT_timestamp,"start_time",PADDR(start_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for start time",
-
 
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
 			nullptr)<1)
@@ -147,9 +143,9 @@ int dryer::create()
 	coil_power[0] = -1;
 
 	state = DRYER_STOPPED;
-
+	
 	energy_used = 0;	
-
+	
 	last_t = 0;	
 
 	gl_warning("explicit %s model is experimental", object_header(this)->oclass->name);
@@ -157,38 +153,22 @@ int dryer::create()
 	return res;
 }
 
-int dryer::shared_init(OBJECT *parent)
+int dryer::init(OBJECT *parent)
 {
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+    if (parent != nullptr) {
+        if ((parent->flags & OF_INIT) != OF_INIT) {
 			char objname[256];
 			gl_verbose("dryer::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	// These variables need intialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	last_t = 0;
-	return 1;
-}
-
-int dryer::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
-int dryer::init(OBJECT *parent)
-{
-	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-
-	OBJECT *hdr = object_header(this);
+	int rv = 0;
 	// default properties
 	if (motor_power==0) motor_power = gl_random_uniform(&hdr->rng_state,150,350);
 	if (heat_fraction==0) heat_fraction = 0.2;
@@ -242,7 +222,6 @@ int dryer::init(OBJECT *parent)
 	motor_only_check5 = false;
 	motor_only_check6 = false;
 
-
 	hdr->flags |= OF_SKIPSAFE;
 
 	load.power_factor = 0.95;
@@ -263,7 +242,6 @@ int dryer::init(OBJECT *parent)
 		case MT_ANALOG:
 			if(shape.params.analog.energy == 0.0){
 				GL_THROW("dryer does not support fixed energy shaping");
-
 			} else if (shape.params.analog.power == 0){
 
 				daily_dryer_demand = gl_get_loadshape_value(&shape) / 2.4449;
@@ -307,11 +285,6 @@ int dryer::init(OBJECT *parent)
 			break;
 	}
 	return residential_enduse::init(parent);
-//}
-	// must run before update_state() so that pCircuit can be set
-
-
-//	return rv;
 }
 
 int dryer::isa(char *classname)
@@ -329,7 +302,6 @@ TIMESTAMP dryer::sync(TIMESTAMP t0, TIMESTAMP t1)
 		dryer_on = true;
 	else
 		dryer_on = false;	
-
 
 	/* determine loadshape effects */
 
@@ -371,9 +343,7 @@ TIMESTAMP dryer::presync(TIMESTAMP t0, TIMESTAMP t1){
 	if(start_time==0)
 	{
 		start_time = int32(t0);
-		
-	}	
-
+	}
 
 	switch(shape.type){
 		case MT_UNKNOWN:
@@ -382,7 +352,6 @@ TIMESTAMP dryer::presync(TIMESTAMP t0, TIMESTAMP t1){
 		case MT_ANALOG:
 			if(shape.params.analog.energy == 0.0){
 				GL_THROW("dryer does not support fixed energy shaping");
-
 			} else if (shape.params.analog.power == 0){
 
 				daily_dryer_demand = gl_get_loadshape_value(&shape) / 2.4449;
@@ -441,9 +410,9 @@ switch(state) {
 	case DRYER_STOPPED:
 
 		if (enduse_queue>1)// && dryer_on == true)
-
+		
 			dryer_run_prob = double(gl_random_uniform(&hdr->rng_state,queue_min,queue_max));
-
+		
 		if (enduse_queue > 1 && (dryer_run_prob > enduse_queue))
 			{
 				state = DRYER_CONTROL_ONLY;
@@ -454,7 +423,7 @@ switch(state) {
 				enduse_queue--;
 
 				new_running_state = true;
-
+				
 			}
 		else if (temp_voltage_magnitude<stall_voltage)
 			{
@@ -507,7 +476,7 @@ switch(state) {
 						new_running_state = true;
 			}		
 
-
+		
 		else if (temp_voltage_magnitude<stall_voltage)
 			{
 				state = DRYER_STALLED;
@@ -515,10 +484,9 @@ switch(state) {
 			}
 		break;
 
+    case DRYER_MOTOR_COIL_ONLY:
 
-case DRYER_MOTOR_COIL_ONLY:
-
-	if (energy_used >= energy_needed && cycle_time <= 0)
+        if (energy_used >= energy_needed && cycle_time <= 0)
 		{  // The clothes are dry
 				state = DRYER_STOPPED;
 				cycle_time = 0;
@@ -543,7 +511,7 @@ case DRYER_MOTOR_COIL_ONLY:
 				new_running_state = true;
 
 		}
-	else if (cycle_time<=0 && motor_coil_only_check1 == true)//one-over
+	    else if (cycle_time<=0 && motor_coil_only_check1 == true)//one-over
 		{
 				state = DRYER_MOTOR_ONLY;
 				double cycle_t = 1000 * (energy_needed - energy_used) / motor_power * 60 * 60;
@@ -558,7 +526,7 @@ case DRYER_MOTOR_COIL_ONLY:
 					new_running_state = true;
 		}		
 
-	else if (cycle_time<=0 && motor_coil_only_check2 == true)//two-over
+	    else if (cycle_time<=0 && motor_coil_only_check2 == true)//two-over
 		{
 				state = DRYER_MOTOR_ONLY;
 				double cycle_t = 1000 * (energy_needed - energy_used) / motor_power * 60 * 60;
@@ -572,7 +540,7 @@ case DRYER_MOTOR_COIL_ONLY:
 				new_running_state = true;
 		}	
 
-	else if (cycle_time<=0 && motor_coil_only_check3 == true)//three-over
+	    else if (cycle_time<=0 && motor_coil_only_check3 == true)//three-over
 		{
 				state = DRYER_MOTOR_ONLY;
 				double cycle_t = 1000 * (energy_needed - energy_used) / motor_power * 60 * 60;
@@ -587,7 +555,7 @@ case DRYER_MOTOR_COIL_ONLY:
 					new_running_state = true;
 		}	
 
-	else if (cycle_time<=0 && motor_coil_only_check4 == true)//four-over
+	    else if (cycle_time<=0 && motor_coil_only_check4 == true)//four-over
 		{
 				state = DRYER_MOTOR_ONLY;
 				double cycle_t = 1000 * (energy_needed - energy_used) / motor_power * 60 * 60;
@@ -600,7 +568,7 @@ case DRYER_MOTOR_COIL_ONLY:
 						cycle_time = cycle_t;	
 				new_running_state = true;
 		}	
-	else if (cycle_time<=0 && motor_coil_only_check5 == true)//five-over
+	    else if (cycle_time<=0 && motor_coil_only_check5 == true)//five-over
 		{
 				state = DRYER_MOTOR_ONLY;
 				double cycle_t = 1000 * (energy_needed - energy_used) / motor_power * 60 * 60;
@@ -615,7 +583,7 @@ case DRYER_MOTOR_COIL_ONLY:
 				new_running_state = true;
 		}
 
-	else if (cycle_time<=0 && motor_coil_only_check6 == true)//five-over
+	    else if (cycle_time<=0 && motor_coil_only_check6 == true)//five-over
 		{
 				state = DRYER_MOTOR_ONLY;
 				double cycle_t = 1000 * (energy_needed - energy_used) / motor_power * 60 * 60;
@@ -626,12 +594,12 @@ case DRYER_MOTOR_COIL_ONLY:
 					else
 						cycle_time = cycle_t;	*/		
 		}
-	else if (temp_voltage_magnitude<stall_voltage)
+	    else if (temp_voltage_magnitude<stall_voltage)
 		{
 			state = DRYER_STALLED;
 			state_time = 0;
 		}
-	break;
+	    break;
 
 	case DRYER_MOTOR_ONLY:
 
@@ -718,7 +686,7 @@ case DRYER_MOTOR_COIL_ONLY:
 
 					motor_only_check4 = false;
 					motor_only_check5 = true;
-
+					
 						if (cycle_t > interval)
 							cycle_time = interval;
 						else
@@ -733,7 +701,7 @@ case DRYER_MOTOR_COIL_ONLY:
 					double interval = pulse_interval[6];
 
 					motor_only_check5 = false;
-
+					
 						if (cycle_t > interval)
 							cycle_time = interval;
 						else
@@ -746,7 +714,7 @@ case DRYER_MOTOR_COIL_ONLY:
 					state = DRYER_STALLED;
 					state_time = 0;
 			}
-
+			
 	break;
 
 	case DRYER_STALLED:
@@ -777,7 +745,7 @@ case DRYER_MOTOR_COIL_ONLY:
 
 		break;
 	}
-
+	
 
 	// accumulating units in the queue no matter what happens
 	if (dryer_on == true)
@@ -787,11 +755,11 @@ case DRYER_MOTOR_COIL_ONLY:
 
 	actual_dryer_demand = actual_dryer_demand + daily_dryer_demand;
 
-
+	
 	// now implement current state
 	switch(state) {
 	case DRYER_STOPPED: 
-
+		
 		motor_on_off = motor_coil_on_off = 0;
 
 		// nothing running
@@ -816,7 +784,7 @@ case DRYER_MOTOR_COIL_ONLY:
 	case DRYER_CONTROL_ONLY:
 
 		if(true==new_running_state){
-
+			
 			new_running_state = false;
 
 		}
@@ -847,7 +815,7 @@ case DRYER_MOTOR_COIL_ONLY:
 
 		// nothing running
 		load.power = load.current = load.admittance = gld::complex(0,0,J);
-
+		
 		// time to next expected state change
 		dt = reset_delay; 
 
@@ -890,14 +858,12 @@ case DRYER_MOTOR_COIL_ONLY:
 	return dt;
 }
 
-
-
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
 
-EXPORT TIMESTAMP sync_dryer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_dryer_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP tret;
 	dryer *my = object_data<dryer>(obj);
@@ -927,13 +893,29 @@ EXPORT TIMESTAMP sync_dryer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return TS_INVALID;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_dryer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_dryer_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_dryer(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_dryer_impl(obj, t0, pass);
+}
+#endif
+
 EXPORT int create_dryer(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(dryer::oclass);
 	if (*obj!=nullptr)
 	{
 		dryer *my = object_data<dryer>(*obj);
-		gl_set_parent(*obj,parent);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -944,12 +926,6 @@ EXPORT int init_dryer(OBJECT *obj)
 {
 	dryer *my = object_data<dryer>(obj);
 	return my->init(obj->parent);
-}
-
-EXPORT int checkpoint_init_dryer(OBJECT *obj)
-{
-	dryer *my = object_data<dryer>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT int isa_dryer(OBJECT *obj, char *classname)
@@ -968,3 +944,5 @@ EXPORT int isa_dryer(OBJECT *obj, char *classname)
 //	obj->clock = t0;
 //	return t1;
 //}
+
+/**@}**/

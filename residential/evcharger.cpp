@@ -346,43 +346,21 @@ static double fuse[] = {15,35,70};
 static double amps[] = {12,28,55};
 static bool hiV[] = {false,true,true};
 
-int evcharger::shared_init(OBJECT *parent)
-{
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+int evcharger::init(OBJECT *parent) {
+    OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+    int retval;
+    if (parent != nullptr) {
+        if ((parent->flags & OF_INIT) != OF_INIT) {
 			char objname[256];
 			gl_verbose("evcharger::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	// These variables need initialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	
-	// load demand profile - pDemand is a private pointer that must be reloaded
-	pDemand = nullptr;  // Initialize to null first
-	if (strcmp(demand_profile,"")!=0)
-		pDemand = get_demand_profile(demand_profile);
-	return 1;
-}
-
-int evcharger::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
-int evcharger::init(OBJECT *parent)
-{
-	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	
-	int retval;
-
 	static double sizes[] = {20,30,30,40,40,40,50,50,50,50,60,60,60,70,70,80};
 
 	if (mileage==0) mileage = gl_random_uniform(RNGSTATE,0.8,1.2);
@@ -415,6 +393,10 @@ int evcharger::init(OBJECT *parent)
 		value.
 		*/
 	}
+
+	// load demand profile
+	if (strcmp(demand_profile,"")!=0)
+		pDemand = get_demand_profile(demand_profile);
 	
 	retval = residential_enduse::init(parent);
 
@@ -640,7 +622,7 @@ EXPORT int create_evcharger(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			evcharger *my = object_data<evcharger>(*obj);;
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -666,12 +648,6 @@ EXPORT int isa_evcharger(OBJECT *obj, char *classname)
 	} else {
 		return 0;
 	}
-}
-
-EXPORT int checkpoint_init_evcharger(OBJECT *obj)
-{
-	evcharger *my = object_data<evcharger>(obj);
-	return my->checkpoint_init(obj->parent);
 }
 
 EXPORT TIMESTAMP sync_evcharger(OBJECT *obj, TIMESTAMP t0)

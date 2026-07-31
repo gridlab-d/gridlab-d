@@ -1,23 +1,26 @@
 /** $Id: collector.c 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file collector.c
-	@addtogroup collector Collectors
-	@ingroup tapes
+        Copyright (C) 2008 Battelle Memorial Institute
+        @file collector.c
+        @addtogroup collector Collectors
+        @ingroup tapes
 
-	Tape collectors are different from recorders in that they aggregate multiple
-	object properties into a single value.  They do not use the parent property, but
-	instead use the 'group' property to form a collection of objects over which the
-	aggregate is taken.  The following properties are also available for collectors
-	- \p group specifies the grouping rule for creating the collection.  Groups
-	   may be specified using \p property \p condition \p value, where \p property is one
-	   of \p class, \p size, \p parent, \p id, \p rank, or any registered property of the object.
-	- \p property value of collectors must be in the form \p aggregator(property) where
-	the \p aggregator is one of \p min, \p max, \p count, \p avg, \p std, \p mean, \p var,
-	\p mbe, \p kur. If a \p | is used instead of parentheses, then the absolute value
-	of the property is used.
-	If the property is a complex number, the property must be specified in the form
-	\p property.part, where \p part is one of \p real, \p imag, \p mag, \p ang, or \p arg.
-	Angles are in degrees, and \p arg is in radians.
+        Tape collectors are different from recorders in that they aggregate
+ multiple object properties into a single value.  They do not use the parent
+ property, but instead use the 'group' property to form a collection of objects
+ over which the aggregate is taken.  The following properties are also available
+ for collectors
+        - \p group specifies the grouping rule for creating the collection.
+ Groups may be specified using \p property \p condition \p value, where \p
+ property is one of \p class, \p size, \p parent, \p id, \p rank, or any
+ registered property of the object.
+        - \p property value of collectors must be in the form \p
+ aggregator(property) where the \p aggregator is one of \p min, \p max, \p
+ count, \p avg, \p std, \p mean, \p var,
+        \p mbe, \p kur. If a \p | is used instead of parentheses, then the
+ absolute value of the property is used. If the property is a complex number,
+ the property must be specified in the form
+        \p property.part, where \p part is one of \p real, \p imag, \p mag, \p
+ ang, or \p arg. Angles are in degrees, and \p arg is in radians.
  @{
  **/
 
@@ -25,142 +28,131 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <vector>
-#include<memory>
 
+#include "aggregate.h"
 #include "gridlabd.h"
 #include "object.h"
-#include "aggregate.h"
 
 #include "collector.h"
 #include "file.h"
 #include "odbc.h"
 
-
-
 CLASS *collector_class = nullptr;
 static OBJECT *last_collector = nullptr;
 
-EXPORT int create_collector(OBJECT **obj, OBJECT *parent)
-{
-	*obj = gl_create_object(collector_class);
-	if (*obj!=nullptr)
-	{
-		//struct collector *my = object_data<struct collector>(*obj);
-		struct collector* my = object_data< collector>(*obj);
+EXPORT int create_collector(OBJECT **obj, OBJECT *parent) {
+  *obj = gl_create_object(collector_class);
+  if (*obj != nullptr) {
+    // struct collector *my = object_data<struct collector>(*obj);
+    struct collector *my = object_data<collector>(*obj);
 
-		last_collector = *obj;
-		gl_set_parent(*obj,parent);
-		strcpy(my->file,"");
-		strcpy(my->filetype,"txt");
-		strcpy(my->delim,",");
-		strcpy(my->property,"(undefined)");
-		strcpy(my->group,"");
-		my->interval = TS_NEVER; /* transients only */
-		my->dInterval = -1.0;
-		my->last.ts = -1;
-		strcpy(my->last.value,"");
-		my->limit = 0;
-		my->samples = 0;
-		my->status = TS_INIT;
-		my->trigger[0]='\0';
-		my->format = 0;
-		my->aggr = {};
-		return 1;
-	}
-	return 0;
+    last_collector = *obj;
+    // gl_set_parent(*obj,parent);
+    strcpy(my->file, "");
+    strcpy(my->filetype, "txt");
+    strcpy(my->delim, ",");
+    strcpy(my->property, "(undefined)");
+    strcpy(my->group, "");
+    my->interval = TS_NEVER; /* transients only */
+    my->dInterval = -1.0;
+    my->last.ts = -1;
+    strcpy(my->last.value, "");
+    my->limit = 0;
+    my->samples = 0;
+    my->status = TS_INIT;
+    my->trigger[0] = '\0';
+    my->format = 0;
+    my->aggr = {};
+    return 1;
+  }
+  return 0;
 }
 
-static int collector_open(OBJECT *obj)
-{
-	char32 type="file";
-	char1024 fname="";
-	char32 flags="w";
-	TAPEFUNCS *tf = 0;
-	//struct collector* my = object_data<struct collector>(obj);
-	struct collector* my = object_data< collector>(obj);
+static int collector_open(OBJECT *obj) {
+  char32 type = "file";
+  char1024 fname = "";
+  char32 flags = "w";
+  TAPEFUNCS *tf = 0;
+  // struct collector* my = object_data<struct collector>(obj);
+  struct collector *my = object_data<collector>(obj);
 
-	my->interval = (int64)(my->dInterval/TS_SECOND);
+  my->interval = (int64)(my->dInterval / TS_SECOND);
 
-	/* if prefix is omitted (no colons found) */
-	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type.get_string(),fname.get_string(),flags.get_string())==1)
-	{
-		/* filename is file by default */
-		strcpy(fname,my->file);
-		strcpy(type,"file");
-	}
+  /* if prefix is omitted (no colons found) */
+  if (sscanf(my->file, "%32[^:]:%1024[^:]:%[^:]", type.get_string(),
+             fname.get_string(), flags.get_string()) == 1) {
+    /* filename is file by default */
+    strcpy(fname, my->file);
+    strcpy(type, "file");
+  }
 
-	/* if no filename given */
-	if (strcmp(fname,"")==0)
-	{
-		char *p;
-		/* use group spec as default file name */
-		sprintf(fname,"%s.%s",my->group.get_string(),my->filetype.get_string());
+  /* if no filename given */
+  if (strcmp(fname, "") == 0) {
+    char *p;
+    /* use group spec as default file name */
+    sprintf(fname, "%s.%s", my->group.get_string(), my->filetype.get_string());
 
-		/* but change disallowed characters to _ */
-		for (p=fname; *p!='\0'; p++)
-		{
-			if (!isalnum(*p) && *p!='-' && *p!='.')
-				*p='_';
-		}
-	}
+    /* but change disallowed characters to _ */
+    for (p = fname; *p != '\0'; p++) {
+      if (!isalnum(*p) && *p != '-' && *p != '.')
+        *p = '_';
+    }
+  }
 
-	/* if type is file or file is stdin */
-	tf = get_ftable(type);
-	if(tf == nullptr)
-		return 0;
-	my->ops = tf->collector;
-	if(my->ops == nullptr)
-		return 0;
-	set_csv_options();
-	return my->ops->open(my, fname, flags);
+  /* if type is file or file is stdin */
+  tf = get_ftable(type);
+  if (tf == nullptr)
+    return 0;
+  my->ops = tf->collector;
+  if (my->ops == nullptr)
+    return 0;
+  set_csv_options();
+  return my->ops->open(my, fname, flags);
 }
 
-static int write_collector(struct collector *my, char *ts, char *value)
-{
-	int rc=my->ops->write(my, ts, value);
-	if ( (my->flush==0 || (my->flush>0 && gl_globalclock%my->flush==0)) && my->ops->flush!=nullptr )
-		my->ops->flush(my);
-	return rc;
+static int write_collector(struct collector *my, char *ts, char *value) {
+  int rc = my->ops->write(my, ts, value);
+  if ((my->flush == 0 || (my->flush > 0 && gl_globalclock % my->flush == 0)) &&
+      my->ops->flush != nullptr)
+    my->ops->flush(my);
+  return rc;
 }
-static void close_collector(struct collector *my){
-	if(my->ops){
-		my->ops->close(my);
-	}
-}
-
-static TIMESTAMP collector_write(OBJECT *obj)
-{
-	//struct collector* my = object_data<struct collector>(obj);
-	struct collector* my = object_data< collector>(obj);
-	char ts[64];
-	if (my->format==0)
-	{
-		//time_t t = (time_t)(my->last.ts*TS_SECOND);
-		//strftime(ts,sizeof(ts),timestamp_format, gmtime(&t));
-
-		DATETIME dt;
-		gl_localtime(my->last.ts, &dt);
-		gl_strtime(&dt, ts, sizeof(ts));
-	}
-	else
-		sprintf(ts,"%" FMT_INT64 "d", my->last.ts);
-	if ((my->limit>0 && my->samples>my->limit) /* limit reached */
-		|| write_collector(my,ts,my->last.value)==0) /* write failed */
-	{
-		if (my->ops){
-			close_collector(my);
-		} else {
-			gl_error("collector_write: no TAPEOP structure when closing the tape");
-		}
-		my->status = TS_DONE;
-	}
-	else
-		my->samples++;
-	return TS_NEVER;
+static void close_collector(struct collector *my) {
+  if (my->ops) {
+    my->ops->close(my);
+  }
 }
 
-//AGGREGATION *link_aggregates(char *aggregate_list, char *group)
+static TIMESTAMP collector_write(OBJECT *obj) {
+  // struct collector* my = object_data<struct collector>(obj);
+  struct collector *my = object_data<collector>(obj);
+  char ts[64];
+  if (my->format == 0) {
+    // time_t t = (time_t)(my->last.ts*TS_SECOND);
+    // strftime(ts,sizeof(ts),timestamp_format, gmtime(&t));
+
+    DATETIME dt;
+    gl_localtime(my->last.ts, &dt);
+    gl_strtime(&dt, ts, sizeof(ts));
+  } else
+    sprintf(ts, "%" FMT_INT64 "d", my->last.ts);
+  if ((my->limit > 0 && my->samples > my->limit)       /* limit reached */
+      || write_collector(my, ts, my->last.value) == 0) /* write failed */
+  {
+    if (my->ops) {
+      close_collector(my);
+    } else {
+      gl_error("collector_write: no TAPEOP structure when closing the tape");
+    }
+    my->status = TS_DONE;
+  } else
+    my->samples++;
+  return TS_NEVER;
+}
+
+// AGGREGATION *link_aggregates(char *aggregate_list, char *group)
 //{
 //	char *item;
 //	AGGREGATION *first=nullptr, *last=nullptr;
@@ -171,18 +163,18 @@ static TIMESTAMP collector_write(OBJECT *obj)
 //		AGGREGATION *aggr = gl_create_aggregate(item,group);
 //		if (aggr!=nullptr)
 //		{
-//			/* TODO: ideally the aggregation group program from the previous should be reused */
-//			if (first==nullptr) first=aggr; else last->next=aggr;
-//			last=aggr;
-//			aggr->next = nullptr;
+//			/* TODO: ideally the aggregation group program from the
+//previous should be reused */ 			if (first==nullptr) first=aggr; else
+//last->next=aggr; 			last=aggr; 			aggr->next = nullptr;
 //		}
 //		else
-//			return nullptr; // allowable to have null (zero-length) aggrs, but only give time-varying aggregates
+//			return nullptr; // allowable to have null (zero-length)
+//aggrs, but only give time-varying aggregates
 //	}
 //	return first;
-//}
+// }
 //
-//int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
+// int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
 //{
 //	AGGREGATION *p;
 //	int offset=0;
@@ -198,147 +190,172 @@ static TIMESTAMP collector_write(OBJECT *obj)
 //		count++;
 //	}
 //	return count;
-//}
+// }
 
+std::vector<std::shared_ptr<struct s_aggregate>>
+link_aggregates(const char *aggregate_list, char *group) {
+  std::vector<std::shared_ptr<struct s_aggregate>> aggregates;
+  char1024 list;
+  strcpy(list, aggregate_list); // Avoid destroying the original list.
+  char *item = strtok(list, ",");
 
-std::vector<std::shared_ptr<struct s_aggregate>> link_aggregates(const char* aggregate_list, char* group) {
-	std::vector<std::shared_ptr<struct s_aggregate>> aggregates;
-	char1024 list;
-	strcpy(list, aggregate_list); // Avoid destroying the original list.
-	char* item = strtok(list, ",");
-
-	while (item != nullptr) {
-		std::shared_ptr<struct s_aggregate> aggr = gl_create_aggregate(item, group);
-		if (aggr != nullptr) {
-			aggregates.push_back(aggr); // Add to the vector.
-		}
-		else {
-			return {}; // Return an empty vector on failure.
-		}
-		item = strtok(nullptr, ",");
-	}
-	return aggregates;
+  while (item != nullptr) {
+    std::shared_ptr<struct s_aggregate> aggr = gl_create_aggregate(item, group);
+    if (aggr != nullptr) {
+      aggregates.push_back(aggr); // Add to the vector.
+    } else {
+      return {}; // Return an empty vector on failure.
+    }
+    item = strtok(nullptr, ",");
+  }
+  return aggregates;
 }
 
-int read_aggregates(std::vector<std::shared_ptr<struct s_aggregate>>& aggregates, char* buffer, int size) {
-	int offset = 0;
-	int count = 0;
-	char32 fmt;
-	gl_global_getvar("double_format", fmt, 32);
+int read_aggregates(
+    std::vector<std::shared_ptr<struct s_aggregate>> &aggregates, char *buffer,
+    int size) {
+  int offset = 0;
+  int count = 0;
+  char32 fmt;
+  gl_global_getvar("double_format", fmt, 32);
 
-	for ( auto& aggr : aggregates) {
-		if (offset > 0) {
-			strcpy(buffer + offset++, ",");
-		}
-		offset += sprintf(buffer + offset, fmt, gl_run_aggregate(aggr));
-		if (offset >= size - 33) {
-			break; // Avoid buffer overflow.
-		}
-		count++;
-	}
-	buffer[offset] = '\0';
-	return count;
+  for (auto &aggr : aggregates) {
+    if (offset > 0) {
+      strcpy(buffer + offset++, ",");
+    }
+    offset += sprintf(buffer + offset, fmt, gl_run_aggregate(aggr));
+    if (offset >= size - 33) {
+      break; // Avoid buffer overflow.
+    }
+    count++;
+  }
+  buffer[offset] = '\0';
+  return count;
 }
 
+static TIMESTAMP sync_collector_impl(OBJECT *obj, TIMESTAMP t0,
+                                     PASSCONFIG pass) {
+  struct collector *my = object_data<struct collector>(obj);
+  typedef enum { NONE = '\0', LT = '<', EQ = '=', GT = '>' } COMPAREOP;
+  COMPAREOP comparison;
+  char2048 buffer = "";
 
-TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-{
-	struct collector *my = object_data<struct collector>(obj);
-	typedef enum {NONE='\0', LT='<', EQ='=', GT='>'} COMPAREOP;
-	COMPAREOP comparison;
-	char2048 buffer = "";
+  if (my->status == TS_DONE) {
+    return TS_NEVER;
+  }
 
-	if(my->status == TS_DONE){
-		return TS_NEVER;
-	}
+  /* connect to property */
+  if (my->aggr.empty())
+    my->aggr = link_aggregates(my->property, my->group);
 
-	/* connect to property */
-	if (my->aggr.empty())
-		my->aggr = link_aggregates(my->property,my->group);
+  /* read property */
+  if (my->aggr.empty()) {
+    sprintf(buffer,
+            "'%s' contains an aggregate that is not found in the group '%s'",
+            (char *)my->property, (char *)my->group);
+    my->status = TS_ERROR;
+    return sync_collector_error(&obj, &my, buffer);
+  }
 
-	/* read property */
-	if (my->aggr.empty())
-	{
-		sprintf(buffer,"'%s' contains an aggregate that is not found in the group '%s'", (char*)my->property, (char*)my->group);
-		my->status = TS_ERROR;
-		return sync_collector_error(&obj, &my, buffer);
-	}
+  if ((my->status == TS_OPEN) && (t0 > obj->clock)) {
+    obj->clock = t0;
+    if ((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)) {
+      collector_write(obj);
+      // my->last.ts = t0;
+      my->last.value[0] = 0;
+    }
+  }
 
-	if((my->status == TS_OPEN) && (t0 > obj->clock)){
-		obj->clock = t0;
-		if((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)){
-			collector_write(obj);
-			//my->last.ts = t0;
-			my->last.value[0] = 0;
-		}
-	}
+  // if(my->aggr != nullptr && (my->aggr =
+  // link_aggregates(my->property,my->group)),read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
+  if (!my->aggr.empty() && (my->interval == 0 || my->interval == -1)) {
+    if (read_aggregates(my->aggr, buffer, sizeof(buffer)) == 0) {
+      sprintf(buffer, "unable to read aggregate '%s' of group '%s'",
+              my->property.get_string(), my->group.get_string());
+      close_collector(my);
+      my->status = TS_ERROR;
+    }
+  }
 
-	//if(my->aggr != nullptr && (my->aggr = link_aggregates(my->property,my->group)),read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
-	if(!my->aggr.empty() && (my->interval == 0 || my->interval == -1)) {
-		if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
-		{
-			sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property.get_string(), my->group.get_string());
-			close_collector(my);
-			my->status = TS_ERROR;
-		}
-	}
+  if (!my->aggr.empty() && my->interval > 0) {
+    if ((t0 >= my->last.ts + my->interval) || (t0 == my->last.ts)) {
+      if (read_aggregates(my->aggr, buffer, sizeof(buffer)) == 0) {
+        sprintf(buffer, "unable to read aggregate '%s' of group '%s'",
+                my->property.get_string(), my->group.get_string());
+        close_collector(my);
+        my->status = TS_ERROR;
+      }
+      my->last.ts = t0;
+    }
+  }
 
-	if(!my->aggr.empty() && my->interval > 0) {
-		if((t0 >= my->last.ts + my->interval) || (t0 == my->last.ts)){
-			if(read_aggregates(my->aggr,buffer,sizeof(buffer))==0){
-				sprintf(buffer,"unable to read aggregate '%s' of group '%s'", my->property.get_string(), my->group.get_string());
-				close_collector(my);
-				my->status = TS_ERROR;
-			}
-			my->last.ts = t0;
-		}
-	}
+  /* check trigger, if any */
+  comparison = (COMPAREOP)my->trigger[0];
+  if (comparison != NONE) {
+    int desired = comparison == LT
+                      ? -1
+                      : (comparison == EQ ? 0 : (comparison == GT ? 1 : -2));
 
-	/* check trigger, if any */
-	comparison = (COMPAREOP)my->trigger[0];
-	if (comparison!=NONE)
-	{
-		int desired = comparison==LT ? -1 : (comparison==EQ ? 0 : (comparison==GT ? 1 : -2));
+    /* if not trigger or can't get access */
+    int actual = strcmp(buffer, my->trigger.get_string() + 1);
+    if (actual != desired || (my->status == TS_INIT && !collector_open(obj))) {
+      /* better luck next time */
+      return (my->interval == 0 || my->interval == -1) ? TS_NEVER
+                                                       : t0 + my->interval;
+    }
+  } else if (my->status == TS_INIT && !collector_open(obj)) {
+    close_collector(my);
+    return TS_NEVER;
+  }
 
-		/* if not trigger or can't get access */
-		int actual = strcmp(buffer,my->trigger.get_string()+1);
-		if (actual!=desired || (my->status==TS_INIT && !collector_open(obj))){
-			/* better luck next time */
-			return (my->interval==0 || my->interval==-1) ? TS_NEVER : t0+my->interval;
-		}
-	}
-	else if (my->status==TS_INIT && !collector_open(obj)){
-		close_collector(my);
-		return TS_NEVER;
-	}
+  if (my->last.ts < 1 && my->interval != -1) {
+    my->last.ts = t0;
+  }
 
-	if(my->last.ts < 1 && my->interval != -1){
-		my->last.ts = t0;
-	}
-
-	/* write tape */
-	if(my->status == TS_OPEN){
-		if(my->interval == 0 /* sample on every pass */
-			|| ((my->interval == -1) && my->last.ts != t0 && strcmp(buffer, my->last.value) != 0) /* sample only when value changes */
-			){
-			strncpy(my->last.value, buffer, sizeof(my->last.value));
-			my->last.ts = t0;
-			collector_write(obj);
-		} else if(my->interval > 0 && my->last.ts == t0){
-			strncpy(my->last.value, buffer, sizeof(my->last.value));
-		}
-	}
-	return sync_collector_error(&obj, &my, buffer);
+  /* write tape */
+  if (my->status == TS_OPEN) {
+    if (my->interval == 0 /* sample on every pass */
+        || ((my->interval == -1) && my->last.ts != t0 &&
+            strcmp(buffer, my->last.value) !=
+                0) /* sample only when value changes */
+    ) {
+      strncpy(my->last.value, buffer, sizeof(my->last.value));
+      my->last.ts = t0;
+      collector_write(obj);
+    } else if (my->interval > 0 && my->last.ts == t0) {
+      strncpy(my->last.value, buffer, sizeof(my->last.value));
+    }
+  }
+  return sync_collector_error(&obj, &my, buffer);
 }
-TIMESTAMP sync_collector_error(OBJECT **obj, struct collector **my, char2048 buffer) {
-	if ((*my)->status==TS_ERROR)
-	{
-		gl_error("collector %d %s\n",(*obj)->id, buffer.get_string());
-		(*my)->status=TS_DONE;
-		return 0; /* failed */
-	}
 
-	return ((*my)->interval==0 || (*my)->interval==-1) ? TS_NEVER : (*my)->last.ts+(*my)->interval;
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0,
+                                               PASSCONFIG pass) {
+  return sync_collector_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_collector(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_collector_impl(obj, t0, pass);
+}
+#endif
+
+TIMESTAMP sync_collector_error(OBJECT **obj, struct collector **my,
+                               char2048 buffer) {
+  if ((*my)->status == TS_ERROR) {
+    gl_error("collector %d %s\n", (*obj)->id, buffer.get_string());
+    (*my)->status = TS_DONE;
+    return 0; /* failed */
+  }
+
+  return ((*my)->interval == 0 || (*my)->interval == -1)
+             ? TS_NEVER
+             : (*my)->last.ts + (*my)->interval;
 }
 
 /**@}*/

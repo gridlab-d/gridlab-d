@@ -48,7 +48,7 @@ clotheswasher::clotheswasher(MODULE *module) : residential_enduse(module)
 			PT_INHERIT, "residential_enduse",
 			PT_double,"motor_power[kW]",PADDR(shape.params.analog.power),
 			PT_double,"circuit_split",PADDR(circuit_split),
-			PT_double,"queue[unit]",PADDR(enduse_queue), PT_DESCRIPTION, "the total laundry accumulated",				
+			PT_double,"queue[unit]",PADDR(enduse_queue), PT_DESCRIPTION, "the total laundry accumulated",
 			PT_double,"demand[unit/day]",PADDR(enduse_demand), PT_DESCRIPTION, "the amount of laundry accumulating daily",
 			PT_double,"cycle_duration[s]",PADDR(cycle_duration), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle duration",
 			PT_complex,"energy_meter[kWh]",PADDR(load.energy),
@@ -162,40 +162,22 @@ int clotheswasher::create()
 	return res;
 }
 
-int clotheswasher::shared_init(OBJECT *parent)
+int clotheswasher::init(OBJECT *parent)
 {
-	if (parent != nullptr)
-	{
-		if ((parent->flags & OF_INIT) != OF_INIT)
-		{
+	OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+	if(parent != nullptr){
+		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("clotheswasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	// These variables need intialized every time regardless of checkpoint load
-	// Non-published variables (not loaded from checkpoint) must be initialized here
-	starttime = false;
-	new_running_state = false;
-	cycle_time = 0.0;
-	return 1;
-}
-
-int clotheswasher::checkpoint_init(OBJECT *parent)
-{
-	// Only initialize variables that aren't published.  If a variable is published, it will be loaded from checkpoint, and we don't want to reinitialize it.
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
-	return residential_enduse::checkpoint_init(parent);
-}
-
-int clotheswasher::init(OBJECT *parent)
-{
-	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
-	// Initialize non-published variables
-	int rv = shared_init(parent);
-	if (rv != 1) return rv;
 	
 	// default properties
 	if (shape.params.analog.power==0) shape.params.analog.power = gl_random_uniform(&hdr->rng_state,0.100,0.750);		// clotheswasher size [W]
@@ -723,13 +705,10 @@ double clotheswasher::update_state(double dt)
 					Is_on = 0;
 
 				break;
-				
 				}
-
-				new_running_state = true;
+			new_running_state = true;
 		}		
 		break;
-	
 	}
 	
 	if(state==STOPPED){
@@ -745,17 +724,12 @@ double clotheswasher::update_state(double dt)
 			else{
 				dt = 3600;
 			}
-
 		}
 		else{
-			
-			dt = (enduse_queue>=1) ? 0 : ((1-enduse_queue)*3600)/(enduse_demand*24); 	
-			
+			dt = (enduse_queue>=1) ? 0 : ((1-enduse_queue)*3600)/(enduse_demand*24);
 		}
-
 	}
 	else{ 	
-
 		if(new_running_state == true){
 			new_running_state = false;	
 			cycle_time = cycle_time-1;
@@ -769,8 +743,6 @@ double clotheswasher::update_state(double dt)
 		load.admittance =0;
 		
 		dt = cycle_time; 	
-
-
 	}
 
 	// compute the total electrical load
@@ -792,7 +764,6 @@ EXPORT int create_clotheswasher(OBJECT **obj, OBJECT *parent)
 	if (*obj!=nullptr)
 	{
 		clotheswasher *my = object_data<clotheswasher>(*obj);
-		gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -805,12 +776,6 @@ EXPORT int init_clotheswasher(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
-EXPORT int checkpoint_init_clotheswasher(OBJECT *obj)
-{
-	clotheswasher *my = object_data<clotheswasher>(obj);
-	return my->checkpoint_init(obj->parent);
-}
-
 EXPORT int isa_clotheswasher(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
@@ -820,7 +785,7 @@ EXPORT int isa_clotheswasher(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT TIMESTAMP sync_clotheswasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_clotheswasher_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	clotheswasher *my = object_data<clotheswasher>(obj);
 	if (obj->clock <= ROUNDOFF)
@@ -837,15 +802,31 @@ EXPORT TIMESTAMP sync_clotheswasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
+  } catch (int m) {
+    gl_error("%s (clotheswasher:%d) model zone exception (code %d) not caught",
+             obj->name ? obj->name : "(anonymous waterheater)", obj->id, m);
+  } catch (char *msg) {
+    gl_error("%s (clotheswasher:%d) %s",
+             obj->name ? obj->name : "(anonymous clotheswasher)", obj->id, msg);
 	}
-	catch (int m)
-	{
-		gl_error("%s (clotheswasher:%d) model zone exception (code %d) not caught", obj->name?obj->name:"(anonymous waterheater)", obj->id, m);
-	}
-	catch (char *msg)
-	{
-		gl_error("%s (clotheswasher:%d) %s", obj->name?obj->name:"(anonymous clotheswasher)", obj->id, msg);
-	}
-	return TS_INVALID;}
+  return TS_INVALID;
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_clotheswasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+  return sync_clotheswasher_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_clotheswasher(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_clotheswasher_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

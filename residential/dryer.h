@@ -24,8 +24,6 @@ public:
 			DRYER_CONTROL_ONLY=5					///< only the controls are running
 	} DRYER;										///< control state
 
-
-
 	double circuit_split;				///< -1=100% negative, 0=balanced, +1=100% positive
 	bool is_240;						///< load connected at 220 
 	
@@ -57,6 +55,7 @@ public:
 	double controls_power;
 	double daily_dryer_demand;			///< amount of demand added per hour (units/hr)
 	double enduse_queue;				///< accumulated demand (units)
+	double cycle_duration;				///< typical cycle runtime (s)
 	double cycle_time;					///< remaining time in main cycle (s)
 	double state_time;					///< remaining time in current state (s)
 	
@@ -95,8 +94,6 @@ public:
 	~dryer();
 	int create();
 	int init(OBJECT *parent);
-	int checkpoint_init(OBJECT *parent);
-	int shared_init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP last_t;
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
