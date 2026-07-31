@@ -30,16 +30,14 @@ json_schema/
 ## Requirements
 
 - Python 3.6+
-- Required packages:
-  - `pyjson5`
-  - `importlib_resources`
+- Required packages: none beyond Python's standard library
 - Optional (for schema validation):
   - `jsonschema`
 
 ## Installation
 
 ```bash
-pip install pyjson5 importlib_resources jsonschema
+pip install jsonschema
 ```
 
 Requires Python 3.6+.

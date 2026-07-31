@@ -91,6 +91,7 @@ if install_root:
 
 # Import isolated GridLabD wrapper (process isolation for multiple instances)
 from ._isolated import IsolatedGridLabD
+from ._glm_json import convert_glm_to_json, glm_to_json
 
 # Save the original C++ class before we wrap it
 _CppGridLabD = GridLabD
@@ -124,6 +125,10 @@ class GridLabDSingleton:
     def load(self, filename: str):
         """Load a GLM file (convenience method that wraps load_glm)."""
         return self._cpp_instance.load_glm([filename])
+
+    def convert_glm_to_json(self, glm_path, output_path=None):
+        """Convert a GLM file to JSON using the Python converter."""
+        return glm_to_json(glm_path, output_path)
     
     # Expose static methods from the C++ class
     @staticmethod
@@ -149,6 +154,10 @@ class GridLabDWrapper(_CppGridLabD):
         """Load a GLM file (convenience method that wraps load_glm)."""
         return self.load_glm([filename])
 
+    def convert_glm_to_json(self, glm_path, output_path=None):
+        """Convert a GLM file to JSON using the Python converter."""
+        return glm_to_json(glm_path, output_path)
+
 # By default, use the isolated wrapper to provide proper process isolation
 # This allows multiple GridLabD instances to coexist without conflicts
 GridLabD = IsolatedGridLabD
@@ -168,6 +177,8 @@ __all__ = [
     "__version__",
     "version",
     "info",
+    "glm_to_json",
+    "convert_glm_to_json",
     
 ]
 
@@ -182,4 +193,3 @@ def info():
     print(hello())
     print("GridLAB-D API integration: ✓ Available")
     print("GridLabD Mode: Isolated (multiple instances supported)")
-

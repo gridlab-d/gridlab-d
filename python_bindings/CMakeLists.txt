@@ -130,6 +130,30 @@ endif()
 install(FILES ${GRIDLABD_DATA_FILES}
         DESTINATION gridlabd/share)
 
+# Install the existing Python GLM-to-JSON converter with the Python package so
+# gridlabd.glm_to_json() works from built wheels as well as source checkouts.
+if(PYPI_MODE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/json_schema/glm_to_json.py")
+    set(GLM_JSON_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/json_schema")
+else()
+    set(GLM_JSON_SCHEMA_DIR "${GRIDLABD_ROOT}/utilities/json_schema")
+endif()
+if(EXISTS "${GLM_JSON_SCHEMA_DIR}/glm_to_json.py")
+    install(FILES
+            ${GLM_JSON_SCHEMA_DIR}/__init__.py
+            ${GLM_JSON_SCHEMA_DIR}/glm_to_json.py
+            ${GLM_JSON_SCHEMA_DIR}/glm_parser.py
+            ${GLM_JSON_SCHEMA_DIR}/glm_entities.py
+            ${GLM_JSON_SCHEMA_DIR}/glm_utils.py
+            DESTINATION gridlabd/json_schema)
+
+    install(FILES
+            ${GLM_JSON_SCHEMA_DIR}/references/glm_classes.json
+            ${GLM_JSON_SCHEMA_DIR}/references/glm_schema.json
+            DESTINATION gridlabd/json_schema/references)
+else()
+    message(WARNING "GLM-to-JSON converter not found at ${GLM_JSON_SCHEMA_DIR}; gridlabd.glm_to_json() will require a source checkout")
+endif()
+
 # Install dummy bin/gridlabd so set_install_root() can work automatically
 # The C++ code expects bin/gridlabd to exist for proper path resolution
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/prebuilt/bin/gridlabd")

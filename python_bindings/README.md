@@ -70,6 +70,22 @@ assert result == 0, "Simulation failed"
 print("Simulation completed successfully!")
 ```
 
+### Converting GLM to JSON
+
+```python
+import gridlabd
+
+# Write model.json next to model.glm
+json_path = gridlabd.glm_to_json("model.glm")
+
+# Or choose an explicit output file
+json_path = gridlabd.convert_glm_to_json("model.glm", "output/model.json")
+
+# The same converter is available from GridLabD instances
+gld = gridlabd.GridLabD()
+json_path = gld.convert_glm_to_json("model.glm")
+```
+
 ### Querying Objects and Properties
 
 ```python
@@ -199,4 +215,3 @@ gld.clear_messages()
 gld.set_message_capture_limit(5000)
 limit = gld.get_message_capture_limit()
 ```
-   
