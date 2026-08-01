@@ -51,7 +51,7 @@ IF (WIN32)
     #    MESSAGE(STATUS "BUILD_NUM: ${BUILD_NUM}")
 ELSE ()
     SET(COMMAND_SCRIPT "./BuildInfo.sh")
-    #    MESSAGE(STATUS "Using bash to detect build data.")
+    MESSAGE(STATUS "Using bash to detect build data.")
     EXECUTE_PROCESS(
             COMMAND bash "-c" "${COMMAND_SCRIPT} ${CMAKE_CURRENT_BINARY_DIR}/build_number/${GIT_OUTPUT}_remote.tmp --remote"
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake

@@ -687,15 +687,15 @@ TIMESTAMP house::sync_panel(TIMESTAMP t0, TIMESTAMP t1) {
 
   // compute line currents and post to meter
   if (obj->parent != nullptr)
-    LOCK_OBJECT(obj->parent);
-
+    std::unique_lock<std::shared_mutex> lock_obj(
+      SharedMutexManager::get_mutex(obj->parent));
   pLine_I[0] = I[X13];
   pLine_I[1] = I[X23];
   pLine_I[2] = 0;
   *pLine12 = I[X12];
 
   if (obj->parent != nullptr)
-    UNLOCK_OBJECT(obj->parent);
+    lock_obj.unlock();
 
   return sync_time;
 }

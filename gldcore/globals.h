@@ -112,6 +112,10 @@ extern "C"
 #define XC_SIGINT (XC_SIGNAL | SIGINT) /* SIGINT caught */
 #define XC_EXCEPTION 255			   /* exception caught */
 
+#define UR_TRANSFORM 0x02
+#define UR_RANKS 0x01
+#define UR_NONE 0x00
+
 #if defined(_WIN32) && defined(_DEBUG)
 #include <crtdbg.h>
 	void pause_at_exit(void);
@@ -167,14 +171,14 @@ extern "C"
 	GLOBAL int global_relax_naming_rules INIT(0); /**< Causes the error to relax to a warning when object names start with numbers or special characters */
 	GLOBAL char global_urlbase[1024]			  /**< default urlbase used for online resources */
 #ifdef _DEBUG
-		INIT("./");
+	INIT("./");
 #else
 	INIT("http://www.gridlabd.org/");
 #endif
 	GLOBAL unsigned int global_randomseed INIT(0); /**< random number seed (default 0 means true randomization, non-zero means deterministic random state) */
 	GLOBAL char global_include[1024]
 #ifdef _WIN32
-		INIT("");
+	INIT("");
 #else
 	INIT("");
 #endif											/**< include path for models and code headers */
@@ -185,7 +189,7 @@ extern "C"
 	GLOBAL char global_execname[1024] INIT(""); /**< the main program full path */
 	GLOBAL char global_tmp[1024]				/**< location for temp files */
 #ifdef _WIN32
-		INIT("C:\\WINDOWS\\TEMP");
+	INIT("C:\\WINDOWS\\TEMP");
 #else
 	INIT("/tmp");
 #endif

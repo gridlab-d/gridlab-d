@@ -111,7 +111,6 @@ TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1) {
 
     double x;
     x = dQ * (t1 - t0);
-    // LOCKED(from, pFrom->Qz -= x);
     {
       std::unique_lock<std::shared_mutex> lock(
           SharedMutexManager::get_mutex(from));
@@ -121,7 +120,6 @@ TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1) {
     {
       std::unique_lock<std::shared_mutex> lock(
           SharedMutexManager::get_mutex(to));
-      // LOCKED(to, pTo->Qz += dQ);
       pTo->Qz += dQ;
     }
 

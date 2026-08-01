@@ -66,7 +66,7 @@ static const char *GetLastErrorMsg(void)
 		*p = ' ';
 	while ((p = strchr((char *)lpMsgBuf, '\r')) != nullptr)
 		*p = ' ';
-	snprintf(szBuf, sizeof(szBuf), "%s (error code %d)", lpMsgBuf, dw);
+	snprintf(szBuf, sizeof(szBuf), "%s (error code %d)", (char *)lpMsgBuf, dw);
 
 	LocalFree(lpMsgBuf);
 	return szBuf;

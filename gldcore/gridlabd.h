@@ -626,7 +626,7 @@ inline bool gl_object_isa(OBJECT *obj, const char *type, const char *modname = n
   if (modname && *modname)
   {
     const MODULE *runtime_mod = (obj->oclass ? obj->oclass->module : nullptr);
-    const std::string_view lhs = gl_normalize_module_name(sv_or_empty(runtime_mod && runtime_mod->name ? runtime_mod->name : nullptr));
+    const std::string_view lhs = gl_normalize_module_name(sv_or_empty(runtime_mod && runtime_mod->name[0] != '\0' ? runtime_mod->name : nullptr));
     const std::string_view rhs = gl_normalize_module_name(sv_or_empty(modname));
     return lhs == rhs;
   }
@@ -2497,7 +2497,7 @@ public:
 		}
 	}
 
-	inline OBJECT *my() { return this ? (((OBJECT *)this) - 1) : NULL; }
+	inline OBJECT *my() { return ((OBJECT *)this) - 1; }
 
 private:
 	// Make gld_object not copy-constructable.

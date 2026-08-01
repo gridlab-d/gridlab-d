@@ -1065,13 +1065,15 @@ int convert_to_char1024(const char *_buffer, void *_data, PROPERTY *_prop)
   // Validate the input buffer pointer
   if (!_buffer)
   {
-    throw std::invalid_argument("The _buffer pointer is null.");
+    output_error("convert_to_char1024: The _buffer pointer is null.");
+    return 0;
   }
 
   // Validate the _data pointer
   if (!_data)
   {
-    throw std::invalid_argument("The _data pointer is null.");
+    output_error("convert_to_char1024: The _data pointer is null.");
+    return 0;
   }
 
   // Cast data to a character pointer
@@ -1095,7 +1097,8 @@ int convert_to_char1024(const char *_buffer, void *_data, PROPERTY *_prop)
     }
     else
     {
-      throw std::runtime_error("Failed to parse the quoted string.");
+      output_error("convert_to_char1024: Failed to parse the quoted string.");
+      return 0;
     }
   }
 
@@ -1106,7 +1109,8 @@ int convert_to_char1024(const char *_buffer, void *_data, PROPERTY *_prop)
   }
   else
   {
-    throw std::runtime_error("Failed to parse the input string.");
+    output_error("convert_to_char1024: Failed to parse the input string.");
+    return 0;
   }
 }
 

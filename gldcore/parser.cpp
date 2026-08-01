@@ -1,5 +1,42 @@
 #include "parser.h"
 
+#define START int _mm = 0, _m = 0, _n = 0;
+#define ACCEPT                                                                 \
+  {                                                                            \
+    _n += _m;                                                                  \
+    _p += _m;                                                                  \
+    _m = 0;                                                                    \
+  }
+#define HERE (_p + _m)
+#define OR                                                                     \
+  {                                                                            \
+    _m = 0;                                                                    \
+  }
+#define REJECT                                                                 \
+  {                                                                            \
+    return 0;                                                                  \
+  }
+#define WHITE (TERM(white(HERE)))
+#define LITERAL(X)                                                             \
+  (_mm = literal(HERE, (const_cast<char *>(X))), _m += _mm, _mm > 0)
+#define TERM(X) (_mm = (X), _m += _mm, _mm > 0)
+#define COPY(X)                                                                \
+  {                                                                            \
+    size--;                                                                    \
+    (X)[_n++] = *_p++;                                                         \
+  }
+#define DONE return _n;
+#define BEGIN_REPEAT                                                           \
+  {                                                                            \
+    char *__p = _p;                                                            \
+    int __mm = _mm, __m = _m, __n = _n;
+#define REPEAT                                                                 \
+  _p = __p;                                                                    \
+  _m = __m;                                                                    \
+  _mm = __mm;                                                                  \
+  _n = __n;
+#define END_REPEAT }
+
 int parser::findLastIndex(string str, char x) {
   int index = -1;
   for (int i = 0; i < str.length(); i++) {

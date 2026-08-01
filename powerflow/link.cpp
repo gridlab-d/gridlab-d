@@ -4029,17 +4029,21 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 				 a_mat[2][2].Mag() > 0))
 			{
 				/* the source-flag of the from-bus is copied to the to-bus */
-				LOCKED(to, t->busflags |= (f->busflags & NF_HASSOURCE));
+ 		    	std::unique_lock<std::shared_mutex> lock(
+					SharedMutexManager::get_mutex(to));
+				t->busflags |= (f->busflags & NF_HASSOURCE);
+
 			}
 			else
 			{
 				/* otherwise the source flag of the to-bus is cleared */
-				LOCKED(to, t->busflags &= ~NF_HASSOURCE);
+				std::unique_lock<std::shared_mutex> lock(
+					SharedMutexManager::get_mutex(to));
+				t->busflags &= ~NF_HASSOURCE;
 			}
 
 			/* if the to-bus flags has changed */
 			if ((t->busflags & NF_HASSOURCE) != of)
-
 				/* force the solver to make another pass */
 				TRET = t0;
 		}
@@ -4049,12 +4053,15 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 		else //Assumes open here
 		{
 				//Zero all output voltages - radial assumption
-				LOCKED(to,t->voltage[0] = 0.0);
-				LOCKED(to,t->voltage[1] = 0.0);
-				LOCKED(to,t->voltage[2] = 0.0);
+ 		    	std::unique_lock<std::shared_mutex> lock(
+					SharedMutexManager::get_mutex(to));
+				t->voltage[0] = 0.0;
+				t->voltage[1] = 0.0;
+				t->voltage[2] = 0.0;
+				lock.unlock();
 
-				//Zero output current too, since t->current_inj isn't valid to us no
-		matter what read_I_out[0] = 0.0; read_I_out[1] = 0.0; read_I_out[2] = 0.0;
+				// Zero output current too, since t->current_inj isn't valid to us no
+				// matter what read_I_out[0] = 0.0; read_I_out[1] = 0.0; read_I_out[2] = 0.0;
 		}
 		*/
 #endif

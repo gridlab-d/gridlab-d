@@ -545,7 +545,7 @@ static const char *GetLastErrorMsg(void)
         *p = ' ';
     while ((p = strchr((char *)lpMsgBuf, '\r')) != nullptr)
         *p = ' ';
-    snprintf(szBuf, sizeof(szBuf), "%s (error code %d)", lpMsgBuf, dw);
+    snprintf(szBuf, sizeof(szBuf), "%s (error code %d)", (char *)lpMsgBuf, dw);
 
     LocalFree(lpMsgBuf);
     return szBuf;
@@ -1590,12 +1590,12 @@ int validate(int argc, char *argv[])
     {
         // 2. For the 'validate_child_cmdargs' (passed to individual GLM runs)
         // Filter out --threadcount and its value
-        if (strcmp(argv[i], "--threadcount") == 0)
-        {
-            // Skip the current argument (--threadcount) and the next one (its value)
-            i++;      // Increment 'i' to skip the value, so next loop iteration starts after it
-            continue; // Do not add --threadcount or its value to child_cmd_args
-        }
+//        if (strcmp(argv[i], "--threadcount") == 0)
+//        {
+//            // Skip the current argument (--threadcount) and the next one (its value)
+//            i++;      // Increment 'i' to skip the value, so next loop iteration starts after it
+//            continue; // Do not add --threadcount or its value to child_cmd_args
+//        }
         // Filter out --validate, as it's for the harness, not individual GLM runs
         if (strcmp(argv[i], "--validate") == 0)
         {

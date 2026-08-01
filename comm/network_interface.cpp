@@ -284,15 +284,17 @@ network_message *network_interface::handle_inbox(TIMESTAMP t1,
   }
   // update interface, copy from nm
   if (t1 >= nm->rx_done_sec) {
-    LOCK_OBJECT(my);
+    std::unique_lock<std::shared_mutex> lock_my(
+      SharedMutexManager::get_mutex(my));
     this->curr_buffer_size = nm->buffer_size;
     memcpy(this->data_buffer, nm->message, nm->buffer_size);
-    UNLOCK_OBJECT(my);
+    lock_my.unlock();
     // update interface's parent
     void *addr = (void *)((int64)((my->parent) + 1) + (int64)target->addr);
-    LOCK_OBJECT(my->parent);
+    std::unique_lock<std::shared_mutex> lock_parent(
+      SharedMutexManager::get_mutex(my->parent));
     memcpy(addr, data_buffer, curr_buffer_size);
-    UNLOCK_OBJECT(my->parent);
+    lock_parent.unlock();
     return nm->next;
   } else {
     return nm;

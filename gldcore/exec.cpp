@@ -990,9 +990,7 @@ static void tp_do_object_sync(OBJECT *obj)
         /* if this event precedes next step, next step is now this event */
         if (data->step_to > this_t)
         {
-            // LOCK(data);
             data->step_to = this_t;
-            // UNLOCK(data);
         }
         // printf("data->step_to=%d, this_t=%d\n", data->step_to, this_t);
     }
@@ -1143,9 +1141,7 @@ static void ss_do_object_sync(int thread, void *item)
         /* if this event precedes next step, next step is now this event */
         if (data->step_to > this_t)
         {
-            // LOCK(data);
             data->step_to = this_t;
-            // UNLOCK(data);
         }
         // printf("data->step_to=%d, this_t=%d\n", data->step_to, this_t);
     }
