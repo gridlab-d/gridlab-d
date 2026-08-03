@@ -3332,7 +3332,7 @@ public:
 		try                                                                     \
 		{                                                                       \
 			if (obj != NULL)                                                    \
-				return /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->init(parent); \
+				return object_data<C>(obj)->init(parent); \
 			else                                                                \
 				return 0;                                                       \
 		}                                                                       \
@@ -3557,22 +3557,22 @@ public:
 // Emit BOTH when CLASS == NAME
 #define EXPORT_SYNC(NAME) EXPORT_SYNC2(NAME, NAME)
 
-#define EXPORT_ISA_C(X, C)                                                                         \
- 	EXPORT int isa_##X(OBJECT *obj, char *name)                                                    \
- 	{                                                                                              \
- 		return (obj != 0 && name != 0) ? /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->isa(name) : 0; \
+#define EXPORT_ISA_C(X, C)                                                   \
+ 	EXPORT int isa_##X(OBJECT *obj, char *name)                              \
+ 	{                                                                        \
+ 		return (obj != 0 && name != 0) ? object_data<C>(obj)->isa(name) : 0; \
  	}
 /// Implement class isa export
 #define EXPORT_ISA(X) EXPORT_ISA_C(X, X)
 
-#define EXPORT_PLC_C(X, C)                                                       \
-	EXPORT TIMESTAMP plc_##X(OBJECT *obj, TIMESTAMP t1)                          \
-	{                                                                            \
-		try                                                                      \
-		{                                                                        \
-			return object_data<C>(obj)->plc(t1); /*OBJECTDATA(obj,C)->plc(t1);*/ \
-		}                                                                        \
-		T_CATCHALL(plc, X);                                                      \
+#define EXPORT_PLC_C(X, C)                              \
+	EXPORT TIMESTAMP plc_##X(OBJECT *obj, TIMESTAMP t1) \
+	{                                                   \
+		try                                             \
+		{                                               \
+			return object_data<C>(obj)->plc(t1);        \
+		}                                               \
+		T_CATCHALL(plc, X);                             \
 	}
 /// Implement class plc export
 #define EXPORT_PLC(X) EXPORT_PLC_C(X, X)
