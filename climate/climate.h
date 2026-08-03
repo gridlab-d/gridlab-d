@@ -17,13 +17,6 @@
 #include "solar_angles.h"
 #include "weather_reader.h"
 
-#ifdef _WIN32
-#include <io.h> // Provides _access and related macros
-#define R_OK 4  // Define POSIX-like `READ` flag compatibility for Windows
-#else
-#include <unistd.h> // For POSIX systems
-#endif
-
 typedef enum {
   CP_H = 0,
   CP_N = 1,

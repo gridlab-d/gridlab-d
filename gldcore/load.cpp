@@ -808,7 +808,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				char mopt[8] = "";
 				const char *libs = "-lstdc++";
 #ifdef _WIN32
-				snprintf(mopt, sizeof(mopt), "-m%d", sizeof(void *) * 8);
+				snprintf(mopt, sizeof(mopt), "-m%I64u", sizeof(void *) * 8);
 				libs = "";
 #endif
 

@@ -32,6 +32,16 @@ EXPORT_SYNC(climate)
 #undef max
 #undef min
 
+#ifdef _WIN32
+#include <io.h> // Provides _access and related macros
+  #ifndef R_OK
+    #define R_OK 4  // Define POSIX-like `READ` flag compatibility for Windows
+  #endif
+#else
+#include <unistd.h> // For POSIX systems
+#endif
+
+
 // extern enum class RANDOMTYPE;
 
 double surface_angles[] = {

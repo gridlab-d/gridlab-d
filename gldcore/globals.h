@@ -143,7 +143,7 @@ extern "C"
 	GLOBAL int global_quiet_mode INIT(false);				/**< The quiet mode flag */
 	GLOBAL int global_warn_mode INIT(true);					/**< The warning mode flag */
 	GLOBAL int global_debug_mode INIT(false);				/**< Enables the debugger */
-	GLOBAL int global_test_mode INIT(false);				/**< The test mode flag */
+	GLOBAL bool global_test_mode INIT(false);				/**< The test mode flag */
 	GLOBAL int global_verbose_mode INIT(false);				/**< The verbose mode flag */
 	GLOBAL int global_debug_output INIT(false);				/**< Enables debug output */
 	GLOBAL int global_keep_progress INIT(false);			/**< Flag to keep progress reports */

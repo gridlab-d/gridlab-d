@@ -512,7 +512,7 @@ static void http_send(HTTPCNX *http)
  * bytes needed to store result */
 static size_t http_rewrite(char *out, char *in, size_t len, size_t limit)
 {
-  char name[64], *n;
+  char name[64], *n = name;
   size_t count = 0;
   enum
   {

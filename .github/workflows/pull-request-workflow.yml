@@ -119,21 +119,9 @@ jobs:
           submodules: recursive
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1.3
+        uses: microsoft/setup-msbuild@v2
         with:
-          # vs-version: '17.0'
           msbuild-architecture: 'x64'
-
-#      - name: Set up vcpkg
-#        run: |
-#          git clone https://github.com/microsoft/vcpkg.git
-#          cd vcpkg
-#          ./bootstrap-vcpkg.bat
-#
-#      - name: Install Dependencies
-#        run: |
-#          cd vcpkg
-#          ./vcpkg install
 
       - name: Setup vcpkg (manifest mode + cache)
         uses: lukka/run-vcpkg@v11
@@ -276,28 +264,23 @@ jobs:
       matrix:
         include:
           - os: macos-26
-            # arch: x86_64
+
     runs-on: ${{matrix.os}}
     steps:
+      # Macos-26 come with brew installed
       - name: Install Homebrew dependencies
         run: |
           brew update
           env HOMEBREW_NO_AUTO_UPDATE=1 
           brew install boost
-          # brew install llvm@21
 
-      # - name: Set up Clang 21 Environment
-      #   run: |
-      #     # Homebrew installs llvm@21 as keg-only to prevent conflicts
-      #     # Add the binaries and set the compilers as environment variables
-      #     echo "CC=/opt/homebrew/opt/llvm@21/bin/clang" >> $GITHUB_ENV
-      #     echo "CXX=/opt/homebrew/opt/llvm@21/bin/clang++" >> $GITHUB_ENV
-      #     echo "/opt/homebrew/opt/llvm@21/bin" >> $GITHUB_PATH
-
-      - name: Verify Clang Version
+      - name: Print toolchain info
         run: |
-          set
+          sw_vers
           clang --version          
+          cmake --version
+          ninja --version
+          brew list --versions cmake ninja pkg-config eigen
 
   #     - name: Build HELICS Cache
   #       id: cache-helics
@@ -331,24 +314,24 @@ jobs:
   #         cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
+          fetch-depth: 0
 
-      - name: Build GridLAB-D
+      - name: Configure CMake for Build GridLAB-D
         run: |
-          threads=`sysctl -n hw.logicalcpu`
           cmake -B ${{github.workspace}}/build-${{matrix.arch}} \
           -DCMAKE_C_COMPILER=/usr/bin/clang \
           -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
           -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-          # -DCMAKE_C_COMPILER=/opt/homebrew/opt/llvm@21/bin/clang \
-          # -DCMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm@21/bin/clang++ \
-          # -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
-          # -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} \
-          # -DGLD_CI_BUILD=ON
-          cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
+
+      - name: Buiild GridLAB-D
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          cmake --build . --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Install GridLAB-D
         working-directory: ${{github.workspace}}/build-${{matrix.arch}}

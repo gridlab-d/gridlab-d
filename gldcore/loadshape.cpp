@@ -289,9 +289,9 @@ static void sync_queued(loadshape *ls, double dt)
 {
     double queue_value = (ls->d[1] - ls->d[0]);
     if (ls->params.queued.pulsetype == MPT_POWER)
-        ls->load = ls->s * ls->params.queued.pulsevalue * ls->dPdV;
+        ls->load = (double)ls->s * ls->params.queued.pulsevalue * ls->dPdV;
     else /* MPT_TIME */
-		ls->load = ls->s * ls->params.queued.energy / ls->params.queued.pulsevalue / ls->params.queued.scalar * ls->dPdV;
+		ls->load = (double)ls->s * ls->params.queued.energy / ls->params.queued.pulsevalue / ls->params.queued.scalar * ls->dPdV;
 
 #define duration ((ls->params.queued.energy * queue_value) / ls->load)
 

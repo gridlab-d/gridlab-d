@@ -4,6 +4,7 @@ on:
   workflow_dispatch:    # allows "Run workflow" button in GitHub UI
   push:
     branches:
+      - feature/1478
       - "release/*"
     tags:
       - "v*"
@@ -117,13 +118,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
           fetch-depth: 0
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: 'x64'
 
       - name: Setup vcpkg (manifest mode + cache)
         uses: lukka/run-vcpkg@v11
@@ -156,13 +159,15 @@ jobs:
 
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
+        env:
+          ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTIONS_CACHE_URL: "https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json"
         run: >
             cmake -S .
             --log-level=VERBOSE
             --log-context
             --debug-output
             -B out/build/ci-windows
-            -G "Visual Studio 17 2022"
             -A x64
             -DCMAKE_CONFIGURATION_TYPES="Release"
             -DVCPKG_TARGET_TRIPLET=x64-windows
@@ -184,7 +189,6 @@ jobs:
          Write-Host "Found: $src"
          Get-Item $src | Format-List *
 
-
       - name: Show install prefix
         shell: pwsh
         run: |
@@ -194,7 +198,6 @@ jobs:
           } else {
             Write-Host "Install prefix does not yet exist."
           }
-
 
       - name: Install GridLAB-D
         shell: pwsh
@@ -240,62 +243,6 @@ jobs:
       #      -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
       #     cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
       #     cmake --install ./build
-
-      - name: Checkout GridLAB-D
-        uses: actions/checkout@v4
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Setup vcpkg (manifest mode + cache)
-        uses: lukka/run-vcpkg@v11
-        with:
-          runVcpkgInstall: true
-          logCollectionRegExps: |
-            .*/CMakeOutput\.log$
-            .*/CMakeError\.log$
-            .*/vcpkg/buildtrees/.+\.log$
-        env:
-          VCPKG_INSTALL_OPTIONS: "--debug"
-
-
-
-      - name: Clean install prefix (Windows)
-        shell: pwsh
-        run: |
-          $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
-          if (Test-Path $installRoot) {
-            Write-Host "Removing previous install at $installRoot..."
-            Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
-          }
-
-      - name: Configure CMake (VS2022 + vcpkg toolchain)
-        shell: pwsh
-        run: >
-          cmake -S .
-          --log-level=VERBOSE
-          --log-context
-          --debug-output
-          -B out/build/ci-windows
-          -G "Visual Studio 17 2022"
-          -A x64
-          -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
-          -DVCPKG_TARGET_TRIPLET=x64-windows
-          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
-          -DGLD_CI_BUILD=ON
-
-      - name: Build GridLAB-D (Release)
-        shell: pwsh
-        run: cmake --build out/build/ci-windows --config Release -t ALL_BUILD
-        env:
-          CFLAGS: "/W0"
-          CXXFLAGS: "/W0"
 
       - name: Package
         shell: pwsh
@@ -394,7 +341,9 @@ jobs:
 
       - name: Build
         working-directory: out/build/ci-macos
-        run: cmake --build . --config Release
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          cmake --build . --config Release --parallel $threads
 
       - name: Install
         working-directory: out/build/ci-macos
