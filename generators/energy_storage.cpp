@@ -514,9 +514,7 @@ EXPORT int create_energy_storage(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(energy_storage::oclass);
     if (*obj != nullptr) {
-      energy_storage *my =
-          /*OBJECTDATA(*obj, energy_storage)*/ object_data<energy_storage>(
-              *obj);
+      energy_storage *my = object_data<energy_storage>(*obj);
       // gl_set_parent(*obj, parent);
       return my->create();
     } else
@@ -594,9 +592,7 @@ interupdate_energy_storage(OBJECT *obj, unsigned int64 delta_time,
 EXPORT STATUS dc_object_update_energy_storage(OBJECT *us_obj,
                                               OBJECT *calling_obj,
                                               bool init_mode) {
-  energy_storage *me_energy_storage =
-      /*OBJECTDATA(us_obj, energy_storage)*/ object_data<energy_storage>(
-          us_obj);
+  energy_storage *me_energy_storage = object_data<energy_storage>(us_obj);
   STATUS temp_status;
 
   // Call our update function

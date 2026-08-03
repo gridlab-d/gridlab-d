@@ -853,7 +853,7 @@ int climate::init(OBJECT *parent)
 				gl_verbose("climate::init(): deferring initialization on %s", gl_name(reader, objname, 255));
 				return 2; // defer
 			}
-			csv_reader *my = /*OBJECTDATA(reader, csv_reader)*/ object_data<csv_reader>(reader);
+			csv_reader *my = object_data<csv_reader>(reader);
 			reader_hndl = my;
 			rv = my->open(my->filename);
 			//			my->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
@@ -2398,7 +2398,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	if (t0 > TS_ZERO && reader_type == (enumeration)RT::RT_CSV)
 	{
 		gld_clock now(t0);
-		csv_reader *cr = /*OBJECTDATA(reader, csv_reader)*/ object_data<csv_reader>(reader);
+		csv_reader *cr = object_data<csv_reader>(reader);
 		csv_rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &global_horizontal_extra, &wind_speed, &wind_dir, &opq_sky_cov, &tot_sky_cov, &rainfall, &snowdepth, &pressure);
 		// calculate the solar radiation
 		double sol_time = sa->solar_time((double)now.get_hour() + now.get_minute() / 60.0 + now.get_second() / 3600.0 + (now.get_is_dst() ? -1 : 0), now.get_yearday(), RAD(tz_meridian), RAD(reader->longitude));

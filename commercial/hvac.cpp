@@ -32,7 +32,7 @@ EXPORT int create_hvac(OBJECT **obj, OBJECT *parent) {
   *obj = gl_create_object(hvac_class);
   if (*obj != nullptr) {
     last_hvac = *obj;
-    hvac *my = /*OBJECTDATA(*obj, hvac)*/ object_data<hvac>(*obj);
+    hvac *my = object_data<hvac>(*obj);
     // gl_set_parent(*obj,parent);
     my->create();
     return 1;

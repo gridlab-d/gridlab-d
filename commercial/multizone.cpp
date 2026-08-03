@@ -92,8 +92,8 @@ TIMESTAMP multizone::presync(TIMESTAMP t0, TIMESTAMP t1) {
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1) {
   if (t1 > t0 && t0 > 0) {
-    office *pFrom = /*OBJECTDATA(from,office)*/ object_data<office>(from);
-    office *pTo = /*OBJECTDATA(to, office)*/ object_data<office>(to);
+    office *pFrom = object_data<office>(from);
+    office *pTo = object_data<office>(to);
 
     /* initial delta T */
     double dT =
@@ -150,8 +150,7 @@ EXPORT int create_multizone(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(multizone::oclass);
     if (*obj != nullptr) {
-      multizone *my =
-          /*OBJECTDATA(*obj, multizone)*/ object_data<multizone>(*obj);
+      multizone *my = object_data<multizone>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else

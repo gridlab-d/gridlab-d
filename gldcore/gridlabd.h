@@ -2517,7 +2517,7 @@ public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my()->id; };
 	inline char *get_groupid(void) { return my()->groupid.get_string(); };
 	inline gld_class *get_oclass(void) { return (gld_class *)my()->oclass; };
-	inline gld_object *get_parent(void) { return my()->parent ? object_data<gld_object>(my()->parent) /*OBJECTDATA(my()->parent, gld_object)*/ : NULL; };
+	inline gld_object *get_parent(void) { return my()->parent ? object_data<gld_object>(my()->parent) : NULL; };
 	inline OBJECTRANK get_rank(void) { return my()->rank; };
 	inline TIMESTAMP get_clock(void) { return my()->clock; };
 	inline TIMESTAMP get_valid_to(void) { return my()->valid_to; };
@@ -2569,23 +2569,6 @@ public: // member lookup functions
 	inline PROPERTY *get_property(char *name, PROPERTYSTRUCT *pstruct = NULL) { return callback->properties.get_property(my(), name, pstruct); };
 	inline FUNCTIONADDR get_function(const char *name) { return (*callback->function.get)(my()->oclass->name, name); };
 
-public: // external accessors
-        // template <class T> inline void getp(PROPERTY &prop, T &value) {
-        //	//rlock();
-        //	wlock();
-        //	value=*(T*)(get_addr(my(),&prop));
-        //	wunlock();
-        //};
-        // template <class T> inline void setp(PROPERTY &prop, T &value) {
-        // wlock(); *(T*)(get_addr(my(),&prop)   /*GETADDR(my(), &prop)*/) =
-        // value; wunlock(); };
-  /*template <class T> inline void getp(PROPERTY& prop, T& value, gld_rlock&) {
-   * value = *(T*)(get_addr(my(), &prop)); };*/
-  // template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) {
-  // value=*(T*)(get_addr(my(),&prop)); }; template <class T> inline void
-  // setp(PROPERTY &prop, T &value, gld_wlock&) {
-  // *(T*)(get_addr(my(),&prop))=value; };
-
 public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->object.set_dependent(my(), obj); };
 	inline int set_parent(OBJECT *obj) { return callback->object.set_parent(my(), obj); };
@@ -2598,9 +2581,9 @@ public: // iterators
 	inline static gld_object *get_first(void)
 	{
 		OBJECT *o = callback->object.get_first();
-		return object_data<gld_object>(o); /*OBJECTDATA(o, gld_object);*/
+		return object_data<gld_object>(o); 
 	};
-	inline gld_object *get_next(void) { return object_data<gld_object>(my()->next); /*OBJECTDATA(my()->next, gld_object);*/ };
+	inline gld_object *get_next(void) { return object_data<gld_object>(my()->next); };
 
 public: // exceptions
 	inline void exception(const char *msg, ...)

@@ -5108,7 +5108,7 @@ EXPORT int create_inverter(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(inverter::oclass);
 		if (*obj!=nullptr)
 		{
-			inverter *my = /*OBJECTDATA(*obj, inverter)*/ object_data<inverter>(*obj);
+			inverter *my = object_data<inverter>(*obj);
 			// gl_set_parent(*obj,parent);
 			return my->create();
 		}
@@ -5123,7 +5123,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 	try 
 	{
 		if (obj!=nullptr)
-			return /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj)->init(parent);
+			return object_data<inverter>(obj)->init(parent);
 		else
 			return 0;
 	}
@@ -5133,7 +5133,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 static TIMESTAMP sync_inverter_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
+	inverter *my = object_data<inverter>(obj);
 	try
 	{
 		switch (pass) {

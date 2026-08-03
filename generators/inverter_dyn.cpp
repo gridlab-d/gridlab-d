@@ -7899,8 +7899,7 @@ EXPORT int create_inverter_dyn(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(inverter_dyn::oclass);
     if (*obj != nullptr) {
-      inverter_dyn *my =
-          /*OBJECTDATA(*obj,<>)*/ object_data<inverter_dyn>(*obj);
+      inverter_dyn *my = object_data<inverter_dyn>(*obj);
       // gl_set_parent(*obj, parent);
       return my->create();
     } else
@@ -8009,24 +8008,7 @@ interupdate_inverter_dyn(OBJECT *obj, unsigned int64 delta_time,
   }
 }
 
-// EXPORT STATUS postupdate_inverter_dyn(OBJECT *obj, gld::complex
-// *useful_value, unsigned int mode_pass)
-// {
-// 	inverter_dyn *my = /*OBJECTDATA(obj,<>)*/
-// object_data<inverter_dyn>(obj); 	STATUS status = FAILED; 	try
-// 	{
-// 		status = my->post_deltaupdate(useful_value, mode_pass);
-// 		return status;
-// 	}
-// 	catch (char *msg)
-// 	{
-// 		gl_error("postupdate_inverter_dyn(obj=%d;%s): %s", obj->id,
-// obj->name ? obj->name : "unnamed", msg); 		return status;
-// 	}
-// }
-
-//// Define export function that update the VSI current injection IGenerated to
-///the grid
+// Define export function that update the VSI current injection IGenerated to the grid
 EXPORT STATUS inverter_dyn_NR_current_injection_update(
     OBJECT *obj, int64 iteration_count, bool *converged_failure) {
   STATUS temp_status;

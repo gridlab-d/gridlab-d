@@ -2580,7 +2580,7 @@ EXPORT int create_battery(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(battery::oclass);
 		if (*obj != nullptr)
 		{
-			battery *my = /*OBJECTDATA(*obj, battery)*/ object_data<battery>(*obj);
+			battery *my = object_data<battery>(*obj);
 			// gl_set_parent(*obj, parent);
 			return my->create();
 		}

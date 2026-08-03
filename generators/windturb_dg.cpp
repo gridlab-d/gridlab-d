@@ -2272,7 +2272,7 @@ EXPORT int create_windturb_dg(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(windturb_dg::oclass);
 		if (*obj != nullptr)
 		{
-			windturb_dg *my = /*OBJECTDATA(*obj,<>)*/ object_data<windturb_dg>(*obj);
+			windturb_dg *my = object_data<windturb_dg>(*obj);
 			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
