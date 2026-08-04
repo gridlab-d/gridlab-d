@@ -21,10 +21,11 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
     runs-on: ${{matrix.os}}
+
     steps:
       - name: Install Dependencies
         run: |
-          sudo apt update
+          sudo apt update -yq
           sudo apt install -yq --no-install-recommends \
             build-essential \
             cmake \
@@ -64,7 +65,6 @@ jobs:
           threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build/build \
           -G Ninja \
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
@@ -80,7 +80,6 @@ jobs:
           threads=`nproc`
           cmake -S . -B ${{github.workspace}}/build \
           -G Ninja \
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
           -DGLD_USE_HELICS=ON \
           -DGLD_HELICS_DIR=~/.cache/HELICS \
@@ -94,10 +93,11 @@ jobs:
       - name: Run GridLAB-D autotests
         working-directory: ${{github.workspace}}
         run: |
+          threads=`nproc`
           # Add installed GridLAB-D binaries to PATH
           export PATH=$PATH:~/.temp/GridLAB-D/bin
           # Run integration validation from repository root
-          python validate_gld.py -T 1
+          python validate_gld.py -T $threads
 
       - name: Upload validation artifacts
         if: always()
@@ -264,15 +264,16 @@ jobs:
       matrix:
         include:
           - os: macos-26
-
     runs-on: ${{matrix.os}}
+
     steps:
       # Macos-26 come with brew installed
       - name: Install Homebrew dependencies
         run: |
           brew update
+          brew list
           env HOMEBREW_NO_AUTO_UPDATE=1 
-          brew install boost
+          brew install boost eigen
 
       - name: Print toolchain info
         run: |
@@ -280,7 +281,6 @@ jobs:
           clang --version          
           cmake --version
           ninja --version
-          brew list --versions cmake ninja pkg-config eigen
 
   #     - name: Build HELICS Cache
   #       id: cache-helics
@@ -318,6 +318,10 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+
+      - name: Clean build 
+        run: |
+          rm -rf build/ out/ CMakeCache.txt CMakeFiles 2>/dev/null || true
 
       - name: Configure CMake for Build GridLAB-D
         run: |

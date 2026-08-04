@@ -2,9 +2,9 @@ name: GridLAB-D Build
 
 on:
   workflow_dispatch:    # allows "Run workflow" button in GitHub UI
+
   push:
     branches:
-      - feature/1478
       - "release/*"
     tags:
       - "v*"
@@ -12,11 +12,10 @@ on:
 permissions:
   contents: write
 
-
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  helics-ref: "v3.6.0"
+  helics-ref: "v3.6.1"
 
 jobs:
   linux-build:
@@ -26,6 +25,7 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
     runs-on: ${{matrix.os}}
+
     steps:
       - name: Install Dependencies
         run: |
@@ -87,17 +87,15 @@ jobs:
           -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
 
-      - name: Install
+      - name: Install GridLAB-D
         working-directory: ${{github.workspace}}/build
-        run: cmake --install . --config Release --prefix ${{ runner.temp }}/staging
+        run: cmake --install . --config ${{env.BUILD_TYPE}} --prefix ${{ runner.temp }}/gridlabd-install
 
 
       - name: Package
         working-directory: ${{github.workspace}}/build
         run: |
           STAGING="${{ runner.temp }}/gridlabd-install"
-          rm -rf "$STAGING"
-          cmake --install . --prefix "$STAGING"
           mkdir -p packages
           tar czf packages/gridlabd-linux-x86_64.tar.gz -C "$STAGING" .
 
@@ -156,7 +154,6 @@ jobs:
             Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
          }
 
-
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
         env:
@@ -170,9 +167,10 @@ jobs:
             -B out/build/ci-windows
             -A x64
             -DCMAKE_CONFIGURATION_TYPES="Release"
+            -DCMAKE_BUILD_TYPE="Release"
             -DVCPKG_TARGET_TRIPLET=x64-windows
-            "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-            "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+            -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D"
             -DGLD_CI_BUILD=ON
 
       - name: Build gridlabd (Release)
@@ -264,50 +262,21 @@ jobs:
   # macOS: AppleClang + Homebrew + Python validator
   # ─────────────────────────────────────────────
   macos-build:
-    runs-on: macos-26 # ARM64 macOS runner
+    strategy:
+      matrix:
+        include:
+          - os: macos-26
+    runs-on: ${{matrix.os}}
     timeout-minutes: 600
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: Cache Homebrew (optional)
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/Library/Caches/Homebrew
-            /Library/Caches/Homebrew
-          key: brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ci/Brewfile') }}
-          restore-keys: |
-            brew-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Install build tools and Eigen via Homebrew
-        shell: bash
+      # Macos-26 come with brew installed
+      - name: Install Homebrew dependencies
         run: |
-          set -euxo pipefail
-
-          if ! command -v brew >/dev/null 2>&1; then
-            echo "Homebrew not found"; exit 1
-          fi
-
           brew update
-
-          if [[ -f ci/Brewfile ]]; then
-            brew bundle --file=ci/Brewfile
-          else
-            brew install cmake ninja pkg-config eigen
-          fi
-
-          HOMEBREW_PREFIX="$(brew --prefix)"
-          echo "HOMEBREW_PREFIX=${HOMEBREW_PREFIX}"
-
-          # Help CMake find Homebrew-installed packages
-          export PKG_CONFIG_PATH="${HOMEBREW_PREFIX}/lib/pkgconfig:${HOMEBREW_PREFIX}/share/pkgconfig:${PKG_CONFIG_PATH:-}"
-          echo "CMAKE_PREFIX_PATH=${HOMEBREW_PREFIX}" >> "$GITHUB_ENV"
-          echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"   >> "$GITHUB_ENV"
+          env HOMEBREW_NO_AUTO_UPDATE=1 
+          brew install boost eigen
+          brew list
 
       - name: Print toolchain info
         run: |
@@ -315,46 +284,40 @@ jobs:
           clang --version
           cmake --version
           ninja --version
-          brew list --versions cmake ninja pkg-config eigen
 
-      - name: Clean build
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Clean build 
         run: |
           rm -rf build/ out/ CMakeCache.txt CMakeFiles 2>/dev/null || true
 
-      - name: Configure CMake (AppleClang + Ninja)
-        shell: bash
-        env:
-          CMAKE_PREFIX_PATH: ${{ env.CMAKE_PREFIX_PATH }}
-          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
+      - name: Configure CMake for Build GridLAB-D
         run: |
-          set -euxo pipefail
-          BUILD_DIR="out/build/ci-macos"
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} \
+          -DCMAKE_C_COMPILER=/usr/bin/clang \
+          -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-          cmake -S . -B "$BUILD_DIR" \
-            -G Ninja \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
-            -DCMAKE_BUILD_TYPE="Release" \
-            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
-            -DCMAKE_MACOSX_RPATH=ON \
-            -DCMAKE_INSTALL_RPATH="$HOME/.temp/GridLAB-D/lib;$HOME/.temp/GridLAB-D/lib/gridlabd"
-
-      - name: Build
-        working-directory: out/build/ci-macos
+      - name: Buiild GridLAB-D
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
         run: |
           threads=`sysctl -n hw.logicalcpu`
-          cmake --build . --config Release --parallel $threads
+          cmake --build . --config ${{env.BUILD_TYPE}} --parallel $threads
 
-      - name: Install
-        working-directory: out/build/ci-macos
-        run: cmake --install . --config Release --prefix ${{ runner.temp }}/staging
+      - name: Install GridLAB-D
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
+        run: |
+          cmake --install . --config ${{env.BUILD_TYPE}}  --prefix ${{ runner.temp }}/gridlabd-install
 
       - name: Package
-        working-directory: out/build/ci-macos
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
         run: |
           STAGING="${{ runner.temp }}/gridlabd-install"
-          rm -rf "$STAGING"
-          cmake --install . --prefix "$STAGING"
           mkdir -p packages
           tar czf packages/gridlabd-macos-arm64.tar.gz -C "$STAGING" .
 
@@ -363,5 +326,5 @@ jobs:
         with:
           name: Mac Package
           path: |
-            ${{github.workspace}}/out/build/ci-macos/packages
-            !${{github.workspace}}/out/build/ci-macos/packages/_CPack_Packages
+            ${{github.workspace}}/build-${{matrix.arch}}/packages
+            !${{github.workspace}}/build-${{matrix.arch}}/packages/_CPack_Packages
