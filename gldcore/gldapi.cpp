@@ -1114,12 +1114,13 @@ GLDErrorCode GridLabD::get_property(const std::string &object_name,
 
 // Get property metadata (type, units, description)
 GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
-                                         const std::string &property_name,
-                                         int &prop_type, std::string &unit_str,
-                                         std::string &description)
-{
-    // Find the object by name
-    OBJECT *obj = nullptr;
+                                        const std::string &property_name,
+                                        int &prop_type,
+                                        std::string &unit_str,
+                                        std::string &description,
+                                        int &access) {
+  // Find the object by name
+  OBJECT *obj = nullptr;
 
     // Try to find by name first
     obj = object_find_name(object_name.c_str());
@@ -1164,15 +1165,15 @@ GLDErrorCode GridLabD::get_property_info(const std::string &object_name,
         unit_str = "";
     }
 
-    // Get description
-    if (prop->description != nullptr)
-    {
-        description = std::string(prop->description);
-    }
-    else
-    {
-        description = "";
-    }
+  // Get description
+  if (prop->description != nullptr) {
+    description = std::string(prop->description);
+  } else {
+    description = "";
+  }
+
+  // Get access flags
+  access = static_cast<int>(prop->access);
 
     return GLD_SUCCESS;
 }
@@ -1205,11 +1206,23 @@ GLDErrorCode GridLabD::set_property(const std::string &object_name,
         return GLD_OPERATION_FAILED;
     }
 
-    // Set the property value
-    // Set the property value
-    char value_copy[1024];
-    strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
-    value_copy[sizeof(value_copy) - 1] = '\0';
+  // Check property access flags before attempting write.
+  // Properties marked PA_REFERENCE lack the PA_W bit — they are computed by
+  // the simulation and any written value will be overwritten on the next
+  // timestep.  Warn the user and skip the write rather than hard-failing.
+  PROPERTY *prop = object_get_property(obj, property_name.c_str(), nullptr);
+  if (prop != nullptr && !(prop->access & PA_W)) {
+    output_warning("Property '%s' on object '%s' is read-only (PA_REFERENCE); "
+                   "it is computed by the simulation and any written value will "
+                   "be overwritten on the next timestep",
+                   property_name.c_str(), object_name.c_str());
+    return GLD_SUCCESS;
+  }
+
+  // Set the property value
+  char value_copy[1024];
+  strncpy(value_copy, value.c_str(), sizeof(value_copy) - 1);
+  value_copy[sizeof(value_copy) - 1] = '\0';
 
     int result = object_set_value_by_name(
         obj, const_cast<char *>(property_name.c_str()), value_copy);

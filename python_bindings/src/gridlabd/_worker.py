@@ -375,6 +375,203 @@ def handle_get_property_info(message: Message) -> Response:
         return Response(success=False, error=str(e))
 
 
+# --- Property type enum values (must match gldcore/property.h PROPERTYTYPE) ---
+_PT_VOID        = 0
+_PT_DOUBLE      = 1
+_PT_COMPLEX     = 2
+_PT_ENUMERATION = 3
+_PT_SET         = 4
+_PT_INT16       = 5
+_PT_INT32       = 6
+_PT_UINT32      = 7
+_PT_INT64       = 8
+_PT_CHAR8       = 9
+_PT_CHAR32      = 10
+_PT_CHAR256     = 11
+_PT_CHAR1024    = 12
+_PT_OBJECT      = 13
+_PT_DELEGATED   = 14
+_PT_BOOL        = 15
+_PT_TIMESTAMP   = 16
+_PT_DOUBLE_ARRAY = 17
+_PT_COMPLEX_ARRAY = 18
+_PT_REAL        = 19
+_PT_FLOAT       = 20
+
+_FLOAT_TYPES = {_PT_DOUBLE, _PT_REAL, _PT_FLOAT}
+_INT_TYPES   = {_PT_INT16, _PT_INT32, _PT_UINT32, _PT_INT64}
+_STR_TYPES   = {_PT_CHAR8, _PT_CHAR32, _PT_CHAR256, _PT_CHAR1024,
+                _PT_OBJECT, _PT_DELEGATED, _PT_ENUMERATION, _PT_SET}
+
+_PA_W = 0x02  # write access bit (from property.h)
+
+_TYPE_NAMES = {
+    _PT_VOID: "void",
+    _PT_DOUBLE: "double",
+    _PT_COMPLEX: "complex",
+    _PT_ENUMERATION: "enumeration",
+    _PT_SET: "set",
+    _PT_INT16: "int16",
+    _PT_INT32: "int32",
+    _PT_UINT32: "uint32",
+    _PT_INT64: "int64",
+    _PT_CHAR8: "char8",
+    _PT_CHAR32: "char32",
+    _PT_CHAR256: "char256",
+    _PT_CHAR1024: "char1024",
+    _PT_OBJECT: "object",
+    _PT_DELEGATED: "delegated",
+    _PT_BOOL: "bool",
+    _PT_TIMESTAMP: "timestamp",
+    _PT_DOUBLE_ARRAY: "double_array",
+    _PT_COMPLEX_ARRAY: "complex_array",
+    _PT_REAL: "real",
+    _PT_FLOAT: "float",
+}
+
+
+def _strip_unit_suffix(raw_value: str, unit: str) -> str:
+    """Strip the unit suffix from a raw property value string.
+
+    GridLAB-D's ``object_get_value_by_name`` appends the unit to the
+    formatted value (e.g. ``"+68.1022 degF"``).  We strip it so the
+    remaining text can be parsed as a number.
+    """
+    s = raw_value.strip()
+    if unit and s.endswith(unit):
+        s = s[: -len(unit)].rstrip()
+    return s
+
+
+def _convert_value(raw_value: str, prop_type: int, unit: str):
+    """Convert a raw GridLAB-D value string to a native Python type.
+
+    Returns a JSON-safe value (int, float, bool, str, or a dict for complex).
+    """
+    s = _strip_unit_suffix(raw_value, unit)
+
+    try:
+        if prop_type in _FLOAT_TYPES:
+            return float(s)
+
+        if prop_type == _PT_COMPLEX:
+            # GridLAB-D complex formats:
+            #   "+120+0.5j"  (rectangular)
+            #   "+120-0.5j"
+            #   "120+0.5d"   (polar degrees – rare in API output)
+            # Remove any trailing notation char other than 'j'
+            cleaned = s.rstrip()
+            if cleaned.endswith(('d', 'r')):
+                cleaned = cleaned[:-1] + 'j'
+            if not cleaned.endswith('j'):
+                cleaned += '+0j'
+            c = complex(cleaned.replace(' ', ''))
+            return {"__complex__": True, "real": c.real, "imag": c.imag}
+
+        if prop_type in _INT_TYPES:
+            # Values may contain a decimal point (e.g. "3.000"), truncate
+            return int(float(s))
+
+        if prop_type == _PT_BOOL:
+            return s.upper() in ("TRUE", "1", "YES")
+
+        # Strings, enumerations, sets, timestamps, etc.
+        return s
+
+    except (ValueError, TypeError):
+        # Fall back to the raw (unit-stripped) string
+        return s
+
+
+def handle_get_object_property_value(message: Message) -> Response:
+    """Get a single property value converted to its native Python type."""
+    try:
+        obj_name = message.args["object_name"]
+        prop_name = message.args["property_name"]
+
+        # 1. Get raw string value
+        code_val, raw_value = _gld_instance.get_property(obj_name, prop_name)
+        code_int = int(code_val) if isinstance(code_val, int) else int(code_val.value)
+        if code_int != 0:
+            return Response(success=False,
+                            error=f"Failed to get property '{prop_name}' from object '{obj_name}'")
+
+        # 2. Get property metadata (type, unit)
+        prop_type = _PT_VOID
+        unit = ""
+        if hasattr(_gld_instance, 'get_property_info'):
+            code_info, info = _gld_instance.get_property_info(obj_name, prop_name)
+            info_int = int(code_info) if isinstance(code_info, int) else int(code_info.value)
+            if info_int == 0:
+                prop_type = info.get("type", _PT_VOID)
+                unit = info.get("unit", "")
+
+        # 3. Convert
+        typed_value = _convert_value(raw_value, prop_type, unit)
+
+        return Response(success=True, result={
+            "code": 0,
+            "value": typed_value,
+        })
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
+def handle_get_object_properties_detailed(message: Message) -> Response:
+    """Get all properties of an object with metadata (value, unit, type, access)."""
+    try:
+        obj_name = message.args["object_name"]
+
+        # 1. Get all raw property strings
+        raw_props = _gld_instance.get_object_properties(obj_name)
+        if not raw_props:
+            return Response(success=False,
+                            error=f"Object '{obj_name}' not found or has no properties")
+
+        result = {}
+        has_info = hasattr(_gld_instance, 'get_property_info')
+
+        for prop_name, raw_value in raw_props.items():
+            # Skip internal metadata keys
+            if prop_name.startswith("__") and prop_name.endswith("__"):
+                continue
+
+            prop_type = _PT_VOID
+            unit = ""
+            description = ""
+            access_flags = 0x0F  # default PA_PUBLIC (R|W|S|L)
+            type_name = "unknown"
+
+            if has_info:
+                try:
+                    code_info, info = _gld_instance.get_property_info(obj_name, prop_name)
+                    info_int = int(code_info) if isinstance(code_info, int) else int(code_info.value)
+                    if info_int == 0:
+                        prop_type = info.get("type", _PT_VOID)
+                        unit = info.get("unit", "")
+                        description = info.get("description", "")
+                        access_flags = info.get("access", 0x0F)
+                        type_name = _TYPE_NAMES.get(prop_type, "unknown")
+                except Exception:
+                    pass
+
+            typed_value = _convert_value(raw_value, prop_type, unit)
+
+            access_str = "read-write" if (access_flags & _PA_W) else "read-only"
+
+            result[prop_name] = {
+                "value": typed_value,
+                "unit": unit,
+                "type": type_name,
+                "access": access_str,
+                "description": description,
+            }
+
+        return Response(success=True, result=result)
+    except Exception as e:
+        return Response(success=False, error=str(e))
+
+
 def handle_set_property(message: Message) -> Response:
     """Set a property value."""
     try:
@@ -513,6 +710,8 @@ COMMAND_HANDLERS = {
     Command.GET_MODEL: handle_get_model,
     Command.GET_PROPERTY: handle_get_property,
     Command.GET_PROPERTY_INFO: handle_get_property_info,
+    Command.GET_OBJECT_PROPERTY_VALUE: handle_get_object_property_value,
+    Command.GET_OBJECT_PROPERTIES_DETAILED: handle_get_object_properties_detailed,
     Command.SET_PROPERTY: handle_set_property,
     Command.GET_PROPERTIES_BY_CLASS: handle_get_properties_by_class,
     Command.SET_PROPERTY_BY_CLASS: handle_set_property_by_class,
