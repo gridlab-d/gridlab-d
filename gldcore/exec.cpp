@@ -582,6 +582,14 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                     TIMESTAMP val = strtoll(value_str, nullptr, 10);
                     return static_cast<int64_t>(val);
                 }
+                case PT_enumeration:
+                {
+                    return std::string(value_str);
+                }
+                case PT_set:
+                {
+                    return std::string(value_str);
+                }
                 case PT_char8:
                 case PT_char32:
                 case PT_char256:
@@ -865,12 +873,126 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                             }
                             case PT_enumeration:
                             {
-                                enumeration *eptr = object_get_enum(obj, pmap);
-                                if (eptr != nullptr)
+                                char enumValStr[1024] = "";
+                                if (object_get_value_by_name(obj, pmap->name, enumValStr, sizeof(enumValStr) - 1) != 0)
                                 {
-                                    instance[pmap->name] = static_cast<int>(*eptr);
+                                    if (strlen(enumValStr) > 0 && strcmp(enumValStr, "null") != 0 &&
+                                        strcmp(enumValStr, "NULL") != 0 && strcmp(enumValStr, "\"\"") != 0 &&
+                                        strcmp(enumValStr, "''") != 0 && strcmp(enumValStr, "NAN") != 0 &&
+                                        strcmp(enumValStr, "nan") != 0 && strstr(enumValStr, "nan") == nullptr &&
+                                        strstr(enumValStr, "NAN") == nullptr)
+                                    {
+                                        instance[pmap->name] = std::string(enumValStr);
+                                    }
                                 }
                                 break;
+                            }
+                            case PT_set:
+                            {
+                                char setValStr[1024] = "";
+                                if (object_get_value_by_name(obj, pmap->name, setValStr, sizeof(setValStr) - 1) != 0)
+                                {
+                                    if (strlen(setValStr) > 0 && strcmp(setValStr, "null") != 0 &&
+                                        strcmp(setValStr, "NULL") != 0 && strcmp(setValStr, "\"\"") != 0 &&
+                                        strcmp(setValStr, "''") != 0 && strcmp(setValStr, "NAN") != 0 &&
+                                        strcmp(setValStr, "nan") != 0 && strstr(setValStr, "nan") == nullptr &&
+                                        strstr(setValStr, "NAN") == nullptr)
+                                    {
+                                        instance[pmap->name] = std::string(setValStr);
+                                    }
+                                }
+                            }
+                            case PT_char8:
+                            {
+                                char valStr[8] = "";
+                                if (object_get_value_by_name(obj, pmap->name, valStr, sizeof(valStr) - 1) != 0)
+                                {
+                                    if (strlen(valStr) > 0 && strcmp(valStr, "null") != 0 &&
+                                        strcmp(valStr, "NULL") != 0 && strcmp(valStr, "\"\"") != 0 &&
+                                        strcmp(valStr, "''") != 0 && strcmp(valStr, "NAN") != 0 &&
+                                        strcmp(valStr, "nan") != 0 && strstr(valStr, "nan") == nullptr &&
+                                        strstr(valStr, "NAN") == nullptr)
+                                    {
+                                        std::string val = std::string(valStr);
+                                        if (val.front() == '"' && val.back() == '"')
+                                        {
+                                            instance[pmap->name] = val.substr(1, val.size() - 2);
+                                        }
+                                        else
+                                        {
+                                            instance[pmap->name] = val;
+                                        }
+                                    }
+                                }
+                            }
+                            case PT_char32:
+                            {
+                                char valStr[32] = "";
+                                if (object_get_value_by_name(obj, pmap->name, valStr, sizeof(valStr) - 1) != 0)
+                                {
+                                    if (strlen(valStr) > 0 && strcmp(valStr, "null") != 0 &&
+                                        strcmp(valStr, "NULL") != 0 && strcmp(valStr, "\"\"") != 0 &&
+                                        strcmp(valStr, "''") != 0 && strcmp(valStr, "NAN") != 0 &&
+                                        strcmp(valStr, "nan") != 0 && strstr(valStr, "nan") == nullptr &&
+                                        strstr(valStr, "NAN") == nullptr)
+                                    {
+                                        std::string val = std::string(valStr);
+                                        if (val.front() == '"' && val.back() == '"')
+                                        {
+                                            instance[pmap->name] = val.substr(1, val.size() - 2);
+                                        }
+                                        else
+                                        {
+                                            instance[pmap->name] = val;
+                                        }
+                                    }
+                                }
+                            }
+                            case PT_char256:
+                            {
+                                char valStr[256] = "";
+                                if (object_get_value_by_name(obj, pmap->name, valStr, sizeof(valStr) - 1) != 0)
+                                {
+                                    if (strlen(valStr) > 0 && strcmp(valStr, "null") != 0 &&
+                                        strcmp(valStr, "NULL") != 0 && strcmp(valStr, "\"\"") != 0 &&
+                                        strcmp(valStr, "''") != 0 && strcmp(valStr, "NAN") != 0 &&
+                                        strcmp(valStr, "nan") != 0 && strstr(valStr, "nan") == nullptr &&
+                                        strstr(valStr, "NAN") == nullptr)
+                                    {
+                                        std::string val = std::string(valStr);
+                                        if (val.front() == '"' && val.back() == '"')
+                                        {
+                                            instance[pmap->name] = val.substr(1, val.size() - 2);
+                                        }
+                                        else
+                                        {
+                                            instance[pmap->name] = val;
+                                        }
+                                    }
+                                }
+                            }
+                            case PT_char1024:
+                            {
+                                char valStr[1024] = "";
+                                if (object_get_value_by_name(obj, pmap->name, valStr, sizeof(valStr) - 1) != 0)
+                                {
+                                    if (strlen(valStr) > 0 && strcmp(valStr, "null") != 0 &&
+                                        strcmp(valStr, "NULL") != 0 && strcmp(valStr, "\"\"") != 0 &&
+                                        strcmp(valStr, "''") != 0 && strcmp(valStr, "NAN") != 0 &&
+                                        strcmp(valStr, "nan") != 0 && strstr(valStr, "nan") == nullptr &&
+                                        strstr(valStr, "NAN") == nullptr)
+                                    {
+                                        std::string val = std::string(valStr);
+                                        if (val.front() == '"' && val.back() == '"')
+                                        {
+                                            instance[pmap->name] = val.substr(1, val.size() - 2);
+                                        }
+                                        else
+                                        {
+                                            instance[pmap->name] = val;
+                                        }
+                                    }
+                                }
                             }
                             default:
                             {
