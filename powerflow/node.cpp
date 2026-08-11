@@ -643,9 +643,13 @@ int node::init(OBJECT *parent)
                 */
             }
 
-            // Rank the child object (which should propagate upward)
-            gl_set_rank(obj, 3); // Start as below normal nodes (but above links)
-                                 // This way load postings should propogate during sync (bottom-up)
+            // Rank the child object (which should propagate upward) - but only do if not a checkpoint
+            if (!global_checkpoint_loaded)
+            {
+                gl_set_rank(obj, 3); // Start as below normal nodes (but above links)
+                                    // This way load postings should propogate during sync (bottom-up)
+            }
+            //Default else - checkpoint - has already been done
 
             // Flag our index as a child as well, as yet another catch
             NR_node_reference = -99;
@@ -679,12 +683,16 @@ int node::init(OBJECT *parent)
             }
             // Once fails, reached top of parent chain (theoretically)
 
-            // Check ranking
-            if ((tmp_subnode_parent->rank + 2) > NR_expected_swing_rank)
+            // Check ranking if not checkpoint
+            if (!global_checkpoint_loaded)
             {
-                // Update the tracker
-                NR_expected_swing_rank = tmp_subnode_parent->rank + 2;
+                if ((tmp_subnode_parent->rank + 2) > NR_expected_swing_rank)
+                {
+                    // Update the tracker
+                    NR_expected_swing_rank = tmp_subnode_parent->rank + 2;
+                }
             }
+            //default else - checkpoint, so already done
 
             // Pull the node pointer real quick
             tmp_par_node = object_data<node>(tmp_subnode_parent);
@@ -888,19 +896,24 @@ int node::init(OBJECT *parent)
             }
             else // Normal nodes and rival swing buses end up starting in the same rank
             {
-                if (obj->rank < 4)
+                //Only do if not checkpoint
+                if (!global_checkpoint_loaded)
                 {
-                    gl_set_rank(obj, 4);
-                }
-                // Default else - means something else set us already
+                    if (obj->rank < 4)
+                    {
+                        gl_set_rank(obj, 4);
+                    }
+                    // Default else - means something else set us already
 
-                // Update the SWING tracker
-                if ((obj->rank + 2) > NR_expected_swing_rank)
-                {
-                    // Update tracker - swing two steps higher than the "rabble" nodes
-                    NR_expected_swing_rank = obj->rank + 2;
+                    // Update the SWING tracker
+                    if ((obj->rank + 2) > NR_expected_swing_rank)
+                    {
+                        // Update tracker - swing two steps higher than the "rabble" nodes
+                        NR_expected_swing_rank = obj->rank + 2;
+                    }
+                    // Default else - it is already here or higher
                 }
-                // Default else - it is already here or higher
+                //default else - checkpoint, so already done
             }
         }
 
@@ -1258,15 +1271,6 @@ int node::init(OBJECT *parent)
     The powerflow solver has detected that a nominal voltage was not specified or is invalid.
     Specify this voltage as a positive value via nominal_voltage to enable the solver to work.
     */
-
-    /* update geographic degree */
-    if (k > 1)
-    {
-        if (geographic_degree > 0)
-            geographic_degree = n / (1 / (geographic_degree / n) + log((double)k));
-        else
-            geographic_degree = n / log((double)k);
-    }
 
     /* set source flags for SWING and PV buses */
     if ((bustype == SWING) || (bustype == SWING_PQ) || (bustype == PV))

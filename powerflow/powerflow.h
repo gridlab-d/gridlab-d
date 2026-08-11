@@ -190,7 +190,6 @@ GLOBAL double warning_voltageangle
     INIT(2.0); /**< voltage angle (over link) above which a warning is posted */
 GLOBAL bool require_voltage_control
     INIT(false);                                         /**< flag to enable voltage control source requirement */
-GLOBAL double geographic_degree INIT(0.0);               /**< topological degree factor */
 GLOBAL gld::complex fault_Z INIT(gld::complex(1e-6, 0)); /**< fault impedance */
 GLOBAL gld::complex ground_Z INIT(gld::complex(1e-6,
                                                0)); /**< ground impedance */
