@@ -11,10 +11,7 @@ EXPORT SIMULATIONMODE interupdate_motor(OBJECT *obj, unsigned int64 delta_time, 
 class motor : public node
 {
 private:
-	gld::complex TF[16];
-	gld::complex ITF[16];
 	double last_cycle;
-	double curr_delta_time;
 	bool triplex_connected;
 
 	typedef enum {
@@ -182,8 +179,6 @@ private:
 	double rs_pu;
 	double rr_pu;
 	double lm;
-	double lls;
-	double llr;
 	double Kfric;
 	gld::complex phips;
 	gld::complex phins_cj;

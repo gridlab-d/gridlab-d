@@ -1,301 +1,301 @@
 {
-  "_directives": {
-    "#define": {
-      "PF": "NR"
+    "_directives": {
+        "#define": {
+            "PF": "NR"
+        },
+        "#set": {
+            "profiler": "1;",
+            "double_format": "%+.12lg",
+            "randomseed": "10;",
+            "relax_naming_rules": "1;"
+        }
     },
-    "#set": {
-      "profiler": "1;",
-      "double_format": "%+.12lg",
-      "randomseed": "10;",
-      "relax_naming_rules": "1;"
+    "clock": {
+        "timezone": "PST+8PDT",
+        "timestamp": "'2009-01-01 00:00:00'",
+        "stoptime": "'2009-01-05 00:00:00'"
+    },
+    "modules": {
+        "climate": {},
+        "generators": {},
+        "powerflow": {
+            "solver_method": "${PF}"
+        },
+        "tape": {},
+        "assert": {}
+    },
+    "objects": {
+        "climate": {
+            "instances": [
+                {
+                    "tmyfile": "../Standard_Weather.csv",
+                    "reader": "csvreader",
+                    "outside_comments": [
+                        "//#set savefile=\"test_my_turbine_${PF}.xml\""
+                    ]
+                }
+            ]
+        },
+        "csv_reader": {
+            "instances": [
+                {
+                    "name": "csvreader",
+                    "filename": "../Standard_Weather.csv"
+                }
+            ]
+        },
+        "overhead_line_conductor": {
+            "instances": [
+                {
+                    "object_declaration": "overhead_line_conductor:100",
+                    "geometric_mean_radius": 0.0244,
+                    "resistance": 0.306
+                },
+                {
+                    "object_declaration": "overhead_line_conductor:101",
+                    "geometric_mean_radius": 0.00814,
+                    "resistance": 0.592
+                }
+            ]
+        },
+        "line_spacing": {
+            "instances": [
+                {
+                    "object_declaration": "line_spacing:200",
+                    "distance_AB": 2.5,
+                    "distance_BC": 4.5,
+                    "distance_AC": 7.0,
+                    "distance_AN": 5.656854,
+                    "distance_BN": 4.272002,
+                    "distance_CN": 5.0
+                }
+            ]
+        },
+        "line_configuration": {
+            "instances": [
+                {
+                    "object_declaration": "line_configuration:300",
+                    "conductor_A": "overhead_line_conductor:100",
+                    "conductor_B": "overhead_line_conductor:100",
+                    "conductor_C": "overhead_line_conductor:100",
+                    "conductor_N": "overhead_line_conductor:101",
+                    "spacing": "line_spacing:200"
+                }
+            ]
+        },
+        "transformer_configuration": {
+            "instances": [
+                {
+                    "object_declaration": "transformer_configuration:400",
+                    "connect_type": "WYE_WYE",
+                    "power_rating": 6000,
+                    "primary_voltage": 12470,
+                    "secondary_voltage": 4160,
+                    "resistance": 0.01,
+                    "reactance": 0.06,
+                    "install_type": "PADMOUNT"
+                },
+                {
+                    "object_declaration": "transformer_configuration:500",
+                    "connect_type": "WYE_WYE",
+                    "power_rating": 3000,
+                    "primary_voltage": 4160,
+                    "secondary_voltage": 600,
+                    "resistance": 0.01,
+                    "reactance": 0.06,
+                    "install_type": "PADMOUNT",
+                    "outside_comments": [
+                        "// Add Vestas wind turbine"
+                    ]
+                },
+                {
+                    "object_declaration": "transformer_configuration:600",
+                    "connect_type": "WYE_WYE",
+                    "power_rating": 3000,
+                    "primary_voltage": 4160,
+                    "secondary_voltage": 690,
+                    "resistance": 0.01,
+                    "reactance": 0.06,
+                    "install_type": "PADMOUNT",
+                    "outside_comments": [
+                        "// Add GE wind turbine"
+                    ]
+                }
+            ]
+        },
+        "node": {
+            "instances": [
+                {
+                    "object_declaration": "node:1",
+                    "phases": "ABCN",
+                    "bustype": "SWING",
+                    "voltage_A": "+7199.558+0.000j",
+                    "voltage_B": "-3599.779-6235.000j",
+                    "voltage_C": "-3599.779+6235.000j",
+                    "nominal_voltage": 7200
+                },
+                {
+                    "object_declaration": "node:2",
+                    "phases": "ABCN",
+                    "voltage_A": "+7199.558+0.000j",
+                    "voltage_B": "-3599.779-6235.000j",
+                    "voltage_C": "-3599.779+6235.000j",
+                    "nominal_voltage": 7200
+                },
+                {
+                    "object_declaration": "node:3",
+                    "phases": "ABCN",
+                    "voltage_A": "+2401.777+0.000j",
+                    "voltage_B": "-1200.889-2080.000j",
+                    "voltage_C": "-1200.889+2080.000j",
+                    "nominal_voltage": 2400
+                }
+            ]
+        },
+        "overhead_line": {
+            "instances": [
+                {
+                    "object_declaration": "overhead_line:12",
+                    "phases": "ABCN",
+                    "from": "node:1",
+                    "to": "node:2",
+                    "length": 2000,
+                    "configuration": "line_configuration:300"
+                },
+                {
+                    "object_declaration": "overhead_line:34",
+                    "phases": "ABCN",
+                    "from": "node:3",
+                    "to": "load:4",
+                    "length": 2500,
+                    "configuration": "line_configuration:300"
+                }
+            ]
+        },
+        "player": {
+            "instances": [
+                {
+                    "parent": "double_assert_12",
+                    "property": "value",
+                    "file": "../windpower_assert.player"
+                }
+            ]
+        },
+        "double_assert": {
+            "instances": [
+                {
+                    "name": "double_assert_12",
+                    "parent": "transformer23",
+                    "target": "power_out_real",
+                    "within": 5000,
+                    "inside_comments": [
+                        "// Solutions were determined from FBS - represents",
+                        "//  less than a 0.1% difference between the answers"
+                    ]
+                }
+            ]
+        },
+        "recorder": {
+            "instances": [
+                {
+                    "parent": "transformer23",
+                    "property": "power_out_real",
+                    "interval": 900,
+                    "file": "test_windpower_${PF}.csv"
+                }
+            ]
+        },
+        "transformer": {
+            "instances": [
+                {
+                    "name": "transformer23",
+                    "object_declaration": "transformer:23",
+                    "phases": "ABCN",
+                    "from": "node:2",
+                    "to": "node:3",
+                    "configuration": "transformer_configuration:400"
+                },
+                {
+                    "phases": "ABCN",
+                    "from": "load:4",
+                    "to": "my_meter1",
+                    "configuration": "transformer_configuration:500"
+                },
+                {
+                    "phases": "ABCN",
+                    "from": "load:4",
+                    "to": "my_meter2",
+                    "configuration": "transformer_configuration:600"
+                }
+            ]
+        },
+        "load": {
+            "instances": [
+                {
+                    "object_declaration": "load:4",
+                    "phases": "ABCN",
+                    "voltage_A": "+2401.777+0.000j",
+                    "voltage_B": "-1200.889-2080.000j",
+                    "voltage_C": "-1200.889+2080.000j",
+                    "constant_power_A": "+1275000.000+790174.031j",
+                    "constant_power_B": "+1800000.000+871779.789j",
+                    "constant_power_C": "+2375000.000+780624.750j",
+                    "maximum_voltage_error": 0.001,
+                    "nominal_voltage": 2400
+                }
+            ]
+        },
+        "meter": {
+            "instances": [
+                {
+                    "name": "my_meter1",
+                    "phases": "ABCN",
+                    "nominal_voltage": 350
+                },
+                {
+                    "name": "my_meter2",
+                    "phases": "ABCN",
+                    "nominal_voltage": 400
+                }
+            ]
+        },
+        "multi_recorder": {
+            "instances": [
+                {
+                    "parent": "windturb1",
+                    "file": "test_wind_power_${PF}1.csv",
+                    "interval": 900,
+                    "property": "wind_speed,WSadj,Cp,my_meter1:measured_real_power,total_real_power"
+                },
+                {
+                    "parent": "windturb2",
+                    "file": "test_wind_power_${PF}2.csv",
+                    "interval": 900,
+                    "property": "wind_speed,WSadj,Cp,my_meter2:measured_real_power,total_real_power"
+                }
+            ]
+        },
+        "windturb_dg": {
+            "instances": [
+                {
+                    "name": "windturb1",
+                    "parent": "my_meter1",
+                    "phases": "ABCN",
+                    "Gen_status": "ONLINE",
+                    "Gen_type": "SYNCHRONOUS",
+                    "Gen_mode": "CONSTANTP",
+                    "Turbine_Model": "VESTAS_V82"
+                },
+                {
+                    "name": "windturb2",
+                    "parent": "my_meter2",
+                    "phases": "ABCN",
+                    "Gen_status": "ONLINE",
+                    "Gen_type": "SYNCHRONOUS",
+                    "Gen_mode": "CONSTANTP",
+                    "Turbine_Model": "GE_25MW"
+                }
+            ]
+        }
     }
-  },
-  "clock": {
-    "timezone": "PST+8PDT",
-    "timestamp": "'2009-01-01 00:00:00'",
-    "stoptime": "'2009-01-05 00:00:00'"
-  },
-  "modules": {
-    "climate": {},
-    "generators": {},
-    "powerflow": {
-      "solver_method": "${PF}"
-    },
-    "tape": {},
-    "assert": {}
-  },
-  "objects": {
-    "climate": {
-      "instances": [
-        {
-          "tmyfile": "../Standard_Weather.csv",
-          "reader": "csvreader",
-          "outside_comments": [
-            "//#set savefile=\"test_my_turbine_${PF}.xml\""
-          ]
-        }
-      ]
-    },
-    "csv_reader": {
-      "instances": [
-        {
-          "name": "csvreader",
-          "filename": "../Standard_Weather.csv"
-        }
-      ]
-    },
-    "overhead_line_conductor": {
-      "instances": [
-        {
-          "object_declaration": "overhead_line_conductor:100",
-          "geometric_mean_radius": 0.0244,
-          "resistance": 0.306
-        },
-        {
-          "object_declaration": "overhead_line_conductor:101",
-          "geometric_mean_radius": 0.00814,
-          "resistance": 0.592
-        }
-      ]
-    },
-    "line_spacing": {
-      "instances": [
-        {
-          "object_declaration": "line_spacing:200",
-          "distance_AB": 2.5,
-          "distance_BC": 4.5,
-          "distance_AC": 7.0,
-          "distance_AN": 5.656854,
-          "distance_BN": 4.272002,
-          "distance_CN": 5.0
-        }
-      ]
-    },
-    "line_configuration": {
-      "instances": [
-        {
-          "object_declaration": "line_configuration:300",
-          "conductor_A": "overhead_line_conductor:100",
-          "conductor_B": "overhead_line_conductor:100",
-          "conductor_C": "overhead_line_conductor:100",
-          "conductor_N": "overhead_line_conductor:101",
-          "spacing": "line_spacing:200"
-        }
-      ]
-    },
-    "transformer_configuration": {
-      "instances": [
-        {
-          "object_declaration": "transformer_configuration:400",
-          "connect_type": "WYE_WYE",
-          "power_rating": 6000,
-          "primary_voltage": 12470,
-          "secondary_voltage": 4160,
-          "resistance": 0.01,
-          "reactance": 0.06,
-          "install_type": "PADMOUNT"
-        },
-        {
-          "object_declaration": "transformer_configuration:500",
-          "connect_type": "WYE_WYE",
-          "power_rating": 3000,
-          "primary_voltage": 4160,
-          "secondary_voltage": 600,
-          "resistance": 0.01,
-          "reactance": 0.06,
-          "install_type": "PADMOUNT",
-          "outside_comments": [
-            "// Add Vestas wind turbine"
-          ]
-        },
-        {
-          "object_declaration": "transformer_configuration:600",
-          "connect_type": "WYE_WYE",
-          "power_rating": 3000,
-          "primary_voltage": 4160,
-          "secondary_voltage": 690,
-          "resistance": 0.01,
-          "reactance": 0.06,
-          "install_type": "PADMOUNT",
-          "outside_comments": [
-            "// Add GE wind turbine"
-          ]
-        }
-      ]
-    },
-    "node": {
-      "instances": [
-        {
-          "object_declaration": "node:1",
-          "phases": "ABCN",
-          "bustype": "SWING",
-          "voltage_A": "+7199.558+0.000j",
-          "voltage_B": "-3599.779-6235.000j",
-          "voltage_C": "-3599.779+6235.000j",
-          "nominal_voltage": 7200
-        },
-        {
-          "object_declaration": "node:2",
-          "phases": "ABCN",
-          "voltage_A": "+7199.558+0.000j",
-          "voltage_B": "-3599.779-6235.000j",
-          "voltage_C": "-3599.779+6235.000j",
-          "nominal_voltage": 7200
-        },
-        {
-          "object_declaration": "node:3",
-          "phases": "ABCN",
-          "voltage_A": "+2401.777+0.000j",
-          "voltage_B": "-1200.889-2080.000j",
-          "voltage_C": "-1200.889+2080.000j",
-          "nominal_voltage": 2400
-        }
-      ]
-    },
-    "overhead_line": {
-      "instances": [
-        {
-          "object_declaration": "overhead_line:12",
-          "phases": "ABCN",
-          "from": "node:1",
-          "to": "node:2",
-          "length": 2000,
-          "configuration": "line_configuration:300"
-        },
-        {
-          "object_declaration": "overhead_line:34",
-          "phases": "ABCN",
-          "from": "node:3",
-          "to": "load:4",
-          "length": 2500,
-          "configuration": "line_configuration:300"
-        }
-      ]
-    },
-    "player": {
-      "instances": [
-        {
-          "parent": "double_assert_12",
-          "property": "value",
-          "file": "../windpower_assert.player"
-        }
-      ]
-    },
-    "double_assert": {
-      "instances": [
-        {
-          "name": "double_assert_12",
-          "parent": "transformer23",
-          "target": "power_out_real",
-          "within": 5,
-          "inside_comments": [
-            "// Solutions were determined from FBS - represents",
-            "//  less than a 0.1% difference between the answers"
-          ]
-        }
-      ]
-    },
-    "recorder": {
-      "instances": [
-        {
-          "parent": "transformer23",
-          "property": "power_out_real",
-          "interval": 900,
-          "file": "test_windpower_${PF}.csv"
-        }
-      ]
-    },
-    "transformer": {
-      "instances": [
-        {
-          "name": "transformer23",
-          "object_declaration": "transformer:23",
-          "phases": "ABCN",
-          "from": "node:2",
-          "to": "node:3",
-          "configuration": "transformer_configuration:400"
-        },
-        {
-          "phases": "ABCN",
-          "from": "load:4",
-          "to": "my_meter1",
-          "configuration": "transformer_configuration:500"
-        },
-        {
-          "phases": "ABCN",
-          "from": "load:4",
-          "to": "my_meter2",
-          "configuration": "transformer_configuration:600"
-        }
-      ]
-    },
-    "load": {
-      "instances": [
-        {
-          "object_declaration": "load:4",
-          "phases": "ABCN",
-          "voltage_A": "+2401.777+0.000j",
-          "voltage_B": "-1200.889-2080.000j",
-          "voltage_C": "-1200.889+2080.000j",
-          "constant_power_A": "+1275000.000+790174.031j",
-          "constant_power_B": "+1800000.000+871779.789j",
-          "constant_power_C": "+2375000.000+780624.750j",
-          "maximum_voltage_error": 0.001,
-          "nominal_voltage": 2400
-        }
-      ]
-    },
-    "meter": {
-      "instances": [
-        {
-          "name": "my_meter1",
-          "phases": "ABCN",
-          "nominal_voltage": 350
-        },
-        {
-          "name": "my_meter2",
-          "phases": "ABCN",
-          "nominal_voltage": 400
-        }
-      ]
-    },
-    "multi_recorder": {
-      "instances": [
-        {
-          "parent": "windturb1",
-          "file": "test_wind_power_${PF}1.csv",
-          "interval": 900,
-          "property": "wind_speed,WSadj,Cp,my_meter1:measured_real_power,total_real_power"
-        },
-        {
-          "parent": "windturb2",
-          "file": "test_wind_power_${PF}2.csv",
-          "interval": 900,
-          "property": "wind_speed,WSadj,Cp,my_meter2:measured_real_power,total_real_power"
-        }
-      ]
-    },
-    "windturb_dg": {
-      "instances": [
-        {
-          "name": "windturb1",
-          "parent": "my_meter1",
-          "phases": "ABCN",
-          "Gen_status": "ONLINE",
-          "Gen_type": "SYNCHRONOUS",
-          "Gen_mode": "CONSTANTP",
-          "Turbine_Model": "VESTAS_V82"
-        },
-        {
-          "name": "windturb2",
-          "parent": "my_meter2",
-          "phases": "ABCN",
-          "Gen_status": "ONLINE",
-          "Gen_type": "SYNCHRONOUS",
-          "Gen_mode": "CONSTANTP",
-          "Turbine_Model": "GE_25MW"
-        }
-      ]
-    }
-  }
 }

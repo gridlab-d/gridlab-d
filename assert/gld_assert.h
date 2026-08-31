@@ -247,8 +247,6 @@ public:
   int create(void);
   int init(OBJECT *parent);
   TIMESTAMP commit(TIMESTAMP t1, TIMESTAMP t2);
-  int postnotify(PROPERTY *prop, char *value);
-  inline int prenotify(PROPERTY *prop, char *value) { return 1; };
 
 public:
   static CLASS *oclass;

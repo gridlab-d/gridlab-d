@@ -52,109 +52,121 @@ typedef unsigned int64 uint64;
 #endif                   /* HAVE_STDINT_H */
 
 /* Valid GridLAB data types */
-template <size_t size> class charbuf;
+template <size_t size>
+class charbuf;
 
-class emh { // eigen matrix helper
+class emh
+{ // eigen matrix helper
 public:
-  static bool is_element_valid(Eigen::MatrixXcd &mat, size_t r, size_t c) {
-    return r < mat.rows() && c < mat.cols();
-  }
+    static bool is_element_valid(Eigen::MatrixXcd &mat, size_t r, size_t c)
+    {
+        return r < mat.rows() && c < mat.cols();
+    }
 
-  static bool is_element_nan(const Eigen::MatrixXcd &matrix, int n, int m) {
-    const std::complex<double> &value = matrix(n, m);
-    return std::isnan(value.real()) || std::isnan(value.imag());
-  }
+    static bool is_element_nan(const Eigen::MatrixXcd &matrix, int n, int m)
+    {
+        const std::complex<double> &value = matrix(n, m);
+        return std::isnan(value.real()) || std::isnan(value.imag());
+    }
 };
 
 // bool is_element_valid(Eigen::MatrixXcd& mat, size_t r, size_t c);
 // bool is_element_nan(const Eigen::MatrixXcd& matrix, int n, int m);
 
 template <size_t S>
-std::ostream &operator<<(std::ostream &os, const charbuf<S> &buffer) {
-  os << buffer.buffer;
-  return os;
+std::ostream &operator<<(std::ostream &os, const charbuf<S> &buffer)
+{
+    os << buffer.buffer;
+    return os;
 }
 
-template <size_t size> class charbuf {
+template <size_t size>
+class charbuf
+{
 private:
-  char buffer[size];
+    char buffer[size];
 
 public:
-  inline charbuf<size>(void) { erase(); };
+    inline charbuf<size>(void) { erase(); };
 
-  inline charbuf<size>(const char *s) { copy_from(s); };
+    inline charbuf<size>(const char *s) { copy_from(s); };
 
-  inline ~charbuf() = default;
+    inline ~charbuf() = default;
 
-  inline size_t get_size(void) { return size; };
+    inline size_t get_size(void) { return size; };
 
-  inline size_t get_length(void) { return strlen(buffer); };
+    inline size_t get_length(void) { return strlen(buffer); };
 
-  inline char *get_string(void) { return buffer; };
+    inline char *get_string(void) { return buffer; };
 
-  inline char *erase(void) { return (char *)memset(buffer, 0, size); };
+    inline char *erase(void) { return (char *)memset(buffer, 0, size); };
 
-  inline char *copy_to(char *s) { return s ? strncpy(s, buffer, size) : NULL; };
+    inline char *copy_to(char *s) { return s ? strncpy(s, buffer, size) : NULL; };
 
-  inline char *copy_from(const char *s) {
-    return s ? strncpy(buffer, s, size) : NULL;
-  };
+    inline char *copy_from(const char *s)
+    {
+        return s ? strncpy(buffer, s, size) : NULL;
+    };
 
-  operator char *() { return buffer; };
+    operator char *() { return buffer; };
 
-  operator char() { return *buffer; };
+    operator char() { return *buffer; };
 
-  inline bool operator==(const char *s) { return strcmp(buffer, s) == 0; };
+    inline bool operator==(const char *s) { return strcmp(buffer, s) == 0; };
 
-  // inline bool operator <(const char *s) { return strcmp(buffer,s)==-1; };
-  inline bool operator<(const char *s) { return strcmp(buffer, s) < 0; };
+    // inline bool operator <(const char *s) { return strcmp(buffer,s)==-1; };
+    inline bool operator<(const char *s) { return strcmp(buffer, s) < 0; };
 
-  // inline bool operator >(const char *s) { return strcmp(buffer,s)==1; };
-  inline bool operator>(const char *s) { return strcmp(buffer, s) > 1; };
+    // inline bool operator >(const char *s) { return strcmp(buffer,s)==1; };
+    inline bool operator>(const char *s) { return strcmp(buffer, s) > 1; };
 
-  inline bool operator<=(const char *s) { return strcmp(buffer, s) <= 0; };
+    inline bool operator<=(const char *s) { return strcmp(buffer, s) <= 0; };
 
-  inline bool operator>=(const char *s) { return strcmp(buffer, s) >= 0; };
+    inline bool operator>=(const char *s) { return strcmp(buffer, s) >= 0; };
 
-  inline char *find(const char c) { return strchr(buffer, c); };
+    inline char *find(const char c) { return strchr(buffer, c); };
 
-  inline char *find(const char *s) { return strstr(buffer, s); };
+    inline char *find(const char *s) { return strstr(buffer, s); };
 
-  inline char *findrev(const char c) { return strrchr(buffer, c); };
+    inline char *findrev(const char c) { return strrchr(buffer, c); };
 
-  // inline char *token(char *from, const char *delim, char **context) { return
-  // strtok_s(from, delim, context); };
+    // inline char *token(char *from, const char *delim, char **context) { return strtok_s(from, delim, context); };
 
 #if defined(_WIN32) || defined(_WIN64) // For Windows
 #include <string.h>
-  inline char *_token(char *from, const char *delim, char **context) {
-    return strtok_s(from, delim, context);
-  }
+    inline char *_token(char *from, const char *delim, char **context)
+    {
+        return strtok_s(from, delim, context);
+    }
 #else // For POSIX systems
 #include <string.h>
-  inline char *_token(char *from, const char *delim, char **context) {
-    return strtok_r(from, delim, context);
-  }
+    inline char *_token(char *from, const char *delim, char **context)
+    {
+        return strtok_r(from, delim, context);
+    }
 #endif
 
-  inline size_t format(char *fmt, ...) {
-    va_list ptr;
-    va_start(ptr, fmt);
-    size_t len = vsnprintf(buffer, size, fmt, ptr);
-    va_end(ptr);
-    return len;
-  };
+    inline size_t format(char *fmt, ...)
+    {
+        va_list ptr;
+        va_start(ptr, fmt);
+        size_t len = vsnprintf(buffer, size, fmt, ptr);
+        va_end(ptr);
+        return len;
+    };
 
-  inline size_t vformat(char *fmt, va_list ptr) {
-    return vsnprintf(buffer, size, fmt, ptr);
-  };
+    inline size_t vformat(char *fmt, va_list ptr)
+    {
+        return vsnprintf(buffer, size, fmt, ptr);
+    };
 
-  template <size_t S>
-  friend std::ostream &operator<<(std::ostream &os, const charbuf<S> &buffer);
+    template <size_t S>
+    friend std::ostream &operator<<(std::ostream &os, const charbuf<S> &buffer);
 };
 
-namespace gld {
-using set = uint64; /* sets (each of up to 64 values may be defined) */
+namespace gld
+{
+    using set = uint64; /* sets (each of up to 64 values may be defined) */
 }
 
 typedef charbuf<2049> char2048;
@@ -164,7 +176,7 @@ typedef charbuf<129> char128;
 typedef charbuf<65> char64;
 typedef charbuf<33> char32;
 typedef charbuf<9> char8;
-typedef uint32 enumeration; /* enumerations (any one of a list of values) */
+typedef uint32 enumeration;           /* enumerations (any one of a list of values) */
 typedef struct s_object_list *object; /* GridLAB objects */
 typedef double triplet[3];
 typedef gld::complex triplex[3];
@@ -237,8 +249,7 @@ typedef gld::complex triplex[3];
 //        return (*x[r][c]);
 //    };
 // public:
-//    inline double_vector operator[](const size_t n) { return
-//    double_vector(x[n]); }
+//    inline double_vector operator[](const size_t n) { return double_vector(x[n]); }
 //
 //    inline double_vector operator[](const size_t n) const { return
 //    double_vector(x[n]); }
@@ -782,8 +793,7 @@ typedef gld::complex triplex[3];
 //        return (*x[r][c]);
 //    };
 // public:
-//    inline complex_vector operator[](const size_t n) { return
-//    complex_vector(x[n]); }
+//    inline complex_vector operator[](const size_t n) { return complex_vector(x[n]); }
 //
 //    inline const complex_vector operator[](const size_t n) const { return
 //    complex_vector(x[n]); }
@@ -1256,88 +1266,73 @@ typedef double real_type;
 /* delegated types allow module to keep all type operations private
  * this includes convert operations and allocation/deallocation
  */
-typedef struct s_delegatedtype {
-  char32 type;   /**< the name of the delegated type */
-  CLASS *oclass; /**< the class implementing the delegated type */
-  int (*from_string)(void *addr,
-                     const char *value); /**< the function that converts from a
-                                            string to the data */
-  int (*to_string)(
-      void *addr, char *value,
-      int size); /**< the function that converts from the data to a string */
-} DELEGATEDTYPE; /**< type delegation specification */
-typedef struct s_delegatedvalue {
-  char *data;                      /**< the data that is delegated */
-  DELEGATEDTYPE *type;             /**< the delegation specification to use */
+typedef struct s_delegatedtype
+{
+    char32 type;                                         /**< the name of the delegated type */
+    CLASS *oclass;                                       /**< the class implementing the delegated type */
+    int (*from_string)(void *addr, const char *value);   /**< the function that converts from a string to the data */
+    int (*to_string)(void *addr, char *value, int size); /**< the function that converts from the data to a string */
+} DELEGATEDTYPE;                                         /**< type delegation specification */
+typedef struct s_delegatedvalue
+{
+    char *data;                    /**< the data that is delegated */
+    DELEGATEDTYPE *type;           /**< the delegation specification to use */
 } DELEGATEDVALUE;                  /**< a delegation entry */
 typedef DELEGATEDVALUE *delegated; /* delegated data type */
 
 /* int64 is already defined in platform.h */
-typedef enum {
-  _PT_FIRST = -1,
-  PT_void,        /**< the type has no data */
-  PT_double,      /**< the data is a double-precision float */
-  PT_complex,     /**< the data is a complex value */
-  PT_enumeration, /**< the data is an enumeration */
-  PT_set,         /**< the data is a set */
-  PT_int16,       /**< the data is a 16-bit integer */
-  PT_int32,       /**< the data is a 32-bit integer */
-  PT_uint32,      /**< the data is a 32-bit integer */
-  PT_int64,       /**< the data is a 64-bit integer */
-  PT_char8,   /**< the data is \p NULL -terminated string up to 8 characters in
-                 length */
-  PT_char32,  /**< the data is \p NULL -terminated string up to 32 characters in
-                 length */
-  PT_char256, /**< the data is \p NULL -terminated string up to 256 characters
-                 in length */
-  PT_char1024, /**< the data is \p NULL -terminated string up to 1024 characters
-                  in length */
-  PT_object,   /**< the data is a pointer to a GridLAB object */
-  PT_delegated, /**< the data is delegated to a module for implementation */
-  PT_bool, /**< the data is a true/false value, implemented as a C++ bool */
-  PT_timestamp,             /**< timestamp value */
-  PT_double_array,          /**< the data is a fixed length double[] */
-  PT_complex_array,         /**< the data is a fixed length complex[] */
-  /*	PT_object_array, */ /**< the data is a fixed length array of object
-                               pointers*/
-  PT_real,  /**< Single or double precision float ~ allows double values to be
-               overriden */
-  PT_float, /**< Single-precision float	*/
-  PT_loadshape, /**< Loadshapes are state machines driven by schedules */
-  PT_enduse,    /**< Enduse load data */
-  PT_random,    /**< Randomized number */
-  PT_method,    /**< Method */
-/* add new property types here - don't forget to add them also to rt/gridlabd.h
- * and property.c */
+typedef enum
+{
+    _PT_FIRST = -1,
+    PT_void,                /**< the type has no data */
+    PT_double,              /**< the data is a double-precision float */
+    PT_complex,             /**< the data is a complex value */
+    PT_enumeration,         /**< the data is an enumeration */
+    PT_set,                 /**< the data is a set */
+    PT_int16,               /**< the data is a 16-bit integer */
+    PT_int32,               /**< the data is a 32-bit integer */
+    PT_uint32,              /**< the data is a 32-bit integer */
+    PT_int64,               /**< the data is a 64-bit integer */
+    PT_char8,               /**< the data is \p NULL -terminated string up to 8 characters in length */
+    PT_char32,              /**< the data is \p NULL -terminated string up to 32 characters in length */
+    PT_char256,             /**< the data is \p NULL -terminated string up to 256 characters in length */
+    PT_char1024,            /**< the data is \p NULL -terminated string up to 1024 characters in length */
+    PT_object,              /**< the data is a pointer to a GridLAB object */
+    PT_delegated,           /**< the data is delegated to a module for implementation */
+    PT_bool,                /**< the data is a true/false value, implemented as a C++ bool */
+    PT_timestamp,           /**< timestamp value */
+    PT_double_array,        /**< the data is a fixed length double[] */
+    PT_complex_array,       /**< the data is a fixed length complex[] */
+    /*	PT_object_array, */ /**< the data is a fixed length array of object pointers*/
+    PT_real,                /**< Single or double precision float ~ allows double values to be overriden */
+    PT_float,               /**< Single-precision float	*/
+    PT_loadshape,           /**< Loadshapes are state machines driven by schedules */
+    PT_enduse,              /**< Enduse load data */
+    PT_random,              /**< Randomized number */
+    PT_method,              /**< Method */
+/* add new property types here - don't forget to add them also to rt/gridlabd.h and property.c */
 #ifdef USE_TRIPLETS
-  PT_triple,  /**< triplet of doubles (not supported) */
-  PT_triplex, /**< triplet of complexes (not supported) */
+    PT_triple,  /**< triplet of doubles (not supported) */
+    PT_triplex, /**< triplet of complexes (not supported) */
 #endif
-  _PT_LAST,
-  /* never put these before _PT_LAST they have special uses */
-  PT_AGGREGATE, /* internal use only */
-  PT_KEYWORD,   /* used to add an enum/set keyword definition */
-  PT_ACCESS,    /* used to specify property access rights */
-  PT_SIZE,      /* used to setup arrayed properties */
-  PT_FLAGS,     /* used to indicate property flags next */
-  PT_INHERIT, /* used to indicate that properties from a parent class are to be
-                 published */
-  PT_UNITS, /* used to indicate that property has certain units (which following
-               immediately as a string) */
-  PT_DESCRIPTION, /* used to provide helpful description of property */
-  PT_EXTEND,   /* used to enlarge class size by the size of the current property
-                  being mapped */
-  PT_EXTENDBY, /* used to enlarge class size by the size provided in the next
-                  argument */
-  PT_DEPRECATED, /* used to flag a property that is deprecated */
-  PT_HAS_NOTIFY, /* used to indicate that a notify function exists for the
-                    specified property */
-  PT_HAS_NOTIFY_OVERRIDE, /* as PT_HAS_NOTIFY, but instructs the core not to set
-                             the property to the value being set */
-} PROPERTYTYPE;           /**< property types */
+    _PT_LAST,
+    /* never put these before _PT_LAST they have special uses */
+    PT_AGGREGATE,              /* internal use only */
+    PT_KEYWORD,                /* used to add an enum/set keyword definition */
+    PT_ACCESS,                 /* used to specify property access rights */
+    PT_SIZE,                   /* used to setup arrayed properties */
+    PT_FLAGS,                  /* used to indicate property flags next */
+    PT_INHERIT,                /* used to indicate that properties from a parent class are to be published */
+    PT_UNITS,                  /* used to indicate that property has certain units (which following immediately as a string) */
+    PT_DESCRIPTION,            /* used to provide helpful description of property */
+    PT_EXTEND,                 /* used to enlarge class size by the size of the current property being mapped */
+    PT_EXTENDBY,               /* used to enlarge class size by the size provided in the next argument */
+    PT_DEPRECATED,             /* used to flag a property that is deprecated */
+    PT_HAS_NOTIFY,             /* used to indicate that a notify function exists for the specified property */
+    PT_HAS_NOTIFY_OVERRIDE,    /* as PT_HAS_NOTIFY, but instructs the core not to set the property to the value being set */
+} PROPERTYTYPE;                /**< property types */
 typedef char CLASSNAME[64];    /**< the name of a GridLAB class */
-typedef void *PROPERTYADDR;    /**< the offset of a property from the end of the
-                                  OBJECT header */
+typedef void *PROPERTYADDR;    /**< the offset of a property from the end of the OBJECT header */
 typedef char PROPERTYNAME[64]; /**< the name of a property */
 typedef char FUNCTIONNAME[64]; /**< the name of a function (not used) */
 
@@ -1349,23 +1344,20 @@ typedef char FUNCTIONNAME[64]; /**< the name of a function (not used) */
 #define PA_S 0x04 /**< save access--property is saved to output */
 #define PA_L 0x08 /**< load access--property is loaded from input */
 #define PA_H 0x10 /**< hidden access--property is not revealed by modhelp */
-typedef enum {
-  PA_PUBLIC =
-      (PA_R | PA_W | PA_S |
-       PA_L), /**< property is public (readable, writable, saved, and loaded) */
-  PA_REFERENCE =
-      (PA_R | PA_S | PA_L), /**< property is FYI (readable, saved, and loaded */
-  PA_PROTECTED =
-      (PA_R), /**< property is semipublic (readable, but not saved or loaded) */
-  PA_PRIVATE = (PA_S | PA_L), /**< property is nonpublic (not accessible, but
-                                 saved and loaded) */
-  PA_HIDDEN = (PA_PUBLIC | PA_H), /**< property is not visible  */
-} PROPERTYACCESS;                 /**< property access rights */
+typedef enum
+{
+    PA_PUBLIC = (PA_R | PA_W | PA_S | PA_L), /**< property is public (readable, writable, saved, and loaded) */
+    PA_REFERENCE = (PA_R | PA_S | PA_L),     /**< property is FYI (readable, saved, and loaded */
+    PA_PROTECTED = (PA_R),                   /**< property is semipublic (readable, but not saved or loaded) */
+    PA_PRIVATE = (PA_S | PA_L),              /**< property is nonpublic (not accessible, but saved and loaded) */
+    PA_HIDDEN = (PA_PUBLIC | PA_H),          /**< property is not visible  */
+} PROPERTYACCESS;                            /**< property access rights */
 
-typedef struct s_keyword {
-  char name[32];
-  uint64 value;
-  struct s_keyword *next;
+typedef struct s_keyword
+{
+    char name[32];
+    uint64 value;
+    struct s_keyword *next;
 } KEYWORD;
 
 typedef int (*METHODCALL)(
@@ -1373,99 +1365,80 @@ typedef int (*METHODCALL)(
     int size); /**< the function that read and writes a string */
 
 typedef uint32 PROPERTYFLAGS;
-#define PF_RECALC                                                              \
-  0x0001 /**< property has a recalc trigger (only works if recalc_<class> is   \
-            exported) */
-#define PF_CHARSET                                                             \
-  0x0002 /**< set supports single character keywords (avoids use of |) */
-#define PF_EXTENDED                                                            \
-  0x0004 /**< indicates that the property was added at runtime */
-#define PF_DEPRECATED                                                          \
-  0x8000 /**< set this flag to indicate that the property is deprecated        \
-            (warning will be displayed anytime it is used */
-#define PF_DEPRECATED_NONOTICE                                                 \
-  0x04000 /**< set this flag to indicate that the property is deprecated but   \
-             no reference warning is desired */
+#define PF_RECALC 0x0001               /**< property has a recalc trigger (only works if recalc_<class> is exported) */
+#define PF_CHARSET 0x0002              /**< set supports single character keywords (avoids use of |) */
+#define PF_EXTENDED 0x0004             /**< indicates that the property was added at runtime */
+#define PF_DEPRECATED 0x8000           /**< set this flag to indicate that the property is deprecated (warning will be displayed anytime it is used */
+#define PF_DEPRECATED_NONOTICE 0x04000 /**< set this flag to indicate that the property is deprecated but no reference warning is desired */
 
-typedef struct s_property_map {
-  CLASS *oclass;      /**< class implementing the property */
-  PROPERTYNAME name;  /**< property name */
-  PROPERTYTYPE ptype; /**< property type */
-  uint32 size;        /**< property array size */
-  uint32 width;       /**< property byte size, copied from array in class.c */
-  PROPERTYACCESS access; /**< property access flags */
-  UNIT *unit;            /**< property unit, if any; \p NULL if none */
-  PROPERTYADDR addr; /**< property location, offset from OBJECT header; OBJECT
-                        header itself for methods */
-  DELEGATEDTYPE
-      *delegation;   /**< property delegation, if any; \p NULL if none */
-  KEYWORD *keywords; /**< keyword list, if any; \p NULL if none (only for set
-                        and enumeration types)*/
-  const char *description;     /**< description of property */
-  struct s_property_map *next; /**< next property in property list */
-  PROPERTYFLAGS flags;         /**< property flags (e.g., PF_RECALC) */
-  FUNCTIONADDR notify;
-  METHODCALL method; /**< method call, addr must be 0 */
-  bool notify_override;
-  std::string raw;
+typedef struct s_property_map
+{
+    CLASS *oclass;               /**< class implementing the property */
+    PROPERTYNAME name;           /**< property name */
+    PROPERTYTYPE ptype;          /**< property type */
+    uint32 size;                 /**< property array size */
+    uint32 width;                /**< property byte size, copied from array in class.c */
+    PROPERTYACCESS access;       /**< property access flags */
+    UNIT *unit;                  /**< property unit, if any; \p NULL if none */
+    PROPERTYADDR addr;           /**< property location, offset from OBJECT header; OBJECT header itself for methods */
+    DELEGATEDTYPE *delegation;   /**< property delegation, if any; \p NULL if none */
+    KEYWORD *keywords;           /**< keyword list, if any; \p NULL if none (only for set and enumeration types)*/
+    const char *description;     /**< description of property */
+    struct s_property_map *next; /**< next property in property list */
+    PROPERTYFLAGS flags;         /**< property flags (e.g., PF_RECALC) */
+    FUNCTIONADDR notify;
+    METHODCALL method; /**< method call, addr must be 0 */
+    bool notify_override;
+    std::string raw;
 } PROPERTY; /**< property definition item */
 
-typedef struct s_property_struct {
-  PROPERTY *prop;
-  PROPERTYNAME part;
+typedef struct s_property_struct
+{
+    PROPERTY *prop;
+    PROPERTYNAME part;
 } PROPERTYSTRUCT;
 
 /** Property comparison operators
  **/
-typedef enum {
-  TCOP_EQ = 0, /**< property are equal to a **/
-  TCOP_LE = 1, /**< property is less than or equal to a **/
-  TCOP_GE = 2, /**< property is greater than or equal a **/
-  TCOP_NE = 3, /**< property is not equal to a **/
-  TCOP_LT = 4, /**< property is less than a **/
-  TCOP_GT = 5, /**< property is greater than a **/
-  TCOP_IN = 6, /**< property is between a and b (inclusive) **/
-  TCOP_NI = 7, /**< property is not between a and b (inclusive) **/
-  _TCOP_LAST,
-  TCOP_NOP,
-  TCOP_ERR = -1
+typedef enum
+{
+    TCOP_EQ = 0, /**< property are equal to a **/
+    TCOP_LE = 1, /**< property is less than or equal to a **/
+    TCOP_GE = 2, /**< property is greater than or equal a **/
+    TCOP_NE = 3, /**< property is not equal to a **/
+    TCOP_LT = 4, /**< property is less than a **/
+    TCOP_GT = 5, /**< property is greater than a **/
+    TCOP_IN = 6, /**< property is between a and b (inclusive) **/
+    TCOP_NI = 7, /**< property is not between a and b (inclusive) **/
+    _TCOP_LAST,
+    TCOP_NOP,
+    TCOP_ERR = -1
 } PROPERTYCOMPAREOP;
 
 typedef int PROPERTYCOMPAREFUNCTION(void *, void *, void *);
 
-typedef struct s_property_specs { /**<	the property type conversion
-                                     specifications. It is critical that the
-                                     order of entries in this list must match
-                                                                the order of
-                                     entries in the enumeration #PROPERTYTYPE
-                                                  **/
-  const char *name;               /**< the property type name */
-  const char *xsdname;
-  unsigned int size;  /**< the size of 1 instance */
-  unsigned int csize; /**< the minimum size of a converted instance (not
-                         including '\0' or unit, 0 means a call to
-                         property_minimum_buffersize() is necessary) */
-  int (*data_to_string)(
-      char *, int, void *,
-      PROPERTY *); /**< the function to convert from data to a string */
-  int (*string_to_data)(
-      const char *, void *,
-      PROPERTY *); /**< the function to convert from a string to data */
-  int (*create)(
-      void *); /**< the function used to create the property, if any */
-  size_t (*stream)(FILE *, int, void *,
-                   PROPERTY *); /**< the function to read data from a stream */
-  struct {
-    PROPERTYCOMPAREOP op;
-    char str[16];
-    PROPERTYCOMPAREFUNCTION *fn;
-    int trinary;
-  } compare[_TCOP_LAST]; /**< the list of comparison operators available for
-                            this type */
-  double (*get_part)(
-      void *,
-      const char *name); /**< the function to get a part of a property */
-  // @todo for greater generality this should be implemented as a linked list
+typedef struct s_property_specs
+{                     /**<	the property type conversion specifications.
+                    It is critical that the order of entries in this list must match
+                    the order of entries in the enumeration #PROPERTYTYPE
+              **/
+    const char *name; /**< the property type name */
+    const char *xsdname;
+    unsigned int size;                                       /**< the size of 1 instance */
+    unsigned int csize;                                      /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */
+    int (*data_to_string)(char *, int, void *, PROPERTY *);  /**< the function to convert from data to a string */
+    int (*string_to_data)(const char *, void *, PROPERTY *); /**< the function to convert from a string to data */
+    int (*create)(void *);                                   /**< the function used to create the property, if any */
+    size_t (*stream)(FILE *, int, void *, PROPERTY *);       /**< the function to read data from a stream */
+    struct
+    {
+        PROPERTYCOMPAREOP op;
+        char str[16];
+        PROPERTYCOMPAREFUNCTION *fn;
+        int trinary;
+    } compare[_TCOP_LAST];                        /**< the list of comparison operators available for this type */
+    double (*get_part)(void *, const char *name); /**< the function to get a part of a property */
+    // @todo for greater generality this should be implemented as a linked list
 } PROPERTYSPEC;
 
 int property_check(void);
@@ -1490,28 +1463,27 @@ PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 
 PROPERTYTYPE property_get_type(char *name);
 
-double property_get_part(struct s_object_list *obj, PROPERTY *prop,
-                         const char *part);
+double property_get_part(struct s_object_list *obj, PROPERTY *prop, const char *part);
 
 /* double array */
 // int double_array_create(double_array &a);
 
 // double get_double_array_value(double_array*,unsigned int n, unsigned int m);
-// void set_double_array_value(double_array*,unsigned int n, unsigned int m,
-// double x); double *get_double_array_ref(double_array*,unsigned int n,
-// unsigned int m); double double_array_get_part(void *x, const char *name);
+// void set_double_array_value(double_array*,unsigned int n, unsigned int m, double x);
+// double *get_double_array_ref(double_array*,unsigned int n, unsigned int m);
+// double double_array_get_part(void *x, const char *name);
 
 /* complex array */
 // int complex_array_create(complex_array &a);
 
-// gld::complex *get_complex_array_value(complex_array*,unsigned int n, unsigned
-// int m); void set_complex_array_value(complex_array*,unsigned int n, unsigned
-// int m, gld::complex *x); gld::complex
-// *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m); double
-// complex_array_get_part(void *x, const char *name);
+// gld::complex *get_complex_array_value(complex_array*,unsigned int n, unsigned int m);
+// void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, gld::complex *x);
+// gld::complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);
+// double complex_array_get_part(void *x, const char *name);
 
-inline PROPERTYTYPE &operator++(PROPERTYTYPE &d) {
-  return d = PROPERTYTYPE(d + 1);
+inline PROPERTYTYPE &operator++(PROPERTYTYPE &d)
+{
+    return d = PROPERTYTYPE(d + 1);
 }
 
 #endif //_PROPERTY_H
