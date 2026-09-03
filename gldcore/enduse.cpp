@@ -516,6 +516,29 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		strcpy(lastname,name);
 	}
 
+	/* Publish the internal accumulator timestamp so it survives a checkpoint.
+	 * energy and cumulative_heatgain are integrated over dt = t1 - t_last in
+	 * enduse_sync_impl(); if t_last is not restored it resets to TS_ZERO and the
+	 * first post-restore interval is skipped, leaving energy one step behind.
+	 * PA_HIDDEN keeps it out of --modhelp while still being saved/restored by the
+	 * checkpoint machinery (which writes all properties and allows PA_HIDDEN
+	 * writes on restore). */
+	{
+		char tlname[256];
+		if (prefix == nullptr || strcmp(prefix, "") == 0)
+			strcpy(tlname, "t_last");
+		else
+			sprintf(tlname, "%s.t_last", prefix);
+		PROPERTY *tlprop = property_malloc(
+			PT_timestamp, oclass, tlname,
+			(char *)PADDR_C(t_last) + (int64)struct_address, nullptr);
+		tlprop->access = PA_HIDDEN;
+		tlprop->description =
+			"CHECKPOINT_VAR: internal enduse energy-integration timestamp";
+		class_add_property(oclass, tlprop);
+		result++;
+	}
+
 	return result;
 }
 

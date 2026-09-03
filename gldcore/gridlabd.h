@@ -2649,6 +2649,7 @@ static inline gld_object *get_object(char *n)
 	return get_object(obj);
 }
 
+
 static PROPERTYSTRUCT nullpstruct;
 /// Property container
 class gld_property
@@ -3256,6 +3257,74 @@ public:
 	inline size_t get_body_size(void) { return result->body.size; };
 	inline int get_status(void) { return result->status; };
 };
+
+//Map Complex value
+static inline gld_property *map_complex_value(OBJECT *obj, const char *name)
+{
+	gld_property *pQuantity;
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if (!pQuantity->is_valid() || !pQuantity->is_complex())
+	{
+		GL_THROW("Unable to map property %s from object:%d %s",name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in controller_dg.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
+}
+
+//Map double value
+static inline gld_property *map_double_value(OBJECT *obj, const char *name)
+{
+	gld_property *pQuantity;
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if (!pQuantity->is_valid() || !pQuantity->is_double())
+	{
+		GL_THROW("Unable to map property %s from object:%d %s",name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in controller_dg.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
+}
+
+// Map enumeration value
+static inline gld_property *map_enum_value(OBJECT *obj, const char *name)
+{
+	gld_property *pQuantity;
+
+	// Map to the property of interest
+	pQuantity = new gld_property(obj, name);
+
+	// Check it
+	if ((pQuantity->is_valid() != true) || (pQuantity->is_enumeration() != true))
+	{
+		GL_THROW("Unable to map property %s from object:%d %s", name, obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in the secondary controller.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	// return the pointer
+	return pQuantity;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////
 // Module-Core Linkage Export Macros
 ////////////////////////////////////////////////////////////////////////////////////

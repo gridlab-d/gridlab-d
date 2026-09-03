@@ -121,8 +121,6 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
                    &nominal_frequency, nullptr);
   gl_global_create("powerflow::require_voltage_control", PT_bool,
                    &require_voltage_control, nullptr);
-  gl_global_create("powerflow::geographic_degree", PT_double,
-                   &geographic_degree, nullptr);
   gl_global_create("powerflow::fault_impedance", PT_complex, &fault_Z, nullptr);
   gl_global_create("powerflow::ground_impedance", PT_complex, &ground_Z,
                    nullptr);

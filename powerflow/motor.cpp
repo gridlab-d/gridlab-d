@@ -156,6 +156,39 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "sigma1", PADDR(sigma1),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 1 associated with synch. react.",
 			PT_double, "sigma2", PADDR(sigma2),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 2 associated with synch. react.",
 
+			// SPIM checkpoint variables
+			PT_double, "trip_prev", PADDR(trip_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous trip timer value",
+			PT_double, "reconnect_prev", PADDR(reconnect_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous reconnect timer value",
+			PT_int32, "motor_trip_prev", PADDR(motor_trip_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous motor trip state",
+			PT_complex, "psi_b_prev", PADDR(psi_b_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous backward rotating flux",
+			PT_complex, "psi_f_prev", PADDR(psi_f_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous forward rotating flux",
+			PT_complex, "psi_dr_prev", PADDR(psi_dr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous rotor d axis flux",
+			PT_complex, "psi_qr_prev", PADDR(psi_qr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous rotor q axis flux",
+			PT_complex, "Ids_prev", PADDR(Ids_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous d-axis stator current",
+			PT_complex, "Iqs_prev", PADDR(Iqs_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous q-axis stator current",
+			PT_complex, "If_prev", PADDR(If_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous forward current",
+			PT_complex, "Ib_prev", PADDR(Ib_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous backward current",
+			PT_complex, "Is_prev", PADDR(Is_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous motor current",
+			PT_complex, "motor_elec_power_prev", PADDR(motor_elec_power_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous motor electrical power",
+			PT_double, "Telec_prev", PADDR(Telec_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous electrical torque",
+			PT_double, "wr_prev", PADDR(wr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous rotor speed",
+			PT_double, "psi_sat_prev", PADDR(psi_sat_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous saturation flux",
+
+			// Under voltage protection checkpoint variables
+			PT_double, "uv_relay_time", PADDR(uv_relay_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: under-voltage relay time accumulator",
+			PT_int32, "uv_lockout", PADDR(uv_lockout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: under-voltage relay lockout state",
+
+			// TPIM checkpoint variables
+			PT_complex, "phips_prev", PADDR(phips_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous positive sequence stator flux",
+			PT_complex, "phins_cj_prev", PADDR(phins_cj_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous conjugate of negative sequence stator flux",
+			PT_complex, "phipr_prev", PADDR(phipr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous positive sequence rotor flux",
+			PT_complex, "phinr_cj_prev", PADDR(phinr_cj_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous conjugate of negative sequence rotor flux",
+			PT_double, "wr_pu_prev", PADDR(wr_pu_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous per-unit rotor speed",
+			PT_complex, "Ips_prev", PADDR(Ips_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous positive sequence stator current",
+			PT_complex, "Ipr_prev", PADDR(Ipr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous positive sequence rotor current",
+			PT_complex, "Ins_cj_prev", PADDR(Ins_cj_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous conjugate of negative sequence stator current",
+			PT_complex, "Inr_cj_prev", PADDR(Inr_cj_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous conjugate of negative sequence rotor current",
+
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
@@ -257,10 +290,8 @@ int motor::create()
     Rs= 0.262;
     Xs= 1.206;
     rs_pu = -999;  // pu
-    lls = -999;  //  pu
     lm = -999;  // pu
     rr_pu = -999;  // pu
-    llr = -999;  // pu
 
     // Parameters are for 3000 W motor
     Kfric = 0.0;  // pu
@@ -308,6 +339,8 @@ int motor::init(OBJECT *parent)
 	enumeration temp_house_type;
 	gld_property *temp_gld_property;
 	unsigned int test_rlock = 0;
+	double lls;
+	double llr;
 
 	//See if we have a house connection defined -- if so, do this after that initializes (to get data)
 	if (mtr_house_pointer != nullptr)
@@ -998,7 +1031,9 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	STATUS return_status_val;
 	bool temp_house_motor_state;
 	unsigned int  test_rlock = 0;
-	double deltat, deltat_ndiv;
+	double curr_delta_time;
+	double deltat; 
+	double deltat_ndiv;
 
 	// make sure to capture the current time
 	curr_delta_time = gl_globaldeltaclock;
@@ -1661,6 +1696,8 @@ void motor::TPIMStateOFF() {
 
 // Function to calculate the solution to the steady state SPIM model
 void motor::SPIMSteadyState(TIMESTAMP t1) {
+	gld::complex TF[16];
+	gld::complex ITF[16];
 	double wr_delta = 1;
     psi_sat = 1;
 	double psi = -1;

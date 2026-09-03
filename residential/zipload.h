@@ -34,7 +34,7 @@ public:
 	double phi;					///< duty cycle of the device 
 	double eta;					///< consumer demand rate that prematurely turns on a device or population
 	double nominal_power;
-	int64 next_time, last_time; ///< used to keep track of time in "special" modes - DR, duty-cycle
+	TIMESTAMP next_time, last_time; ///< used to keep track of time in "special" modes - DR, duty-cycle
 	double duty_cycle;			///< effective duty cycle of device
 	double last_duty_cycle;
 	double period;				///< period at which duty cycle is applied

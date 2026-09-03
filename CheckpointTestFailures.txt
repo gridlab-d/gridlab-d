@@ -1,0 +1,861 @@
+Checkpoint Test Failures:
+	Assert:
+		test_int_assert_converted:
+			Failed at Step: 3
+			Error: Checkpoint restore failed
+			Note: This test has start and stop time as the same so this shouldn't be included in checkpoint testing.
+			
+	Climate:
+		test_csvreader_dst_converted: failed=7, numeric_failed=0, exact_failed=7, acceptable=0, total=373
+			- $.globals.clock: integer mismatch
+			- $.objects.climate.instances[0].clock: integer mismatch
+			- $.objects.house.instances[0].clock: integer mismatch
+			- $.objects.house.instances[0].panel.t_last: integer mismatch
+			- $.objects.house.instances[0].t_last: integer mismatch
+			- $.objects.recorder.instances[0].clock: integer mismatch
+			- $.objects.recorder.instances[1].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+		test_csvreader_exercise_5_1_2_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=373
+			- $.objects.house.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+		test_singleHouseSolarInverter_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=6186
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+			Note: This test has no object moving the simulation forward so checkpointing comparison becomes invalid.
+			
+	Generators:
+		test_windturbine_NR_converted: failed=6, numeric_failed=6, exact_failed=0, acceptable=0, total=1629
+			- $.objects.meter.instances[0].measured_reactive_energy: double differs by more than 10%
+			- $.objects.meter.instances[1].measured_reactive_energy: double differs by more than 10%
+			- $.objects.meter.instances[2].measured_reactive_energy: double differs by more than 10%
+			- $.objects.meter.instances[3].measured_reactive_energy: double differs by more than 10%
+			- $.objects.triplex_meter.instances[0].measured_reactive_energy: double differs by more than 10%
+			- $.objects.triplex_meter.instances[1].measured_reactive_energy: double differs by more than 10%
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+		test_fqm_group_lf_converted: failed=3, numeric_failed=0, exact_failed=3, acceptable=0, total=2786
+			- $.objects.recorder.instances[0].clock: integer mismatch
+			- $.objects.recorder.instances[1].clock: integer mismatch
+			- $.objects.recorder.instances[2].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+	Gldcore:
+		test_groupid_converted: failed=112, numeric_failed=44, exact_failed=68, acceptable=0, total=3656
+			- $.globals.clock: integer mismatch
+			- $.objects.collector.instances[0].clock: integer mismatch
+			- $.objects.house.instances[0].clock: integer mismatch
+			- $.objects.house.instances[0].dTair: double differs by more than 10%
+			- $.objects.house.instances[0].k1: double differs by more than 10%
+			- $.objects.house.instances[0].panel.t_last: integer mismatch
+			- $.objects.house.instances[0].t_last: integer mismatch
+			- $.objects.house.instances[1].clock: integer mismatch
+			- $.objects.house.instances[1].dTair: double differs by more than 10%
+			- $.objects.house.instances[1].k1: double differs by more than 10%
+			- $.objects.house.instances[1].panel.t_last: integer mismatch
+			- $.objects.house.instances[1].t_last: integer mismatch
+			- $.objects.house.instances[2].clock: integer mismatch
+			- $.objects.house.instances[2].dTair: double differs by more than 10%
+			- $.objects.house.instances[2].k1: double differs by more than 10%
+			- $.objects.house.instances[2].panel.t_last: integer mismatch
+			- $.objects.house.instances[2].t_last: integer mismatch
+			- $.objects.house.instances[3].clock: integer mismatch
+			- $.objects.house.instances[3].dTair: double differs by more than 10%
+			- $.objects.house.instances[3].k1: double differs by more than 10%
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+		test_largeid_converted: failed=7, numeric_failed=2, exact_failed=5, acceptable=0, total=296
+			- $.globals.clock: integer mismatch
+			- $.objects.collector.instances[0].clock: integer mismatch
+			- $.objects.house.instances[0].clock: integer mismatch
+			- $.objects.house.instances[0].dTair: double differs by more than 10%
+			- $.objects.house.instances[0].k1: double differs by more than 10%
+			- $.objects.house.instances[0].panel.t_last: integer mismatch
+			- $.objects.house.instances[0].t_last: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+		test_loadshape_exercise_2_3_3_converted: failed=7, numeric_failed=0, exact_failed=7, acceptable=2, total=359
+			- $.globals.clock: integer mismatch
+			- $.objects.house.instances[0].clock: integer mismatch
+			- $.objects.house.instances[0].panel.t_last: integer mismatch
+			- $.objects.house.instances[0].t_last: integer mismatch
+			- $.objects.recorder.instances[0].clock: integer mismatch
+			- $.objects.waterheater.instances[0].clock: integer mismatch
+			- $.objects.waterheater.instances[0].t_last: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+		test_simple_schedule_converted: failed=4, numeric_failed=0, exact_failed=4, acceptable=0, total=283
+			- $.globals.clock: integer mismatch
+			- $.objects.house.instances[0].clock: integer mismatch
+			- $.objects.house.instances[0].panel.t_last: integer mismatch
+			- $.objects.house.instances[0].t_last: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+		test_core_63_schedule_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=609
+			- $.objects.house.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+		test_core_player_schedule_1_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=346
+			- $.objects.house.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+			
+	Powerflow:
+		test_ZIPLoad_Delta_NR_converted:
+			Failed at Step: 3
+			Error: Checkpoint restore failed
+			
+		test_ZIPLoad_ZeroBase_NR_converted:
+			Failed at Step: 3
+			Error: Checkpoint restore failed
+			
+		test_IEEE123_zero_voltages_NR_converted: failed=4298, numeric_failed=3864, exact_failed=434, acceptable=0, total=14484
+			- $.objects.capacitor.instances[0].rank: missing key in restored checkpoint
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_nominal_voltage: double differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].init_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchC_state: string mismatch
+			- $.objects.capacitor.instances[0].last_disconnect: integer mismatch
+			- $.objects.capacitor.instances[0].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].last_voltage_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].maximum_voltage_error: double differs by more than 10%
+			- $.objects.capacitor.instances[0].prev_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchB_state: string mismatch
+			
+		test_IEEE123_zero_voltages_FBS_converted: failed=4141, numeric_failed=3845, exact_failed=296, acceptable=0, total=14656
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_nominal_voltage: double differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].init_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchC_state: string mismatch
+			- $.objects.capacitor.instances[0].last_disconnect: integer mismatch
+			- $.objects.capacitor.instances[0].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].last_voltage_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].maximum_voltage_error: double differs by more than 10%
+			- $.objects.capacitor.instances[0].prev_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchC_state: string mismatch
+		
+		test_IEEE_34_NR_converted: failed=2249, numeric_failed=2036, exact_failed=213, acceptable=0, total=7042
+			- $.objects.capacitor.instances[0].rank: missing key in restored checkpoint
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_nominal_voltage: double differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].init_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchC_state: string mismatch
+			- $.objects.capacitor.instances[0].last_disconnect: integer mismatch
+			- $.objects.capacitor.instances[0].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].last_voltage_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].maximum_voltage_error: double differs by more than 10%
+			- $.objects.capacitor.instances[0].prev_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchB_state: string mismatch
+		
+		test_IEEE_34_FBS_converted: failed=2145, numeric_failed=1995, exact_failed=150, acceptable=8, total=7122
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_nominal_voltage: double differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].init_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchC_state: string mismatch
+			- $.objects.capacitor.instances[0].last_disconnect: integer mismatch
+			- $.objects.capacitor.instances[0].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].last_voltage_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].maximum_voltage_error: double differs by more than 10%
+			- $.objects.capacitor.instances[0].prev_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchC_state: string mismatch
+		
+		test_IEEE-123_FBS_converted: failed=321, numeric_failed=0, exact_failed=321, acceptable=0, total=14347
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.complex_assert.instances[0].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[1].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[2].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[3].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[4].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[5].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[6].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[7].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[8].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[9].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[10].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[11].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[12].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[13].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[14].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[15].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[16].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[17].parent: missing key in restored checkpoint
+			- $.objects.complex_assert.instances[18].parent: missing key in restored checkpoint
+		
+		test_capacitor_CURRENT_ABC_indiv_converted: failed=132, numeric_failed=90, exact_failed=42, acceptable=8, total=792
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].CurrentVals_A: double differs by more than 10%
+			- $.objects.capacitor.instances[0].CurrentVals_B: double differs by more than 10%
+			- $.objects.capacitor.instances[0].CurrentVals_C: double differs by more than 10%
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].dwell_time_left: double differs by more than 10%
+			- $.objects.capacitor.instances[0].init_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchC_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchB_state: string mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_capacitor_CURRENT_ABC_indiv_NR_converted: failed=126, numeric_failed=89, exact_failed=37, acceptable=9, total=788
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].CurrentVals_A: double differs by more than 10%
+			- $.objects.capacitor.instances[0].CurrentVals_B: double differs by more than 10%
+			- $.objects.capacitor.instances[0].CurrentVals_C: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].dwell_time_left: double differs by more than 10%
+			- $.objects.capacitor.instances[0].init_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchC_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchC_state: string mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_capacitor_VAR_ABC_indiv_dwell_converted: failed=126, numeric_failed=86, exact_failed=40, acceptable=12, total=792
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].VArVals_A: double differs by more than 10%
+			- $.objects.capacitor.instances[0].VArVals_B: double differs by more than 10%
+			- $.objects.capacitor.instances[0].VArVals_C: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].dwell_time_left: double differs by more than 10%
+			- $.objects.capacitor.instances[0].init_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchC_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchC_state: string mismatch
+			- $.objects.capacitor.instances[0].shunt_B: complex magnitude differs by more than 10%
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_capacitor_VAR_ABC_indiv_Y_NR_converted: failed=125, numeric_failed=87, exact_failed=38, acceptable=9, total=788
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].VArVals_A: double differs by more than 10%
+			- $.objects.capacitor.instances[0].VArVals_B: double differs by more than 10%
+			- $.objects.capacitor.instances[0].VArVals_C: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].dwell_time_left: double differs by more than 10%
+			- $.objects.capacitor.instances[0].prev_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].shunt_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].shunt_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].shunt_C: complex magnitude differs by more than 10%
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_capacitor_VAR_ABC_indiv_NR_converted: failed=124, numeric_failed=84, exact_failed=40, acceptable=9, total=787
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].VArVals_A: double differs by more than 10%
+			- $.objects.capacitor.instances[0].VArVals_B: double differs by more than 10%
+			- $.objects.capacitor.instances[0].VArVals_C: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_inj_C: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].init_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].init_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchA_state: string mismatch
+			- $.objects.capacitor.instances[0].prev_switchB_state: string mismatch
+			- $.objects.capacitor.instances[0].shunt_A: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].shunt_B: complex magnitude differs by more than 10%
+			- $.objects.capacitor.instances[0].switchA: string mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_fuse_switched_out_of_service_converted: failed=86, numeric_failed=82, exact_failed=4, acceptable=2, total=65838
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[1].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[2].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[3].Iteration_Toggle: type/value mismatch
+			- $.objects.fuse.instances[7].power_in: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[7].power_in_A: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[7].power_in_C: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[7].power_out: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[7].power_out_A: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[7].power_out_C: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[7].power_out_real: double differs by more than 10%
+			- $.objects.fuse.instances[14].power_in: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[14].power_in_A: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[14].power_in_B: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[14].power_out: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[14].power_out_A: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[14].power_out_B: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[14].power_out_real: double differs by more than 10%
+			- $.objects.fuse.instances[31].power_in: complex magnitude differs by more than 10%
+			- $.objects.fuse.instances[31].power_in_A: complex magnitude differs by more than 10%
+		
+		test_capacitor_VAR_ABC_indiv_Y_converted: failed=41, numeric_failed=8, exact_failed=33, acceptable=1, total=786
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].switchC_state_Next: string mismatch
+			- $.objects.capacitor.instances[0].switchC_state_Prev: string mismatch
+			- $.objects.capacitor.instances[0].switchC_state_Req_Next: string mismatch
+			- $.objects.load.instances[0].clock: integer mismatch
+			- $.objects.load.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[0].clock: integer mismatch
+			- $.objects.node.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[1].parent: missing key in restored checkpoint
+			- $.objects.node.instances[1].clock: integer mismatch
+			- $.objects.node.instances[1].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[2].parent: missing key in restored checkpoint
+			- $.objects.node.instances[2].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_capacitor_VAR_ABC_indiv_converted: failed=41, numeric_failed=8, exact_failed=33, acceptable=1, total=786
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].switchC_state_Next: string mismatch
+			- $.objects.capacitor.instances[0].switchC_state_Prev: string mismatch
+			- $.objects.capacitor.instances[0].switchC_state_Req_Next: string mismatch
+			- $.objects.load.instances[0].clock: integer mismatch
+			- $.objects.load.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[0].clock: integer mismatch
+			- $.objects.node.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[1].parent: missing key in restored checkpoint
+			- $.objects.node.instances[1].clock: integer mismatch
+			- $.objects.node.instances[1].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[2].parent: missing key in restored checkpoint
+			- $.objects.node.instances[2].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_capacitor_VAR_ABC_BANK_B_converted: failed=40, numeric_failed=9, exact_failed=31, acceptable=1, total=787
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].Iteration_Toggle: type/value mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].dwell_time_left: double differs by more than 10%
+			- $.objects.capacitor.instances[0].switchB_state_Prev: string mismatch
+			- $.objects.load.instances[0].clock: integer mismatch
+			- $.objects.load.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[0].clock: integer mismatch
+			- $.objects.node.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[1].parent: missing key in restored checkpoint
+			- $.objects.node.instances[1].clock: integer mismatch
+			- $.objects.node.instances[1].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[2].parent: missing key in restored checkpoint
+			- $.objects.node.instances[2].clock: integer mismatch
+			- $.objects.node.instances[2].current_uptime: double differs by more than 10%
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_switching_converted: failed=40, numeric_failed=0, exact_failed=40, acceptable=1, total=2547
+			- $.globals.clock: integer mismatch
+			- $.objects.currdump.instances[0].clock: integer mismatch
+			- $.objects.currdump.instances[1].clock: integer mismatch
+			- $.objects.load.instances[0].clock: integer mismatch
+			- $.objects.load.instances[1].clock: integer mismatch
+			- $.objects.load.instances[2].clock: integer mismatch
+			- $.objects.load.instances[3].clock: integer mismatch
+			- $.objects.load.instances[4].clock: integer mismatch
+			- $.objects.load.instances[5].clock: integer mismatch
+			- $.objects.load.instances[6].clock: integer mismatch
+			- $.objects.load.instances[7].clock: integer mismatch
+			- $.objects.load.instances[8].clock: integer mismatch
+			- $.objects.load.instances[9].clock: integer mismatch
+			- $.objects.meter.instances[0].clock: integer mismatch
+			- $.objects.meter.instances[0].last_t: integer mismatch
+			- $.objects.meter.instances[1].clock: integer mismatch
+			- $.objects.meter.instances[1].last_t: integer mismatch
+			- $.objects.multi_recorder.instances[0].clock: integer mismatch
+			- $.objects.node.instances[0].clock: integer mismatch
+			- $.objects.node.instances[1].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_capacitor_VAR_ABC_indiv_dwell_NR_converted: failed=37, numeric_failed=8, exact_failed=29, acceptable=1, total=782
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].dwell_time_left: double differs by more than 10%
+			- $.objects.capacitor.instances[0].switchA_state_Prev: string mismatch
+			- $.objects.capacitor.instances[0].switchA_state_Req_Next: string mismatch
+			- $.objects.capacitor.instances[0].switchB_state_Prev: string mismatch
+			- $.objects.capacitor.instances[0].switchB_state_Req_Next: string mismatch
+			- $.objects.load.instances[0].clock: integer mismatch
+			- $.objects.load.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[0].clock: integer mismatch
+			- $.objects.node.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[1].clock: integer mismatch
+			- $.objects.node.instances[1].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[2].clock: integer mismatch
+			- $.objects.node.instances[2].current_uptime: double differs by more than 10%
+			- $.objects.overhead_line.instances[0].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_capacitor_VAR_ABC_BANK_B_NR_converted: failed=35, numeric_failed=9, exact_failed=26, acceptable=1, total=783
+			- $.globals.clock: integer mismatch
+			- $.globals.mainloop_state: string mismatch
+			- $.objects.capacitor.instances[0].cap_A_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_B_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].cap_C_switch_count: double differs by more than 10%
+			- $.objects.capacitor.instances[0].clock: integer mismatch
+			- $.objects.capacitor.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.capacitor.instances[0].dwell_time_left: double differs by more than 10%
+			- $.objects.capacitor.instances[0].switchB_state_Prev: string mismatch
+			- $.objects.load.instances[0].clock: integer mismatch
+			- $.objects.load.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[0].clock: integer mismatch
+			- $.objects.node.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[1].clock: integer mismatch
+			- $.objects.node.instances[1].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[2].clock: integer mismatch
+			- $.objects.node.instances[2].current_uptime: double differs by more than 10%
+			- $.objects.overhead_line.instances[0].clock: integer mismatch
+			- $.objects.overhead_line.instances[1].clock: integer mismatch
+			- $.objects.player.instances[0].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_meter_delta_converted: failed=12, numeric_failed=1, exact_failed=11, acceptable=0, total=1138
+			- $.objects.ZIPload.instances[0].load: string mismatch
+			- $.objects.ZIPload.instances[1].load: string mismatch
+			- $.objects.assert.instances[0].lower: string mismatch
+			- $.objects.assert.instances[0].value: string mismatch
+			- $.objects.assert.instances[1].lower: string mismatch
+			- $.objects.assert.instances[1].value: string mismatch
+			- $.objects.assert.instances[2].lower: string mismatch
+			- $.objects.assert.instances[2].value: string mismatch
+			- $.objects.assert.instances[3].lower: string mismatch
+			- $.objects.assert.instances[3].value: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.waterheater.instances[0].time_step: double differs by more than 10%
+		
+		test_multi_island_converted: failed=12, numeric_failed=12, exact_failed=0, acceptable=0, total=1606
+			- $.objects.load.instances[2].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.load.instances[2].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.load.instances[2].last_voltage_C: complex magnitude differs by more than 10%
+			- $.objects.node.instances[6].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.node.instances[6].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.node.instances[6].last_voltage_C: complex magnitude differs by more than 10%
+			- $.objects.node.instances[7].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.node.instances[7].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.node.instances[7].last_voltage_C: complex magnitude differs by more than 10%
+			- $.objects.node.instances[8].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.node.instances[8].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.node.instances[8].last_voltage_C: complex magnitude differs by more than 10%
+		
+		test_disconnected_node_converted: failed=10, numeric_failed=10, exact_failed=0, acceptable=0, total=925
+			- $.objects.node.instances[3].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.node.instances[3].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.node.instances[3].last_voltage_C: complex magnitude differs by more than 10%
+			- $.objects.switch.instances[0].power_in: complex magnitude differs by more than 10%
+			- $.objects.switch.instances[0].power_in_B: complex magnitude differs by more than 10%
+			- $.objects.switch.instances[0].power_in_C: complex magnitude differs by more than 10%
+			- $.objects.switch.instances[0].power_out: complex magnitude differs by more than 10%
+			- $.objects.switch.instances[0].power_out_B: complex magnitude differs by more than 10%
+			- $.objects.switch.instances[0].power_out_C: complex magnitude differs by more than 10%
+			- $.objects.switch.instances[0].power_out_real: double differs by more than 10%
+		
+		test_powerflow_reg_bank_reverse_flow_control_current_pos_converted: failed=7, numeric_failed=0, exact_failed=7, acceptable=0, total=834
+			- $.objects.assert.instances[0].lower: string mismatch
+			- $.objects.assert.instances[0].value: string mismatch
+			- $.objects.assert.instances[1].lower: string mismatch
+			- $.objects.assert.instances[1].value: string mismatch
+			- $.objects.assert.instances[2].lower: string mismatch
+			- $.objects.assert.instances[2].value: string mismatch
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_powerflow_reg_bank_reverse_flow_control_neutral_converted: failed=7, numeric_failed=0, exact_failed=7, acceptable=0, total=820
+			- $.objects.assert.instances[0].lower: string mismatch
+			- $.objects.assert.instances[0].value: string mismatch
+			- $.objects.assert.instances[1].lower: string mismatch
+			- $.objects.assert.instances[1].value: string mismatch
+			- $.objects.assert.instances[2].lower: string mismatch
+			- $.objects.assert.instances[2].value: string mismatch
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_powerflow_reg_ind_reverse_flow_control_neutral_converted: failed=7, numeric_failed=0, exact_failed=7, acceptable=0, total=834
+			- $.objects.assert.instances[0].lower: string mismatch
+			- $.objects.assert.instances[0].value: string mismatch
+			- $.objects.assert.instances[1].lower: string mismatch
+			- $.objects.assert.instances[1].value: string mismatch
+			- $.objects.assert.instances[2].lower: string mismatch
+			- $.objects.assert.instances[2].value: string mismatch
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_IEEE_13_FBS_AMI_StepParameterChange_converted: failed=6, numeric_failed=0, exact_failed=6, acceptable=0, total=4023
+			- $.objects.multi_recorder.instances[0].clock: integer mismatch
+			- $.objects.multi_recorder.instances[1].clock: integer mismatch
+			- $.objects.multi_recorder.instances[2].clock: integer mismatch
+			- $.objects.multi_recorder.instances[3].clock: integer mismatch
+			- $.objects.multi_recorder.instances[4].clock: integer mismatch
+			- $.objects.multi_recorder.instances[5].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_IEEE_13_FBS_AMI_StepPropertyChange2_converted: failed=6, numeric_failed=0, exact_failed=6, acceptable=0, total=4028
+			- $.objects.multi_recorder.instances[0].clock: integer mismatch
+			- $.objects.multi_recorder.instances[1].clock: integer mismatch
+			- $.objects.multi_recorder.instances[2].clock: integer mismatch
+			- $.objects.multi_recorder.instances[3].clock: integer mismatch
+			- $.objects.multi_recorder.instances[4].clock: integer mismatch
+			- $.objects.multi_recorder.instances[5].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_IEEE_13_FBS_AMI_StepPropertyChange_converted: failed=6, numeric_failed=0, exact_failed=6, acceptable=0, total=4028
+			- $.objects.multi_recorder.instances[0].clock: integer mismatch
+			- $.objects.multi_recorder.instances[1].clock: integer mismatch
+			- $.objects.multi_recorder.instances[2].clock: integer mismatch
+			- $.objects.multi_recorder.instances[3].clock: integer mismatch
+			- $.objects.multi_recorder.instances[4].clock: integer mismatch
+			- $.objects.multi_recorder.instances[5].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_multi_island_SWING_PQ_Indep_Islands_converted: failed=6, numeric_failed=6, exact_failed=0, acceptable=2, total=1523
+			- $.objects.load.instances[1].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.load.instances[1].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.load.instances[1].last_voltage_C: complex magnitude differs by more than 10%
+			- $.objects.node.instances[4].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.node.instances[5].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.node.instances[5].last_voltage_C: complex magnitude differs by more than 10%
+		
+		test_powerflow_reg_ind_reverse_flow_control_current_pos_converted: failed=5, numeric_failed=0, exact_failed=5, acceptable=0, total=834
+			- $.objects.assert.instances[1].lower: string mismatch
+			- $.objects.assert.instances[1].value: string mismatch
+			- $.objects.assert.instances[2].lower: string mismatch
+			- $.objects.assert.instances[2].value: string mismatch
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_link_status_converted: failed=3, numeric_failed=3, exact_failed=0, acceptable=0, total=1567
+			- $.objects.node.instances[9].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.node.instances[9].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.node.instances[9].last_voltage_C: complex magnitude differs by more than 10%
+		
+		test_multi_island_indep_node_converted: failed=3, numeric_failed=3, exact_failed=0, acceptable=0, total=1482
+			- $.objects.load.instances[0].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.load.instances[0].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.load.instances[0].last_voltage_C: complex magnitude differs by more than 10%
+		
+		test_multi_island_zero_voltages_converted: failed=3, numeric_failed=3, exact_failed=0, acceptable=0, total=1451
+			- $.objects.load.instances[0].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.load.instances[0].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.load.instances[0].last_voltage_C: complex magnitude differs by more than 10%
+		
+		test_powerflow_NR_network_converted: failed=3, numeric_failed=3, exact_failed=0, acceptable=0, total=2357
+			- $.objects.load.instances[3].current_inj_A: complex magnitude differs by more than 10%
+			- $.objects.load.instances[3].measured_power: complex magnitude differs by more than 10%
+			- $.objects.load.instances[3].measured_power_A: complex magnitude differs by more than 10%
+		
+		test_reversed_lines_NR_converted: failed=3, numeric_failed=3, exact_failed=0, acceptable=0, total=1638
+			- $.objects.triplex_load.instances[1].indiv_measured_power_1: complex magnitude differs by more than 10%
+			- $.objects.triplex_load.instances[1].indiv_measured_power_2: complex magnitude differs by more than 10%
+			- $.objects.triplex_load.instances[1].measured_power: complex magnitude differs by more than 10%
+		
+		test_switch_single_node_hanging_converted: failed=3, numeric_failed=3, exact_failed=0, acceptable=0, total=815
+			- $.objects.node.instances[4].last_voltage_A: complex magnitude differs by more than 10%
+			- $.objects.node.instances[4].last_voltage_B: complex magnitude differs by more than 10%
+			- $.objects.node.instances[4].last_voltage_C: complex magnitude differs by more than 10%
+		
+		test_dutycycle_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=1229
+			- $.objects.ZIPload.instances[1].load: string mismatch
+			- $.objects.house.instances[1].panel: string mismatch
+		
+		test_billing_tiered_tou_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=706
+			- $.objects.recorder.instances[0].clock: integer mismatch
+			Note: Failing due to recorder instability with checkpointing. Recorder needs redesign to work with checkpointing.
+		
+		test_regulator_outputvolt_YY_A_NR_ts_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=695
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_regulator_outputvolt_YY_A_ts_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=685
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_regulator_outputvolt_YY_B_NR_ts_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=691
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_regulator_outputvolt_YY_B_ts_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=685
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_regulator_remotesense_YY_A_NR_ts_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=732
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_regulator_remotesense_YY_A_ts_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=686
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_regulator_remotesense_YY_B_NR_ts_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=694
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_regulator_remotesense_YY_B_ts_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=686
+			- $.objects.regulator.instances[0].flow_direction: string mismatch
+		
+		test_triplex_meter_parent_accum_FBS_converted: failed=1, numeric_failed=1, exact_failed=0, acceptable=0, total=1317
+			- $.objects.waterheater.instances[0].time_step: double differs by more than 10%
+	Residential:
+		test_commercial_meters_NR_converted:
+			Failed at Step: 3
+			Error: Checkpoint restore failed
+		
+		test_residential_exercise_5_2_1_converted: failed=8, numeric_failed=3, exact_failed=5, acceptable=1, total=480
+			- $.objects.house.instances[0].hvac_duty_cycle: double differs by more than 10%
+			- $.objects.house.instances[0].hvac_last_off: integer mismatch
+			- $.objects.house.instances[0].hvac_last_on: integer mismatch
+			- $.objects.house.instances[0].hvac_period_length: double differs by more than 10%
+			- $.objects.house.instances[0].hvac_period_off: double differs by more than 10%
+			- $.objects.house.instances[0].thermostat_last_cycle_time: integer mismatch
+			- $.objects.house.instances[0].thermostat_last_off_cycle_time: integer mismatch
+			- $.objects.house.instances[0].thermostat_last_on_cycle_time: integer mismatch
+		
+		test_waterheater_implicit_converted: failed=3, numeric_failed=0, exact_failed=3, acceptable=0, total=333
+			- $.objects.house.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.recorder.instances[0].clock: integer mismatch
+		
+		test_HVAC_common_heat_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=519
+			- $.objects.house.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_HVAC_peak_heat_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=521
+			- $.objects.house.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_clotheswasher_implicit_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=315
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.recorder.instances[0].clock: integer mismatch
+		
+		test_dishwasher_implicit_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=316
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.recorder.instances[0].clock: integer mismatch
+		
+		test_evcharger_det_m1_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=383
+			- $.objects.evcharger_det.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_evcharger_det_m1_default_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=381
+			- $.objects.evcharger_det.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_evcharger_det_m1_minTS_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=383
+			- $.objects.evcharger_det.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_external_voltage_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=511
+			- $.objects.house.instances[0].load: string mismatch
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_lights_exp_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=376
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.lights.instances[0].load: string mismatch
+		
+		test_lights_explicit_power1_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=405
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.lights.instances[0].load: string mismatch
+		
+		test_lights_explicit_power2_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=405
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.lights.instances[0].load: string mismatch
+		
+		test_lights_explicit_power3_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=405
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.lights.instances[0].load: string mismatch
+		
+		test_microwave_implicit_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=315
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.recorder.instances[0].clock: integer mismatch
+		
+		test_plugload_explicit_swd_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=443
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.plugload.instances[0].load: string mismatch
+		
+		test_thermal_storage_autotest_converted: failed=2, numeric_failed=0, exact_failed=2, acceptable=0, total=584
+			- $.objects.house.instances[0].panel: string mismatch
+			- $.objects.thermal_storage.instances[0].load: string mismatch
+		
+		test_dryer_implicit_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=300
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_lights_explicit_power4_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=405
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_lights_imp_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=319
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_lights_implicit_power1_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=337
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_lights_implicit_power2_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=337
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_lights_implicit_power3_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=337
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_occupantload_enduse_load0_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=366
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_plugload_enduse_load_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=359
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_refrigerator_implicit_converted: failed=1, numeric_failed=0, exact_failed=1, acceptable=0, total=301
+			- $.objects.house.instances[0].panel: string mismatch
+		
+		test_waterheater_explicit_1_converted: failed=1, numeric_failed=1, exact_failed=0, acceptable=0, total=708
+			- $.objects.waterheater.instances[0].time_step: double differs by more than 10%
+	Tape:
+		test_collector_exercise_2_4_2_converted: failed=679, numeric_failed=152, exact_failed=527, acceptable=51, total=18134
+			- $.objects.house.instances[0].hvac_last_off: integer mismatch
+			- $.objects.house.instances[0].hvac_last_on: integer mismatch
+			- $.objects.house.instances[0].thermostat_last_cycle_time: integer mismatch
+			- $.objects.house.instances[0].thermostat_last_off_cycle_time: integer mismatch
+			- $.objects.house.instances[0].thermostat_last_on_cycle_time: integer mismatch
+			- $.objects.house.instances[1].hvac_last_off: integer mismatch
+			- $.objects.house.instances[1].hvac_last_on: integer mismatch
+			- $.objects.house.instances[1].k2: double differs by more than 10%
+			- $.objects.house.instances[1].thermostat_last_cycle_time: integer mismatch
+			- $.objects.house.instances[1].thermostat_last_off_cycle_time: integer mismatch
+			- $.objects.house.instances[1].thermostat_last_on_cycle_time: integer mismatch
+			- $.objects.house.instances[2].dTair: double differs by more than 10%
+			- $.objects.house.instances[2].hvac_last_off: integer mismatch
+			- $.objects.house.instances[2].hvac_last_on: integer mismatch
+			- $.objects.house.instances[2].k2: double differs by more than 10%
+			- $.objects.house.instances[2].thermostat_last_cycle_time: integer mismatch
+			- $.objects.house.instances[2].thermostat_last_off_cycle_time: integer mismatch
+			- $.objects.house.instances[2].thermostat_last_on_cycle_time: integer mismatch
+			- $.objects.house.instances[3].hvac_last_off: integer mismatch
+			- $.objects.house.instances[3].hvac_last_on: integer mismatch
+
+		test_histogram_basic_converted: failed=42, numeric_failed=20, exact_failed=22, acceptable=0, total=1007
+			- $.globals.clock: integer mismatch
+			- $.objects.histogram.instances[0].limit: integer mismatch
+			- $.objects.node.instances[0].clock: integer mismatch
+			- $.objects.node.instances[0].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[1].clock: integer mismatch
+			- $.objects.node.instances[1].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[2].clock: integer mismatch
+			- $.objects.node.instances[2].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[3].clock: integer mismatch
+			- $.objects.node.instances[3].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[4].clock: integer mismatch
+			- $.objects.node.instances[4].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[5].clock: integer mismatch
+			- $.objects.node.instances[5].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[6].clock: integer mismatch
+			- $.objects.node.instances[6].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[7].clock: integer mismatch
+			- $.objects.node.instances[7].current_uptime: double differs by more than 10%
+			- $.objects.node.instances[8].clock: integer mismatch
+			- $.objects.node.instances[8].current_uptime: double differs by more than 10%
+
+		test_metrics_collector_converted: failed=33, numeric_failed=26, exact_failed=7, acceptable=1, total=6367
+			- $.objects.house.instances[0].Qa: double differs by more than 10%
+			- $.objects.house.instances[0].Qi: double differs by more than 10%
+			- $.objects.house.instances[0].Qm: double differs by more than 10%
+			- $.objects.house.instances[0].internal_gain: double differs by more than 10%
+			- $.objects.house.instances[0].panel.cumulative_heatgain: double differs by more than 10%
+			- $.objects.house.instances[0].panel.heatgain: double differs by more than 10%
+			- $.objects.house.instances[2].Qa: double differs by more than 10%
+			- $.objects.house.instances[2].Qi: double differs by more than 10%
+			- $.objects.house.instances[2].Qm: double differs by more than 10%
+			- $.objects.house.instances[2].internal_gain: double differs by more than 10%
+			- $.objects.house.instances[2].k2: double differs by more than 10%
+			- $.objects.house.instances[2].panel.heatgain: double differs by more than 10%
+			- $.objects.house.instances[3].Qa: double differs by more than 10%
+			- $.objects.house.instances[3].Qi: double differs by more than 10%
+			- $.objects.house.instances[3].Qm: double differs by more than 10%
+			- $.objects.house.instances[3].dTair: double differs by more than 10%
+			- $.objects.house.instances[3].internal_gain: double differs by more than 10%
+			- $.objects.house.instances[3].k1: double differs by more than 10%
+			- $.objects.house.instances[3].k2: double differs by more than 10%
+			- $.objects.house.instances[3].panel.heatgain: double differs by more than 10%
+
+		test_tape_whitespace_converted: failed=4, numeric_failed=0, exact_failed=4, acceptable=0, total=5806
+			- $.objects.collector.instances[0].clock: integer mismatch
+			- $.objects.multi_recorder.instances[0].clock: integer mismatch
+			- $.objects.recorder.instances[0].clock: integer mismatch
+			- $.objects.recorder.instances[1].clock: integer mismatch
+
+		test_recorder_epoch_converted: failed=3, numeric_failed=0, exact_failed=3, acceptable=0, total=2401
+			- $.objects.multi_recorder.instances[0].clock: integer mismatch
+			- $.objects.recorder.instances[0].clock: integer mismatch
+			- $.objects.recorder.instances[1].clock: integer mismatch
+		
+		test_recorder_exercise_2_2_2_converted: failed=2, numeric_failed=1, exact_failed=1, acceptable=0, total=351
+			- $.objects.recorder.instances[0].clock: integer mismatch
+			- $.objects.waterheater.instances[0].time_step: double differs by more than 10%

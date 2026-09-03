@@ -166,7 +166,7 @@ extern "C"
 	GLOBAL char global_kmlfile[1024] INIT("");	  /**< Specifies KML file to dump */
 	GLOBAL char global_modelname[1024] INIT("");  /**< Name of the current model */
 	GLOBAL char global_execdir[1024] INIT("");	  /**< Path to folder containing installed application files */
-	GLOBAL bool global_strictnames INIT(true);	  /**< Enforce strict global naming (prevents globals from being implicitly created by assignment) */
+	GLOBAL bool global_strictnames INIT(false);	  /**< Enforce strict global naming (prevents globals from being implicitly created by assignment) */
 	GLOBAL bool global_xmlstrict INIT(true);	  /**< Causes XML I/O to use strict XML data structures */
 	GLOBAL int global_relax_naming_rules INIT(0); /**< Causes the error to relax to a warning when object names start with numbers or special characters */
 	GLOBAL char global_urlbase[1024]			  /**< default urlbase used for online resources */
@@ -216,7 +216,7 @@ extern "C"
 #include "realtime.h"
 
 	GLOBAL TIMESTAMP global_clock INIT(TS_ZERO);	   /**< The main clock timestamp */
-	GLOBAL TIMESTAMP global_nextTime INIT(TS_ZERO);	   /** < The next smallest event timestamp */
+	GLOBAL TIMESTAMP global_nexttime INIT(TS_ZERO);	   /** < The next smallest event timestamp */
 	GLOBAL TIMESTAMP global_starttime INIT(946684800); /**< The simulation starting time (default is 2000-01-01 0:00) */
 	GLOBAL TIMESTAMP global_stoptime INIT(TS_NEVER);   /**< The simulation stop time (default is 1 year after start time) */
 
@@ -321,6 +321,7 @@ extern "C"
 	GLOBAL int global_checkpoint_interval INIT(0);	   /** checkpoint interval (default is 3600 for CPT_WALL and 86400 for CPT_SIM */
 	GLOBAL int global_checkpoint_keepall INIT(0);	   /** determines whether all checkpoint files are kept, non-zero keeps files, zero delete all but last */
 	GLOBAL int global_checkpoint_loaded INIT(0);	   /**< flag to indicate whether a checkpoint file has been loaded */
+	GLOBAL int global_checkpoint_replay_active INIT(0); /**< flag set only while checkpoint object properties are actively replayed */
 
 	/* version check */
 	GLOBAL int global_check_version INIT(0); /**< check version flag */

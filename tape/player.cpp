@@ -515,18 +515,94 @@ TIMESTAMP player_read(OBJECT *obj) {
                           : (my->next.ts + 1); // 'break' statements sent here
 }
 
+/* Returns true when the simulation was started from a restored checkpoint.
+ * Read via the callback API (gl_global_getvar) since core globals are not
+ * directly linkable from module code. checkpoint_loaded is a PT_bool global,
+ * so gl_global_getvar formats it as the string "TRUE"/"FALSE" (not "1"/"0"). */
+static bool player_checkpoint_loaded(void) {
+  char buf[32] = "";
+  if (gl_global_getvar("checkpoint_loaded", buf, sizeof(buf)) == nullptr)
+    return false;
+  return buf[0] == 'T' || buf[0] == 't' || buf[0] == '1';
+}
+
+/* Reposition a player that was restored from a checkpoint.
+ *
+ * On restore the read cursor (status, next.ts/ns/value, loopnum, delta_track)
+ * has been re-applied from the checkpoint, but the file itself is not open and
+ * the OS file position is at the top. Re-open the file and replay player_read()
+ * — which only parses lines into my->next, it does NOT apply values to the
+ * model — until the cursor once again matches the restored (next.ts, next.ns,
+ * loopnum). That re-derives the correct in-file position without re-applying
+ * any already-simulated rows.
+ *
+ * Note: player_open() resets loopnum = loop and status = TS_OPEN, so loop
+ * accounting is reproduced exactly as in the original run. */
+static void player_restore_position(OBJECT *obj) {
+  struct player *my = object_data<player>(obj);
+
+  /* Capture the restored target cursor before player_open()/player_read()
+   * overwrite it. */
+  TIMESTAMP target_ts = my->next.ts;
+  int64 target_ns = my->next.ns;
+  int32 target_loopnum = my->loopnum;
+
+  if (player_open(obj) == 0) {
+    gl_error("sync_player: unable to reopen player file '%s' for object '%s' "
+             "during checkpoint restore",
+             my->file.get_string(), obj->name ? obj->name : "(anon)");
+    return;
+  }
+
+  /* Prime the first row, then advance until the cursor matches the restored
+   * position. The guard bounds the replay so a corrupt or hand-edited
+   * checkpoint cannot spin forever. */
+  TIMESTAMP t1 = player_read(obj);
+  long guard = 0;
+  const long guard_limit = 100000000L;
+  while (my->status == TS_OPEN && t1 != TS_INVALID &&
+         !(my->next.ts == target_ts && my->next.ns == target_ns &&
+           my->loopnum == target_loopnum)) {
+    if (++guard > guard_limit) {
+      gl_warning("sync_player: checkpoint restore for '%s' could not match the "
+                 "saved tape position (ts=%lld ns=%lld loop=%d); resuming from "
+                 "the closest position reached",
+                 obj->name ? obj->name : "(anon)", (long long)target_ts,
+                 (long long)target_ns, target_loopnum);
+      break;
+    }
+    t1 = player_read(obj);
+  }
+
+  if (t1 == TS_INVALID)
+    gl_warning("sync_player: error while repositioning player '%s' during "
+               "checkpoint restore",
+               obj->name ? obj->name : "(anon)");
+}
+
 static TIMESTAMP sync_player_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   int return_val;
   struct player *my = object_data<player>(obj);
+
+  /* Checkpoint restore: a player comes back as TS_OPEN (its saved status) but
+   * with no open file handle. Reposition it in the file before the normal sync
+   * logic runs, so it resumes mid-tape instead of re-reading from the top. */
+  if (my->status == TS_OPEN && my->fp == nullptr && player_checkpoint_loaded())
+    player_restore_position(obj);
+
+  /* A parentless player writes to its own "value" property. In a fresh run this
+   * fallback is applied in the TS_INIT block below, but on a checkpoint restore
+   * the player comes back as TS_OPEN and skips TS_INIT entirely, leaving
+   * my->target null and my->property at the "(undefined)" create-time sentinel.
+   * Re-derive it here, independent of status, so restore resolves the same
+   * target the original run used. */
+  if (my->target == nullptr && obj->parent == nullptr)
+    my->target = gl_get_property(obj, "value", nullptr);
+
   TIMESTAMP t1 = (TS_OPEN == my->status) ? my->next.ts : TS_NEVER;
   TIMESTAMP temp_t = TS_INVALID; // FIXME: make sure this makes sense.
 
   if (my->status == TS_INIT) {
-
-    /* get local target if remote is not used and "value" is defined by the user
-     * at runtime */
-    if (my->target == nullptr && obj->parent == nullptr)
-      my->target = gl_get_property(obj, "value", nullptr);
 
     if (player_open(obj) == 0) {
       gl_fatal("sync_player: Unable to open player file '%s' for object '%s'",
@@ -546,8 +622,17 @@ static TIMESTAMP sync_player_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
          my->next.ns ==
              0) /* only use this method when not operating in subsecond mode */
   {             /* post this value */
-    if (my->target == nullptr)
+    if (my->target == nullptr) {
+      if (obj->parent == nullptr) {
+        gl_fatal("sync_player: player '%s' has no parent and no resolvable "
+                 "'value' property to write to",
+                 obj->name ? obj->name : "(anon)");
+        gl_globalexitcode = XC_ARGERR;
+        my->status = TS_ERROR;
+        return TS_INVALID;
+      }
       my->target = player_link_properties(my, obj->parent, my->property);
+    }
     if (my->target == nullptr) {
       gl_fatal("sync_player: Unable to find property '%s' in object %s",
                my->property.get_string(), obj->name ? obj->name : "(anon)");

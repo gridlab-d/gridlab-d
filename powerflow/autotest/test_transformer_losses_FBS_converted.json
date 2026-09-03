@@ -254,7 +254,7 @@
         {
           "parent": "xform23dy",
           "target": "power_losses",
-          "within": 0.5,
+          "within": 1.0,
           "value": "129706.5+80.5377d"
         },
         {

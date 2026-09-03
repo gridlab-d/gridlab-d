@@ -104,7 +104,7 @@
         {
           "parent": "transformer_meter",
           "target": "monthly_bill",
-          "value": 383.71,
+          "value": 383.83,
           "within": 0.01,
           "once": "ONCE_TRUE",
           "in": "'2006-01-31 23:00:00 CST'",
@@ -116,7 +116,7 @@
         {
           "parent": "transformer_meter",
           "target": "monthly_bill",
-          "value": 399.39,
+          "value": 409.33,
           "within": 0.01,
           "once": "ONCE_TRUE",
           "in": "'2006-05-31 23:00:00 CST'",
@@ -128,7 +128,7 @@
         {
           "parent": "triplex_node_A",
           "target": "monthly_bill",
-          "value": 168.66,
+          "value": 168.70,
           "within": 0.01,
           "once": "ONCE_TRUE",
           "in": "'2006-01-31 23:00:00 CST'",
@@ -139,7 +139,7 @@
         {
           "parent": "triplex_node_A",
           "target": "monthly_bill",
-          "value": 175.55,
+          "value": 185.52,
           "within": 0.01,
           "once": "ONCE_TRUE",
           "in": "'2006-05-31 23:00:00 CST'",
@@ -209,7 +209,7 @@
         {
           "parent": "triplex_node_A",
           "limit": 7000,
-          "interval": 3600,
+          "interval": 900,
           "file": "tiered_tou_bills.csv",
           "property": "measured_real_power,monthly_energy,monthly_bill,price"
         }

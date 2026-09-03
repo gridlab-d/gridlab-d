@@ -31,16 +31,13 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
         if (oclass == nullptr)
             GL_THROW("unable to register object class implemented by %s", __FILE__);
 
-        if (gl_publish_variable(
-                oclass, PT_INHERIT, "switch", PT_double, "retry_time[s]",
-                PADDR(retry_time), PT_DESCRIPTION,
-                "the amount of time in seconds to wait before the recloser "
-                "attempts to close",
-                PT_double, "max_number_of_tries", PADDR(ntries), PT_DESCRIPTION,
-                "the number of times the recloser will try to close before "
-                "permanently opening",
-                PT_double, "number_of_tries", PADDR(curr_tries), PT_DESCRIPTION,
-                "Current number of tries recloser has attempted", nullptr) < 1)
+        if (gl_publish_variable(oclass,
+                                PT_INHERIT, "switch",
+                                PT_double, "retry_time[s]", PADDR(retry_time), PT_DESCRIPTION, "the amount of time in seconds to wait before the recloser attempts to close",
+                                PT_double, "max_number_of_tries", PADDR(ntries), PT_DESCRIPTION, "the number of times the recloser will try to close before permanently opening",
+                                PT_double, "number_of_tries", PADDR(curr_tries), PT_DESCRIPTION, "Current number of tries recloser has attempted",
+                                PT_timestamp, "prev_rec_time", PADDR(prev_rec_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: Previous recloser operation time",
+                                nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
         if (gl_publish_function(oclass, "change_recloser_state",
@@ -105,9 +102,7 @@ int recloser::init(OBJECT *parent)
     OBJECT *obj_this = object_header(this);
 
 #ifdef __APPLE__
-    parent =
-        obj_this
-            ->parent; // AppleClang seems to have an issue with the parent pointer
+    parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
 #endif
     int result = switch_object::init(parent);
 

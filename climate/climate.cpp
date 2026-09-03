@@ -649,7 +649,6 @@ climate::climate(MODULE *module)
 								PT_double, "cloud_alpha[pu]", PADDR(cloud_alpha),
 								PT_double, "cloud_num_layers[pu]", PADDR(cloud_num_layers),
 								PT_double, "cloud_aerosol_transmissivity[pu]", PADDR(cloud_aerosol_transmissivity),
-								PT_double, "update_time", PADDR(update_time),
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 		// memset(this, 0, sizeof(climate));
@@ -2370,8 +2369,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	TIMESTAMP tmy_rv = 0;
 	TIMESTAMP cloud_rv = 0;
 	DATETIME dt;
-	// establish the current time
-	update_time = t0;
+
 	// %%%%% 20170224 MJB Stub in solar computation
 	if (t0 > TS_ZERO && tmy == nullptr && reader_type != (enumeration)RT::RT_CSV)
 	{ // no file was read, so it's probably manual, FNCS or HELICS control

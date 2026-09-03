@@ -16,7 +16,6 @@
 EXPORT_CREATE(int_assert);
 EXPORT_INIT(int_assert);
 EXPORT_COMMIT(int_assert);
-EXPORT_NOTIFY(int_assert);
 
 CLASS *int_assert::oclass = nullptr;
 int_assert *int_assert::defaults = nullptr;
@@ -159,9 +158,3 @@ TIMESTAMP int_assert::commit(TIMESTAMP t1, TIMESTAMP t2) {
   }
 }
 
-int int_assert::postnotify(PROPERTY *prop, char *value) {
-  if (once == ONCE_DONE && strcmp(prop->name, "value") == 0) {
-    once = ONCE_TRUE;
-  }
-  return 1;
-}

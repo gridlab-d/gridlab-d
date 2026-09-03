@@ -170,25 +170,25 @@ object meter { //633 {
 		target measured_power_A;
 		object player{
 			property value;
-			file "../cdgc_test_meter_power_assert.player";
+			file "../cdgc_test_meter_power_assert_A.player";
 		};
-		within "10";
+		within "1";
 	};
 	object complex_assert {
 		target measured_power_B;
 		object player{
 			property value;
-			file "../cdgc_test_meter_power_assert.player";
+			file "../cdgc_test_meter_power_assert_B.player";
 		};
-		within "10";
+		within "1";
 	};
 	object complex_assert {
 		target measured_power_C;
 		object player{
 			property value;
-			file "../cdgc_test_meter_power_assert.player";
+			file "../cdgc_test_meter_power_assert_C.player";
 		};
-		within "10";
+		within "1";
 	};
 
 }
