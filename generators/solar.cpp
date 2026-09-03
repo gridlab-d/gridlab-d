@@ -128,6 +128,12 @@ solar::solar(MODULE *module)
 								PT_double, "default_current_variable", PADDR(default_current_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default current value, when solar is run without an inverter",
 								PT_double, "default_power_variable", PADDR(default_power_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default power value, when solar is run without an inverter",
 
+								PT_double, "prevTemp", PADDR(prevTemp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prevTemp",
+								PT_double, "currTemp", PADDR(currTemp), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for currTemp",
+								PT_timestamp, "prevTime", PADDR(prevTime), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prevTime",
+								PT_double, "last_DC_current", PADDR(last_DC_current), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_DC_current",
+								PT_double, "last_DC_power", PADDR(last_DC_power), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_DC_power",
+
 								PT_enumeration, "orientation", PADDR(orientation_type),
 								PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
 								PT_KEYWORD, "FIXED_AXIS", (enumeration)FIXED_AXIS,
@@ -298,6 +304,7 @@ int solar::init_climate()
 			}
 
 			// Free up the list
+			gl_warning("Free up climates list");
 			gl_free((void **)&climates);
 		}
 
@@ -521,6 +528,11 @@ int solar::init_climate()
 int solar::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent;
+#endif
+
 	int climate_result;
 	gld_property *temp_property_pointer = nullptr;
 	unsigned test_rlock = 0;
@@ -586,7 +598,6 @@ int solar::init(OBJECT *parent)
 			efficiency = 0.10;
 		break;
 	}
-
 	// efficiency dictates how much of the rate insolation the panel can capture and
 	// turn into electricity
 	// Rated power output
@@ -1007,7 +1018,8 @@ int solar::init(OBJECT *parent)
 		default_voltage_array = V_Max / sqrt(3.0);
 	}
 
-	climate_result = init_climate();
+	gl_warning("Initialize the climate");
+	climate_result = this->init_climate();
 
 	// Check factors
 	if ((soiling_factor < 0) || (soiling_factor > 1.0))
@@ -1111,6 +1123,11 @@ int solar::init(OBJECT *parent)
 	}
 
 	return climate_result; /* return 1 on success, 0 on failure */
+}
+// Isa function for identification
+int solar::isa(char *classname)
+{
+	return strcmp(classname, "solar") == 0;
 }
 
 TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
@@ -1662,8 +1679,8 @@ EXPORT int create_solar(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(solar::oclass);
 		if (*obj != nullptr)
 		{
-			solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(*obj);
-			gl_set_parent(*obj, parent);
+			solar *my = object_data<solar>(*obj);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -1677,17 +1694,17 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj)->init(parent);
+			return object_data<solar>(obj)->init(parent);
 		else
 			return 0;
 	}
 	INIT_CATCHALL(solar);
 }
 
-EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_solar_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj);
+	solar *my = object_data<solar>(obj);
 	try
 	{
 		switch (pass)
@@ -1712,10 +1729,44 @@ EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	return t2;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+    return sync_solar_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_solar(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = (PASSCONFIG)va_arg(args, int);
+    va_end(args);
+    return sync_solar_impl(obj, t1, pass);
+}
+#endif
+
+EXPORT int isa_solar_impl(OBJECT *obj, char *classname) {
+  return object_data<solar>(obj)->isa(classname);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_solar(OBJECT *obj, char *classname) {
+  return isa_solar_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_solar(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_solar_impl(obj, classname);
+}
+#endif
+
 // DELTAMODE Linkage
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	solar *my = /*OBJECTDATA(obj,<>)*/ object_data<solar>(obj);
+	solar *my = object_data<solar>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -1732,7 +1783,7 @@ EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, 
 // DC Object calls from inverter linkage
 EXPORT STATUS dc_object_update_solar(OBJECT *us_obj, OBJECT *calling_obj, bool init_mode)
 {
-	solar *me_solar = /*OBJECTDATA(us_obj,<>)*/ object_data<solar>(us_obj);
+	solar *me_solar = object_data<solar>(us_obj);
 	STATUS temp_status;
 
 	// Call our update function

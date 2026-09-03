@@ -133,6 +133,27 @@ battery::battery(MODULE *module)
 								PT_double, "battery_load[W]", PADDR(bat_load), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the current power output of the battery.",
 								PT_double, "reserve_state_of_charge[pu]", PADDR(b_soc_reserve), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the reserve state of charge the battery can reach.",
 
+								PT_int64, "state_change_time_delta", PADDR(state_change_time_delta), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for state_change_time_delta",
+								PT_double, "margin", PADDR(margin), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for margin",
+								PT_double, "E_Next", PADDR(E_Next), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for E_Next",
+								PT_bool, "recalculate", PADDR(recalculate), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for recalculate",
+								PT_timestamp, "prev_time", PADDR(prev_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_time",
+								PT_int32, "first_time_step", PADDR(first_time_step), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first_time_step",
+								PT_int32, "prev_state", PADDR(prev_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: 1 is charging, 0 is nothing, -1 is discharging",
+								PT_double, "internal_battery_load", PADDR(internal_battery_load), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: the power out of the battery on the source side of the internal resistance",
+								PT_complex, "value_Circuit_V_A", PADDR(value_Circuit_V[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Circuit_V[0]",
+								PT_complex, "value_Circuit_V_B", PADDR(value_Circuit_V[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Circuit_V[1]",
+								PT_complex, "value_Circuit_V_C", PADDR(value_Circuit_V[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Circuit_V[2]",
+								PT_complex, "value_Line_I_A", PADDR(value_Line_I[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line_I[0]",
+								PT_complex, "value_Line_I_B", PADDR(value_Line_I[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line_I[1]",
+								PT_complex, "value_Line_I_C", PADDR(value_Line_I[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line_I[2]",
+								PT_complex, "value_Line12", PADDR(value_Line12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Line12",
+								PT_double, "value_Tout", PADDR(value_Tout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for value_Tout",
+								PT_bool, "parent_is_meter", PADDR(parent_is_meter), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_meter",
+								PT_bool, "parent_is_triplex", PADDR(parent_is_triplex), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_triplex",
+								PT_bool, "parent_is_inverter", PADDR(parent_is_inverter), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for parent_is_inverter",
+								PT_bool, "climate_object_found", PADDR(climate_object_found), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for climate_object_found",
+
 								nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 		defaults = this;
@@ -221,6 +242,11 @@ int battery::create(void)
 int battery::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+  parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	gld_property *temp_property_pointer;
 	double temp_value_SocReserve;
 	enumeration temp_value_control_mode;
@@ -2440,7 +2466,6 @@ void battery::update_soc(unsigned int64 delta_time)
 			}
 		}
 	}
-	pre_soc = soc;
 	// Push the SOC up
 	pSoc->setp<double>(soc, test_rlock);
 }
@@ -2555,8 +2580,8 @@ EXPORT int create_battery(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(battery::oclass);
 		if (*obj != nullptr)
 		{
-			battery *my = /*OBJECTDATA(*obj, battery)*/ object_data<battery>(*obj);
-			gl_set_parent(*obj, parent);
+			battery *my = object_data<battery>(*obj);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -2570,17 +2595,17 @@ EXPORT int init_battery(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj)->init(parent);
+			return object_data<battery>(obj)->init(parent);
 		else
 			return 0;
 	}
 	INIT_CATCHALL(battery);
 }
 
-EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+static TIMESTAMP sync_battery_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	battery *my = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
+	battery *my = object_data<battery>(obj);
 	try
 	{
 		switch (pass)
@@ -2605,9 +2630,26 @@ EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	return t2;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+    return sync_battery_impl(obj, t1, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_battery(OBJECT *object, ...)
+{
+    va_list args;
+    va_start(args, object);
+    TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_battery_impl(object, t1, pass);
+}
+#endif
+
 EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
-	battery *my = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
+	battery *my = object_data<battery>(obj);
 	STATUS status_output = FAILED;
 
 	try
@@ -2624,7 +2666,7 @@ EXPORT STATUS preupdate_battery(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_
 
 EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	battery *my = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
+	battery *my = object_data<battery>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -2640,7 +2682,7 @@ EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time
 
 EXPORT STATUS postupdate_battery(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	battery *my = /*OBJECTDATA(obj, battery)*/ object_data<battery>(obj);
+	battery *my = object_data<battery>(obj);
 	STATUS status = FAILED;
 	try
 	{

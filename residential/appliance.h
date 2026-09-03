@@ -21,10 +21,12 @@ private:
 	unsigned int n_states;
 	unsigned int state;
 	double *transition_probabilities;
+
 private:
 	void update_next_t(void);
 	void update_power(void);
 	void update_state(void);
+
 public:
 	appliance(MODULE *module);
 	~appliance() { if (defaults) delete defaults; }
@@ -37,6 +39,7 @@ public:
 	inline TIMESTAMP postsync(TIMESTAMP t1) { return TS_NEVER; };
 	int prenotify(PROPERTY *prop, char *value){ return 1;} ;
 	int postnotify(PROPERTY *prop, char *value);
+
 public:
 	static CLASS *oclass, *pclass;
 	static appliance *defaults;
@@ -80,6 +83,7 @@ public:
 		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
 		power = p;
 	}
+
 protected:
 	Eigen::MatrixXcd impedance;  // Member variable of type `Eigen::MatrixXcd`.
 
@@ -109,6 +113,7 @@ public:
 		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
 		impedance = p;
 	}
+
 protected:
 	Eigen::MatrixXcd current;  // Member variable of type `Eigen::MatrixXcd`.
 
@@ -138,6 +143,7 @@ public:
 		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
 		current = p;
 	}
+
 protected:
 	Eigen::MatrixXd duration;  // Member variable of type `Eigen::MatrixXd`.
 
@@ -167,6 +173,7 @@ public:
 		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
 		duration = p;
 	}
+
 protected:
 	Eigen::MatrixXd transition;  // Member variable of type `Eigen::MatrixXd`.
 
@@ -196,6 +203,7 @@ public:
 		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
 		transition = p;
 	}
+
 protected:
 	Eigen::MatrixXd heatgain;  // Member variable of type `Eigen::MatrixXd`.
 
@@ -225,8 +233,6 @@ public:
 		std::unique_lock<std::shared_mutex> lock(mtx); // Exclusive lock for write access
 		heatgain = p;
 	}
-
-
 };
 
 #endif

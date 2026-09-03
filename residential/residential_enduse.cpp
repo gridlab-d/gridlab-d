@@ -1,8 +1,8 @@
 /** $Id $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file residential_enduse.cpp
-	@addtogroup residential_enduse Residential enduses
-	@ingroup residential
+    Copyright (C) 2008 Battelle Memorial Institute
+    @file residential_enduse.cpp
+    @addtogroup residential_enduse Residential enduses
+    @ingroup residential
 
  @{
  **/
@@ -18,63 +18,73 @@
 //////////////////////////////////////////////////////////////////////////
 // CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* residential_enduse::oclass = nullptr;
+CLASS *residential_enduse::oclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 residential_enduse::residential_enduse(MODULE *mod)
 {
-	// first time init
+    // first time init
 	if (oclass==nullptr)
 	{
-		// register the class definition
+        // register the class definition
 		oclass = gld_class::create(mod,"residential_enduse",sizeof(residential_enduse),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==nullptr)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
-			/* TROUBLESHOOT
+        if (oclass == nullptr)
+            GL_THROW("unable to register object class implemented by %s", __FILE__);
+        /* TROUBLESHOOT
 				The registration for the residential_enduse class failed.   This is usually caused
 				by a coding error in the core implementation of classes or the module implementation.
 				Please report this error to the developers.
-			 */
+         */
 
-		// publish the class properties
-		if (gl_publish_variable(oclass,
-			PT_loadshape,"shape",PADDR(shape),
-			PT_enduse,"",PADDR(load),
-			PT_enumeration,"override",PADDR(re_override),
-				PT_KEYWORD,"NORMAL",(enumeration)OV_NORMAL,
-				PT_KEYWORD,"ON",(enumeration)OV_ON,
-				PT_KEYWORD,"OFF",(enumeration)OV_OFF,
-			PT_enumeration, "power_state", PADDR(power_state),
-				PT_KEYWORD, "OFF", (enumeration)PS_OFF,
-				PT_KEYWORD, "ON", (enumeration)PS_ON,
-				PT_KEYWORD, "UNKNOWN", (enumeration)PS_UNKNOWN,
-			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-			/* TROUBLESHOOT
+        // publish the class properties
+        if (gl_publish_variable(oclass,
+                                PT_loadshape, "shape", PADDR(shape),
+                                PT_enduse, "", PADDR(load),
+                                PT_enumeration, "override", PADDR(re_override),
+                                PT_KEYWORD, "NORMAL", (enumeration)OV_NORMAL,
+                                PT_KEYWORD, "ON", (enumeration)OV_ON,
+                                PT_KEYWORD, "OFF", (enumeration)OV_OFF,
+                                PT_enumeration, "power_state", PADDR(power_state),
+                                PT_KEYWORD, "OFF", (enumeration)PS_OFF,
+                                PT_KEYWORD, "ON", (enumeration)PS_ON,
+                                PT_KEYWORD, "UNKNOWN", (enumeration)PS_UNKNOWN,
+                                nullptr) < 1)
+            GL_THROW("unable to publish properties in %s", __FILE__);
+        /* TROUBLESHOOT
 				The registration for the residential_enduse properties failed.   This is usually caused
 				by a coding error in the core implementation of classes or the module implementation.
 				Please report this error to the developers.
-			 */
-	}
+         */
+    }
 }
 
 // create is called every time a new object is loaded
 int residential_enduse::create(bool connect_shape) 
 {
-	// attach loadshape 
-	load.end_obj = my();
-	if (connect_shape) load.shape = &shape;
-	load.breaker_amps = 20;
-	load.config = 0;
-	load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
-	re_override = OV_NORMAL;
-	power_state = PS_UNKNOWN;
-	return 1;
+    // attach loadshape
+    load.end_obj = my();
+    if (connect_shape)
+        load.shape = &shape;
+    // Point loadshape rng_seed at parent object's RNG seed
+    load.shape->obj_rng_state_ptr = &(object_header(this)->rng_state);
+    load.breaker_amps = 20;
+    load.config = 0;
+    load.heatgain_fraction = 1.0; /* power has no effect on heat loss */
+    re_override = OV_NORMAL;
+    power_state = PS_UNKNOWN;
+    return 1;
 }
 
 int residential_enduse::init(OBJECT *parent)
 {
+    OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	set_flags(get_flags()|OF_SKIPSAFE);
-	gld_object *pParent = object_data<gld_object>(parent);
+    gld_object *pParent = object_data<gld_object>(parent);
 	//	pull parent attach_enduse and attach the enduseload
 	if ( pParent!=nullptr && pParent->is_valid() )
 	{
@@ -82,48 +92,56 @@ int residential_enduse::init(OBJECT *parent)
         {
             return 2;
         }
-		ATTACHFUNCTION attach = (ATTACHFUNCTION)pParent->get_function("attach_enduse");
-		if ( attach )
-			pCircuit = (*attach)(parent, &load, load.breaker_amps, (load.config&EUC_IS220)!=0);
-		else
-			gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse function so voltage response cannot be modeled", get_name(), get_oclass()->get_name(), get_id(), pParent->get_name(), pParent->get_oclass()->get_name(), pParent->get_id());
-			/* TROUBLESHOOT
+        ATTACHFUNCTION attach = (ATTACHFUNCTION)pParent->get_function("attach_enduse");
+        if (attach)
+            pCircuit = (*attach)(parent, &load, load.breaker_amps,
+                           (load.config & EUC_IS220) != 0);
+        else
+            gl_warning("%s (%s:%d) parent %s (%s:%d) does not export attach_enduse "
+                 "function so voltage response cannot be modeled",
+                 get_name(), get_oclass()->get_name(), get_id(),
+                 pParent->get_name(), pParent->get_oclass()->get_name(),
+                 pParent->get_id());
+            /* TROUBLESHOOT
 				Enduses must have a voltage source from a parent object that exports an attach_enduse function.  
 				The residential_enduse object references a parent object that does not conform with this requirement.
 				Fix the parent reference and try again.
-			 */
-	}
-
+             */
+    }
 	if (load.shape!=nullptr) {
 		if (load.shape->schedule==nullptr)
 		{
 			gl_verbose("%s (%s:%d) schedule is not specified so the load may be inactive", get_name(), get_oclass()->get_name(), get_id());
-			/* TROUBLESHOOT
-				The residential_enduse object requires a schedule that defines how
+            /* TROUBLESHOOT
+                The residential_enduse object requires a schedule that defines how
 				the load behaves.  Omitting this schedule effectively shuts the enduse
 				load off and this is not typically intended.
-			 */
-		}
-	}
-
-	return 1;
+             */
+        }
+    }
+    return 1;
 }
 
-int residential_enduse::isa(char *classname){
-	return strcmp(classname,"residential_enduse")==0;
+int residential_enduse::isa(char *classname)
+{
+    return strcmp(classname, "residential_enduse") == 0;
 }
 
 TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	gl_debug("%s shape load = %8g", get_name(), gl_get_loadshape_value(&shape));
-	if (load.voltage_factor>1.2 || load.voltage_factor<0.8)
+    gl_debug("%s shape load = %8g", get_name(), gl_get_loadshape_value(&shape));
+
+    // >>> Ensure the embedded enduse 'load' computes P/Q at this tick
+    gl_enduse_sync(&load, t1, PC_BOTTOMUP);
+
+    if (load.voltage_factor > 1.2 || load.voltage_factor < 0.8)
 		gl_verbose("%s voltage is out of normal +/- 20%% range of nominal (vf=%.2f)", get_name(), load.voltage_factor);
-		/* TROUBLESHOOT
+    /* TROUBLESHOOT
 		   The voltage on the enduse circuit is outside the expected range for that enduse.
 		   This is usually caused by an impropely configure circuit (e.g., 110V on 220V or vice versa).
 		   Fix the circuit configuration for that enduse and try again.
-		 */
-	return shape.t2>t1 ? shape.t2 : TS_NEVER; 
+     */
+    return shape.t2 > t1 ? shape.t2 : TS_NEVER;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -132,47 +150,98 @@ TIMESTAMP residential_enduse::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 EXPORT int create_residential_enduse(OBJECT **obj, OBJECT *parent)
 {
-	try {
-		*obj = gl_create_object(residential_enduse::oclass);
+    try
+    {
+        *obj = gl_create_object(residential_enduse::oclass);
 		if (*obj!=nullptr)
 		{
-			residential_enduse *my = object_data<residential_enduse>(*obj);
-			gl_set_parent(*obj,parent);
-			return my->create();
+            residential_enduse *my = object_data<residential_enduse>(*obj);
+			// gl_set_parent(*obj,parent);
+            return my->create();
 		}
 		else
-			return 0;
-	}
-	CREATE_CATCHALL(residential_enduse);
+            return 0;
+    }
+    CREATE_CATCHALL(residential_enduse);
 }
 
 EXPORT int init_residential_enduse(OBJECT *obj)
 {
-	try {
-		residential_enduse *my = object_data<residential_enduse>(obj);
-		return my->init(obj->parent);
-	}
-	INIT_CATCHALL(residential_enduse);
+    try
+    {
+        residential_enduse *my = object_data<residential_enduse>(obj);
+        return my->init(obj->parent);
+    }
+    INIT_CATCHALL(residential_enduse);
 }
 
-EXPORT int isa_residential_enduse(OBJECT *obj, char *classname)
+EXPORT int isa_residential_enduse_impl(OBJECT *obj, char *classname)
 {
-	if(obj != 0 && classname != 0){
-		return object_data<residential_enduse>(obj)->isa(classname);
-	} else {
-		return 0;
-	}
+    if (obj != 0 && classname != 0)
+    {
+        return object_data<residential_enduse>(obj)->isa(classname);
+    }
+    else
+    {
+        return 0;
+    }
 }
 
-EXPORT TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t1)
-{
-	residential_enduse *my = object_data<residential_enduse>(obj);
-	try {
-		TIMESTAMP t2 = my->sync(obj->clock, t1);
-		obj->clock = t1;
-		return t2;
-	}
-	SYNC_CATCHALL(residential_enduse);
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_residential_enduse(OBJECT *obj, char *classname) {
+  return isa_residential_enduse_impl(obj, classname);
 }
+#else
+extern "C" MODULE_API int isa_residential_enduse(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_residential_enduse_impl(obj, classname);
+}
+#endif
+
+static TIMESTAMP sync_residential_enduse_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
+ {
+    try {
+        residential_enduse *my = object_data<residential_enduse>(obj);
+        TIMESTAMP t2 = TS_NEVER;
+        switch (pass) {
+        case PC_PRETOPDOWN:
+            break;
+
+        case PC_BOTTOMUP:
+            t2 = my->sync(obj->clock, t1);
+            obj->clock = t1;
+            break;
+
+        case PC_POSTTOPDOWN:
+            break;
+
+        default:
+            gl_error("residential_enduse::sync- invalid pass configuration");
+            t2 = TS_INVALID; // serious error in exec.c
+        }
+        return t2;
+    }
+    SYNC_CATCHALL(residential_enduse);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_residential_enduse(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_residential_enduse_impl(obj, t0, PC_BOTTOMUP);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_residential_enduse(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = PC_BOTTOMUP;
+    va_end(args);
+    return sync_residential_enduse_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

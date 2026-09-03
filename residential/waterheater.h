@@ -13,7 +13,6 @@
 #include "residential.h"
 #include "residential_enduse.h"
 
-
 #include <vector>
 using std::vector;
 
@@ -204,7 +203,6 @@ public:
 	double time_to_transition;		///< time until next transition [in seconds]
 
 	// Basic characteristics defined at creation...
-	double Tset_curtail;			///< lower limit before we cancel curtailment [F]
 	double Tinlet;					///< default will be set to 60 degF
 	enumeration location;			///< location of tank (inside or garage) [enum]
 	enumeration heat_mode;				///< method of heating the water (gas or electric) [enum]
@@ -220,12 +218,7 @@ public:
 	// The primary values we compute in our simultation...
 	double h;						///< boundary between hot and cold water layers [ft from top of tank]
 	double Tlower;					///< temperature in lower zone of tank (for 2-zone model) [F]
-	double Tlower_old;
-	double Tupper;					///< temperature in upper zone of tank (for 2-zone model) [F]
-	double Tupper_old;
-	double Twater;					///< temperature of whole tank (for 1-node model) [F]
 	double Tw;						///< water temperature [F]
-	double Tw_old;					///< previous water temperature, for internal_gains
 	double Tcontrol;
 	
 	// Heat pump water heater update
@@ -267,56 +260,37 @@ public:
 	gld::complex waterheater_actual_power;	///< the actual power draw of the object after accounting for voltage
 //	Fortran water heater parameters
 public:
-	double dr_signal;				//dr_signal
-	double simulation_time;		//sim_time
+	double dr_signal;		//dr_signal
+	double simulation_time;	//sim_time
 	double fwh_cop_current;	//COP
-	double operating_mode;			//op_mode
+	double operating_mode;	//op_mode
 
 public:
 	// Tank physical parameters
-	double sensor_position[2];									//sensor_pos
-	double heater_element_power[2];						//heater_q
-	double heater_size[2];											//heater_size
-	double heater_element_position[2];						//heater_pos
-	double upper_element_activation_temp_offset;		//upper_elem_off
-	double compressor_power_capacity;					//comp_power
-	double compressor_activation_temp_offset;			// comp_off
-	double tank_heat_loss_rate;									//heat_loss_rate
-	double upper_fraction;											//upperf
-	double lower_fraction;											//lowerf
+	double tank_heat_loss_rate;			//heat_loss_rate
 
 	// Water_related_parameters
 	double thermal_conductivity;		//water_k0
-	double convective_coefficient;		//water_alpha
-	double water_heat_capacity;			//water_cv
-	double water_density;					//water_rho
 
 	// Simulation parameters
-	double lowest_ambient_temperature_limit;	//low_amb_lim
-	double highest_ambient_temperature_limit;	//up_amb_lim
-	double lowest_water_temperature_limit;		//water_low_lim
-	double activation_temperature_offset;			//mode_3_off
-	double ambient_air_dry_bulb_temp;				//t_db
-	double ambient_air_wet_bulb_temp;				//t_wb
-	double temp_set[2];										//temp_set
-	int coarse_tank_grid;								//large_bins
-	int fine_tank_grid;									//small_bins
+	int coarse_tank_grid;				//large_bins
+	int fine_tank_grid;					//small_bins
 	int ncomp;
 	int nheat[2];
     int heat_up;
 	double init_tank_temp[144];
 
 	// Time variable input parameters
-	double ambient_temp;						//temp_amb
-	double inlet_water_flow;					//v_flow
+	double ambient_temp;				//temp_amb
+	double inlet_water_flow;			//v_flow
 	double inlet_water_flow_threshold;	//v_flow_threshold
-	double ambient_rh;							//hum_amb
+	double ambient_rh;					//hum_amb
 	
 	// Output variables
-	double fwh_power;						//power
+	double fwh_power; //power
 	double fwh_power_now;
-	double tank_water_temp[144];		//ca
-	double fwh_cop;								//COP
+	double tank_water_temp[144];        //ca
+	double fwh_cop;                     //COP
 	double fwh_energy;
 
 	TIMESTAMP fwh_sim_time;
@@ -380,8 +354,8 @@ private:
 	double last_lower_thermostat_setpoint;
 	enumeration last_override_value;
 	int last_transition_time;
-
 	bool conditions_changed;
+
 public:
 	double tank_setpoint_1;
 	double tank_setpoint_2;
@@ -398,6 +372,7 @@ public:
 	double discrete_step_size;
 	double Vdot_circ;
 	double T_mixing_valve;
+
 public:
 	static CLASS *oclass, *pclass;
 	static waterheater *defaults;

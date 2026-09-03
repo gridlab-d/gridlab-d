@@ -62,8 +62,6 @@
 CLASS* freezer::oclass = nullptr;
 CLASS* freezer::pclass = nullptr;
 
-
-
 freezer::freezer(MODULE *module) : residential_enduse(module)
 {
 	// first time init
@@ -74,7 +72,6 @@ freezer::freezer(MODULE *module) : residential_enduse(module)
 			throw "unable to register class freezer";
 		else
 			oclass->trl = TRL_DEMONSTRATED;
-
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
@@ -114,6 +111,11 @@ int freezer::create()
 
 int freezer::init(OBJECT *parent)
 {
+  OBJECT *obj_this = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj_this->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 
 	if(parent != nullptr){
@@ -298,7 +300,7 @@ EXPORT int create_freezer(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			freezer *my = object_data<freezer>(*obj);;
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -308,7 +310,7 @@ EXPORT int create_freezer(OBJECT **obj, OBJECT *parent)
 	CREATE_CATCHALL(freezer);
 }
 
-EXPORT TIMESTAMP sync_freezer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_freezer_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
 		freezer *my = object_data<freezer>(obj);
@@ -337,17 +339,31 @@ EXPORT TIMESTAMP sync_freezer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(freezer);
 }
 
-EXPORT int init_freezer(OBJECT *obj)
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_freezer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	try
-	{
+    return sync_freezer_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_freezer(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_freezer_impl(obj, t0, pass);
+}
+#endif
+
+EXPORT int init_freezer(OBJECT *obj) {
+  try {
 		freezer *my = object_data<freezer>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(freezer);
 }
 
-EXPORT int isa_freezer(OBJECT *obj, char *classname)
+EXPORT int isa_freezer_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<freezer>(obj)->isa(classname);
@@ -356,8 +372,22 @@ EXPORT int isa_freezer(OBJECT *obj, char *classname)
 	}
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_freezer(OBJECT *obj, char *classname) {
+  return isa_freezer_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_freezer(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_freezer_impl(obj, classname);
+}
+#endif
+
 /*	determine if we're turning the motor on or off and nothing else. */
-EXPORT TIMESTAMP plc_freezer(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP plc_freezer_impl(OBJECT *obj, TIMESTAMP t0)
 {
 	// this will be disabled if a PLC object is attached to the freezer
 
@@ -366,5 +396,21 @@ EXPORT TIMESTAMP plc_freezer(OBJECT *obj, TIMESTAMP t0)
 
 	return TS_NEVER;  
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP plc_freezer(OBJECT *obj, TIMESTAMP t0)
+{
+    return plc_freezer_impl(obj, t0);
+}
+#else
+extern "C" MODULE_API TIMESTAMP plc_freezer(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    va_end(args);
+    return plc_freezer_impl(obj, t0);
+}
+#endif
 
 /**@}**/

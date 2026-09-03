@@ -48,7 +48,6 @@ public:
 	TIMESTAMP last_time, next_time;
 
 public:
-
 	static CLASS *oclass, *pclass;
 	static freezer *defaults;
 	freezer(MODULE *module);

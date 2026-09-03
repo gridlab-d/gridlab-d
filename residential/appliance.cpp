@@ -30,6 +30,7 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 			PT_double_array, "durations",PADDR(duration),
 			PT_double_array, "transitions",PADDR(transition),
 			PT_double_array, "heatgains", PADDR(heatgain),
+			PT_object, "defaults", PADDR(defaults), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for appliance default object",
 			nullptr)<1 )
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -44,6 +45,11 @@ int appliance::create()
 
 int appliance::init(OBJECT *parent)
 {
+  OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+  parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 
 	gl_warning("This device, %s, is considered very experimental and has not been validated.", get_name());
 

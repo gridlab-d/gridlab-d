@@ -48,6 +48,7 @@ microwave::microwave(MODULE *module) : residential_enduse(module)
 			PT_double,"cycle_length[s]",PADDR(cycle_time),PT_DESCRIPTION,"length of the combined on/off cycle between uses",
 			PT_double,"runtime[s]",PADDR(runtime),PT_DESCRIPTION,"",
 			PT_double,"state_time[s]",PADDR(state_time),PT_DESCRIPTION,"",
+			PT_double,"prev_demand",PADDR(prev_demand), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for previous demand",
 			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -105,6 +106,12 @@ void microwave::init_noshape(){
 
 int microwave::init(OBJECT *parent)
 {
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -112,7 +119,7 @@ int microwave::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = object_header(this);
+
 	hdr->flags |= OF_SKIPSAFE;
 
 	if (load.voltage_factor==0) load.voltage_factor = 1.0;
@@ -324,7 +331,7 @@ EXPORT int create_microwave(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			microwave *my = object_data<microwave>(*obj);
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -332,7 +339,6 @@ EXPORT int create_microwave(OBJECT **obj, OBJECT *parent)
 			return 0;
 	}
 	CREATE_CATCHALL(microwave);
-
 }
 
 EXPORT int init_microwave(OBJECT *obj)
@@ -344,7 +350,7 @@ EXPORT int init_microwave(OBJECT *obj)
 	INIT_CATCHALL(microwave);
 }
 
-EXPORT int isa_microwave(OBJECT *obj, char *classname)
+EXPORT int isa_microwave_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<microwave>(obj)->isa(classname);
@@ -353,15 +359,59 @@ EXPORT int isa_microwave(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT TIMESTAMP sync_microwave(OBJECT *obj, TIMESTAMP t0)
-{
-	try {
-		microwave *my = object_data<microwave>(obj);
-		TIMESTAMP t2 = my->sync(obj->clock, t0);
-		obj->clock = t0;
-		return t2;
-	}
-	SYNC_CATCHALL(microwave);
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_microwave(OBJECT *obj, char *classname) {
+  return isa_microwave_impl(obj, classname);
 }
+#else
+extern "C" MODULE_API int isa_microwave(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_microwave_impl(obj, classname);
+}
+#endif
+
+static TIMESTAMP sync_microwave_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    try {
+        microwave *my = object_data<microwave>(obj);
+        TIMESTAMP t1 = TS_NEVER;
+        switch (pass) {
+        case PC_PRETOPDOWN:
+            break;
+
+        case PC_BOTTOMUP:
+            t1 = my->sync(obj->clock, t0);
+            obj->clock = t0;
+            break;
+
+        case PC_POSTTOPDOWN:
+            break;
+
+        default:
+            gl_error("microwave::sync- invalid pass configuration");
+            t1 = TS_INVALID; // serious error in exec.c
+        }
+        return t1;
+    }
+    SYNC_CATCHALL(microwave);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_microwave(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+    return sync_microwave_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_microwave(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_microwave_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

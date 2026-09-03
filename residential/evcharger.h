@@ -49,6 +49,7 @@ class evcharger : public residential_enduse
 		VT_ELECTRIC=0,				///< vehicle is pure electric (no long trips)
 		VT_HYBRID=1,				///< vehicle is hybrid (long trip possible)
 	} VEHICLETYPE;
+
 private:
 	EVDEMAND *pDemand;				///< ref demand profile for this vehicle
 

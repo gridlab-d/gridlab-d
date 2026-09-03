@@ -39,6 +39,25 @@ controller_dg::controller_dg(MODULE *mod)
 			PT_double,"ki_QV", PADDR(ki_QV), PT_DESCRIPTION, "parameter of the propotional control for secondary voltage control",
 			PT_double,"kp_QV", PADDR(kp_QV), PT_DESCRIPTION, "parameter of the integral control for secondary voltage control",
 			PT_double,"gain_QV", PADDR(gain_QV), PT_DESCRIPTION, "Gain of the controller for secondary voltage control",
+
+			PT_bool, "first_run", PADDR(first_run), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first_run",
+			PT_bool, "flag_switchOn", PADDR(flag_switchOn), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for flag_switchOn",
+			PT_int64, "controlTime", PADDR(controlTime), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for controlTime",
+			PT_double, "predictor_vals.w_measured", PADDR(predictor_vals.w_measured), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.w_measured",
+								PT_double, "predictor_vals.x", PADDR(predictor_vals.x), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Predictor pass values of variables - x",
+								PT_double, "predictor_vals.Pref_ctrl", PADDR(predictor_vals.Pref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Predictor pass values of variables - Pref_ctrl",
+			PT_double, "predictor_vals.wref_ctrl", PADDR(predictor_vals.wref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.wref_ctrl",
+			PT_double, "predictor_vals.Vset_ref", PADDR(predictor_vals.Vset_ref), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.Vset_ref",
+			PT_double, "predictor_vals.x_QV", PADDR(predictor_vals.x_QV), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for predictor_vals.x_QV",
+								PT_double, "predictor_vals.Vset_ctrl", PADDR(predictor_vals.Vset_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Predictor pass values of variables - Vset_ctrl",
+			PT_double, "corrector_vals.w_measured", PADDR(corrector_vals.w_measured), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.w_measured",
+								PT_double, "corrector_vals.x", PADDR(corrector_vals.x), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Corrector pass values of variables - x",
+			PT_double, "corrector_vals.Pref_ctrl", PADDR(corrector_vals.Pref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Corrector pass values of variables - Pref_ctrl",
+			PT_double, "corrector_vals.wref_ctrl", PADDR(corrector_vals.wref_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.wref_ctrl",
+			PT_double, "corrector_vals.Vset_ref", PADDR(corrector_vals.Vset_ref), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.Vset_ref",
+			PT_double, "corrector_vals.x_QV", PADDR(corrector_vals.x_QV), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for corrector_vals.x_QV",
+			PT_double, "corrector_vals.Vset_ctrl", PADDR(corrector_vals.Vset_ctrl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Corrector pass values of variables - Vset_ctrl",
+			// Note: prev_Pref_val and prev_Vset_val are dynamically allocated pointer arrays and cannot be published directly
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;
@@ -49,7 +68,6 @@ controller_dg::controller_dg(MODULE *mod)
 			GL_THROW("Unable to publish controller_dg deltamode function");
 		if (gl_publish_function(oclass,	"postupdate_controller_object", (FUNCTIONADDR)postupdate_controller_dg)==nullptr)
 			GL_THROW("Unable to publish controller_dg deltamode function");
-
     }
 }
 
@@ -85,10 +103,13 @@ int controller_dg::create(void)
 }
 
 /* Object initialization is called once after all object have been created */
-int controller_dg::init(OBJECT *parent)
-{
-	OBJECT *thisobj = object_header(this);
-	OBJECT *obj;
+int controller_dg::init(OBJECT *parent) {
+  OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+  parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	gld_property *temp_prop;
 	gld_object *temp_from, *temp_to;
 	STATUS fxn_return_status;
@@ -100,7 +121,7 @@ int controller_dg::init(OBJECT *parent)
 	}
 
 	//Set the deltamode flag, if desired
-	if ((thisobj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
 		deltamode_inclusive = true;	//Set the flag and off we go
 	}
@@ -231,8 +252,6 @@ int controller_dg::init(OBJECT *parent)
 			prev_Vset_val[i] = 0; //Assign value to each prev_Vset_val
 			ctrlGen[i]->curr_state->Vset_ref = -1; // Assign negative initial values to Vset_ref as an indicator
 		}
-
-
 	}
 
 	// Obtain the pointer to the switch objects
@@ -276,7 +295,7 @@ int controller_dg::init(OBJECT *parent)
 			// Double check the validity
 			if (!temp_prop->is_valid() || !temp_prop->is_objectref())
 			{
-				GL_THROW("controller_dg:%d %s Failed to map the switch property 'from'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+				GL_THROW("controller_dg:%d %s Failed to map the switch property 'from'!",obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to map the a property from the switch object, an error occurred.  Please try again.
 				If the error persists, please submit your GLM and a bug report to the ticketing system.
@@ -291,7 +310,7 @@ int controller_dg::init(OBJECT *parent)
 			// Double check the validity
 			if (!temp_prop->is_valid() || !temp_prop->is_objectref())
 			{
-				GL_THROW("controller_dg:%d %s Failed to map the switch property 'to'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+				GL_THROW("controller_dg:%d %s Failed to map the switch property 'to'!",obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to map the a property to the switch object, an error occurred.  Please try again.
 				If the error persists, please submit your GLM and a bug report to the ticketing system.
@@ -341,7 +360,7 @@ int controller_dg::init(OBJECT *parent)
 				//Check it
 				if (!pSwitchObjs[dgswitchFound].status_prop->is_valid() || !pSwitchObjs[dgswitchFound].status_prop->is_enumeration())
 				{
-					GL_THROW("controller_dg:%d %s Failed to map the switch property 'status'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+					GL_THROW("controller_dg:%d %s Failed to map the switch property 'status'!",obj->id, (obj->name ? obj->name : "Unnamed"));
 					/*  TROUBLESHOOT
 					While attempting to map the a property to the switch object, an error occurred.  Please try again.
 					If the error persists, please submit your GLM and a bug report to the ticketing system.
@@ -467,13 +486,9 @@ TIMESTAMP controller_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					*/
 				}
 			}
-
 		}
-
 	}
-
 	first_run = false;
-
 	return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
@@ -582,8 +597,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 				}
 
 				// Set delay so that all switches will not be opened together
-				controlTime == delta_time + 100*dt;
-
+				controlTime = delta_time + 100*dt;
 			}
 		}
 	}
@@ -675,7 +689,6 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 			// Update tracking variable
 			prev_Pref_val[index] = ctrlGen[index]->curr_state->Pref_ctrl;
 			prev_Vset_val[index] = ctrlGen[index]->curr_state->Vset_ref;
-
 		}
 
 		// Determine our desired state - if rotor speed is settled, exit
@@ -815,8 +828,8 @@ EXPORT int create_controller_dg(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(controller_dg::oclass);
 		if (*obj!=nullptr)
 		{
-			controller_dg *my = /*OBJECTDATA(*obj, controller_dg)*/ object_data<controller_dg>(*obj);
-			gl_set_parent(*obj,parent);
+			controller_dg *my = object_data<controller_dg>(*obj);
+			// gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -830,17 +843,17 @@ EXPORT int init_controller_dg(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj!=nullptr)
-			return /*OBJECTDATA(obj,controller_dg)*/ object_data<controller_dg>(obj)->init(parent);
+			return object_data<controller_dg>(obj)->init(parent);
 		else
 			return 0;
 	}
 	INIT_CATCHALL(controller_dg);
 }
 
-EXPORT TIMESTAMP sync_controller_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_controller_dg_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
-	controller_dg *my = /*OBJECTDATA(obj,controller_dg)*/ object_data<controller_dg>(obj);
+	controller_dg *my = object_data<controller_dg>(obj);
 	try
 	{
 		switch (pass) {
@@ -864,9 +877,25 @@ EXPORT TIMESTAMP sync_controller_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return t1;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_controller_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_controller_dg_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_controller_dg(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = (PASSCONFIG)va_arg(args, int);
+    va_end(args);
+    return sync_controller_dg_impl(obj, t0, pass);
+}
+#endif
+
 EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	controller_dg *my = /*OBJECTDATA(obj, controller_dg)*/ object_data<controller_dg>(obj);
+	controller_dg *my = object_data<controller_dg>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{
@@ -882,7 +911,7 @@ EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delt
 
 EXPORT STATUS postupdate_controller_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
-	controller_dg *my = /*OBJECTDATA(obj, controller_dg)*/ object_data<controller_dg>(obj);
+	controller_dg *my = object_data<controller_dg>(obj);
 	STATUS status = FAILED;
 	try
 	{
@@ -895,5 +924,3 @@ EXPORT STATUS postupdate_controller_dg(OBJECT *obj, gld::complex *useful_value, 
 		return status;
 	}
 }
-
-

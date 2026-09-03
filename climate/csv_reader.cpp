@@ -34,14 +34,29 @@ EXPORT int create_csv_reader(OBJECT **obj, OBJECT *parent){
 }
 
 EXPORT int init_csv_reader(OBJECT **obj, OBJECT *parent){
-	csv_reader *my = /*OBJECTDATA(obj, csv_reader)*/   object_data<csv_reader>(obj) ;
+	csv_reader *my = object_data<csv_reader>(obj) ;
 	return 1; // let the climate object cause the file to open
 }
 
 /// Synchronize the cliamte object
-EXPORT TIMESTAMP sync_csv_reader(OBJECT *obj, TIMESTAMP t0){
+static TIMESTAMP sync_csv_reader_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass){
 	return TS_NEVER; // really doesn't do anything
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_csv_reader(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  return sync_csv_reader_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_csv_reader(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_csv_reader_impl(obj, t0, pass);
+}
+#endif
 
 csv_reader::csv_reader(){
 	////memset(this, 0, sizeof(csv_reader));
@@ -54,6 +69,8 @@ csv_reader::csv_reader(MODULE *module){
 		oclass = gl_register_class(module,"csv_reader",sizeof(csv_reader), 0);
 		if (gl_publish_variable(oclass,
 			PT_int32,"index",PADDR(index),PT_ACCESS,PA_REFERENCE,
+			PT_timestamp,"next_ts",PADDR(next_ts),PT_ACCESS,PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next_ts",
+			PT_timestamp,"last_ts",PADDR(last_ts),PT_ACCESS,PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last_ts",
 			PT_char32,"city_name",PADDR(city_name),
 			PT_char32,"state_name",PADDR(state_name),
 			PT_double,"lat_deg",PADDR(lat_deg),
@@ -92,7 +109,6 @@ int csv_reader::open(const char *file){
 
 	char cwd[1024];
 	getcwd(cwd, sizeof(cwd));
-	
 
 	gl_debug("Reading weather file from %s\\%s",cwd, file);
 
@@ -169,7 +185,6 @@ int csv_reader::open(const char *file){
 	//	samples = nullptr;
 	//}
 
-
 	/* move list into double pointer */
 	//samples = (weather**)malloc(sizeof(weather *) * (size_t) sample_ct);
 
@@ -182,7 +197,6 @@ int csv_reader::open(const char *file){
 		}
 		//samples[i] = wtr;
 		samples.push_back(wtr);
-
 	}
 
 	if (samples.empty()) {
@@ -253,7 +267,6 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 			*/
 			return 0;
 		}
-
 	} else if(prop->ptype == PT_char32){
 		strncpy((char *)addr, valstr, 32);
 //	} else if(prop->ptype == PT_char256){
@@ -359,8 +372,6 @@ int csv_reader::read_header(char *line){
 	return 1;
 }
 
-
-
 // When adding a new weather object
 void csv_reader::add_weather(weather::unique_ptr_type new_weather) {
 	if (!weather_root) {
@@ -375,12 +386,10 @@ void csv_reader::add_weather(weather::unique_ptr_type new_weather) {
 	}
 }
 
-
 csv_reader::~csv_reader() {
 	weather_root.reset();
 	weather_last = nullptr;
 }
-
 
 int csv_reader::read_line(char* line, int linenum) {
 	std::vector<std::string> tokens;
@@ -445,8 +454,8 @@ int csv_reader::read_line(char* line, int linenum) {
 			 &parsed_month, &parsed_day,
 			&parsed_hour, &parsed_minute, &parsed_second) >= 5) {
 			// Successfully parsed full timestamp without timezone
-			//sample->month = parsed_month;
-			//sample->day = parsed_day;
+			// sample->month = parsed_month;
+			// sample->day = parsed_day;
 			sample->hour = parsed_hour;
 			sample->minute = parsed_minute;
 			sample->second = parsed_second;
@@ -514,10 +523,8 @@ int csv_reader::read_line(char* line, int linenum) {
 
 	add_weather(std::move(sample));
 
-
 	return 1;
 }
-
 
 TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double *direct, double *diffuse, double *global, double *extra_global,  double *wind,double *winddir, double *opaque, double *total, double *rain, double *snow, double *pressure){
 	DATETIME now, then;
@@ -597,7 +604,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*global = samples[index]->solar_global;
 			*extra_global = samples[index]->global_horizontal_extra;
 			*wind = samples[index]->wind_speed;
-      *winddir = samples[index]->wind_dir;
+			*winddir = samples[index]->wind_dir;
 			*opaque = samples[index]-> opq_sky_cov;
 			*total = samples[index]-> tot_sky_cov;
 			*rain = samples[index]->rainfall;
@@ -615,7 +622,6 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 				return -1;
 			}
 
-
 			if (!samples[sample_ct - 1]) {
 				gl_error("csv_reader::get_data ~ sample at index %d is null", sample_ct - 1);
 				return -1; // Or choose a fallback value
@@ -628,7 +634,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 			*global = samples[sample_ct - 1]->solar_global;
 			*extra_global = samples[sample_ct - 1]->global_horizontal_extra;
 			*wind = samples[sample_ct - 1]->wind_speed;
-      *winddir = samples[sample_ct - 1]->wind_dir;
+			*winddir = samples[sample_ct - 1]->wind_dir;
 			*opaque = samples[sample_ct - 1]-> opq_sky_cov;
 			*total = samples[sample_ct - 1]-> tot_sky_cov;
 			*rain = samples[sample_ct - 1]->rainfall;
@@ -677,8 +683,8 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 		then.minute = samples[(index+1)%sample_ct]->minute;
 		then.second = samples[(index+1)%sample_ct]->second;
 		if(then.month == 2 && then.day == 29){
-				if(!ISLEAPYEAR(then.year))
-					continue; // skip leap days on non-leap years
+            if(!ISLEAPYEAR(then.year))
+                continue; // skip leap days on non-leap years
 			}
 		strcpy(then.tz, now.tz);
 
@@ -693,7 +699,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 	*global = samples[index]->solar_global;
 	*extra_global = samples[index]->global_horizontal_extra;
 	*wind = samples[index]->wind_speed;
-  *winddir = samples[index]->wind_dir;
+	*winddir = samples[index]->wind_dir;
 	*opaque = samples[index]->opq_sky_cov;
 	*total = samples[index]->tot_sky_cov;
 	*rain = samples[index]->rainfall;

@@ -123,6 +123,16 @@ range::range(MODULE *module) : residential_enduse(module){
 			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the actual load based on current voltage stored for use in controllers",
 			PT_complex,"actual_power[kVA]",PADDR(range_actual_power), PT_DESCRIPTION, "the actual power based on the current voltage across the coils",
 			PT_double,"is_range_on",PADDR(is_range_on),PT_DESCRIPTION, "simple logic output to determine state of range (1-on, 0-off)",
+			PT_double,"time_to_transition",PADDR(time_to_transition), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for time to transition",
+			PT_double,"cycle_duration_cooktop",PADDR(cycle_duration_cooktop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle duration cooktop",
+			PT_double,"cycle_time_cooktop",PADDR(cycle_time_cooktop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle time cooktop",
+			PT_double,"state_time",PADDR(state_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for state time",
+			PT_double,"Tlower",PADDR(Tlower), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tlower",
+			PT_double,"Tlower_old",PADDR(Tlower_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tlower_old",
+			PT_double,"Tupper",PADDR(Tupper), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tupper",
+			PT_double,"Tupper_old",PADDR(Tupper_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tupper_old",
+			PT_double,"Tw_old",PADDR(Tw_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for Tw_old",
+			PT_double,"oven_demand_old",PADDR(oven_demand_old), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for oven_demand_old",
 			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -139,8 +149,7 @@ int range::create()
 	int res = residential_enduse::create();
 
 	// initialize public values
-	
-	
+
 	oven_diameter = 1.5;  // All heaters are 1.5-ft wide for now...
 	Tinlet = 60.0;		// default set here, but published by the model for users to set this value
 	oven_demand = 0.0;	
@@ -165,10 +174,8 @@ int range::create()
 	food_density = 5;
 	specificheat_food = 1;
 	time_oven_setting = 3600;
-	
 
 	enduse_queue_oven = 0.85;
-
 
 	// location...mostly in garage, a few inside...
 	location = gl_random_bernoulli(&hdr->rng_state,0.80) ? GARAGE : INSIDE;
@@ -218,13 +225,16 @@ int range::create()
 	enduse_queue_cooktop = 0.99;
 
 	return res;
-
 }
 
-/** Initialize oven model properties - randomized defaults for all published variables
- **/
+/** Initialize oven model properties - randomized defaults for all published variables **/
 int range::init(OBJECT *parent)
 {
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
 	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
 	
 	if(parent != nullptr){
@@ -234,13 +244,13 @@ int range::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = object_header(this);
+
 	hdr->flags |= OF_SKIPSAFE;
 
 	static double sTair = 74;
 	static double sTout = 68;
-	if (heat_fraction==0) heat_fraction = 0.2;
 
+	// Initialize pointers to parent properties
 	if(parent){
 		pTair = gl_get_double_by_name(parent, "air_temperature");
 		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
@@ -305,9 +315,6 @@ int range::init(OBJECT *parent)
 	}
 	current_model = NONE;
 	load_state = STABLE;
-
-	// initial demand
-	Tset_curtail	= oven_setpoint - thermostat_deadband/2 - 10;  // Allow T to drop only 10 degrees below lower cut-in T...
 
 	// Setup derived characteristics...
 	area 		= (pi * pow(oven_diameter,2))/4;
@@ -1245,7 +1252,7 @@ EXPORT int create_range(OBJECT **obj, OBJECT *parent)
 	if (*obj!=nullptr)
 	{
 		range *my = object_data<range>(*obj);;
-		gl_set_parent(*obj,parent);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -1258,7 +1265,7 @@ EXPORT int init_range(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
-EXPORT int isa_range(OBJECT *obj, char *classname)
+EXPORT int isa_range_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<range>(obj)->isa(classname);
@@ -1267,8 +1274,21 @@ EXPORT int isa_range(OBJECT *obj, char *classname)
 	}
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_range(OBJECT *obj, char *classname) {
+  return isa_range_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_range(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_range_impl(obj, classname);
+}
+#endif
 
-EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_range_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	range *my = object_data<range>(obj);
 	if (obj->clock <= ROUNDOFF)
@@ -1299,13 +1319,29 @@ EXPORT TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return TS_INVALID;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_range(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_range_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_range(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_range_impl(obj, t0, pass);
+}
+#endif
+
 EXPORT int commit_range(OBJECT *obj)
 {
 	range *my = object_data<range>(obj);
 	return my->commit();
 }
 
-EXPORT TIMESTAMP plc_range(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP plc_range_impl(OBJECT *obj, TIMESTAMP t0)
 {
 	// this will be disabled if a PLC object is attached to the range
 	if (obj->clock <= ROUNDOFF)
@@ -1319,16 +1355,21 @@ EXPORT TIMESTAMP plc_range(OBJECT *obj, TIMESTAMP t0)
 	return TS_NEVER;  
 }
 
-/** $Id: range.cpp 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file range.cpp
-	@addtogroup range Electric range
-	@ingroup residential
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP plc_range(OBJECT *obj, TIMESTAMP t0)
+{
+    return plc_range_impl(obj, t0);
+}
+#else
+extern "C" MODULE_API TIMESTAMP plc_range(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    va_end(args);
+    return plc_range_impl(obj, t0);
+}
+#endif
 
-	The residential electric range uses a hybrid thermal model that is capable
-	of tracking a single-mass of food.
-
- @{
- **/
 /**@}**/
 

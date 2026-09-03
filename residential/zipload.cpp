@@ -61,18 +61,12 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_int16,"thermostatic_control_range",PADDR(L),PT_DESCRIPTION, "Range of the thermostat's control operation",
 			PT_double,"number_of_devices_off",PADDR(N_off),PT_DESCRIPTION, "Total number of devices that are off",
 			PT_double,"number_of_devices_on",PADDR(N_on),PT_DESCRIPTION, "Total number of devices that are on",
-			//PT_double,"density_of_devices_off[1/K]",PADDR(noff),PT_DESCRIPTION, "Density of devices that are off per unit of temperature",
-			//PT_double,"density_of_devices_on[1/K]",PADDR(non),PT_DESCRIPTION, "Density of devices that are on per unit of temperature",
 			PT_double,"rate_of_cooling[K/h]",PADDR(roff),PT_DESCRIPTION, "rate at which devices cool down",
 			PT_double,"rate_of_heating[K/h]",PADDR(ron),PT_DESCRIPTION, "rate at which devices heat up",
-			//PT_double,"total_cycle_time[h]",PADDR(t), PT_DESCRIPTION, "total cycle time of a thermostatic device",
-			//PT_double,"total_off_time[h]",PADDR(toff),PT_DESCRIPTION, "total off time of device",
-			//PT_double,"total_on_time[h]",PADDR(ton),PT_DESCRIPTION, "total on time of device",
+			PT_double,"total_cycle_time[h]",PADDR(t), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for time to transition",
 			PT_int16,"temperature",PADDR(x),PT_DESCRIPTION, "temperature of the device's controlled media (eg air temp or water temp)",
 			PT_double,"phi",PADDR(phi),PT_DESCRIPTION, "duty cycle of the device",
-			//PT_double,"diversity_of_population",PADDR(PHI),PT_DESCRIPTION, "diversity of a population of devices",
 			PT_double,"demand_rate[1/h]",PADDR(eta),PT_DESCRIPTION, "consumer demand rate that prematurely turns on a device or population",
-			//PT_double,"effective_rate[K/h]",PADDR(rho),PT_DESCRIPTION, "effect rate at which devices heats up or cools down under consumer demand",
 			PT_double,"nominal_power",PADDR(nominal_power),PT_DESCRIPTION, "the rated amount of power demanded by devices that are on",
 
 			//Variables for creating a duty cycle
@@ -80,6 +74,10 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 			PT_double,"recovery_duty_cycle[pu]",PADDR(recovery_duty_cycle),PT_DESCRIPTION, "fraction of time in the on state, while in recovery interval",
 			PT_double,"period[h]",PADDR(period),PT_DESCRIPTION, "time interval to apply duty cycle",
 			PT_double,"phase[pu]",PADDR(phase),PT_DESCRIPTION, "initial phase of load; duty will be assumed to occur at beginning of period",
+			PT_double,"next_time",PADDR(next_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next time",
+			PT_double,"last_duty_cycle",PADDR(last_duty_cycle), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last duty cycle",
+			PT_double,"last_time",PADDR(last_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last time",
+			PT_int32,"first_pass",PADDR(first_pass), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for first pass",
 			nullptr)<1)
 
 			GL_THROW("unable to publish properties in %s",__FILE__);
@@ -90,7 +88,7 @@ ZIPload::~ZIPload()
 {
 }
 
-int ZIPload::create() 
+int ZIPload::create()
 {
 	int res = residential_enduse::create();
 
@@ -127,23 +125,33 @@ int ZIPload::create()
 
 int ZIPload::init(OBJECT *parent)
 {
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+    OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+	if (parent != nullptr)
+	{
+		if ((parent->flags & OF_INIT) != OF_INIT)
+		{
 			char objname[256];
 			gl_verbose("zipload::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = object_header(this);
-	hdr->flags |= OF_SKIPSAFE;
+
+	obj->flags |= OF_SKIPSAFE;
 
 	if (demand_response_mode == true)
 	{
 		gl_warning("zipload_init: The demand response zipload is an experimental model at this time.");
-		/*  TROUBLESHOOT
-		The warning is pretty obvious.  However, over time, we will be developing this model further.  If you have any questions 
-		about it, please see the Matlab files found in ../design/dr_model/ or read the paper titled "On the Equilibrium Dynamics of Demand Response"
-		submitted to HICSS 2011 or post your questions on the WIKI forum.
+        /*  TROUBLESHOOT
+        The warning is pretty obvious.  However, over time, we will be developing
+        this model further.  If you have any questions about it, please see the
+        Matlab files found in ../design/dr_model/ or read the paper titled "On the
+        Equilibrium Dynamics of Demand Response" submitted to HICSS 2011 or post
+        your questions on the WIKI forum.
 		*/
 		
 		// Initial error checks
@@ -158,9 +166,10 @@ int ZIPload::init(OBJECT *parent)
 		{
 			GL_THROW("zipload_init: duty_cycle (phi) must be between 0 and 1.");
 			/*  TROUBLESHOOT
-			The duty cycle is only explicitly used if ron and roff are not set.  In normal operation, phi will be calculated from
-			ron and roff as a function of time.  However, if ron and roff are not set, the initial values for ron and roff are calculated
-			from phi.  Please set to a value between 1 and 0 (inclusive).
+            The duty cycle is only explicitly used if ron and roff are not set.  In
+            normal operation, phi will be calculated from ron and roff as a function
+            of time.  However, if ron and roff are not set, the initial values for ron
+            and roff are calculated from phi.  Please set to a value between 1 and 0 (inclusive).
 			*/
 		}
 		
@@ -172,16 +181,18 @@ int ZIPload::init(OBJECT *parent)
 			{
 				gl_warning("zipload_init: Using a value for thermostatic_control_range (L) greater than 50 may cause some instabilities.");
 				/*  TROUBLESHOOT
-				This warning is shown only as a reminder.  Large values of L (thermostatic_control_range) can cause instabilities for some
-				combinations of ron and roff.  If you receive inderminant numbers as part of the solution, try reducing L.
+                This warning is shown only as a reminder.  Large values of L
+                (thermostatic_control_range) can cause instabilities for some
+                combinations of ron and roff.  If you receive indeterminate numbers as
+                part of the solution, try reducing L.
 				*/
 			}
 		else
 		{
 			GL_THROW("zipload_init: thermostatic_control_range (L) must be greater than 0.");
 			/*  TROUBLESHOOT
-			The thermostatic control range must be a positive integer value, since this is used to create the number of bins 
-			for the discrete solution.
+			The thermostatic control range must be a positive integer value,
+			since this is used to create the number of bins for the discrete solution.
 			*/
 		}
 
@@ -191,8 +202,8 @@ int ZIPload::init(OBJECT *parent)
 		{
 			GL_THROW("zipload_init: memory allocation error.  Please report this error.");
 			/*  TROUBLESHOOT
-			If you receive this error, something went horribly wrong with a memory allocation. Please report this to TRAC and provide
-			the glm file that caused it.
+			If you receive this error, something went horribly wrong with a memory allocation.
+			Please report this to TRAC and provide the glm file that caused it.
 			*/
 		}
 
@@ -235,12 +246,13 @@ int ZIPload::init(OBJECT *parent)
 		{
 			GL_THROW("zipload_init: rate_of_cooling and rate_of_heating must be greater than or equal to 0.");
 			/*  TROUBLESHOOT
-			Rates of heating and cooling should be positive or zero values.  These values describe how fast objects transition from a 
-			cooler to hotter temperature, or vice versa, and have been defined as positive values in this model.
+			Rates of heating and cooling should be positive or zero values.
+			These values describe how fast objects transition from a cooler
+			to hotter temperature, or vice versa, and have been defined as
+			positive values in this model.
 			*/
 		}
 
-		non = noff = 0;
 		double test_N = 0;
 
 		for (x=0; x<L; x++)
@@ -251,15 +263,6 @@ int ZIPload::init(OBJECT *parent)
 				drm.on[x] = N * eta * (1-phi) * exp(eta*(L-0.5-x)/roff) / (exp(eta*L/roff)-1);
 				drm.off[x] = drm.on[x] * ron/roff;
 				test_N += drm.on[x] + drm.off[x];
-				//non += drm.on[x] = eta * (1-phi) * exp(eta*(L-x+0.5)/roff) / (exp(eta*L/roff)-1);
-				//noff += drm.off[x] = drm.on[x]*ron/roff;
-			}
-
-			/* uniform distribution */
-			else
-			{
-				non += drm.on[x] = N * phi/L;
-				noff += drm.off[x] = N * (1-phi)/L;
 			}
 		}
 
@@ -269,7 +272,6 @@ int ZIPload::init(OBJECT *parent)
 			double extra = N - test_N;
 			drm.off[0] += extra;
 		}
-		
 	}
 
 	if (duty_cycle > 1 || duty_cycle < 0)
@@ -600,7 +602,7 @@ EXPORT int create_ZIPload(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			ZIPload *my = object_data<ZIPload>(*obj);;
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -620,7 +622,7 @@ EXPORT int init_ZIPload(OBJECT *obj)
 	INIT_CATCHALL(ZIPload);
 }
 
-EXPORT int isa_ZIPload(OBJECT *obj, char *classname)
+EXPORT int isa_ZIPload_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<ZIPload>(obj)->isa(classname);
@@ -629,17 +631,58 @@ EXPORT int isa_ZIPload(OBJECT *obj, char *classname)
 	}
 }
 
-
-EXPORT TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0)
-{
-	try
-	{
-		ZIPload *my = object_data<ZIPload>(obj);
-		TIMESTAMP t1 = my->sync(obj->clock, t0);
-		obj->clock = t0;
-		return t1;
-	}
-	SYNC_CATCHALL(ZIPload);
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_ZIPload(OBJECT *obj, char *classname) {
+  return isa_ZIPload_impl(obj, classname);
 }
+#else
+extern "C" MODULE_API int isa_ZIPload(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_ZIPload_impl(obj, classname);
+}
+#endif
+
+static TIMESTAMP sync_ZIPload_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
+    try {
+        ZIPload *my = object_data<ZIPload>(obj);
+        TIMESTAMP t2 = TS_NEVER;
+        switch (pass) {
+            case PC_PRETOPDOWN:
+              break;
+
+            case PC_BOTTOMUP:
+              t2 = my->sync(obj->clock, t1);
+              obj->clock = t1;
+              break;
+
+            case PC_POSTTOPDOWN:
+              break;
+
+            default:
+              gl_error("ZIPload::sync- invalid pass configuration");
+              t2 = TS_INVALID; // serious error in exec.c
+        }
+        return t2;
+    }
+    SYNC_CATCHALL(ZIPload);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_ZIPload(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  return sync_ZIPload_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_ZIPload(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_ZIPload_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

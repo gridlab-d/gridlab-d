@@ -48,7 +48,6 @@ series_reactor::series_reactor(MODULE *mod) : link_object(mod)
 			PT_complex, "phase_C_impedance[Ohm]",PADDR(phase_C_impedance),PT_DESCRIPTION,"Series impedance of reactor on phase C",
 			PT_double, "phase_C_resistance[Ohm]",PADDR(phase_C_impedance.Re()),PT_DESCRIPTION,"Resistive portion of phase C's impedance",
 			PT_double, "phase_C_reactance[Ohm]",PADDR(phase_C_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase C's impedance",
-			PT_double, "rated_current_limit[A]",PADDR(rated_current_limit),PT_DESCRIPTION,"Rated current limit for the reactor",
             nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
@@ -80,6 +79,12 @@ int series_reactor::create()
 
 int series_reactor::init(OBJECT *parent)
 {
+    OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	int result = link_object::init(parent);
 
 	//Check for deferred
@@ -100,7 +105,6 @@ int series_reactor::init(OBJECT *parent)
 		b_mat[0][0] = B_mat[0][0] = phase_A_impedance;
 		b_mat[1][1] = B_mat[1][1] = phase_B_impedance;
 		b_mat[2][2] = B_mat[2][2] = phase_C_impedance;
-
 	}
 	else
 	{
@@ -175,7 +179,7 @@ EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			series_reactor *my = object_data<series_reactor>(*obj);
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -207,7 +211,7 @@ EXPORT int init_series_reactor(OBJECT *obj)
 * @param pass the current pass for this sync call
 * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
 */
-EXPORT TIMESTAMP sync_series_reactor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_series_reactor_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
 		series_reactor *pObj = object_data<series_reactor>(obj);
@@ -228,9 +232,39 @@ EXPORT TIMESTAMP sync_series_reactor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(series_reactor);
 }
 
-EXPORT int isa_series_reactor(OBJECT *obj, char *classname)
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_series_reactor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+    return sync_series_reactor_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_series_reactor(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_series_reactor_impl(obj, t0, pass);
+}
+#endif
+
+EXPORT int isa_series_reactor_impl(OBJECT *obj, char *classname)
 {
 	return object_data<series_reactor>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_series_reactor(OBJECT *obj, char *classname) {
+  return isa_series_reactor_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_series_reactor(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_series_reactor_impl(obj, classname);
+}
+#endif
 
 /**@}**/

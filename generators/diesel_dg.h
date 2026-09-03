@@ -13,7 +13,6 @@
 
 #include "generators.h"
 
-EXPORT int isa_diesel_dg(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count, bool *converged_failure);
@@ -317,7 +316,6 @@ public:
 	double ki_Pconstant;		// ki for the PI controller implemented in P constant delta mode
 	double kp_Pconstant;		// kp for the PI controller implemented in P constant delta mode
 
-	bool P_constant_mode; 		// Flag indicating whether P constant mode is imployed
 	double ki_Qconstant;		// ki for the PI controller implemented in Q constant delta mode
 	double kp_Qconstant;		// kp for the PI controller implemented in Q constant delta mode
 	
@@ -368,7 +366,6 @@ public:
 	double gov_gast_KT;				//Governor temperature control loop gain
 	double gov_gast_VMAX;			//Governor actuator upper limit (p.u.)
 	double gov_gast_VMIN;			//Governor actuator lower limit (p.u.)
-//	double gov_gast_TD;				//Governor combustion delay (s)
 
 	//Governor properties (GGOV1)
 	double gov_ggv1_r;				//Permanent droop, p.u.

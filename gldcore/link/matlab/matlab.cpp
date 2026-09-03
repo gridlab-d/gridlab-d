@@ -6,8 +6,8 @@
 #include <direct.h>
 #define getcwd _getcwd
 #else
-#include <unistd.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
 #include <ctype.h>
 
@@ -19,973 +19,932 @@ CALLBACKS *callback = nullptr;
 
 #ifdef HAVE_MATLAB
 
-// you must have matlab installed and ensure matlab/extern/include is in include path
-#include "matrix.h"
+// you must have matlab installed and ensure matlab/extern/include is in include
+// path
 #include "engine.h"
+#include "matrix.h"
 
 typedef enum {
-	MWD_HIDE, // never show window
-	MWD_SHOW, // show only while running
-	MWD_KEEP, // show while running and keep open when done
-	MWD_ONERROR, // show only on error and keep open when done
-	MWD_ONDEBUG, // show only when debugging and keep open when done
+  MWD_HIDE,    // never show window
+  MWD_SHOW,    // show only while running
+  MWD_KEEP,    // show while running and keep open when done
+  MWD_ONERROR, // show only on error and keep open when done
+  MWD_ONDEBUG, // show only when debugging and keep open when done
 } MATLABWINDOWDISPOSITION;
 
 typedef struct {
-	Engine *engine;
-	char *command;
-	MATLABWINDOWDISPOSITION window;
-	int keep_onerror;
-	char *init;
-	char *sync;
-	char *term;
-	int status;
-	char *rootname;
-	char workdir[1024];
-	size_t output_size;
-	char *output_buffer;
-	mxArray *root;
+  Engine *engine;
+  char *command;
+  MATLABWINDOWDISPOSITION window;
+  int keep_onerror;
+  char *init;
+  char *sync;
+  char *term;
+  int status;
+  char *rootname;
+  char workdir[1024];
+  size_t output_size;
+  char *output_buffer;
+  mxArray *root;
 } MATLABLINK;
 
 static int64 g_skipsafe = 0;
 int start_test = 0;
-char* error_handling_begin = "try; ";
-char* error_handling_end = " catch err; errFuncLine=''; for i = 1:length(err.stack); errFuncLine = [errFuncLine,' ''',err.stack(i).name,' (line ',num2str(err.stack(i).line),')''']; end; ans=['Matlab: ''',err.message(1:end-1),''' in',errFuncLine]; end;";
+char *error_handling_begin = "try; ";
+char *error_handling_end =
+    " catch err; errFuncLine=''; for i = 1:length(err.stack); errFuncLine = "
+    "[errFuncLine,' ''',err.stack(i).name,' (line "
+    "',num2str(err.stack(i).line),')''']; end; ans=['Matlab: "
+    "''',err.message(1:end-1),''' in',errFuncLine]; end;";
 size_t error_handling_begin_len = strlen(error_handling_begin);
 size_t error_handling_end_len = strlen(error_handling_end);
 
-static mxArray* matlab_exec(MATLABLINK *matlab, char *format, ...)
-{
-	char cmd[4096];
-	va_list ptr;
-	va_start(ptr,format);
-	vsprintf(cmd,format,ptr);
-	va_end(ptr);
-	engEvalString(matlab->engine,cmd);
-	if ( matlab->output_buffer && strcmp(matlab->output_buffer,"")!=0 )
-		gl_verbose( "%s", matlab->output_buffer );
-	mxArray *ans = engGetVariable(matlab->engine,"ans");
-	return ans; // failed
+static mxArray *matlab_exec(MATLABLINK *matlab, char *format, ...) {
+  char cmd[4096];
+  va_list ptr;
+  va_start(ptr, format);
+  vsnprintf(cmd, sizeof(cmd), format, ptr);
+  va_end(ptr);
+  engEvalString(matlab->engine, cmd);
+  if (matlab->output_buffer && strcmp(matlab->output_buffer, "") != 0)
+    gl_verbose("%s", matlab->output_buffer);
+  mxArray *ans = engGetVariable(matlab->engine, "ans");
+  return ans; // failed
 }
 
-static mxArray* matlab_create_value(gld_property *prop)
-{
-	mxArray *value=nullptr;
-	switch ( prop->get_type() ) {
-	case PT_double:
-	case PT_random:
-	case PT_enduse:
-	case PT_loadshape:
-		value = mxCreateDoubleScalar(*(double*)prop->get_addr());
-		break;
-	case PT_complex:
-		{
-			value = mxCreateDoubleMatrix(1,1,mxCOMPLEX);
-			complex *v = (complex*)prop->get_addr();
-			*mxGetPr(value) = v->Re();
-			*mxGetPi(value) = v->Im();
-		}
-		break;
-	case PT_int16:
-		value = mxCreateDoubleScalar((double)*(int16*)prop->get_addr());
-		break;
-	case PT_enumeration:
-	case PT_int32:
-		value = mxCreateDoubleScalar((double)*(int32*)prop->get_addr());
-		break;
-	case PT_set:
-	case PT_int64:
-		value = mxCreateDoubleScalar((double)*(int64*)prop->get_addr());
-		break;
-	case PT_timestamp:
-		value = mxCreateDoubleScalar((double)*(TIMESTAMP*)prop->get_addr());
-		break;
-	case PT_bool:
-		value = mxCreateDoubleScalar((double)*(bool*)prop->get_addr());
-		break;
-	case PT_char8:
-	case PT_char32:
-	case PT_char256:
-	case PT_char1024:
-		{
-			const char *str[] = {(char*)prop->get_addr()};
-			value = mxCreateCharMatrixFromStrings(mwSize(1),str); 
-		}
-		break;
-	case PT_double_array:
-		{
-			double_array *data = (double_array*)prop->get_addr();
-			size_t n=data-.rows(), m=data->get_cols();
-			value = mxCreateDoubleMatrix(0,0,mxREAL);
-			double *copy = (double*)mxMalloc(m*n);
-			for ( int c=0 ; c<m ; c++ )
-			{
-				for ( int r=0 ; r<n ; r++ )
-				{
-					copy[c*m+r] = data->get_at(r,c);
-				}
-			}
-			mxSetPr(value,copy);
-			mxSetM(value,m);
-			mxSetN(value,n);
-		}
-		break;
-	case PT_complex_array:
-		// TODO
-		break;
-	default:
-		value = nullptr;
-		break;
-	}
-	return value;
+static mxArray *matlab_create_value(gld_property *prop) {
+  mxArray *value = nullptr;
+  switch (prop->get_type()) {
+  case PT_double:
+  case PT_random:
+  case PT_enduse:
+  case PT_loadshape:
+    value = mxCreateDoubleScalar(*(double *)prop->get_addr());
+    break;
+  case PT_complex: {
+    value = mxCreateDoubleMatrix(1, 1, mxCOMPLEX);
+    complex *v = (complex *)prop->get_addr();
+    *mxGetPr(value) = v->Re();
+    *mxGetPi(value) = v->Im();
+  } break;
+  case PT_int16:
+    value = mxCreateDoubleScalar((double)*(int16 *)prop->get_addr());
+    break;
+  case PT_enumeration:
+  case PT_int32:
+    value = mxCreateDoubleScalar((double)*(int32 *)prop->get_addr());
+    break;
+  case PT_set:
+  case PT_int64:
+    value = mxCreateDoubleScalar((double)*(int64 *)prop->get_addr());
+    break;
+  case PT_timestamp:
+    value = mxCreateDoubleScalar((double)*(TIMESTAMP *)prop->get_addr());
+    break;
+  case PT_bool:
+    value = mxCreateDoubleScalar((double)*(bool *)prop->get_addr());
+    break;
+  case PT_char8:
+  case PT_char32:
+  case PT_char256:
+  case PT_char1024: {
+    const char *str[] = {(char *)prop->get_addr()};
+    value = mxCreateCharMatrixFromStrings(mwSize(1), str);
+  } break;
+  case PT_double_array: {
+    double_array *data = (double_array *)prop->get_addr();
+    size_t n = data -.rows(), m = data->get_cols();
+    value = mxCreateDoubleMatrix(0, 0, mxREAL);
+    double *copy = (double *)mxMalloc(m * n);
+    for (int c = 0; c < m; c++) {
+      for (int r = 0; r < n; r++) {
+        copy[c * m + r] = data->get_at(r, c);
+      }
+    }
+    mxSetPr(value, copy);
+    mxSetM(value, m);
+    mxSetN(value, n);
+  } break;
+  case PT_complex_array:
+    // TODO
+    break;
+  default:
+    value = nullptr;
+    break;
+  }
+  return value;
 }
-static mxArray* matlab_set_value(mxArray *value, gld_property *prop)
-{
-	switch ( prop->get_type() ) {
-	case PT_double:
-	case PT_random:
-	case PT_enduse:
-	case PT_loadshape:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *ptr = *(double*)prop->get_addr();
-		}
-		break;
-	case PT_complex:
-		{
-			double *r = mxGetPr(value);
-			double *i = mxGetPi(value);
-			complex *v = (complex*)prop->get_addr();
-			if (r) *r = v->Re();
-			if (i) *i = v->Im();
-		}
-		break;
-	case PT_int16:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *ptr = (double)*(int16*)prop->get_addr();
-		}
-		break;
-	case PT_enumeration:
-	case PT_int32:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *ptr = (double)*(int32*)prop->get_addr();
-		}
-		break;
-	case PT_set:
-	case PT_int64:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *ptr = (double)*(int64*)prop->get_addr();
-		}
-		break;
-	case PT_timestamp:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *ptr = (double)*(TIMESTAMP*)prop->get_addr();
-		}
-		break;
-	case PT_bool:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *ptr = (double)*(bool*)prop->get_addr();
-		}
-		break;
-	case PT_char8:
-	case PT_char32:
-	case PT_char256:
-	case PT_char1024:
-		// TODO
-		break;
-	case PT_double_array:
-		// TODO
-		break;
-	case PT_complex_array:
-		// TODO
-		break;
-	default:
-		value = nullptr;
-		break;
-	}
-	return value;
+static mxArray *matlab_set_value(mxArray *value, gld_property *prop) {
+  switch (prop->get_type()) {
+  case PT_double:
+  case PT_random:
+  case PT_enduse:
+  case PT_loadshape: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *ptr = *(double *)prop->get_addr();
+  } break;
+  case PT_complex: {
+    double *r = mxGetPr(value);
+    double *i = mxGetPi(value);
+    complex *v = (complex *)prop->get_addr();
+    if (r)
+      *r = v->Re();
+    if (i)
+      *i = v->Im();
+  } break;
+  case PT_int16: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *ptr = (double)*(int16 *)prop->get_addr();
+  } break;
+  case PT_enumeration:
+  case PT_int32: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *ptr = (double)*(int32 *)prop->get_addr();
+  } break;
+  case PT_set:
+  case PT_int64: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *ptr = (double)*(int64 *)prop->get_addr();
+  } break;
+  case PT_timestamp: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *ptr = (double)*(TIMESTAMP *)prop->get_addr();
+  } break;
+  case PT_bool: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *ptr = (double)*(bool *)prop->get_addr();
+  } break;
+  case PT_char8:
+  case PT_char32:
+  case PT_char256:
+  case PT_char1024:
+    // TODO
+    break;
+  case PT_double_array:
+    // TODO
+    break;
+  case PT_complex_array:
+    // TODO
+    break;
+  default:
+    value = nullptr;
+    break;
+  }
+  return value;
 }
-static mxArray* matlab_get_value(mxArray *value, gld_property *prop)
-{
-	switch ( prop->get_type() ) {
-	case PT_double:
-	case PT_random:
-	case PT_enduse:
-	case PT_loadshape:
-		{
-			double *ptr = mxGetPr(value);
-			*(double*)prop->get_addr() = *ptr;
-		}
-		break;
-	case PT_complex:
-		{
-			double *r = mxGetPr(value);
-			double *i = mxGetPi(value);
-			complex *v = (complex*)prop->get_addr();
-			if (r) v->Re() = *r;
-			if (i) v->Im() = *i;
-		}
-		break;
-	case PT_int16:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *(int16*)prop->get_addr() = (int16)*ptr;
-		}
-		break;
-	case PT_enumeration:
-	case PT_int32:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *(int32*)prop->get_addr() = (int32)*ptr;
-		}
-		break;
-	case PT_set:
-	case PT_int64:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *(int64*)prop->get_addr() = (int64)*ptr;
-		}
-		break;
-	case PT_timestamp:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *(TIMESTAMP*)prop->get_addr() = (TIMESTAMP)*ptr;
-		}
-		break;
-	case PT_bool:
-		{
-			double *ptr = mxGetPr(value);
-			if (ptr) *(bool*)prop->get_addr() = (bool)*ptr;
-		}
-		break;
-	case PT_char8:
-	case PT_char32:
-	case PT_char256:
-	case PT_char1024:
-		// TODO
-		break;
-	default:
-		value = nullptr;
-		break;
-	}
-	return value;
+static mxArray *matlab_get_value(mxArray *value, gld_property *prop) {
+  switch (prop->get_type()) {
+  case PT_double:
+  case PT_random:
+  case PT_enduse:
+  case PT_loadshape: {
+    double *ptr = mxGetPr(value);
+    *(double *)prop->get_addr() = *ptr;
+  } break;
+  case PT_complex: {
+    double *r = mxGetPr(value);
+    double *i = mxGetPi(value);
+    complex *v = (complex *)prop->get_addr();
+    if (r)
+      v->Re() = *r;
+    if (i)
+      v->Im() = *i;
+  } break;
+  case PT_int16: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *(int16 *)prop->get_addr() = (int16)*ptr;
+  } break;
+  case PT_enumeration:
+  case PT_int32: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *(int32 *)prop->get_addr() = (int32)*ptr;
+  } break;
+  case PT_set:
+  case PT_int64: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *(int64 *)prop->get_addr() = (int64)*ptr;
+  } break;
+  case PT_timestamp: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *(TIMESTAMP *)prop->get_addr() = (TIMESTAMP)*ptr;
+  } break;
+  case PT_bool: {
+    double *ptr = mxGetPr(value);
+    if (ptr)
+      *(bool *)prop->get_addr() = (bool)*ptr;
+  } break;
+  case PT_char8:
+  case PT_char32:
+  case PT_char256:
+  case PT_char1024:
+    // TODO
+    break;
+  default:
+    value = nullptr;
+    break;
+  }
+  return value;
 }
-EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable)
-{
-	callback = fntable;
-	MATLABLINK *matlab = new MATLABLINK;
-	memset(matlab,0,sizeof(MATLABLINK));
-	matlab->rootname="gridlabd";
-	mod->set_data(matlab);
-	mod->valid_to=0;
-	return true;
+EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable) {
+  callback = fntable;
+  MATLABLINK *matlab = new MATLABLINK;
+  memset(matlab, 0, sizeof(MATLABLINK));
+  matlab->rootname = "gridlabd";
+  mod->set_data(matlab);
+  mod->valid_to = 0;
+  return true;
 }
 
-EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
-{
-	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
-	if ( strcmp(tag,"command")==0 )
-	{
-		matlab->command = (char*)malloc(strlen(data)+1);
-		strcpy(matlab->command,data);
-	}
-	else if ( strcmp(tag,"window")==0 )
-	{
-		if ( strcmp(data,"show")==0 )
-			matlab->window = MWD_SHOW;
-		else if ( strcmp(data,"hide")==0 )
-			matlab->window = MWD_HIDE;
-		else if ( strcmp(data,"onerror")==0 )
-			matlab->window = MWD_ONERROR;
-		else if ( strcmp(data,"ondebug")==0 )
-			matlab->window = MWD_ONDEBUG;
-		else if ( strcmp(data,"keep")==0 )
-			matlab->window = MWD_KEEP;
-		else
-			gl_error("'%s' is not a valid matlab window disposition", data);
-	}
-	else if ( strcmp(tag,"output")==0 )
-	{
-		matlab->output_size = atoi(data);
-		if ( matlab->output_size>0 )
-			matlab->output_buffer = (char*)malloc(matlab->output_size);
-		else
-			gl_error("'%s' is not a valid output buffer size", data);
-	}
-	else if ( strcmp(tag,"workdir")==0 )
-	{
-		strcpy(matlab->workdir,data);
-	}
-	else if ( strcmp(tag,"root")==0 )
-	{
-		if ( strcmp(data,"")==0 ) // no root
-			matlab->rootname=nullptr;
-		else 
-		{
-			matlab->rootname = (char*)malloc(strlen(data)+1);
-			sscanf(data,"%s",matlab->rootname); // use scanf to avoid spaces in root name
-		}
-	}
-	else if ( strcmp(tag,"on_init")==0 )
-	{
-		size_t data_len = strlen(data);
-		char *data_new = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
-		strcpy (data_new,error_handling_begin);
-		strcat (data_new,data);
-		strcat (data_new,error_handling_end);
-		if ( (error_handling_begin_len+error_handling_end_len+data_len)>0 )
-		{
-			matlab->init = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
-			strcpy(matlab->init,data_new);
-			free(data_new);
-		}
-	}
-	else if ( strcmp(tag,"on_sync")==0 )
-	{
-		size_t data_len = strlen(data);
-		char *data_new = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
-		strcpy (data_new,error_handling_begin);
-		strcat (data_new,data);
-		strcat (data_new,error_handling_end);
-		if ( (error_handling_begin_len+error_handling_end_len+data_len)>0 )
-		{
-			matlab->sync = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
-			strcpy(matlab->sync,data_new);
-			free(data_new);
-		}
-	}
-	else if ( strcmp(tag,"on_term")==0 )
-	{
-		size_t data_len = strlen(data);
-		char *data_new = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
-		strcpy (data_new,error_handling_begin);
-		strcat (data_new,data);
-		strcat (data_new,error_handling_end);
-		if ( (error_handling_begin_len+error_handling_end_len+data_len)>0 )
-		{
-			matlab->term = (char*)malloc(error_handling_begin_len+error_handling_end_len+data_len+1);
-			strcpy(matlab->term,data_new);
-			free(data_new);
-		}
-	}
-	else if( strcmp(tag, "skipsafe")==0 )
-	{
-		if( strcmp(data, "yes")==0 )
-		{
-			mod->glxflags |= LF_SKIPSAFE;
-		}
-		else if( strcmp(data, "no")==0 )
-		{
-			mod->glxflags &= ~LF_SKIPSAFE;
-		}
-		else
-		{
-			gl_error("glxmatlab::glx_settag ~ skipsafe value '%s' is not valid", data);
-			return false;
-		}
-	}
-	else
-	{
-		gl_output("tag '%s' not valid for matlab target", tag);
-		return false;
-	}
-	return true;
+EXPORT bool glx_settag(glxlink *mod, char *tag, char *data) {
+  MATLABLINK *matlab = (MATLABLINK *)mod->get_data();
+  if (strcmp(tag, "command") == 0) {
+    matlab->command = (char *)malloc(strlen(data) + 1);
+    strcpy(matlab->command, data);
+  } else if (strcmp(tag, "window") == 0) {
+    if (strcmp(data, "show") == 0)
+      matlab->window = MWD_SHOW;
+    else if (strcmp(data, "hide") == 0)
+      matlab->window = MWD_HIDE;
+    else if (strcmp(data, "onerror") == 0)
+      matlab->window = MWD_ONERROR;
+    else if (strcmp(data, "ondebug") == 0)
+      matlab->window = MWD_ONDEBUG;
+    else if (strcmp(data, "keep") == 0)
+      matlab->window = MWD_KEEP;
+    else
+      gl_error("'%s' is not a valid matlab window disposition", data);
+  } else if (strcmp(tag, "output") == 0) {
+    matlab->output_size = atoi(data);
+    if (matlab->output_size > 0)
+      matlab->output_buffer = (char *)malloc(matlab->output_size);
+    else
+      gl_error("'%s' is not a valid output buffer size", data);
+  } else if (strcmp(tag, "workdir") == 0) {
+    strcpy(matlab->workdir, data);
+  } else if (strcmp(tag, "root") == 0) {
+    if (strcmp(data, "") == 0) // no root
+      matlab->rootname = nullptr;
+    else {
+      matlab->rootname = (char *)malloc(strlen(data) + 1);
+      sscanf(data, "%s",
+             matlab->rootname); // use scanf to avoid spaces in root name
+    }
+  } else if (strcmp(tag, "on_init") == 0) {
+    size_t data_len = strlen(data);
+    char *data_new = (char *)malloc(error_handling_begin_len +
+                                    error_handling_end_len + data_len + 1);
+    strcpy(data_new, error_handling_begin);
+    strcat(data_new, data);
+    strcat(data_new, error_handling_end);
+    if ((error_handling_begin_len + error_handling_end_len + data_len) > 0) {
+      matlab->init = (char *)malloc(error_handling_begin_len +
+                                    error_handling_end_len + data_len + 1);
+      strcpy(matlab->init, data_new);
+      free(data_new);
+    }
+  } else if (strcmp(tag, "on_sync") == 0) {
+    size_t data_len = strlen(data);
+    char *data_new = (char *)malloc(error_handling_begin_len +
+                                    error_handling_end_len + data_len + 1);
+    strcpy(data_new, error_handling_begin);
+    strcat(data_new, data);
+    strcat(data_new, error_handling_end);
+    if ((error_handling_begin_len + error_handling_end_len + data_len) > 0) {
+      matlab->sync = (char *)malloc(error_handling_begin_len +
+                                    error_handling_end_len + data_len + 1);
+      strcpy(matlab->sync, data_new);
+      free(data_new);
+    }
+  } else if (strcmp(tag, "on_term") == 0) {
+    size_t data_len = strlen(data);
+    char *data_new = (char *)malloc(error_handling_begin_len +
+                                    error_handling_end_len + data_len + 1);
+    strcpy(data_new, error_handling_begin);
+    strcat(data_new, data);
+    strcat(data_new, error_handling_end);
+    if ((error_handling_begin_len + error_handling_end_len + data_len) > 0) {
+      matlab->term = (char *)malloc(error_handling_begin_len +
+                                    error_handling_end_len + data_len + 1);
+      strcpy(matlab->term, data_new);
+      free(data_new);
+    }
+  } else if (strcmp(tag, "skipsafe") == 0) {
+    if (strcmp(data, "yes") == 0) {
+      mod->glxflags |= LF_SKIPSAFE;
+    } else if (strcmp(data, "no") == 0) {
+      mod->glxflags &= ~LF_SKIPSAFE;
+    } else {
+      gl_error("glxmatlab::glx_settag ~ skipsafe value '%s' is not valid",
+               data);
+      return false;
+    }
+  } else {
+    gl_output("tag '%s' not valid for matlab target", tag);
+    return false;
+  }
+  return true;
 }
 
-bool window_show(MATLABLINK *matlab)
-{
-	// return true if window should be visible
-	switch ( matlab->window ) {
-	case MWD_HIDE: return false;
-	case MWD_SHOW: return true;
-	case MWD_KEEP: return true;
-	case MWD_ONERROR: return true;
-	case MWD_ONDEBUG: return true; // TODO read global debug variable
-	default: return false;
-	}
+bool window_show(MATLABLINK *matlab) {
+  // return true if window should be visible
+  switch (matlab->window) {
+  case MWD_HIDE:
+    return false;
+  case MWD_SHOW:
+    return true;
+  case MWD_KEEP:
+    return true;
+  case MWD_ONERROR:
+    return true;
+  case MWD_ONDEBUG:
+    return true; // TODO read global debug variable
+  default:
+    return false;
+  }
 }
-bool window_kill(MATLABLINK *matlab)
-{
-	// return true if window engine should be shutdown
-	switch ( matlab->window ) {
-	case MWD_HIDE: return true;
-	case MWD_SHOW: return true;
-	case MWD_KEEP: return false;
-	case MWD_ONERROR: return false; // TODO read exit status
-	case MWD_ONDEBUG: return true; // TODO read global debug variable
-	default: return true;
-	}
+bool window_kill(MATLABLINK *matlab) {
+  // return true if window engine should be shutdown
+  switch (matlab->window) {
+  case MWD_HIDE:
+    return true;
+  case MWD_SHOW:
+    return true;
+  case MWD_KEEP:
+    return false;
+  case MWD_ONERROR:
+    return false; // TODO read exit status
+  case MWD_ONDEBUG:
+    return true; // TODO read global debug variable
+  default:
+    return true;
+  }
 }
 
-EXPORT bool glx_init(glxlink *mod)
-{
-	gl_verbose("initializing matlab link");
-	gl_verbose("PATH=%s", getenv("PATH"));
+EXPORT bool glx_init(glxlink *mod) {
+  gl_verbose("initializing matlab link");
+  gl_verbose("PATH=%s", getenv("PATH"));
 
-	// initialize matlab engine
-	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
-	matlab->status = 0;
+  // initialize matlab engine
+  MATLABLINK *matlab = (MATLABLINK *)mod->get_data();
+  matlab->status = 0;
 #ifdef _WIN32
-	if ( matlab->command )
-		matlab->engine = engOpen(matlab->command);
-	else
-		matlab->engine = engOpenSingleUse(nullptr,nullptr,&matlab->status);
-	if ( matlab->engine==nullptr )
-	{
-		gl_error("matlab engine start failed, status code is '%d'", matlab->status);
-		return false;
-	}
+  if (matlab->command)
+    matlab->engine = engOpen(matlab->command);
+  else
+    matlab->engine = engOpenSingleUse(nullptr, nullptr, &matlab->status);
+  if (matlab->engine == nullptr) {
+    gl_error("matlab engine start failed, status code is '%d'", matlab->status);
+    return false;
+  }
 #else
-	matlab->engine = engOpen(matlab->command);
-	if ( matlab->engine==nullptr )
-	{
-		gl_error("matlab engine start failed");
-		return false;
-	}
+  matlab->engine = engOpen(matlab->command);
+  if (matlab->engine == nullptr) {
+    gl_error("matlab engine start failed");
+    return false;
+  }
 #endif
 
-	// set the output buffer
-	if ( matlab->output_buffer!=nullptr )
-		engOutputBuffer(matlab->engine,matlab->output_buffer,(int)matlab->output_size);
+  // set the output buffer
+  if (matlab->output_buffer != nullptr)
+    engOutputBuffer(matlab->engine, matlab->output_buffer,
+                    (int)matlab->output_size);
 
-	// setup matlab engine
-	engSetVisible(matlab->engine,window_show(matlab));
+  // setup matlab engine
+  engSetVisible(matlab->engine, window_show(matlab));
 
-	gl_debug("matlab link is open");
+  gl_debug("matlab link is open");
 
-	// special values needed by matlab
-	mxArray *ts_never = mxCreateDoubleScalar((double)(TIMESTAMP)TS_NEVER);
-	engPutVariable(matlab->engine,"TS_NEVER",ts_never);
-	mxArray *ts_error = mxCreateDoubleScalar((double)(TIMESTAMP)TS_INVALID);
-	engPutVariable(matlab->engine,"TS_ERROR",ts_error);
-	mxArray *gld_ok = mxCreateDoubleScalar((double)(bool)true);
-	engPutVariable(matlab->engine,"GLD_OK",gld_ok);
-	mxArray *gld_err = mxCreateDoubleScalar((double)(bool)false);
-	engPutVariable(matlab->engine,"GLD_ERROR",gld_err);
+  // special values needed by matlab
+  mxArray *ts_never = mxCreateDoubleScalar((double)(TIMESTAMP)TS_NEVER);
+  engPutVariable(matlab->engine, "TS_NEVER", ts_never);
+  mxArray *ts_error = mxCreateDoubleScalar((double)(TIMESTAMP)TS_INVALID);
+  engPutVariable(matlab->engine, "TS_ERROR", ts_error);
+  mxArray *gld_ok = mxCreateDoubleScalar((double)(bool)true);
+  engPutVariable(matlab->engine, "GLD_OK", gld_ok);
+  mxArray *gld_err = mxCreateDoubleScalar((double)(bool)false);
+  engPutVariable(matlab->engine, "GLD_ERROR", gld_err);
 
-	// set the workdir
-	if ( strcmp(matlab->workdir,"")!=0 )
-	{
+  // set the workdir
+  if (strcmp(matlab->workdir, "") != 0) {
 #ifdef _WIN32
-		_mkdir(matlab->workdir);
+    _mkdir(matlab->workdir);
 #else
-		mkdir(matlab->workdir,0750);
+    mkdir(matlab->workdir, 0750);
 #endif
-		if ( matlab->workdir[0]=='/' )
-			matlab_exec(matlab,"cd '%s'", matlab->workdir);
-		else
-			matlab_exec(matlab,"cd '%s/%s'", getcwd(nullptr,0),matlab->workdir);
-	}
+    if (matlab->workdir[0] == '/')
+      matlab_exec(matlab, "cd '%s'", matlab->workdir);
+    else
+      matlab_exec(matlab, "cd '%s/%s'", getcwd(nullptr, 0), matlab->workdir);
+  }
 
-	// run the initialization command(s)
-	if ( matlab->init )
-	{
-		mxArray *ans = matlab_exec(matlab,"%s",matlab->init);
-		if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
-		{
-			gl_error("matlab init failed");
-			return false;
-		}
-		else if ( ans && mxIsChar(ans) )
-		{
-			int buflen = (mxGetM(ans) * mxGetN(ans)) + 1;
-			char *string =(char*)malloc(buflen);
-			int status_error = mxGetString(ans, string, buflen);
-			if (status_error == 0)
-			{
-				gl_error("'%s'",string);
-				return false;
-			}
-			else
-			{			
-				gl_error("Did not catch Matlab error");
-				return false;
-			}
-		}
-	}
+  // run the initialization command(s)
+  if (matlab->init) {
+    mxArray *ans = matlab_exec(matlab, "%s", matlab->init);
+    if (ans && mxIsDouble(ans) && (bool)*mxGetPr(ans) == false) {
+      gl_error("matlab init failed");
+      return false;
+    } else if (ans && mxIsChar(ans)) {
+      int buflen = (mxGetM(ans) * mxGetN(ans)) + 1;
+      char *string = (char *)malloc(buflen);
+      int status_error = mxGetString(ans, string, buflen);
+      if (status_error == 0) {
+        gl_error("'%s'", string);
+        return false;
+      } else {
+        gl_error("Did not catch Matlab error");
+        return false;
+      }
+    }
+  }
 
-	if ( matlab->rootname!=nullptr )
-	{
-		// build gridlabd data
-		mwSize dims[] = {1,1};
-		mxArray *gridlabd_struct = mxCreateStructArray(2,dims,0,nullptr);
+  if (matlab->rootname != nullptr) {
+    // build gridlabd data
+    mwSize dims[] = {1, 1};
+    mxArray *gridlabd_struct = mxCreateStructArray(2, dims, 0, nullptr);
 
-		///////////////////////////////////////////////////////////////////////////
-		// build global data
-		LINKLIST *item;
-		mxArray *global_struct = mxCreateStructArray(2,dims,0,nullptr);
-		for ( item=mod->get_globals() ; item!=nullptr ; item=mod->get_next(item) )
-		{
-			char *name = mod->get_name(item);
-			GLOBALVAR *var = mod->get_globalvar(item);
-			mxArray *var_struct = nullptr;
-			mwIndex var_index;
-			if ( var==nullptr ) continue;
+    ///////////////////////////////////////////////////////////////////////////
+    // build global data
+    LINKLIST *item;
+    mxArray *global_struct = mxCreateStructArray(2, dims, 0, nullptr);
+    for (item = mod->get_globals(); item != nullptr;
+         item = mod->get_next(item)) {
+      char *name = mod->get_name(item);
+      GLOBALVAR *var = mod->get_globalvar(item);
+      mxArray *var_struct = nullptr;
+      mwIndex var_index;
+      if (var == nullptr)
+        continue;
 
-			// do not map module or structured globals
-			if ( strchr(var->prop->name,':')!=nullptr )
-			{
-				// ignore module globals here
-			}
-			else if ( strchr(var->prop->name,'.')!=nullptr )
-			{
-				char struct_name[256];
-				if ( sscanf(var->prop->name,"%[^.]",struct_name)==0 )
-				{
-					gld_property prop(var);
-					var_index = mxAddField(global_struct,prop.get_name());
-					var_struct = matlab_create_value(&prop);
-					if ( var_struct!=nullptr )
-					{
-						//mod->add_copyto(var->prop->addr,mxGetData(var_struct));
-						mxSetFieldByNumber(global_struct,0,var_index,var_struct);
-					}
-				}
-			}
-			else // simple data
-			{
-				gld_property prop(var);
-				var_index = mxAddField(global_struct,prop.get_name());
-				var_struct = matlab_create_value(&prop);
-				if ( var_struct!=nullptr )
-				{
-					//mod->add_copyto(var->prop->addr,mxGetData(var_struct));
-					mxSetFieldByNumber(global_struct,0,var_index,var_struct);
-				}
-			}
+      // do not map module or structured globals
+      if (strchr(var->prop->name, ':') != nullptr) {
+        // ignore module globals here
+      } else if (strchr(var->prop->name, '.') != nullptr) {
+        char struct_name[256];
+        if (sscanf(var->prop->name, "%[^.]", struct_name) == 0) {
+          gld_property prop(var);
+          var_index = mxAddField(global_struct, prop.get_name());
+          var_struct = matlab_create_value(&prop);
+          if (var_struct != nullptr) {
+            // mod->add_copyto(var->prop->addr,mxGetData(var_struct));
+            mxSetFieldByNumber(global_struct, 0, var_index, var_struct);
+          }
+        }
+      } else // simple data
+      {
+        gld_property prop(var);
+        var_index = mxAddField(global_struct, prop.get_name());
+        var_struct = matlab_create_value(&prop);
+        if (var_struct != nullptr) {
+          // mod->add_copyto(var->prop->addr,mxGetData(var_struct));
+          mxSetFieldByNumber(global_struct, 0, var_index, var_struct);
+        }
+      }
 
-			// update export list
-			if ( var_struct!=nullptr )
-			{
-				mod->set_addr(item,(void*)var_struct);
-				mod->set_index(item,(size_t)var_index);
-			}
-		}
+      // update export list
+      if (var_struct != nullptr) {
+        mod->set_addr(item, (void *)var_struct);
+        mod->set_index(item, (size_t)var_index);
+      }
+    }
 
-		// add globals structure to gridlabd structure
-		mwIndex gridlabd_index = mxAddField(gridlabd_struct,"global");
-		mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,global_struct);
+    // add globals structure to gridlabd structure
+    mwIndex gridlabd_index = mxAddField(gridlabd_struct, "global");
+    mxSetFieldByNumber(gridlabd_struct, 0, gridlabd_index, global_struct);
 
-		///////////////////////////////////////////////////////////////////////////
-		// build module data
-		dims[0] = dims[1] = 1;
-		mxArray *module_struct = mxCreateStructArray(2,dims,0,nullptr);
+    ///////////////////////////////////////////////////////////////////////////
+    // build module data
+    dims[0] = dims[1] = 1;
+    mxArray *module_struct = mxCreateStructArray(2, dims, 0, nullptr);
 
-		// add modules
-		for ( MODULE *module = callback->module.getfirst() ; module!=nullptr ; module=module->next )
-		{
-			// create module info struct
-			mwIndex dims[] = {1,1};
-			mxArray *module_data = mxCreateStructArray(2,dims,0,nullptr);
-			mwIndex module_index = mxAddField(module_struct,module->name);
-			mxSetFieldByNumber(module_struct,0,module_index,module_data);
-			
-			// create version info struct
-			const char *version_fields[] = {"major","minor"};
-			mxArray *version_data = mxCreateStructArray(2,dims,sizeof(version_fields)/sizeof(version_fields[0]),version_fields);
-			mxArray *major_data = mxCreateDoubleScalar((double)module->major);
-			mxArray *minor_data = mxCreateDoubleScalar((double)module->minor);
-			mxSetFieldByNumber(version_data,0,0,major_data);
-			mxSetFieldByNumber(version_data,0,1,minor_data);
+    // add modules
+    for (MODULE *module = callback->module.getfirst(); module != nullptr;
+         module = module->next) {
+      // create module info struct
+      mwIndex dims[] = {1, 1};
+      mxArray *module_data = mxCreateStructArray(2, dims, 0, nullptr);
+      mwIndex module_index = mxAddField(module_struct, module->name);
+      mxSetFieldByNumber(module_struct, 0, module_index, module_data);
 
-			// attach version info to module info
-			mwIndex version_index = mxAddField(module_data,"version");
-			mxSetFieldByNumber(module_data,0,version_index,version_data);
+      // create version info struct
+      const char *version_fields[] = {"major", "minor"};
+      mxArray *version_data = mxCreateStructArray(
+          2, dims, sizeof(version_fields) / sizeof(version_fields[0]),
+          version_fields);
+      mxArray *major_data = mxCreateDoubleScalar((double)module->major);
+      mxArray *minor_data = mxCreateDoubleScalar((double)module->minor);
+      mxSetFieldByNumber(version_data, 0, 0, major_data);
+      mxSetFieldByNumber(version_data, 0, 1, minor_data);
 
-		}
-		gridlabd_index = mxAddField(gridlabd_struct,"module");
-		mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,module_struct);
+      // attach version info to module info
+      mwIndex version_index = mxAddField(module_data, "version");
+      mxSetFieldByNumber(module_data, 0, version_index, version_data);
+    }
+    gridlabd_index = mxAddField(gridlabd_struct, "module");
+    mxSetFieldByNumber(gridlabd_struct, 0, gridlabd_index, module_struct);
 
-		///////////////////////////////////////////////////////////////////////////
-		// build class data
-		dims[0] = dims[1] = 1;
-		mxArray *class_struct = mxCreateStructArray(2,dims,0,nullptr);
-		gridlabd_index = mxAddField(gridlabd_struct,"class");
-		mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,class_struct);
-		mwIndex class_id[1024]; // index into class struct
-		memset(class_id,0,sizeof(class_id));
+    ///////////////////////////////////////////////////////////////////////////
+    // build class data
+    dims[0] = dims[1] = 1;
+    mxArray *class_struct = mxCreateStructArray(2, dims, 0, nullptr);
+    gridlabd_index = mxAddField(gridlabd_struct, "class");
+    mxSetFieldByNumber(gridlabd_struct, 0, gridlabd_index, class_struct);
+    mwIndex class_id[1024]; // index into class struct
+    memset(class_id, 0, sizeof(class_id));
 
-		// add classes
-		for ( CLASS *oclass = callback->class_getfirst() ; oclass!=nullptr ; oclass=oclass->next )
-		{
-			// count objects in this class
-			mwIndex dims[] = {0,1};
-			for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
-			{
-				OBJECT *obj = mod->get_object(item);
-				if ( obj==nullptr || obj->oclass!=oclass ) continue;
-				dims[0]++;
-			}
-			if ( dims[0]==0 ) continue;
-			mxArray *runtime_struct = mxCreateStructArray(2,dims,0,nullptr);
+    // add classes
+    for (CLASS *oclass = callback->class_getfirst(); oclass != nullptr;
+         oclass = oclass->next) {
+      // count objects in this class
+      mwIndex dims[] = {0, 1};
+      for (item = mod->get_objects(); item != nullptr;
+           item = mod->get_next(item)) {
+        OBJECT *obj = mod->get_object(item);
+        if (obj == nullptr || obj->oclass != oclass)
+          continue;
+        dims[0]++;
+      }
+      if (dims[0] == 0)
+        continue;
+      mxArray *runtime_struct = mxCreateStructArray(2, dims, 0, nullptr);
 
-			// add class 
-			mwIndex class_index = mxAddField(class_struct,oclass->name);
-			mxSetFieldByNumber(class_struct,0,class_index,runtime_struct);
+      // add class
+      mwIndex class_index = mxAddField(class_struct, oclass->name);
+      mxSetFieldByNumber(class_struct, 0, class_index, runtime_struct);
 
-			// add properties to class
-			for ( PROPERTY *prop=oclass->pmap ; prop!=nullptr && prop->oclass==oclass ; prop=prop->next )
-			{
-				mwIndex dims[] = {1,1};
-				mxArray *property_struct = mxCreateStructArray(2,dims,0,nullptr);
-				mwIndex runtime_index = mxAddField(runtime_struct,prop->name);
-				mxSetFieldByNumber(runtime_struct,0,runtime_index,property_struct);
-			}
+      // add properties to class
+      for (PROPERTY *prop = oclass->pmap;
+           prop != nullptr && prop->oclass == oclass; prop = prop->next) {
+        mwIndex dims[] = {1, 1};
+        mxArray *property_struct = mxCreateStructArray(2, dims, 0, nullptr);
+        mwIndex runtime_index = mxAddField(runtime_struct, prop->name);
+        mxSetFieldByNumber(runtime_struct, 0, runtime_index, property_struct);
+      }
 
-			// add objects to class
-			for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
-			{
-				OBJECT *obj = mod->get_object(item);
-				if ( obj==nullptr || obj->oclass!=oclass ) continue;
-				mwIndex index = class_id[obj->oclass->id]++;
-				
-				// add properties to class
-				for ( PROPERTY *prop=oclass->pmap ; prop!=nullptr && prop->oclass==oclass ; prop=prop->next )
-				{
-					gld_property p(obj,prop);
-					mxArray *data = matlab_create_value(&p);
-					mxSetField(runtime_struct,index,prop->name,data);
-				}
+      // add objects to class
+      for (item = mod->get_objects(); item != nullptr;
+           item = mod->get_next(item)) {
+        OBJECT *obj = mod->get_object(item);
+        if (obj == nullptr || obj->oclass != oclass)
+          continue;
+        mwIndex index = class_id[obj->oclass->id]++;
 
-				// update export list
-				mod->set_addr(item,(void*)runtime_struct);
-				mod->set_index(item,(size_t)index);
-			}
-		}
+        // add properties to class
+        for (PROPERTY *prop = oclass->pmap;
+             prop != nullptr && prop->oclass == oclass; prop = prop->next) {
+          gld_property p(obj, prop);
+          mxArray *data = matlab_create_value(&p);
+          mxSetField(runtime_struct, index, prop->name, data);
+        }
 
-		///////////////////////////////////////////////////////////////////////////
-		// build the object data
-		dims[0] = 0;
-		for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
-		{
-			if ( mod->get_object(item)!=nullptr ) dims[0]++;
-		}
-		dims[1] = 1;
-		memset(class_id,0,sizeof(class_id));
-		const char *objfields[] = {"name","class","id","parent","rank","clock","valid_to","schedule_skew",
-			"latitude","longitude","in","out","rng_state","heartbeat","lock","flags"};
-		mxArray *object_struct = mxCreateStructArray(2,dims,sizeof(objfields)/sizeof(objfields[0]),objfields);
-		mwIndex n=0;
-		for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
-		{
-			OBJECT *obj = mod->get_object(item);
-			if ( obj==nullptr ) continue;
-			class_id[obj->oclass->id]++; // index into class struct
+        // update export list
+        mod->set_addr(item, (void *)runtime_struct);
+        mod->set_index(item, (size_t)index);
+      }
+    }
 
-			//Explicit error on object - prevents segfaults if relax_naming_rules is enabled
-			if ((obj->name&&isdigit(obj->name[0])) == true)
-			{
-				gl_error("MATLAB Link: object names can not start with numbers");
-				/*  TROUBLESHOOT
-				When using the MATLAB link, object names cannot start with numbers.
-				The file must run with relax_naming_rules not enabled.  This is due to
-				MATLAB not liking variables that start with numbers.  Change your GLM and
-				try again.  As an alternative, you can just specify "object" in the .link file
-				to make GridLAB-D not import any objects, which skips this section of the code.
-				*/
-				return false;
-			}
+    ///////////////////////////////////////////////////////////////////////////
+    // build the object data
+    dims[0] = 0;
+    for (item = mod->get_objects(); item != nullptr;
+         item = mod->get_next(item)) {
+      if (mod->get_object(item) != nullptr)
+        dims[0]++;
+    }
+    dims[1] = 1;
+    memset(class_id, 0, sizeof(class_id));
+    const char *objfields[] = {
+        "name",      "class",         "id",       "parent",    "rank", "clock",
+        "valid_to",  "schedule_skew", "latitude", "longitude", "in",   "out",
+        "rng_state", "heartbeat",     "lock",     "flags"};
+    mxArray *object_struct = mxCreateStructArray(
+        2, dims, sizeof(objfields) / sizeof(objfields[0]), objfields);
+    mwIndex n = 0;
+    for (item = mod->get_objects(); item != nullptr;
+         item = mod->get_next(item)) {
+      OBJECT *obj = mod->get_object(item);
+      if (obj == nullptr)
+        continue;
+      class_id[obj->oclass->id]++; // index into class struct
 
-			const char *objname[] = {obj->name&&isdigit(obj->name[0])?nullptr:obj->name};
-			const char *oclassname[] = {obj->oclass->name};
+      // Explicit error on object - prevents segfaults if relax_naming_rules is
+      // enabled
+      if ((obj->name && isdigit(obj->name[0])) == true) {
+        gl_error("MATLAB Link: object names can not start with numbers");
+        /*  TROUBLESHOOT
+        When using the MATLAB link, object names cannot start with numbers.
+        The file must run with relax_naming_rules not enabled.  This is due to
+        MATLAB not liking variables that start with numbers.  Change your GLM
+        and try again.  As an alternative, you can just specify "object" in the
+        .link file to make GridLAB-D not import any objects, which skips this
+        section of the code.
+        */
+        return false;
+      }
 
-			if (obj->name) mxSetFieldByNumber(object_struct,n,0,mxCreateCharMatrixFromStrings(mwSize(1),objname));
-			mxSetFieldByNumber(object_struct,n,1,mxCreateCharMatrixFromStrings(mwSize(1),oclassname));
-			mxSetFieldByNumber(object_struct,n,2,mxCreateDoubleScalar((double)class_id[obj->oclass->id]));
-			if (obj->parent) mxSetFieldByNumber(object_struct,n,3,mxCreateDoubleScalar((double)obj->parent->id+1));
-			mxSetFieldByNumber(object_struct,n,4,mxCreateDoubleScalar((double)obj->rank));
-			mxSetFieldByNumber(object_struct,n,5,mxCreateDoubleScalar((double)obj->clock));
-			mxSetFieldByNumber(object_struct,n,6,mxCreateDoubleScalar((double)obj->valid_to));
-			mxSetFieldByNumber(object_struct,n,7,mxCreateDoubleScalar((double)obj->schedule_skew));
-			if ( isfinite(obj->latitude) ) mxSetFieldByNumber(object_struct,n,8,mxCreateDoubleScalar((double)obj->latitude));
-			if ( isfinite(obj->longitude) ) mxSetFieldByNumber(object_struct,n,9,mxCreateDoubleScalar((double)obj->longitude));
-			mxSetFieldByNumber(object_struct,n,10,mxCreateDoubleScalar((double)obj->in_svc));
-			mxSetFieldByNumber(object_struct,n,11,mxCreateDoubleScalar((double)obj->out_svc));
-			mxSetFieldByNumber(object_struct,n,12,mxCreateDoubleScalar((double)obj->rng_state));
-			mxSetFieldByNumber(object_struct,n,13,mxCreateDoubleScalar((double)obj->heartbeat));
-			mxSetFieldByNumber(object_struct,n,14,mxCreateDoubleScalar((double)obj->lock));
-			mxSetFieldByNumber(object_struct,n,15,mxCreateDoubleScalar((double)obj->flags));
-			n++;
-		}
-		gridlabd_index = mxAddField(gridlabd_struct,"object");
-		mxSetFieldByNumber(gridlabd_struct,0,gridlabd_index,object_struct);
+      const char *objname[] = {obj->name && isdigit(obj->name[0]) ? nullptr
+                                                                  : obj->name};
+      const char *oclassname[] = {obj->oclass->name};
 
-		///////////////////////////////////////////////////////////////////////////
-		// post the gridlabd structure
-		matlab->root = gridlabd_struct;
-		engPutVariable(matlab->engine,matlab->rootname,matlab->root);
-	}
+      if (obj->name)
+        mxSetFieldByNumber(object_struct, n, 0,
+                           mxCreateCharMatrixFromStrings(mwSize(1), objname));
+      mxSetFieldByNumber(object_struct, n, 1,
+                         mxCreateCharMatrixFromStrings(mwSize(1), oclassname));
+      mxSetFieldByNumber(
+          object_struct, n, 2,
+          mxCreateDoubleScalar((double)class_id[obj->oclass->id]));
+      if (obj->parent)
+        mxSetFieldByNumber(object_struct, n, 3,
+                           mxCreateDoubleScalar((double)obj->parent->id + 1));
+      mxSetFieldByNumber(object_struct, n, 4,
+                         mxCreateDoubleScalar((double)obj->rank));
+      mxSetFieldByNumber(object_struct, n, 5,
+                         mxCreateDoubleScalar((double)obj->clock));
+      mxSetFieldByNumber(object_struct, n, 6,
+                         mxCreateDoubleScalar((double)obj->valid_to));
+      mxSetFieldByNumber(object_struct, n, 7,
+                         mxCreateDoubleScalar((double)obj->schedule_skew));
+      if (isfinite(obj->latitude))
+        mxSetFieldByNumber(object_struct, n, 8,
+                           mxCreateDoubleScalar((double)obj->latitude));
+      if (isfinite(obj->longitude))
+        mxSetFieldByNumber(object_struct, n, 9,
+                           mxCreateDoubleScalar((double)obj->longitude));
+      mxSetFieldByNumber(object_struct, n, 10,
+                         mxCreateDoubleScalar((double)obj->in_svc));
+      mxSetFieldByNumber(object_struct, n, 11,
+                         mxCreateDoubleScalar((double)obj->out_svc));
+      mxSetFieldByNumber(object_struct, n, 12,
+                         mxCreateDoubleScalar((double)obj->rng_state));
+      mxSetFieldByNumber(object_struct, n, 13,
+                         mxCreateDoubleScalar((double)obj->heartbeat));
+      mxSetFieldByNumber(object_struct, n, 14,
+                         mxCreateDoubleScalar((double)obj->lock));
+      mxSetFieldByNumber(object_struct, n, 15,
+                         mxCreateDoubleScalar((double)obj->flags));
+      n++;
+    }
+    gridlabd_index = mxAddField(gridlabd_struct, "object");
+    mxSetFieldByNumber(gridlabd_struct, 0, gridlabd_index, object_struct);
 
-	///////////////////////////////////////////////////////////////////////////
-	// build the import/export data
-	for ( LINKLIST *item=mod->get_exports() ; item!=nullptr ; item=mod->get_next(item) )
-	{
-		OBJECTPROPERTY *objprop = mod->get_export(item);
-		if ( objprop==nullptr ) continue;
+    ///////////////////////////////////////////////////////////////////////////
+    // post the gridlabd structure
+    matlab->root = gridlabd_struct;
+    engPutVariable(matlab->engine, matlab->rootname, matlab->root);
+  }
 
-		// add to published items
-		gld_property prop(objprop->obj,objprop->prop);
-		item->addr = (mxArray*)matlab_create_value(&prop);
-		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
-	}
-	for ( LINKLIST *item=mod->get_imports() ; item!=nullptr ; item=mod->get_next(item) )
-	{
-		OBJECTPROPERTY *objprop = mod->get_import(item);
-		if ( objprop==nullptr ) continue;
+  ///////////////////////////////////////////////////////////////////////////
+  // build the import/export data
+  for (LINKLIST *item = mod->get_exports(); item != nullptr;
+       item = mod->get_next(item)) {
+    OBJECTPROPERTY *objprop = mod->get_export(item);
+    if (objprop == nullptr)
+      continue;
 
-		// check that not already in export list
-		LINKLIST *export_item;
-		bool found=false;
-		for ( export_item=mod->get_exports() ; export_item!=nullptr ; export_item=mod->get_next(export_item) )
-		{
-			OBJECTPROPERTY *other = mod->get_export(item);
-			if ( memcmp(objprop,other,sizeof(OBJECTPROPERTY)) )
-				found=true;
-		}
-		if ( !found )
-		{
-			gld_property prop(objprop->obj,objprop->prop);
-			item->addr = (mxArray*)matlab_create_value(&prop);
-			engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
-		}
-	}
+    // add to published items
+    gld_property prop(objprop->obj, objprop->prop);
+    item->addr = (mxArray *)matlab_create_value(&prop);
+    engPutVariable(matlab->engine, item->name, (mxArray *)item->addr);
+  }
+  for (LINKLIST *item = mod->get_imports(); item != nullptr;
+       item = mod->get_next(item)) {
+    OBJECTPROPERTY *objprop = mod->get_import(item);
+    if (objprop == nullptr)
+      continue;
 
-	static int32 matlab_flag = 1;
-	gl_global_create("MATLAB",PT_int32,&matlab_flag,PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"indicates that MATLAB is available",nullptr);
-	mod->last_t = gl_globalclock;
-	return true;
+    // check that not already in export list
+    LINKLIST *export_item;
+    bool found = false;
+    for (export_item = mod->get_exports(); export_item != nullptr;
+         export_item = mod->get_next(export_item)) {
+      OBJECTPROPERTY *other = mod->get_export(item);
+      if (memcmp(objprop, other, sizeof(OBJECTPROPERTY)))
+        found = true;
+    }
+    if (!found) {
+      gld_property prop(objprop->obj, objprop->prop);
+      item->addr = (mxArray *)matlab_create_value(&prop);
+      engPutVariable(matlab->engine, item->name, (mxArray *)item->addr);
+    }
+  }
+
+  static int32 matlab_flag = 1;
+  gl_global_create("MATLAB", PT_int32, &matlab_flag, PT_ACCESS, PA_REFERENCE,
+                   PT_DESCRIPTION, "indicates that MATLAB is available",
+                   nullptr);
+  mod->last_t = gl_globalclock;
+  return true;
 }
 
-bool copy_exports(glxlink *mod)
-{
-	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
-	LINKLIST *item;
+bool copy_exports(glxlink *mod) {
+  MATLABLINK *matlab = (MATLABLINK *)mod->get_data();
+  LINKLIST *item;
 
-	if ( matlab->rootname!=nullptr )
-	{
-		// update globals
-		for ( item=mod->get_globals() ; item!=nullptr ; item=mod->get_next(item) )
-		{
-			mxArray *var_struct = (mxArray*)mod->get_addr(item);
-			if ( var_struct!=nullptr )
-			{
-				mwIndex var_index = (mwIndex)mod->get_index(item);
-				GLOBALVAR *var = mod->get_globalvar(item);
-				gld_property prop(var);
-				matlab_set_value(var_struct,&prop);
-			}
-		}
+  if (matlab->rootname != nullptr) {
+    // update globals
+    for (item = mod->get_globals(); item != nullptr;
+         item = mod->get_next(item)) {
+      mxArray *var_struct = (mxArray *)mod->get_addr(item);
+      if (var_struct != nullptr) {
+        mwIndex var_index = (mwIndex)mod->get_index(item);
+        GLOBALVAR *var = mod->get_globalvar(item);
+        gld_property prop(var);
+        matlab_set_value(var_struct, &prop);
+      }
+    }
 
-		// update classes
-		// TODO
+    // update classes
+    // TODO
 
-		// update objects
-		for ( item=mod->get_objects() ; item!=nullptr ; item=mod->get_next(item) )
-		{
-			OBJECT *obj = mod->get_object(item);
-			if ( obj==nullptr ) continue;
-			mwIndex index = mod->get_index(item);
-			mxArray *runtime_struct = (mxArray*)mod->get_addr(item); 
-			
-			// add properties to class
-			CLASS *oclass = obj->oclass;
-			for ( PROPERTY *prop=oclass->pmap ; prop!=nullptr && prop->oclass==oclass ; prop=prop->next )
-			{
-				gld_property p(obj,prop);
-				mxArray *data = mxGetField(runtime_struct,index,prop->name);
-				matlab_set_value(data,&p);
-			}
-		}
+    // update objects
+    for (item = mod->get_objects(); item != nullptr;
+         item = mod->get_next(item)) {
+      OBJECT *obj = mod->get_object(item);
+      if (obj == nullptr)
+        continue;
+      mwIndex index = mod->get_index(item);
+      mxArray *runtime_struct = (mxArray *)mod->get_addr(item);
 
-		// update root data
-		engPutVariable(matlab->engine,matlab->rootname,matlab->root);
-	}
+      // add properties to class
+      CLASS *oclass = obj->oclass;
+      for (PROPERTY *prop = oclass->pmap;
+           prop != nullptr && prop->oclass == oclass; prop = prop->next) {
+        gld_property p(obj, prop);
+        mxArray *data = mxGetField(runtime_struct, index, prop->name);
+        matlab_set_value(data, &p);
+      }
+    }
 
-	// update exports
-	for ( item=mod->get_exports() ; item!=nullptr ; item=mod->get_next(item) )
-	{
-		OBJECTPROPERTY *objprop = mod->get_export(item);
-		if ( objprop==nullptr ) continue;
-		gld_property prop(objprop->obj,objprop->prop);
-		item->addr = matlab_set_value((mxArray*)item->addr,&prop);
-		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
-	}
+    // update root data
+    engPutVariable(matlab->engine, matlab->rootname, matlab->root);
+  }
 
-	// update imports
-	for ( item=mod->get_imports() ; item!=nullptr ; item=mod->get_next(item) )
-	{
-		OBJECTPROPERTY *objprop = mod->get_import(item);
-		if ( objprop==nullptr ) continue;
-		gld_property prop(objprop->obj,objprop->prop);
-		item->addr = matlab_set_value((mxArray*)item->addr,&prop);
-		engPutVariable(matlab->engine,item->name,(mxArray*)item->addr);
-	}
+  // update exports
+  for (item = mod->get_exports(); item != nullptr; item = mod->get_next(item)) {
+    OBJECTPROPERTY *objprop = mod->get_export(item);
+    if (objprop == nullptr)
+      continue;
+    gld_property prop(objprop->obj, objprop->prop);
+    item->addr = matlab_set_value((mxArray *)item->addr, &prop);
+    engPutVariable(matlab->engine, item->name, (mxArray *)item->addr);
+  }
 
-	return true;
+  // update imports
+  for (item = mod->get_imports(); item != nullptr; item = mod->get_next(item)) {
+    OBJECTPROPERTY *objprop = mod->get_import(item);
+    if (objprop == nullptr)
+      continue;
+    gld_property prop(objprop->obj, objprop->prop);
+    item->addr = matlab_set_value((mxArray *)item->addr, &prop);
+    engPutVariable(matlab->engine, item->name, (mxArray *)item->addr);
+  }
+
+  return true;
 }
 
-bool copy_imports(glxlink *mod)
-{
-	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
-	LINKLIST *item;
+bool copy_imports(glxlink *mod) {
+  MATLABLINK *matlab = (MATLABLINK *)mod->get_data();
+  LINKLIST *item;
 
-	if ( matlab->rootname!=nullptr )
-	{
-		// update globals
-		for ( item=mod->get_globals() ; item!=nullptr ; item=mod->get_next(item) )
-		{
-			mxArray *var_struct = (mxArray*)mod->get_addr(item);
-			if ( var_struct!=nullptr )
-			{
-				mwIndex var_index = (mwIndex)mod->get_index(item);
-				GLOBALVAR *var = mod->get_globalvar(item);
-				gld_property prop(var);
-				matlab_get_value(var_struct,&prop);
-			}
-		}
-	}
+  if (matlab->rootname != nullptr) {
+    // update globals
+    for (item = mod->get_globals(); item != nullptr;
+         item = mod->get_next(item)) {
+      mxArray *var_struct = (mxArray *)mod->get_addr(item);
+      if (var_struct != nullptr) {
+        mwIndex var_index = (mwIndex)mod->get_index(item);
+        GLOBALVAR *var = mod->get_globalvar(item);
+        gld_property prop(var);
+        matlab_get_value(var_struct, &prop);
+      }
+    }
+  }
 
-	// update imports
-	for ( item=mod->get_imports()==nullptr?mod->get_exports():mod->get_imports() ; item!=nullptr ; item=mod->get_next(item) )
-	{
-		OBJECTPROPERTY *objprop = mod->get_import(item);
-		if ( objprop==nullptr ) continue;
-		gld_property prop(objprop->obj,objprop->prop);
-		mxArray *data = engGetVariable(matlab->engine,item->name);
-		if ( data )
-			matlab_get_value(data,&prop);
-		else
-			gl_warning("unable to read '%s' from matlab", item->name);
-		mxDestroyArray(data);
-	}
+  // update imports
+  for (item = mod->get_imports() == nullptr ? mod->get_exports()
+                                            : mod->get_imports();
+       item != nullptr; item = mod->get_next(item)) {
+    OBJECTPROPERTY *objprop = mod->get_import(item);
+    if (objprop == nullptr)
+      continue;
+    gld_property prop(objprop->obj, objprop->prop);
+    mxArray *data = engGetVariable(matlab->engine, item->name);
+    if (data)
+      matlab_get_value(data, &prop);
+    else
+      gl_warning("unable to read '%s' from matlab", item->name);
+    mxDestroyArray(data);
+  }
 
-	return true;
+  return true;
 }
 
-EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
-{
-	TIMESTAMP t1 = TS_NEVER;
-	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
+EXPORT TIMESTAMP glx_sync(glxlink *mod, TIMESTAMP t0) {
+  TIMESTAMP t1 = TS_NEVER;
+  MATLABLINK *matlab = (MATLABLINK *)mod->get_data();
 
-	TIMESTAMP effective_valid_to = mod->valid_to;
-	if((mod->glxflags & LF_SKIPSAFE) && t0 < effective_valid_to){
-		return effective_valid_to;
-	}
-	if ( !copy_exports(mod) )
-		return TS_INVALID; // error
+  TIMESTAMP effective_valid_to = mod->valid_to;
+  if ((mod->glxflags & LF_SKIPSAFE) && t0 < effective_valid_to) {
+    return effective_valid_to;
+  }
+  if (!copy_exports(mod))
+    return TS_INVALID; // error
 
-	if ( matlab->sync )
-	{
-		mod->last_t = t0;
-		mxArray *ans = matlab_exec(matlab,"%s",matlab->sync);
-		if ( ans && mxIsDouble(ans) )
-		{
-			double *pVal = (double*)mxGetData(ans);
-			if ( pVal!=nullptr ){
-				t1 = floor(*pVal);
-			}
-			if ( t1<TS_INVALID || t1 > TS_MAX ){
-				t1=TS_NEVER;
-			}
-		}
-		else if ( ans && mxIsChar(ans) )
-		{
-			int buflen = (mxGetM(ans) * mxGetN(ans)) + 1;
-			char *string =(char*)malloc(buflen);
-			int status_error = mxGetString(ans, string, buflen);
-			if (status_error == 0)
-			{
-				gl_error("'%s'",string);
-				return TS_INVALID; // error
-			}
-			else
-			{			
-				gl_error("Did not catch Matlab error");
-				return TS_INVALID; // error
-			}
-		}
-		else
-		{
-			gl_error("Check what you return as ans for on_sync!");
-		}
-		mod->valid_to = t1;
-	}
+  if (matlab->sync) {
+    mod->last_t = t0;
+    mxArray *ans = matlab_exec(matlab, "%s", matlab->sync);
+    if (ans && mxIsDouble(ans)) {
+      double *pVal = (double *)mxGetData(ans);
+      if (pVal != nullptr) {
+        t1 = floor(*pVal);
+      }
+      if (t1 < TS_INVALID || t1 > TS_MAX) {
+        t1 = TS_NEVER;
+      }
+    } else if (ans && mxIsChar(ans)) {
+      int buflen = (mxGetM(ans) * mxGetN(ans)) + 1;
+      char *string = (char *)malloc(buflen);
+      int status_error = mxGetString(ans, string, buflen);
+      if (status_error == 0) {
+        gl_error("'%s'", string);
+        return TS_INVALID; // error
+      } else {
+        gl_error("Did not catch Matlab error");
+        return TS_INVALID; // error
+      }
+    } else {
+      gl_error("Check what you return as ans for on_sync!");
+    }
+    mod->valid_to = t1;
+  }
 
-	if ( !copy_imports(mod) )
-		return TS_INVALID; // error
+  if (!copy_imports(mod))
+    return TS_INVALID; // error
 
-	return t1;
+  return t1;
 }
 
-EXPORT bool glx_term(glxlink* mod)
-{
-	// close matlab engine
-	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
-	if ( matlab && matlab->engine )
-	{
-		if ( matlab->term ) 
-		{
-			mxArray *ans = matlab_exec(matlab,"%s",matlab->term);
-			if ( ans && mxIsDouble(ans) && (bool)*mxGetPr(ans)==false )
-			{
-				gl_error("matlab term failed");
-				return false;
-			}
-			else if ( ans && mxIsChar(ans) )
-			{
-				int buflen = (mxGetM(ans) * mxGetN(ans)) + 1;
-				char *string =(char*)malloc(buflen);
-				int status_error = mxGetString(ans, string, buflen);
-				if (status_error == 0)
-				{
-					gl_error("'%s'",string);
-					engClose(matlab->engine)==0;
-					return false;
-				}
-				else
-				{			
-					gl_error("Did not catch Matlab error");
-					engClose(matlab->engine)==0;
-					return false;
-				}
-			}
-		}
-		if ( window_kill(matlab) ) engClose(matlab->engine)==0;
-	}
-	return true;
+EXPORT bool glx_term(glxlink *mod) {
+  // close matlab engine
+  MATLABLINK *matlab = (MATLABLINK *)mod->get_data();
+  if (matlab && matlab->engine) {
+    if (matlab->term) {
+      mxArray *ans = matlab_exec(matlab, "%s", matlab->term);
+      if (ans && mxIsDouble(ans) && (bool)*mxGetPr(ans) == false) {
+        gl_error("matlab term failed");
+        return false;
+      } else if (ans && mxIsChar(ans)) {
+        int buflen = (mxGetM(ans) * mxGetN(ans)) + 1;
+        char *string = (char *)malloc(buflen);
+        int status_error = mxGetString(ans, string, buflen);
+        if (status_error == 0) {
+          gl_error("'%s'", string);
+          engClose(matlab->engine) == 0;
+          return false;
+        } else {
+          gl_error("Did not catch Matlab error");
+          engClose(matlab->engine) == 0;
+          return false;
+        }
+      }
+    }
+    if (window_kill(matlab))
+      engClose(matlab->engine) == 0;
+  }
+  return true;
 }
 
 #else
 
-EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable)
-{
-	callback=fntable;
-	gl_error("matlab link was not built on system that had matlab installed");
-	return false;
+EXPORT bool glx_create(glxlink *mod, CALLBACKS *fntable) {
+  callback = fntable;
+  gl_error("matlab link was not built on system that had matlab installed");
+  return false;
 }
-EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
-{
-	gl_error("matlab link was not built on system that had matlab installed");
-	return false;
+EXPORT bool glx_settag(glxlink *mod, char *tag, char *data) {
+  gl_error("matlab link was not built on system that had matlab installed");
+  return false;
 }
-EXPORT bool glx_init(glxlink *mod)
-{
-	gl_error("matlab link was not built on system that had matlab installed");
-	return false;
+EXPORT bool glx_init(glxlink *mod) {
+  gl_error("matlab link was not built on system that had matlab installed");
+  return false;
 }
-EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
-{
-	gl_error("matlab link was not built on system that had matlab installed");
-	return TS_INVALID;
+EXPORT TIMESTAMP glx_sync(glxlink *mod, TIMESTAMP t0) {
+  gl_error("matlab link was not built on system that had matlab installed");
+  return TS_INVALID;
 }
-EXPORT bool glx_term(glxlink* mod)
-{
-	gl_error("matlab link was not built on system that had matlab installed");
-	return false;
+EXPORT bool glx_term(glxlink *mod) {
+  gl_error("matlab link was not built on system that had matlab installed");
+  return false;
 }
 #endif // HAVE_MATLAB

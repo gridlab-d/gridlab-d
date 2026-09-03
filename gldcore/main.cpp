@@ -7,35 +7,20 @@
  **/
 // #define _MAIN_C
 
-#define WIN32_LEAN_AND_MEAN // <--- ADD THIS AT THE VERY TOP OF THE FILE
-
-// #define USE_MPI
 
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-
 #include <iostream>
 #include <thread>
 #include <chrono>
 
 #ifdef _WIN32
-#include <windows.h> // Required for GetCurrentProcessId on Windows
+    #include <windows.h> // Required for GetCurrentProcessId on Windows
+    #include <direct.h>
+    #include <process.h>
 #else
-#include <unistd.h> // Required for getpid() on non-Windows systems
-#endif
-
-#include "globals.h"
-
-#ifdef _WIN32
-
-#include <direct.h>
-#include <process.h>
-
-#else
-
-#include <unistd.h>
-
+    #include <unistd.h> // Required for getpid() on non-Windows systems
 #endif
 
 #include "globals.h"
@@ -52,7 +37,6 @@
 #include "exec.h"
 #include "kml.h"
 #include "kill.h"
-#include "threadpool.h"
 #include "cpp_threadpool.h"
 
 // #if defined(_WIN32) && defined(_DEBUG)
@@ -171,7 +155,7 @@ int main(int argc,     /**< the number entries on command-line argument list \p 
     if (browser != nullptr)
         strncpy(global_browser, browser, sizeof(global_browser) - 1);
 
-    // #if defined WIN32 && _DEBUG
+    // #if defined(_WIN32) && _DEBUG
     //     atexit(pause_at_exit);
     // #endif
 
@@ -197,7 +181,7 @@ int main(int argc,     /**< the number entries on command-line argument list \p 
     for (i = 0; i < argc; i++)
     {
         if (pos < (int)(sizeof(global_command_line) - strlen(argv[i])))
-            pos += sprintf(global_command_line + pos, "%s%s", pos > 0 ? " " : "", argv[i]);
+            pos += snprintf(global_command_line + pos, sizeof(global_command_line) - pos, "%s%s", pos > 0 ? " " : "", argv[i]);
     }
 
     /* main initialization */

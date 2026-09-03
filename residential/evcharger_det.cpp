@@ -92,6 +92,18 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 
 			PT_double, "J2894_outage_disconnect_interval[s]", PADDR(J2894_off_threshold), PT_DESCRIPTION, "J2894-suggested outage length, when criterion has been exceeded",
 
+			/* Additional published internal/state variables from props_to_publish/evcharger_det.csv */
+			PT_timestamp, "glob_min_timestep", PADDR(glob_min_timestep), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for global minimum timestep",
+			PT_double, "glob_min_timestep_dbl", PADDR(glob_min_timestep_dbl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for global minimum timestep in double format",
+			PT_bool, "off_nominal_time", PADDR(off_nominal_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for off nominal time",
+			PT_double, "prev_time_dbl", PADDR(prev_time_dbl), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for previous time in double format",
+			PT_bool, "deltamode_registered", PADDR(deltamode_registered), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for deltamode registration status",
+			PT_bool, "J2894_voltage_high_state_0", PADDR(J2894_voltage_high_state[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 high-voltage state (index 0)",
+			PT_bool, "J2894_voltage_high_state_1", PADDR(J2894_voltage_high_state[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 high-voltage state (index 1)",
+			PT_bool, "J2894_voltage_low_state_0", PADDR(J2894_voltage_low_state[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 low-voltage state (index 0)",
+			PT_bool, "J2894_voltage_low_state_1", PADDR(J2894_voltage_low_state[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 low-voltage state (index 1)",
+			PT_double, "J2894_off_accumulator", PADDR(J2894_off_accumulator), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 off accumulator",
+			PT_bool, "J2894_is_ramp_constrained", PADDR(J2894_is_ramp_constrained), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for J2894 ramp constrained flag",
 			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -189,16 +201,21 @@ int evcharger_det::create()
 	return create_res;
 }
 
-int evcharger_det::init(OBJECT *parent)
-{
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+int evcharger_det::init(OBJECT *parent) {
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+    if (parent != nullptr) {
+        if ((parent->flags & OF_INIT) != OF_INIT) {
 			char objname[256];
 			gl_verbose("evcharger_det::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = object_header(this);
+
 	int init_res;
 	int comma_count, curr_idx, curr_comma_count;
 	char temp_char;
@@ -2315,7 +2332,7 @@ EXPORT int create_evcharger_det(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			evcharger_det *my = object_data<evcharger_det>(*obj);
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -2334,7 +2351,7 @@ EXPORT int init_evcharger_det(OBJECT *obj)
 	INIT_CATCHALL(evcharger_det);
 }
 
-EXPORT int isa_evcharger_det(OBJECT *obj, char *classname)
+EXPORT int isa_evcharger_det_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<evcharger_det>(obj)->isa(classname);
@@ -2343,8 +2360,21 @@ EXPORT int isa_evcharger_det(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-{
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_evcharger_det(OBJECT *obj, char *classname) {
+  return isa_evcharger_det_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_evcharger_det(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_evcharger_det_impl(obj, classname);
+}
+#endif
+
+static TIMESTAMP sync_evcharger_det_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 	TIMESTAMP t1;
 
 	try {
@@ -2369,6 +2399,22 @@ EXPORT TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(evcharger_det);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_evcharger_det_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_evcharger_det(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_evcharger_det_impl(obj, t0, pass);
+}
+#endif
 
 //Deltamode linkage function
 //Deltamode exposed functions

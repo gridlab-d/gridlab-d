@@ -64,6 +64,7 @@ private:
 	bool climate_object_found;
 
 	void push_powerflow_currents(void);
+
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
@@ -121,7 +122,6 @@ public:
 	};
 	enumeration battery_state;
 
-		
 	double power_set_high;
 	double power_set_low;
 	double power_set_high_highT;
@@ -155,7 +155,6 @@ public:
 
 	TIMESTAMP state_change_time;
 
-
 	//battery module parameters
 	double v_max; //the maximum DC voltage of the battery in V
 	double p_max; // the rated DC power the battery can supply or draw in W
@@ -165,7 +164,6 @@ public:
 
 	double deltat; // delta mode time interval in second
 	unsigned int64 state_change_time_delta;
-	double pre_soc; //store the soc value during iterations
 	double Pout_delta; //Power output from parent inverter
 
 	//*** LEGACY model parameters - ported from energy_storage before separation ***//
@@ -217,6 +215,7 @@ public:
 
 	gld_property *map_complex_value(OBJECT *obj, const char *name);
 	gld_property *map_double_value(OBJECT *obj, const char *name);
+
 public:
 	static CLASS *oclass;
 	static battery *defaults;

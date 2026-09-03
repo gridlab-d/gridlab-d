@@ -108,7 +108,6 @@ dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 
 			PT_double,"queue_min[unit]",PADDR(queue_min),
 			PT_double,"queue_max[unit]",PADDR(queue_max),
-			
 
 			PT_double,"pulse_interval_1[s]", PADDR(pulse_interval[0]),
 			PT_double,"pulse_interval_2[s]", PADDR(pulse_interval[1]),
@@ -141,6 +140,17 @@ dishwasher::dishwasher(MODULE *module) : residential_enduse(module)
 			PT_double,"motor_on_off",PADDR(motor_on_off),
 			PT_double,"motor_coil_on_off",PADDR(motor_coil_on_off),
 			
+			PT_bool,"motor_only_25_repeat_one",PADDR(motor_only_25_repeat_one), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal flag for motor only 25 repeat one",
+			PT_double,"controls_power",PADDR(controls_power), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for controls power",
+			PT_double,"cycle_duration",PADDR(cycle_duration), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for cycle duration",
+			PT_double,"count_motor_only",PADDR(count_motor_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only cycles",
+			PT_double,"count_motor_only1",PADDR(count_motor_only1), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only cycles 1",
+			PT_double,"count_motor_only_25",PADDR(count_motor_only_25), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only 25",
+			PT_double,"count_coil_only",PADDR(count_coil_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for coil only",
+			PT_double,"count_motor_only_68",PADDR(count_motor_only_68), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for motor only 68",
+			PT_double,"count_control_only",PADDR(count_control_only), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles",
+			PT_double,"count_control_only1",PADDR(count_control_only1), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal counter for control only cycles 1",
+			PT_double,"heat_fraction",PADDR(heat_fraction), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for heat fraction",
 
 			PT_bool,"is_240",PADDR(is_240), PT_DESCRIPTION, "load is 220/240 V (across both phases)",
 			nullptr)<1)
@@ -170,10 +180,10 @@ int dishwasher::create()
 	energy_used = 0;
 	
 	coil_power[0] = -1;
-	motor_on_off = motor_coil_on_off = both_coils_on_off = 0;
+	motor_on_off = motor_coil_on_off = 0;
 
 	last_t = 0;
-	
+
 
 	gl_warning("explicit %s model is experimental and has not been validated", object_header(this)->oclass->name);
 	/* TROUBLESHOOT
@@ -184,13 +194,17 @@ int dishwasher::create()
 	return res;
 }
 
-int dishwasher::init(OBJECT *parent)
-{
-	// @todo This class has serious problems and should be deleted and started from scratch. Fuller 9/27/2013.
+int dishwasher::init(OBJECT *parent) {
+  OBJECT *hdr = object_header(this);
 
-	OBJECT *hdr = object_header(this);
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+    // @todo This class has serious problems and should be deleted and started
+    // from scratch. Fuller 9/27/2013.
+
+    if (parent != nullptr) {
+        if ((parent->flags & OF_INIT) != OF_INIT) {
 			char objname[256];
 			gl_verbose("dishwasher::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
@@ -1350,7 +1364,6 @@ case dishwasher_TRIPPED:
 	dt = cycle_time;
 	break;
 
-
 	case dishwasher_HEATEDDRY_ONLY:
 	
 	cycle_time -= dt;
@@ -1394,10 +1407,9 @@ case dishwasher_TRIPPED:
 
 		break;
 
-
 	case dishwasher_MOTOR_ONLY:
 		motor_on_off = 1;
-		motor_coil_on_off = both_coils_on_off = 0;
+		motor_coil_on_off = 0;
 		cycle_time -= dt;
 
 		load.power.SetPowerFactor(motor_power/1000, load.power_factor);
@@ -1424,20 +1436,18 @@ case dishwasher_TRIPPED:
 	// compute the total heat gain
 	load.heatgain = load.total.Mag() * heat_fraction;
 
-
 	if (dt > 0 && dt < 1)
 		dt = 1;
 
 	return dt;
 }
 
-
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
 
-EXPORT TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_dishwasher_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP tret;
 	dishwasher *my = object_data<dishwasher>(obj);
@@ -1467,13 +1477,28 @@ EXPORT TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return TS_INVALID;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+    return sync_dishwasher_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_dishwasher(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_dishwasher_impl(obj, t0, pass);
+}
+#endif
+
 EXPORT int create_dishwasher(OBJECT **obj, OBJECT *parent)
 {
 	*obj = gl_create_object(dishwasher::oclass);
 	if (*obj!=nullptr)
 	{
 		dishwasher *my = object_data<dishwasher>(*obj);
-		gl_set_parent(*obj,parent);
+		// gl_set_parent(*obj,parent);
 		my->create();
 		return 1;
 	}
@@ -1486,7 +1511,7 @@ EXPORT int init_dishwasher(OBJECT *obj)
 	return my->init(obj->parent);
 }
 
-EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
+EXPORT int isa_dishwasher_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<dishwasher>(obj)->isa(classname);
@@ -1495,12 +1520,17 @@ EXPORT int isa_dishwasher(OBJECT *obj, char *classname)
 	}
 }
 
-//EXPORT TIMESTAMP sync_dishwasher(OBJECT *obj, TIMESTAMP t0)
-//{
-//	dishwasher *my = object_data<dishwasher>(obj);
-//	TIMESTAMP t1 = my->sync(obj->clock, t0);
-//	obj->clock = t0;
-//	return t1;
-//}
-
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_dishwasher(OBJECT *obj, char *classname) {
+  return isa_dishwasher_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_dishwasher(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_dishwasher_impl(obj, classname);
+}
+#endif
 /**@}**/

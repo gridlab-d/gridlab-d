@@ -63,14 +63,14 @@ clock_t loader_time = 0;
 STATUS load_module_list(FILE *fd, int *test_mod_num) {
   /*
 
-  sprintf(mod_test,"mod_test%d=%s",test_mod_num++,*++argv);
+  snprintf(mod_test, sizeof(mod_test), "mod_test%d=%s",test_mod_num++,*++argv);
   if (global_setvar(mod_test)==SUCCESS)
   */
   char mod_test[100];
   char line[100];
   while (fscanf(fd, "%s", line) != EOF) {
     printf("Line: %s", line);
-    sprintf(mod_test, "mod_test%d=%s", (*test_mod_num)++, line);
+    snprintf(mod_test, sizeof(mod_test), "mod_test%d=%s", (*test_mod_num)++, line);
     if (global_setvar(mod_test) != SUCCESS) {
       output_fatal("Unable to store module name");
       /*	TROUBLESHOOT
@@ -290,13 +290,13 @@ static STATUS no_cmdargs() {
     /* enter server mode and wait */
 #ifdef _WIN32
     if (htmlfile[1] != ':')
-      sprintf(htmlfile, "%s\\gridlabd.htm", global_workdir);
+      snprintf(htmlfile, sizeof(htmlfile), "%s\\gridlabd.htm", global_workdir);
     output_message("opening html page '%s'", htmlfile);
-    sprintf(cmd, "start %s file:///%s", global_browser, htmlfile);
+    snprintf(cmd, sizeof(cmd), "start %s file:///%s", global_browser, htmlfile);
 #elif defined(MACOSX)
-    sprintf(cmd, "open -a %s %s", global_browser, htmlfile);
+    snprintf(cmd, sizeof(cmd), "open -a %s %s", global_browser, htmlfile);
 #else
-    sprintf(cmd, "%s '%s' & ps -p $! >/dev/null", global_browser, htmlfile);
+    snprintf(cmd, sizeof(cmd), "%s '%s' & ps -p $! >/dev/null", global_browser, htmlfile);
 #endif
     output_verbose("Starting browser using command [%s]", cmd);
     if (system(cmd) != 0) {
@@ -670,7 +670,7 @@ static int modhelp(int argc, char *argv[]) {
             KEYWORD *key;
             printf("\t%s {", proptype);
             for (key = prop->keywords; key != nullptr; key = key->next)
-              printf("%s=%ld%s", key->name, key->value,
+              printf("%s=%lld%s", key->name, key->value,
                      key->next == nullptr ? "\n" : ",\n");
             printf("} %s;", strrchr(prop->name, ':') + 1);
           } else {
@@ -1003,7 +1003,7 @@ static int xsl(int argc, char *argv[]) {
       p_args[n_args++] = p_arg;
       p_arg = strtok(nullptr, ",");
     }
-    sprintf(fname, "gridlabd-%d_%d.xsl", global_version_major,
+    snprintf(fname, sizeof(fname), "gridlabd-%d_%d.xsl", global_version_major,
             global_version_minor);
     output_xsl(fname, n_args, p_args);
     return CMDOK;
@@ -1064,12 +1064,12 @@ static int info(int argc, char *argv[]) {
   if (argc > 1) {
     char cmd[1024];
 #ifdef _WIN32
-    sprintf(cmd, "start %s \"%s%s\"", global_browser, global_infourl, argv[1]);
+    snprintf(cmd, sizeof(cmd), "start %s \"%s%s\"", global_browser, global_infourl, argv[1]);
 #elif defined(MACOSX)
-    sprintf(cmd, "open -a %s \"%s%s\"", global_browser, global_infourl,
+    snprintf(cmd, sizeof(cmd), "open -a %s \"%s%s\"", global_browser, global_infourl,
             argv[1]);
 #else
-    sprintf(cmd, "%s \"%s%s\" & ps -p $! >/dev/null", global_browser,
+    snprintf(cmd, sizeof(cmd), "%s \"%s%s\" & ps -p $! >/dev/null", global_browser,
             global_infourl, argv[1]);
 #endif
     output_verbose("Starting browser using command [%s]", cmd);
@@ -1108,7 +1108,7 @@ static int info(int argc, char *argv[]) {
 //	strncpy(global_master,host,sizeof(global_master)-1);
 //	if ( strcmp(global_master,"localhost")==0 ){
 //		sscanf(port,"%" FMT_INT64 "x",&global_master_port); /* port is
-//actual mmap/shmem */ 		global_multirun_connection = MRC_MEM;
+// actual mmap/shmem */ 		global_multirun_connection = MRC_MEM;
 //	}
 //	else
 //	{
@@ -1119,12 +1119,13 @@ static int info(int argc, char *argv[]) {
 //	if ( FAILED == instance_slave_init() )
 //	{
 //		output_error("slave instance init failed for master '%s'
-//connection '%" FMT_INT64 "x'", global_master, global_master_port); 		return
-//CMDERR;
+// connection '%" FMT_INT64 "x'", global_master, global_master_port);
+// return CMDERR;
 //	}
 //
 //	output_verbose("slave instance for master '%s' using connection '%"
-//FMT_INT64 "x' started ok", global_master, global_master_port); 	return 1;
+// FMT_INT64 "x' started ok", global_master, global_master_port); 	return
+// 1;
 // }
 // static int slavenode(int argc, char *argv[])
 //{
@@ -1238,7 +1239,7 @@ static int mclassdef(int argc, char *argv[]) {
 
   /* output the classdef */
   count =
-      sprintf(buffer, "struct('module','%s','class','%s'", modname, classname);
+      snprintf(buffer, sizeof(buffer), "struct('module','%s','class','%s'", modname, classname);
   for (prop = oclass->pmap; prop != nullptr && prop->oclass == oclass;
        prop = prop->next) {
     char temp[1024];
@@ -1246,9 +1247,9 @@ static int mclassdef(int argc, char *argv[]) {
     if (strchr(prop->name, '.') != nullptr)
       continue; /* do not output structures */
     if (value != nullptr)
-      count += sprintf(buffer + count, ",...\n\t'%s','%s'", prop->name, value);
+      count += snprintf(buffer + count, sizeof(buffer) - count, ",...\n\t'%s','%s'", prop->name, value);
   }
-  count += sprintf(buffer + count, ");\n");
+  count += snprintf(buffer + count, sizeof(buffer) - count, ");\n");
   output_raw("%s", buffer);
   return CMDOK;
 }
@@ -1417,10 +1418,10 @@ static CMDARG main_cmd[] = {
     //{"slave",		nullptr,	slave,			"<master>",
     //"Enables slave mode under master"},
     //{"slavenode",	nullptr,	slavenode,		nullptr, "Sets a
-    //listener for a remote GridLAB-D call to run in slave mode"},
+    // listener for a remote GridLAB-D call to run in slave mode"},
     //{"id",			nullptr,	slave_id,
     //"<idnum>", "Sets the ID number for the slave to inform its using to the
-    //master"},
+    // master"},
 };
 
 int cmdarg_runoption(const char *value) {
@@ -1522,7 +1523,7 @@ STATUS cmdarg_load(int argc,     /**< the number of arguments in \p argv */
     for (i = 0; i < sizeof(main_cmd) / sizeof(main_cmd[0]); i++) {
       CMDARG arg = main_cmd[i];
       char tmp[1024];
-      sprintf(tmp, "%s=", arg.lopt);
+      snprintf(tmp, sizeof(tmp), "%s=", arg.lopt);
       if ((arg.sopt && strncmp(*argv, "-", 1) == 0 &&
            strcmp((*argv) + 1, arg.sopt) == 0) ||
           (arg.lopt && strncmp(*argv, "--", 2) == 0 &&
@@ -1561,7 +1562,7 @@ STATUS cmdarg_load(int argc,     /**< the number of arguments in \p argv */
 
           /* preserve name of first model only */
           if (strcmp(global_modelname, "") == 0)
-            strcpy(global_modelname, *argv);
+            snprintf(global_modelname, sizeof(global_modelname), "%s", *argv);
 
           if (!loadall(*argv))
             status = FAILED;

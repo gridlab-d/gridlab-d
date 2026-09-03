@@ -14,11 +14,12 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "version.h"
-#include "output.h"
+#define _MAIN_C 1
 #include "globals.h"
+
 #include "module.h"
-#include "lock.h"
+#include "output.h"
+#include "version.h"
 
 static GLOBALVAR *global_varlist = nullptr, *lastvar = nullptr;
 
@@ -208,6 +209,7 @@ static struct s_varmap
 	{"checkpoint_seqnum", PT_int32, &global_checkpoint_seqnum, PA_PUBLIC, "checkpoint sequence number"},
 	{"checkpoint_interval", PT_int32, &global_checkpoint_interval, PA_PUBLIC, "checkpoint interval"},
 	{"checkpoint_keepall", PT_bool, &global_checkpoint_keepall, PA_PUBLIC, "checkpoint file keep enable flag"},
+	{"checkpoint_loaded", PT_bool, &global_checkpoint_loaded, PA_PUBLIC, "checkpoint loaded flag"},
 	{"check_version", PT_bool, &global_check_version, PA_PUBLIC, "check version enable flag"},
 	{"random_number_generator", PT_enumeration, &global_randomnumbergenerator, PA_PUBLIC, "random number generator version control flag", rng_keys},
 	{"mainloop_state", PT_enumeration, &global_mainloopstate, PA_PUBLIC, "main sync loop state flag", mls_keys},
@@ -656,11 +658,8 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 				return FAILED;
 			}
 		}
-		// wlock(&globalvar_lock);
-		// replace the above with SharedMutexManager
 		std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&globalvar_lock));
 		retval = class_string_to_property(var->prop, (void *)var->prop->addr, value);
-		// wunlock(&globalvar_lock);
 		lock.unlock();
 		if (retval == 0)
 		{
@@ -698,7 +697,7 @@ char *global_guid(char *buffer, int size)
 			srand(entropy_source());
 			guid_first = 0;
 		}
-		sprintf(buffer, "%04x%04x-%04x-4%03x-%04x-%04x%04x%04x",
+		snprintf(buffer, size, "%04x%04x-%04x-4%03x-%04x-%04x%04x%04x",
 				rand() & 0xffff, rand() & 0xffff, rand() & 0xffff, rand() & 0x0fff, rand() & 0xffff, rand() & 0xffff, rand() & 0xffff, rand() & 0xffff);
 		return buffer;
 	}
@@ -908,7 +907,7 @@ int parameter_expansion(char *buffer, int size, const char *spec)
 		if (var == nullptr || var->prop->ptype != PT_int32)
 			return 0;
 		addr = (int32 *)&(var->prop->addr);
-		sprintf(buffer, "%d", ++(*addr));
+		snprintf(buffer, size, "%d", ++(*addr));
 		return 1;
 	}
 
@@ -920,7 +919,7 @@ int parameter_expansion(char *buffer, int size, const char *spec)
 		if (var == nullptr || var->prop->ptype != PT_int32)
 			return 0;
 		addr = (int32 *)&(var->prop->addr);
-		sprintf(buffer, "%d", --(*addr));
+		snprintf(buffer, size, "%d", --(*addr));
 		return 1;
 	}
 
@@ -932,7 +931,7 @@ int parameter_expansion(char *buffer, int size, const char *spec)
 		if (var == nullptr || var->prop->ptype != PT_int32)
 			return 0;
 		addr = (int32 *)&(var->prop->addr);
-		sprintf(buffer, "%d", (*addr));
+		snprintf(buffer, size, "%d", (*addr));
 		if (strcmp(op, "++") == 0)
 		{
 			(*addr)++;
@@ -1002,60 +1001,60 @@ int parameter_expansion(char *buffer, int size, const char *spec)
 		if (var != nullptr && var->prop->ptype == PT_int32)
 		{
 			int32 *addr = (int32 *)&(var->prop->addr);
-			sprintf(buffer, "%d", (*addr));
+			snprintf(buffer, size, "%d", (*addr));
 			if (strcmp(op, "+=") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) += number);
+				snprintf(buffer, size, "%d", (*addr) += number);
 				return 1;
 			}
 			if (strcmp(op, "-=") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) -= number);
+				snprintf(buffer, size, "%d", (*addr) -= number);
 				return 1;
 			}
 			if (strcmp(op, "*=") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) *= number);
+				snprintf(buffer, size, "%d", (*addr) *= number);
 				return 1;
 			}
 			if (strcmp(op, "/=") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) /= number);
+				snprintf(buffer, size, "%d", (*addr) /= number);
 				return 1;
 			}
 			if (strcmp(op, "%=") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) %= number);
+				snprintf(buffer, size, "%d", (*addr) %= number);
 				return 1;
 			}
 			if (strcmp(op, "&=") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) &= number);
+				snprintf(buffer, size, "%d", (*addr) &= number);
 				return 1;
 			}
 			if (strcmp(op, "|=") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) |= number);
+				snprintf(buffer, size, "%d", (*addr) |= number);
 				return 1;
 			}
 			if (strcmp(op, "^=") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) ^= number);
+				snprintf(buffer, size, "%d", (*addr) ^= number);
 				return 1;
 			}
 			if (strcmp(op, "&=~") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) &= ~number);
+				snprintf(buffer, size, "%d", (*addr) &= ~number);
 				return 1;
 			}
 			if (strcmp(op, "|=~") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) |= ~number);
+				snprintf(buffer, size, "%d", (*addr) |= ~number);
 				return 1;
 			}
 			if (strcmp(op, "^=~") == 0)
 			{
-				sprintf(buffer, "%d", (*addr) ^= ~number);
+				snprintf(buffer, size, "%d", (*addr) ^= ~number);
 				return 1;
 			}
 		}
@@ -1074,7 +1073,7 @@ int parameter_expansion(char *buffer, int size, const char *spec)
 		else
 			addr = (int32 *)&(var->prop->addr);
 		*addr = number;
-		sprintf(buffer, "%d", number);
+		snprintf(buffer, size, "%d", number);
 		return 1;
 	}
 
@@ -1108,7 +1107,7 @@ char *global_getvar(const char *name, char *buffer, int size)
 		{"GUID", global_guid},
 		{"NOW", global_now},
 		{"RUN", global_run},
-#if defined WIN32
+#if defined(_WIN32)
 		{"WINDOWS", global_true},
 #elif defined __APPLE__
 		{"APPLE", global_true},
@@ -1218,11 +1217,8 @@ void *global_remote_read(void *local,	 /** local memory for data (must be correc
 		/* multithread */
 		else
 		{
-			// auto v = rlock(&var->lock);
-			// replace the above with SharedMutexManager
 			std::shared_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&var->lock));
 			memcpy(local, addr, size);
-			// runlock();
 			return local;
 		}
 	}
@@ -1252,11 +1248,8 @@ void global_remote_write(void *local,	 /** local memory for data */
 		/* multithread */
 		else
 		{
-			// wlock(&var->lock);
-			// replace the above with SharedMutexManager
 			std::unique_lock<std::shared_mutex> lock(SharedMutexManager::get_mutex(&var->lock));
 			memcpy(addr, local, size);
-			// wunlock(&var->lock);
 		}
 	}
 	else

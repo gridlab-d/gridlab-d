@@ -33,7 +33,6 @@
 #include "exception.h"
 #include "find.h"
 #include "globals.h"
-#include "lock.h"
 #include "output.h"
 #include "platform.h"
 #include "timestamp.h"
@@ -231,8 +230,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt) {
   if (dt == nullptr || ts < TS_ZERO ||
       ts > TS_MAX) /* no buffer or timestamp out of range */
   {
-    output_error("local_datetime(ts=%lli,...): invalid local_datetime request",
-                 ts);
+    output_error("local_datetime(ts=%lli,...): invalid local_datetime request", ts);
     return 0;
   }
 #ifdef USE_TS_CACHE
@@ -257,8 +255,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt) {
             This is the result of an internal core or module coding error which
        resulted in an invalid UTC clock time being converted to local time.
     */
-    output_error("local_datetime(ts=%lli,...): invalid local_datetime request",
-                 ts);
+    output_error("local_datetime(ts=%lli,...): invalid local_datetime request", ts);
     return 0;
   }
 
@@ -374,9 +371,7 @@ int local_datetime_delta(double tsdbl, DATETIME *dt) {
   if (dt == nullptr || ts < TS_ZERO ||
       ts > TS_MAX) /* no buffer or timestamp out of range */
   {
-    output_error(
-        "local_datetime_delta(ts=%lli,...): invalid local_datetime request",
-        ts);
+    output_error("local_datetime_delta(ts=%lli,...): invalid local_datetime request", ts);
     return 0;
   }
 #ifdef USE_TS_CACHE
@@ -401,9 +396,7 @@ int local_datetime_delta(double tsdbl, DATETIME *dt) {
             This is the result of an internal core or module coding error which
        resulted in an invalid UTC clock time being converted to local time.
     */
-    output_error(
-        "local_datetime_delta(ts=%lli,...): invalid local_datetime request",
-        ts);
+    output_error("local_datetime_delta(ts=%lli,...): invalid local_datetime request", ts);
     return 0;
   }
 
@@ -588,29 +581,29 @@ int strdatetime(DATETIME *t, char *buffer, int size) {
   /* choose best format */
   if (global_dateformat == DF_ISO) {
     if (t->nanosecond != 0) {
-      len = sprintf(tbuffer, "%04d-%02d-%02d %02d:%02d:%02d.%09d %s", t->year,
+      len = snprintf(tbuffer, sizeof(tbuffer), "%04d-%02d-%02d %02d:%02d:%02d.%09d %s", t->year,
                     t->month, t->day, t->hour, t->minute, t->second,
                     t->nanosecond, t->tz);
     } else {
-      len = sprintf(tbuffer, "%04d-%02d-%02d %02d:%02d:%02d %s", t->year,
+      len = snprintf(tbuffer, sizeof(tbuffer), "%04d-%02d-%02d %02d:%02d:%02d %s", t->year,
                     t->month, t->day, t->hour, t->minute, t->second, t->tz);
     }
   } else if (global_dateformat == DF_US) {
     if (t->nanosecond != 0) {
-      len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d.%09d %s", t->month,
+      len = snprintf(tbuffer, sizeof(tbuffer), "%02d-%02d-%04d %02d:%02d:%02d.%09d %s", t->month,
                     t->day, t->year, t->hour, t->minute, t->second,
                     t->nanosecond, t->tz);
     } else {
-      len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d %s", t->month,
+      len = snprintf(tbuffer, sizeof(tbuffer), "%02d-%02d-%04d %02d:%02d:%02d %s", t->month,
                     t->day, t->year, t->hour, t->minute, t->second, t->tz);
     }
   } else if (global_dateformat == DF_EURO) {
     if (t->nanosecond != 0) {
-      len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d.%09d %s", t->day,
+      len = snprintf(tbuffer, sizeof(tbuffer), "%02d-%02d-%04d %02d:%02d:%02d.%09d %s", t->day,
                     t->month, t->year, t->hour, t->minute, t->second,
                     t->nanosecond, t->tz);
     } else {
-      len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d %s", t->day,
+      len = snprintf(tbuffer, sizeof(tbuffer), "%02d-%02d-%04d %02d:%02d:%02d %s", t->day,
                     t->month, t->year, t->hour, t->minute, t->second, t->tz);
     }
   } else {
@@ -724,8 +717,8 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset) {
   }
 
   if (minutes == 0) {
-    if (tzname) {
-      sprintf(tzname, "%s%d%s", buf1, hours, (rv == 2 ? "" : buf2));
+    if (tzname != nullptr) {
+      snprintf(tzname, sizeof(tzname), "%s%d%s", buf1, hours, (rv == 2 ? "" : buf2));
     }
 
     if (offset) {
@@ -735,7 +728,7 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset) {
     return 1;
   } else {
     if (tzname != nullptr) {
-      sprintf(tzname, "%s%d:%02d%s", buf1, hours, minutes, buf2);
+      snprintf(tzname, sizeof(tzname), "%s%d:%02d%s", buf1, hours, minutes, buf2);
     }
 
     if (offset != nullptr) {
@@ -753,7 +746,7 @@ char *tz_locale(char *country, char *province, char *city) {
   FILE *fp = nullptr;
   char buffer[1024];
   char target[256];
-  int len = sprintf(target, "%s/%s/%s", country, province, city);
+  int len = snprintf(target, sizeof(target), "%s/%s/%s", country, province, city);
 
   if (find_file(TZFILE, nullptr, R_OK, filepath, sizeof(filepath)) == nullptr) {
     throw_exception(
@@ -1037,38 +1030,6 @@ char *timestamp_set_tz(char *tz_name) {
     tz_name = env_tz != nullptr ? env_tz : const_cast<char *>("UTC0");
   }
 
-  // TODO: makes timezones work reliably
-  /*
-if(tz_name == nullptr || strlen(tz_name) == 0)
-  {
-          static char guess[64];
-          static unsigned int tzlock=0;
-
-          if (strcmp(_tzname[0], "") == 0){
-                  throw_exception(const_cast<char *>("timezone not
-identified"));
-                  *//* TROUBLESHOOT
-				An attempt to use timezones was made before the timezome has been specified.  Try adding or moving the
-				timezone spec to the top of the <code>clock</code> directive and try again.  Alternatively, you can set the '''TZ''' environment
-				variable.
-
-			 *//*
-		}
-
-		wlock(&tzlock);
-		if (_timezone % 60 == 0){
-			sprintf(guess, "%s%d%s", _tzname[0], (int)(_timezone / 3600), _daylight?_tzname[1]:"");
-		} else {
-			sprintf(guess, "%s%d:%d%s", _tzname[0], (int)(_timezone / 3600), (int)(_timezone / 60), _daylight?_tzname[1]:"");
-		}
-		if (_timezone==0 && _daylight==0)
-			tz_name= const_cast<char*>("UTC0");
-		else
-			tz_name = guess;
-		wunlock(&tzlock);
-	}
-    */
-
   load_tzspecs(tz_name);
 
   return current_tzname;
@@ -1121,20 +1082,20 @@ int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer,
            internal error and should be reported.
          */
       } else
-        len = sprintf(temp, "%s", "NEVER");
+        len = snprintf(temp, sizeof(temp), "%s", "NEVER");
     }
   } else if (ts >= DAY)
-    len = sprintf(temp, "%lfd", (double)ts / DAY);
+    len = snprintf(temp, sizeof(temp), "%lfd", (double)ts / DAY);
   else if (ts >= HOUR)
-    len = sprintf(temp, "%lfh", (double)ts / HOUR);
+    len = snprintf(temp, sizeof(temp), "%lfh", (double)ts / HOUR);
   else if (ts >= MINUTE)
-    len = sprintf(temp, "%lfm", (double)ts / MINUTE);
+    len = snprintf(temp, sizeof(temp), "%lfm", (double)ts / MINUTE);
   else if (ts >= SECOND)
-    len = sprintf(temp, "%lfs", (double)ts / SECOND);
+    len = snprintf(temp, sizeof(temp), "%lfs", (double)ts / SECOND);
   else if (ts == 0)
-    len = sprintf(temp, "%s", "INIT");
+    len = snprintf(temp, sizeof(temp), "%s", "INIT");
   else
-    len = sprintf(temp, "%" FMT_INT64 "d", ts);
+    len = snprintf(temp, sizeof(temp), "%" FMT_INT64 "d", ts);
   if (len < size) {
     if (ts == TS_NEVER) {
       strcpy(buffer, "NEVER");
@@ -1175,20 +1136,20 @@ int convert_from_deltatime_timestamp(double ts_v, char *buffer, int size) {
            internal error and should be reported.
          */
       } else
-        len = sprintf(temp, "%s", "NEVER");
+        len = snprintf(temp, sizeof(temp), "%s", "NEVER");
     }
   } else if (ts >= DAY)
-    len = sprintf(temp, "%lfd", (double)ts / DAY);
+    len = snprintf(temp, sizeof(temp), "%lfd", (double)ts / DAY);
   else if (ts >= HOUR)
-    len = sprintf(temp, "%lfh", (double)ts / HOUR);
+    len = snprintf(temp, sizeof(temp), "%lfh", (double)ts / HOUR);
   else if (ts >= MINUTE)
-    len = sprintf(temp, "%lfm", (double)ts / MINUTE);
+    len = snprintf(temp, sizeof(temp), "%lfm", (double)ts / MINUTE);
   else if (ts >= SECOND)
-    len = sprintf(temp, "%lfs", (double)ts / SECOND);
+    len = snprintf(temp, sizeof(temp), "%lfs", (double)ts / SECOND);
   else if (ts == 0)
-    len = sprintf(temp, "%s", "INIT");
+    len = snprintf(temp, sizeof(temp), "%s", "INIT");
   else
-    len = sprintf(temp, "%" FMT_INT64 "d", ts);
+    len = snprintf(temp, sizeof(temp), "%" FMT_INT64 "d", ts);
   if (len < size) {
     if (ts == TS_NEVER) {
       strcpy(buffer, "NEVER");

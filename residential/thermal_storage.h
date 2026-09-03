@@ -13,8 +13,8 @@
 #include "residential_enduse.h"
 
 typedef enum {
-		INTERNAL=0,		//Use internal schedule
-		EXTERNAL=1		//Use published variables for schedule
+    INTERNAL=0,		//Use internal schedule
+    EXTERNAL=1		//Use published variables for schedule
 } THERMAL_SCHEDULE_TYPE;
 
 class thermal_storage : public residential_enduse {
@@ -57,7 +57,6 @@ public:
 	int init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-
 };
 
 #endif // _THERMAL_STORAGE_H

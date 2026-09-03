@@ -55,31 +55,7 @@
 #include "property.h"
 #include "solver_nr.h"
 #include "node.h"
-
-// Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
-#if defined(_WIN32) && !defined(__MINGW32__)
-#define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
-#define _WIN32_WINNT 0x0400
-#include <winsock2.h>
-#include <windows.h>
-#ifndef DLEXT
-#define DLEXT ".dll"
-#endif
-#define DLLOAD(P) LoadLibrary(P)
-#define DLSYM(H, S) (void *)GetProcAddress((HINSTANCE)H, S)
-// #define snprintf _snprintf
-#else /* ANSI */
-#include "dlfcn.h"
-#ifndef DLEXT
-#ifdef __MINGW32__
-#define DLEXT ".dll"
-#else
-#define DLEXT ".so"
-#endif
-#endif
-#define DLLOAD(P) dlopen(P, RTLD_LAZY)
-#define DLSYM(H, S) dlsym(H, S)
-#endif
+#include "compile.h"
 
 //"Small" multiplier for restoring voltages in in-rush.  Zeros seem to make it angry
 // TODO: See if this is a "zero-catch" somewhere making it useless, or legitimate numerical stability
@@ -106,138 +82,138 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			oclass->trl = TRL_PROVEN;
 
 		if (gl_publish_variable(oclass,
-								PT_INHERIT, "powerflow_object",
-								PT_enumeration, "bustype", PADDR(bustype), PT_DESCRIPTION, "defines whether the node is a PQ, PV, or SWING node",
-								PT_KEYWORD, "PQ", (enumeration)PQ,
-								PT_KEYWORD, "PV", (enumeration)PV,
-								PT_KEYWORD, "SWING", (enumeration)SWING,
-								PT_KEYWORD, "SWING_PQ", (enumeration)SWING_PQ,
-								PT_set, "busflags", PADDR(busflags), PT_DESCRIPTION, "flag indicates node has a source for voltage, i.e. connects to the swing node",
-								PT_KEYWORD, "HASSOURCE", (gld::set)NF_HASSOURCE,
-								PT_KEYWORD, "ISSOURCE", (gld::set)NF_ISSOURCE,
-								PT_object, "reference_bus", PADDR(reference_bus), PT_DESCRIPTION, "reference bus from which frequency is defined",
-								PT_double, "maximum_voltage_error[V]", PADDR(maximum_voltage_error), PT_DESCRIPTION, "convergence voltage limit or convergence criteria",
+            PT_INHERIT, "powerflow_object",
+            PT_enumeration, "bustype", PADDR(bustype), PT_DESCRIPTION, "defines whether the node is a PQ, PV, or SWING node",
+            PT_KEYWORD, "PQ", (enumeration)PQ,
+            PT_KEYWORD, "PV", (enumeration)PV,
+            PT_KEYWORD, "SWING", (enumeration)SWING,
+            PT_KEYWORD, "SWING_PQ", (enumeration)SWING_PQ,
+            PT_set, "busflags", PADDR(busflags), PT_DESCRIPTION, "flag indicates node has a source for voltage, i.e. connects to the swing node",
+            PT_KEYWORD, "HASSOURCE", (gld::set)NF_HASSOURCE,
+            PT_KEYWORD, "ISSOURCE", (gld::set)NF_ISSOURCE,
+            PT_object, "reference_bus", PADDR(reference_bus), PT_DESCRIPTION, "reference bus from which frequency is defined",
+            PT_double, "maximum_voltage_error[V]", PADDR(maximum_voltage_error), PT_DESCRIPTION, "convergence voltage limit or convergence criteria",
 
-								PT_complex, "voltage_A[V]", PADDR(voltage[0]), PT_DESCRIPTION, "bus voltage, Phase A to ground",
-								PT_complex, "voltage_B[V]", PADDR(voltage[1]), PT_DESCRIPTION, "bus voltage, Phase B to ground",
-								PT_complex, "voltage_C[V]", PADDR(voltage[2]), PT_DESCRIPTION, "bus voltage, Phase C to ground",
-								PT_complex, "voltage_AB[V]", PADDR(voltaged[0]), PT_DESCRIPTION, "line voltages, Phase AB",
-								PT_complex, "voltage_BC[V]", PADDR(voltaged[1]), PT_DESCRIPTION, "line voltages, Phase BC",
-								PT_complex, "voltage_CA[V]", PADDR(voltaged[2]), PT_DESCRIPTION, "line voltages, Phase CA",
-								PT_complex, "current_A[A]", PADDR(current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_B[A]", PADDR(current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_C[A]", PADDR(current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_A[VA]", PADDR(power[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_B[VA]", PADDR(power[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_C[VA]", PADDR(power[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_A[S]", PADDR(shunt[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_B[S]", PADDR(shunt[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_C[S]", PADDR(shunt[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt admittance, this an accumulator only, not a output or input variable",
+            PT_complex, "voltage_A[V]", PADDR(voltage[0]), PT_DESCRIPTION, "bus voltage, Phase A to ground",
+            PT_complex, "voltage_B[V]", PADDR(voltage[1]), PT_DESCRIPTION, "bus voltage, Phase B to ground",
+            PT_complex, "voltage_C[V]", PADDR(voltage[2]), PT_DESCRIPTION, "bus voltage, Phase C to ground",
+            PT_complex, "voltage_AB[V]", PADDR(voltaged[0]), PT_DESCRIPTION, "line voltages, Phase AB",
+            PT_complex, "voltage_BC[V]", PADDR(voltaged[1]), PT_DESCRIPTION, "line voltages, Phase BC",
+            PT_complex, "voltage_CA[V]", PADDR(voltaged[2]), PT_DESCRIPTION, "line voltages, Phase CA",
+            PT_complex, "current_A[A]", PADDR(current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "current_B[A]", PADDR(current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "current_C[A]", PADDR(current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "power_A[VA]", PADDR(power[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "power_B[VA]", PADDR(power[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "power_C[VA]", PADDR(power[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "shunt_A[S]", PADDR(shunt[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt admittance, this an accumulator only, not a output or input variable",
+            PT_complex, "shunt_B[S]", PADDR(shunt[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt admittance, this an accumulator only, not a output or input variable",
+            PT_complex, "shunt_C[S]", PADDR(shunt[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt admittance, this an accumulator only, not a output or input variable",
 
-								PT_complex, "prerotated_current_A[A]", PADDR(pre_rotated_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
-								PT_complex, "prerotated_current_B[A]", PADDR(pre_rotated_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
-								PT_complex, "prerotated_current_C[A]", PADDR(pre_rotated_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+            PT_complex, "prerotated_current_A[A]", PADDR(pre_rotated_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+            PT_complex, "prerotated_current_B[A]", PADDR(pre_rotated_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+            PT_complex, "prerotated_current_C[A]", PADDR(pre_rotated_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 
-								PT_complex, "deltamode_generator_current_A[A]", PADDR(deltamode_dynamic_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
-								PT_complex, "deltamode_generator_current_B[A]", PADDR(deltamode_dynamic_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
-								PT_complex, "deltamode_generator_current_C[A]", PADDR(deltamode_dynamic_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+            PT_complex, "deltamode_generator_current_A[A]", PADDR(deltamode_dynamic_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+            PT_complex, "deltamode_generator_current_B[A]", PADDR(deltamode_dynamic_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
+            PT_complex, "deltamode_generator_current_C[A]", PADDR(deltamode_dynamic_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - bus current injection (in = positive), direct generator injection (so may be overwritten internally), this an accumulator only, not a output or input variable",
 
-								PT_complex, "deltamode_PGenTotal", PADDR(deltamode_PGenTotal), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input",
+            PT_complex, "deltamode_PGenTotal", PADDR(deltamode_PGenTotal), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input",
 
-								PT_complex_array, "deltamode_full_Y_matrix", PADDR(full_Y_matrix), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
-								PT_complex_array, "deltamode_full_Y_all_matrix", PADDR(full_Y_all_matrix), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
-								PT_object, "NR_powerflow_parent", PADDR(SubNodeParent), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "NR powerflow - actual powerflow parent - used by generators accessing child objects",
+            PT_complex_array, "deltamode_full_Y_matrix", PADDR(full_Y_matrix), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
+            PT_complex_array, "deltamode_full_Y_all_matrix", PADDR(full_Y_all_matrix), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
+            PT_object, "NR_powerflow_parent", PADDR(SubNodeParent), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "NR powerflow - actual powerflow parent - used by generators accessing child objects",
 
-								PT_complex, "current_inj_A[A]", PADDR(current_inj[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
-								PT_complex, "current_inj_B[A]", PADDR(current_inj[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
-								PT_complex, "current_inj_C[A]", PADDR(current_inj[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+            PT_complex, "current_inj_A[A]", PADDR(current_inj[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+            PT_complex, "current_inj_B[A]", PADDR(current_inj[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
+            PT_complex, "current_inj_C[A]", PADDR(current_inj[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 
-								PT_complex, "current_AB[A]", PADDR(current_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_BC[A]", PADDR(current_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_CA[A]", PADDR(current_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_AN[A]", PADDR(current_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_BN[A]", PADDR(current_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "current_CN[A]", PADDR(current_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_AB[VA]", PADDR(power_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_BC[VA]", PADDR(power_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_CA[VA]", PADDR(power_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_AN[VA]", PADDR(power_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_BN[VA]", PADDR(power_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "power_CN[VA]", PADDR(power_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_AB[S]", PADDR(power_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_BC[S]", PADDR(power_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_CA[S]", PADDR(power_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_AN[S]", PADDR(power_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_BN[S]", PADDR(power_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
-								PT_complex, "shunt_CN[S]", PADDR(power_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+            PT_complex, "current_AB[A]", PADDR(current_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "current_BC[A]", PADDR(current_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "current_CA[A]", PADDR(current_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "current_AN[A]", PADDR(current_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "current_BN[A]", PADDR(current_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "current_CN[A]", PADDR(current_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus current wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "power_AB[VA]", PADDR(power_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "power_BC[VA]", PADDR(power_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "power_CA[VA]", PADDR(power_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power delta-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "power_AN[VA]", PADDR(power_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "power_BN[VA]", PADDR(power_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "power_CN[VA]", PADDR(power_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus power wye-connected injection (in = positive), this an accumulator only, not a output or input variable",
+            PT_complex, "shunt_AB[S]", PADDR(shunt_dy[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+            PT_complex, "shunt_BC[S]", PADDR(shunt_dy[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+            PT_complex, "shunt_CA[S]", PADDR(shunt_dy[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt delta-connected admittance, this an accumulator only, not a output or input variable",
+            PT_complex, "shunt_AN[S]", PADDR(shunt_dy[3]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+            PT_complex, "shunt_BN[S]", PADDR(shunt_dy[4]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+            PT_complex, "shunt_CN[S]", PADDR(shunt_dy[5]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
 
-								// House-related variables - for 3-phase house connections
-								PT_complex, "residential_nominal_current_A[A]", PADDR(nom_res_curr[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase A from a residential object, if attached",
-								PT_complex, "residential_nominal_current_B[A]", PADDR(nom_res_curr[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase B from a residential object, if attached",
-								PT_complex, "residential_nominal_current_C[A]", PADDR(nom_res_curr[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase C from a residential object, if attached",
-								PT_double, "residential_nominal_current_A_real[A]", PADDR(nom_res_curr[0].Re()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase A, real, from a residential object, if attached",
-								PT_double, "residential_nominal_current_A_imag[A]", PADDR(nom_res_curr[0].Im()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase A, imag, from a residential object, if attached",
-								PT_double, "residential_nominal_current_B_real[A]", PADDR(nom_res_curr[1].Re()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase B, real, from a residential object, if attached",
-								PT_double, "residential_nominal_current_B_imag[A]", PADDR(nom_res_curr[1].Im()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase B, imag, from a residential object, if attached",
-								PT_double, "residential_nominal_current_C_real[A]", PADDR(nom_res_curr[2].Re()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase C, real, from a residential object, if attached",
-								PT_double, "residential_nominal_current_C_imag[A]", PADDR(nom_res_curr[2].Im()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase C, imag, from a residential object, if attached",
+            // House-related variables - for 3-phase house connections
+            PT_complex, "residential_nominal_current_A[A]", PADDR(nom_res_curr[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase A from a residential object, if attached",
+            PT_complex, "residential_nominal_current_B[A]", PADDR(nom_res_curr[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase B from a residential object, if attached",
+            PT_complex, "residential_nominal_current_C[A]", PADDR(nom_res_curr[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase C from a residential object, if attached",
+            PT_double, "residential_nominal_current_A_real[A]", PADDR(nom_res_curr[0].Re()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase A, real, from a residential object, if attached",
+            PT_double, "residential_nominal_current_A_imag[A]", PADDR(nom_res_curr[0].Im()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase A, imag, from a residential object, if attached",
+            PT_double, "residential_nominal_current_B_real[A]", PADDR(nom_res_curr[1].Re()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase B, real, from a residential object, if attached",
+            PT_double, "residential_nominal_current_B_imag[A]", PADDR(nom_res_curr[1].Im()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase B, imag, from a residential object, if attached",
+            PT_double, "residential_nominal_current_C_real[A]", PADDR(nom_res_curr[2].Re()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase C, real, from a residential object, if attached",
+            PT_double, "residential_nominal_current_C_imag[A]", PADDR(nom_res_curr[2].Im()), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "posted current on phase C, imag, from a residential object, if attached",
 
-								PT_bool, "house_present", PADDR(house_present), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "boolean for detecting whether a house is attached, not an input",
+            PT_bool, "house_present", PADDR(house_present), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "boolean for detecting whether a house is attached, not an input",
 
-								PT_double, "mean_repair_time[s]", PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
+            PT_double, "mean_repair_time[s]", PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 
-								// Properties for frequency measurement
-								PT_enumeration, "frequency_measure_type", PADDR(fmeas_type), PT_DESCRIPTION, "Frequency measurement dynamics-capable implementation",
-								PT_KEYWORD, "NONE", (enumeration)FM_NONE, PT_DESCRIPTION, "No frequency measurement",
-								PT_KEYWORD, "SIMPLE", (enumeration)FM_SIMPLE, PT_DESCRIPTION, "Simplified frequency measurement",
-								PT_KEYWORD, "PLL", (enumeration)FM_PLL, PT_DESCRIPTION, "PLL frequency measurement",
+            // Properties for frequency measurement
+            PT_enumeration, "frequency_measure_type", PADDR(fmeas_type), PT_DESCRIPTION, "Frequency measurement dynamics-capable implementation",
+            PT_KEYWORD, "NONE", (enumeration)FM_NONE, PT_DESCRIPTION, "No frequency measurement",
+            PT_KEYWORD, "SIMPLE", (enumeration)FM_SIMPLE, PT_DESCRIPTION, "Simplified frequency measurement",
+            PT_KEYWORD, "PLL", (enumeration)FM_PLL, PT_DESCRIPTION, "PLL frequency measurement",
 
-								PT_double, "sfm_Tf[s]", PADDR(freq_sfm_Tf), PT_DESCRIPTION, "Transducer time constant for simplified frequency measurement (seconds)",
-								PT_double, "pll_Kp[pu]", PADDR(freq_pll_Kp), PT_DESCRIPTION, "Proportional gain of PLL frequency measurement",
-								PT_double, "pll_Ki[pu]", PADDR(freq_pll_Ki), PT_DESCRIPTION, "Integration gain of PLL frequency measurement",
+            PT_double, "sfm_Tf[s]", PADDR(freq_sfm_Tf), PT_DESCRIPTION, "Transducer time constant for simplified frequency measurement (seconds)",
+            PT_double, "pll_Kp[pu]", PADDR(freq_pll_Kp), PT_DESCRIPTION, "Proportional gain of PLL frequency measurement",
+            PT_double, "pll_Ki[pu]", PADDR(freq_pll_Ki), PT_DESCRIPTION, "Integration gain of PLL frequency measurement",
 
-								// Frequency measurement output variables
-								PT_double, "measured_angle_A[rad]", PADDR(curr_freq_state.anglemeas[0]), PT_DESCRIPTION, "bus angle measurement, phase A",
-								PT_double, "measured_frequency_A[Hz]", PADDR(curr_freq_state.fmeas[0]), PT_DESCRIPTION, "frequency measurement, phase A",
-								PT_double, "measured_angle_B[rad]", PADDR(curr_freq_state.anglemeas[1]), PT_DESCRIPTION, "bus angle measurement, phase B",
-								PT_double, "measured_frequency_B[Hz]", PADDR(curr_freq_state.fmeas[1]), PT_DESCRIPTION, "frequency measurement, phase B",
-								PT_double, "measured_angle_C[rad]", PADDR(curr_freq_state.anglemeas[2]), PT_DESCRIPTION, "bus angle measurement, phase C",
-								PT_double, "measured_frequency_C[Hz]", PADDR(curr_freq_state.fmeas[2]), PT_DESCRIPTION, "frequency measurement, phase C",
-								PT_double, "measured_frequency[Hz]", PADDR(curr_freq_state.average_freq), PT_DESCRIPTION, "frequency measurement - average of present phases",
+            // Frequency measurement output variables
+            PT_double, "measured_angle_A[rad]", PADDR(curr_freq_state.anglemeas[0]), PT_DESCRIPTION, "bus angle measurement, phase A",
+            PT_double, "measured_frequency_A[Hz]", PADDR(curr_freq_state.fmeas[0]), PT_DESCRIPTION, "frequency measurement, phase A",
+            PT_double, "measured_angle_B[rad]", PADDR(curr_freq_state.anglemeas[1]), PT_DESCRIPTION, "bus angle measurement, phase B",
+            PT_double, "measured_frequency_B[Hz]", PADDR(curr_freq_state.fmeas[1]), PT_DESCRIPTION, "frequency measurement, phase B",
+            PT_double, "measured_angle_C[rad]", PADDR(curr_freq_state.anglemeas[2]), PT_DESCRIPTION, "bus angle measurement, phase C",
+            PT_double, "measured_frequency_C[Hz]", PADDR(curr_freq_state.fmeas[2]), PT_DESCRIPTION, "frequency measurement, phase C",
+            PT_double, "measured_frequency[Hz]", PADDR(curr_freq_state.average_freq), PT_DESCRIPTION, "frequency measurement - average of present phases",
 
-								PT_enumeration, "service_status", PADDR(service_status), PT_DESCRIPTION, "In and out of service flag",
-								PT_KEYWORD, "IN_SERVICE", (enumeration)ND_IN_SERVICE,
-								PT_KEYWORD, "OUT_OF_SERVICE", (enumeration)ND_OUT_OF_SERVICE,
-								PT_double, "service_status_double", PADDR(service_status_dbl), PT_DESCRIPTION, "In and out of service flag - type double - will indiscriminately override service_status - useful for schedules",
-								PT_double, "previous_uptime[min]", PADDR(previous_uptime), PT_DESCRIPTION, "Previous time between disconnects of node in minutes",
-								PT_double, "current_uptime[min]", PADDR(current_uptime), PT_DESCRIPTION, "Current time since last disconnect of node in minutes",
-								PT_bool, "Norton_dynamic", PADDR(dynamic_norton), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
-								PT_bool, "Norton_dynamic_child", PADDR(dynamic_norton_child), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Flag to indicate a Norton-equivalent connection is made by a childed node object -- used for generators and deltamode",
-								PT_bool, "generator_dynamic", PADDR(dynamic_generator), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
+            PT_enumeration, "service_status", PADDR(service_status), PT_DESCRIPTION, "In and out of service flag",
+            PT_KEYWORD, "IN_SERVICE", (enumeration)ND_IN_SERVICE,
+            PT_KEYWORD, "OUT_OF_SERVICE", (enumeration)ND_OUT_OF_SERVICE,
+            PT_double, "service_status_double", PADDR(service_status_dbl), PT_DESCRIPTION, "In and out of service flag - type double - will indiscriminately override service_status - useful for schedules",
+            PT_double, "previous_uptime[min]", PADDR(previous_uptime), PT_DESCRIPTION, "Previous time between disconnects of node in minutes",
+            PT_double, "current_uptime[min]", PADDR(current_uptime), PT_DESCRIPTION, "Current time since last disconnect of node in minutes",
+            PT_bool, "Norton_dynamic", PADDR(dynamic_norton), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
+            PT_bool, "Norton_dynamic_child", PADDR(dynamic_norton_child), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Flag to indicate a Norton-equivalent connection is made by a childed node object -- used for generators and deltamode",
+            PT_bool, "generator_dynamic", PADDR(dynamic_generator), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
 
-								PT_bool, "reset_disabled_island_state", PADDR(reset_island_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Deltamode/multi-island flag -- used to reset disabled status (and reform an island)",
+            PT_bool, "reset_disabled_island_state", PADDR(reset_island_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Deltamode/multi-island flag -- used to reset disabled status (and reform an island)",
 
-								// GFA - stuff
-								PT_bool, "GFA_enable", PADDR(GFA_enable), PT_DESCRIPTION, "Disable/Enable Grid Friendly Appliance(TM)-type functionality",
-								PT_double, "GFA_freq_low_trip[Hz]", PADDR(GFA_freq_low_trip), PT_DESCRIPTION, "Low frequency trip point for Grid Friendly Appliance(TM)-type functionality",
-								PT_double, "GFA_freq_high_trip[Hz]", PADDR(GFA_freq_high_trip), PT_DESCRIPTION, "High frequency trip point for Grid Friendly Appliance(TM)-type functionality",
-								PT_double, "GFA_volt_low_trip[pu]", PADDR(GFA_voltage_low_trip), PT_DESCRIPTION, "Low voltage trip point for Grid Friendly Appliance(TM)-type functionality",
-								PT_double, "GFA_volt_high_trip[pu]", PADDR(GFA_voltage_high_trip), PT_DESCRIPTION, "High voltage trip point for Grid Friendly Appliance(TM)-type functionality",
-								PT_double, "GFA_reconnect_time[s]", PADDR(GFA_reconnect_time), PT_DESCRIPTION, "Reconnect time for Grid Friendly Appliance(TM)-type functionality",
-								PT_double, "GFA_freq_disconnect_time[s]", PADDR(GFA_freq_disconnect_time), PT_DESCRIPTION, "Frequency violation disconnect time for Grid Friendly Appliance(TM)-type functionality",
-								PT_double, "GFA_volt_disconnect_time[s]", PADDR(GFA_volt_disconnect_time), PT_DESCRIPTION, "Voltage violation disconnect time for Grid Friendly Appliance(TM)-type functionality",
-								PT_bool, "GFA_status", PADDR(GFA_status), PT_DESCRIPTION, "Grid Friendly Appliance(TM)-type functionality - whether it is in service (not tripped) or not",
+            // GFA - stuff
+            PT_bool, "GFA_enable", PADDR(GFA_enable), PT_DESCRIPTION, "Disable/Enable Grid Friendly Appliance(TM)-type functionality",
+            PT_double, "GFA_freq_low_trip[Hz]", PADDR(GFA_freq_low_trip), PT_DESCRIPTION, "Low frequency trip point for Grid Friendly Appliance(TM)-type functionality",
+            PT_double, "GFA_freq_high_trip[Hz]", PADDR(GFA_freq_high_trip), PT_DESCRIPTION, "High frequency trip point for Grid Friendly Appliance(TM)-type functionality",
+            PT_double, "GFA_volt_low_trip[pu]", PADDR(GFA_voltage_low_trip), PT_DESCRIPTION, "Low voltage trip point for Grid Friendly Appliance(TM)-type functionality",
+            PT_double, "GFA_volt_high_trip[pu]", PADDR(GFA_voltage_high_trip), PT_DESCRIPTION, "High voltage trip point for Grid Friendly Appliance(TM)-type functionality",
+            PT_double, "GFA_reconnect_time[s]", PADDR(GFA_reconnect_time), PT_DESCRIPTION, "Reconnect time for Grid Friendly Appliance(TM)-type functionality",
+            PT_double, "GFA_freq_disconnect_time[s]", PADDR(GFA_freq_disconnect_time), PT_DESCRIPTION, "Frequency violation disconnect time for Grid Friendly Appliance(TM)-type functionality",
+            PT_double, "GFA_volt_disconnect_time[s]", PADDR(GFA_volt_disconnect_time), PT_DESCRIPTION, "Voltage violation disconnect time for Grid Friendly Appliance(TM)-type functionality",
+            PT_bool, "GFA_status", PADDR(GFA_status), PT_DESCRIPTION, "Grid Friendly Appliance(TM)-type functionality - whether it is in service (not tripped) or not",
 
-								PT_enumeration, "GFA_trip_method", PADDR(GFA_trip_method), PT_DESCRIPTION, "Reason for GFA trip - what caused the GFA to activate",
-								PT_KEYWORD, "NONE", (enumeration)GFA_NONE, PT_DESCRIPTION, "No GFA trip",
-								PT_KEYWORD, "UNDER_FREQUENCY", (enumeration)GFA_UF, PT_DESCRIPTION, "GFA trip for under-frequency",
-								PT_KEYWORD, "OVER_FREQUENCY", (enumeration)GFA_OF, PT_DESCRIPTION, "GFA trip for over-frequency",
-								PT_KEYWORD, "UNDER_VOLTAGE", (enumeration)GFA_UV, PT_DESCRIPTION, "GFA trip for under-voltage",
-								PT_KEYWORD, "OVER_VOLTAGE", (enumeration)GFA_OV, PT_DESCRIPTION, "GFA trip for over-voltage",
+            PT_enumeration, "GFA_trip_method", PADDR(GFA_trip_method), PT_DESCRIPTION, "Reason for GFA trip - what caused the GFA to activate",
+            PT_KEYWORD, "NONE", (enumeration)GFA_NONE, PT_DESCRIPTION, "No GFA trip",
+            PT_KEYWORD, "UNDER_FREQUENCY", (enumeration)GFA_UF, PT_DESCRIPTION, "GFA trip for under-frequency",
+            PT_KEYWORD, "OVER_FREQUENCY", (enumeration)GFA_OF, PT_DESCRIPTION, "GFA trip for over-frequency",
+            PT_KEYWORD, "UNDER_VOLTAGE", (enumeration)GFA_UV, PT_DESCRIPTION, "GFA trip for under-voltage",
+            PT_KEYWORD, "OVER_VOLTAGE", (enumeration)GFA_OV, PT_DESCRIPTION, "GFA trip for over-voltage",
 
-								PT_object, "topological_parent", PADDR(TopologicalParent), PT_DESCRIPTION, "topological parent as per GLM configuration",
-								PT_bool, "behaving_as_swing", PADDR(swing_functions_enabled), PT_DESCRIPTION, "Indicator flag for if a bus is behaving as a reference voltage source - valid for a SWING or SWING_PQ",
-								nullptr) < 1)
+            PT_object, "topological_parent", PADDR(TopologicalParent), PT_DESCRIPTION, "topological parent as per GLM configuration",
+            PT_bool, "behaving_as_swing", PADDR(swing_functions_enabled), PT_DESCRIPTION, "Indicator flag for if a bus is behaving as a reference voltage source - valid for a SWING or SWING_PQ",
+            nullptr) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
 		if (gl_publish_function(oclass, "interupdate_pwr_object", (FUNCTIONADDR)interupdate_node) == nullptr)
@@ -295,7 +271,7 @@ int node::create(void)
 
 	NR_node_reference = -1;									   // Newton-Raphson bus index, set to -1 initially
 	house_present = false;									   // House attachment flag
-	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0; // Nominal house current variables
+	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = gld::complex(0.0, 0.0); // Nominal house current variables
 
 	prev_phases = 0x00;
 
@@ -414,6 +390,10 @@ int node::create(void)
 int node::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	OBJECT *tmp_obj, *tmp_subnode_parent;
 	node *tmp_node, *tmp_par_node;
 	int index_loop_val;
@@ -1678,7 +1658,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				// Link the parental
 				node *parNode = object_data<node>(SubNodeParent);
 
-				// WRITELOCK_OBJECT(SubNodeParent);	//Lock
 				std::unique_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(SubNodeParent));
 
 				// Check and see if we're a house-triplex.  If so, flag our parent so NR works - just draconian write (won't hurt anything)
@@ -1696,9 +1675,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					again.  If the error persists, please submit you code and a bug report via the trac website.
 					*/
 
-					// WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
-					// subnode_lock.unlock();
-
+					//Unlock
 					return TS_INVALID;
 				}
 				else // There's space
@@ -1710,7 +1687,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					parNode->NR_number_child_nodes[1]++;
 				}
 
-				// WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
+				//Unlock
 			}
 		}
 
@@ -1719,7 +1696,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			std::unique_lock<std::shared_mutex> subnode_lock;
 			if (NR_swing_bus != obj)
 			{
-				// WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
 				subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(NR_swing_bus));
 			}
 
@@ -1735,7 +1711,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				// Unlock the swing bus
 				if (NR_swing_bus != obj)
 					subnode_lock.unlock();
-				// WRITEUNLOCK_OBJECT(NR_swing_bus);
 
 				return TS_INVALID;
 			}
@@ -1756,7 +1731,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 				// Unlock the swing bus
 				if (NR_swing_bus != obj)
-					// WRITEUNLOCK_OBJECT(NR_swing_bus);
 					subnode_lock.unlock();
 
 				return TS_INVALID;
@@ -1859,7 +1833,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 			// Unlock the swing bus
 			if (NR_swing_bus != obj)
-				// WRITEUNLOCK_OBJECT(NR_swing_bus);
 				subnode_lock.unlock();
 
 			if (obj == NR_swing_bus) // Make sure we're the great MASTER SWING, as a final check
@@ -1899,7 +1872,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			// Lock the SWING bus and get us a value
 			std::unique_lock<std::shared_mutex> subnode_lock;
 			if (NR_swing_bus != obj)
-				// WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
 				subnode_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(NR_swing_bus));
 			// Get the value
 			temp_pwr_object_current = pwr_object_current;
@@ -1909,7 +1881,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 			// Unlock
 			if (NR_swing_bus != obj)
-				// WRITEUNLOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
 				subnode_lock.unlock();
 
 			// Add us into the list
@@ -2226,7 +2197,6 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			}
 
 			// Unlock the parent now that we are done
-			// UNLOCK_OBJECT(SubNodeParent);
 			subnode_lock.unlock();
 
 			// Update previous power tracker
@@ -2306,7 +2276,6 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			}
 
 			// Finished, unlock parent
-			// UNLOCK_OBJECT(SubNodeParent);
 			subnode_lock.unlock();
 
 			// Update our tracking variable
@@ -2469,9 +2438,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			else
 			{
 				temp_inj[0] = 0.0;
-				// WRITELOCK_OBJECT(obj);
 				current_inj[0] = 0.0;
-				// UNLOCK_OBJECT(obj);
 			}
 
 			if (voltage[1] != 0)
@@ -2489,9 +2456,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			else
 			{
 				temp_inj[0] = 0.0;
-				// WRITELOCK_OBJECT(obj);
 				current_inj[1] = 0.0;
-				// UNLOCK_OBJECT(obj);
 			}
 #endif
 
@@ -2597,15 +2562,11 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			{
 				if (voltaged[kphase] == 0.0)
 				{
-					// WRITELOCK_OBJECT(obj);
 					current_inj[kphase] = 0.0;
-					// UNLOCK_OBJECT(obj);
 				}
 				else
 				{
-					// WRITELOCK_OBJECT(obj);
 					current_inj[kphase] += delta_current[kphase] + power_current[kphase] + delta_shunt_curr[kphase];
-					// UNLOCK_OBJECT(obj);
 				}
 			}
 #else
@@ -2626,16 +2587,12 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			{
 				if (voltage[kphase] == 0.0)
 				{
-					// WRITELOCK_OBJECT(obj);
 					current_inj[kphase] = 0.0;
-					// UNLOCK_OBJECT(obj);
 				}
 				else
 				{
 					gld::complex d = ((voltage[kphase] == 0.0) || ((power[kphase] == 0) && shunt[kphase].IsZero())) ? current[kphase] : current[kphase] + ~(power[kphase] / voltage[kphase]) + voltage[kphase] * shunt[kphase];
-					// WRITELOCK_OBJECT(obj);
 					current_inj[kphase] += d;
-					// UNLOCK_OBJECT(obj);
 				}
 			}
 #else
@@ -2749,12 +2706,10 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			if (((pNode->phases & phases) & (!(PHASE_D | PHASE_N))) == (phases & (!(PHASE_D | PHASE_N))))
 			{
 				// add the injections on this node to the parent
-				// WRITELOCK_OBJECT(obj->parent);
 				std::unique_lock<std::shared_mutex> subnode_lock(SharedMutexManager::get_mutex(obj->parent));
 				pNode->current_inj[0] += current_inj[0];
 				pNode->current_inj[1] += current_inj[1];
 				pNode->current_inj[2] += current_inj[2];
-				// WRITEUNLOCK_OBJECT(obj->parent);
 			}
 			else
 				GL_THROW("Node:%d's parent does not have the proper phase connection to be a parent.", obj->id);
@@ -3221,7 +3176,6 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 		gld::complex dVCA = voltageC - voltageA;
 
 		/* phase-phase contact */
-		// WRITELOCK_OBJECT(obj);
 		if (is_contact(PHASE_A | PHASE_B | PHASE_C))
 			/** @todo calculate three-way contact fault current */
 			throw "three-way contact not supported yet";
@@ -3239,7 +3193,6 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 			current_inj[1] = voltageB / fault_Z;
 		if (is_contact(PHASE_C | PHASE_N) || is_contact(PHASE_C | GROUND))
 			current_inj[2] = voltageC / fault_Z;
-		// UNLOCK_OBJECT(obj);
 	}
 
 	/* record the power in for posterity */
@@ -3561,7 +3514,7 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 		if (*obj != nullptr)
 		{
 			node *my = object_data<node>(*obj);
-			gl_set_parent(*obj, parent);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -3633,7 +3586,7 @@ EXPORT int init_node(OBJECT *obj)
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_node_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
@@ -3655,6 +3608,23 @@ EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(node);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_node_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_node(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_node_impl(obj, t0, pass);
+}
+#endif
 
 /**
  * Function to search for a master swing node, one swing to rule them all
@@ -3724,8 +3694,8 @@ int node::NR_populate(void)
 	NR_node_reference = NR_curr_bus; // Grab the current location and keep it as our own
 	NR_curr_bus++;					 // Increment the current bus pointer for next variable
 	if (NR_swing_bus != me)
-		nr_lock.unlock(); // UNLOCK_OBJECT(NR_swing_bus);
-	// UNLOCK_OBJECT(NR_swing_bus);	//All done playing with globals, unlock the swing so others can proceed
+		nr_lock.unlock();
+	//All done playing with globals, unlock the swing so others can proceed
 
 	// Quick check to see if there problems
 	if (NR_node_reference == -1)
@@ -4168,14 +4138,12 @@ int node::NR_current_update(bool parentcall)
 				}
 
 				// Call a lock on that link - just in case multiple nodes call it at once
-				// WRITELOCK_OBJECT(tmp_obj);
 				std::unique_lock<std::shared_mutex> link_lock = std::unique_lock<std::shared_mutex>(SharedMutexManager::get_mutex(tmp_obj));
 
 				// Call its update - tell it who is asking so it knows what to lock
 				temp_result = ((int (*)(OBJECT *, int, bool))(*temp_funadd))(tmp_obj, NR_node_reference, false);
 
 				// Unlock the link
-				// WRITEUNLOCK_OBJECT(tmp_obj);
 				link_lock.unlock();
 
 				// See if it worked, just in case this gets added in the future
@@ -4266,7 +4234,6 @@ int node::NR_current_update(bool parentcall)
 			if (!parentcall) // Wasn't a parent call - unlock us so our siblings get a shot
 			{
 				// Unlock the parent now that it is done
-				// UNLOCK_OBJECT(SubNodeParent);
 				parent_lock.unlock();
 			}
 
@@ -4323,7 +4290,6 @@ int node::NR_current_update(bool parentcall)
 			if (!parentcall) // Wasn't a parent call - unlock us so our siblings get a shot
 			{
 				// Unlock the parent now that it is done
-				// UNLOCK_OBJECT(SubNodeParent);
 				parent_lock.unlock();
 			}
 
@@ -5966,7 +5932,7 @@ STATUS node::shunt_update_fxn(void)
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF OTHER EXPORT FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-EXPORT int isa_node(OBJECT *obj, char *classname)
+static int isa_node_impl(OBJECT *obj, char *classname)
 {
 	if (obj != 0 && classname != 0)
 	{
@@ -5977,6 +5943,22 @@ EXPORT int isa_node(OBJECT *obj, char *classname)
 		return 0;
 	}
 }
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_node(OBJECT *obj, char *classname)
+{
+    return isa_node_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_node(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    char *classname = va_arg(args, char *);
+    va_end(args);
+    return isa_node_impl(obj, classname);
+}
+#endif
+
 
 EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value)
 {

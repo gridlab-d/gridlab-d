@@ -11,12 +11,12 @@ Copyright (C) 2008 Battelle Memorial Institute
 #include <cstdlib>
 #include <gld_complex.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <iterator>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <iterator>
 
 #include "windturb_dg.h"
 
@@ -152,6 +152,25 @@ windturb_dg::windturb_dg(MODULE *module)
 								PT_complex, "Irotor_C[V]", PADDR(Irotor_C), PT_DESCRIPTION, "COP: Induction generator induced current on phase C in p.u.",
 
 								PT_double, "internal_model_current_convergence[pu]", PADDR(internal_model_current_convergence), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Convergence value for internal current calculations",
+
+								PT_complex, "Vapu", PADDR(Vapu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Vapu",
+								PT_complex, "Vbpu", PADDR(Vbpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Vbpu",
+								PT_complex, "Vcpu", PADDR(Vcpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Vcpu",
+								PT_complex, "Iapu", PADDR(Iapu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Iapu",
+								PT_complex, "Ibpu", PADDR(Ibpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Ibpu",
+								PT_complex, "Icpu", PADDR(Icpu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: Per unit voltage and current for Induction Generator at terminals - Icpu",
+								PT_complex, "value_Circuit_V_A", PADDR(value_Circuit_V[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for voltage values - element 0",
+								PT_complex, "value_Circuit_V_B", PADDR(value_Circuit_V[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for voltage values - element 1",
+								PT_complex, "value_Circuit_V_C", PADDR(value_Circuit_V[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for voltage values - element 2",
+								PT_complex, "value_Line_I_A", PADDR(value_Line_I[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for current values - element 0",
+								PT_complex, "value_Line_I_B", PADDR(value_Line_I[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for current values - element 1",
+								PT_complex, "value_Line_I_C", PADDR(value_Line_I[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for current values - element 2",
+								PT_complex, "value_Line12", PADDR(value_Line12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: value holder for line current 12 in triplex metering",
+								PT_complex, "prev_current_A", PADDR(prev_current[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current[0]",
+								PT_complex, "prev_current_B", PADDR(prev_current[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current[1]",
+								PT_complex, "prev_current_C", PADDR(prev_current[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current[2]",
+								PT_bool, "NR_first_run", PADDR(NR_first_run), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for NR_first_run",
+								PT_complex, "prev_current12", PADDR(prev_current12), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for prev_current12",
 
 								PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently triplex mode is only supported for power curve implementation",
 								PT_KEYWORD, "A", (gld::set)PHASE_A,
@@ -319,6 +338,11 @@ int windturb_dg::init_climate()
 int windturb_dg::init(OBJECT *parent)
 {
 	OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+  parent = obj->parent;
+#endif
+
 	double temp_double_value;
 	gld_property *temp_property_pointer;
 	enumeration temp_enum;
@@ -2163,7 +2187,7 @@ void windturb_dg::push_complex_power_values(gld::complex inv_P)
 STATUS windturb_dg::updateCurrInjection(int64 iteration_count, bool *converged_failure)
 {
 	// Assume no convergence failure - mostly for deltamode/Norton-equivalent initialization
-	*converged_failure = false;
+  *converged_failure = false;
 
 	// Call the current updating function
 	switch (Turbine_implementation)
@@ -2248,8 +2272,8 @@ EXPORT int create_windturb_dg(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(windturb_dg::oclass);
 		if (*obj != nullptr)
 		{
-			windturb_dg *my = /*OBJECTDATA(*obj,<>)*/ object_data<windturb_dg>(*obj);
-			gl_set_parent(*obj, parent);
+			windturb_dg *my = object_data<windturb_dg>(*obj);
+			// gl_set_parent(*obj, parent);
 			return my->create();
 		}
 		else
@@ -2263,17 +2287,16 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 	try
 	{
 		if (obj != nullptr)
-			return /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj)->init(parent);
+			return object_data<windturb_dg>(obj)->init(parent);			
 		else
 			return 0;
 	}
 	INIT_CATCHALL(windturb_dg);
 }
 
-EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-{
+static TIMESTAMP sync_windturb_dg_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 	TIMESTAMP t1 = TS_NEVER;
-	windturb_dg *my = /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj);
+	windturb_dg *my = object_data<windturb_dg>(obj);
 	try
 	{
 		switch (pass)
@@ -2296,13 +2319,28 @@ EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return t1;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  return sync_windturb_dg_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_windturb_dg(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_windturb_dg_impl(obj, t0, pass);
+}
+#endif
+
 // Current injection exposed function
 EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure)
 {
 	STATUS temp_status;
 
 	// Map the node
-	windturb_dg *my = /*OBJECTDATA(obj,<>)*/ object_data<windturb_dg>(obj);
+	windturb_dg *my = object_data<windturb_dg>(obj);
 
 	// Call the function, where we can update the current injection
 	temp_status = my->updateCurrInjection(iteration_count, converged_failure);

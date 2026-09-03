@@ -44,9 +44,9 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			PT_enumeration, "msg_mode", PADDR(msgmode),PT_DESCRIPTION,"messages regarding remote node voltage to come internally from gridlabd or externally through co-simulation. Set to EXTERNAL only if you have co-simulation enabled",
 				PT_KEYWORD, "INTERNAL", (enumeration)msg_INTERNAL,
 				PT_KEYWORD, "EXTERNAL", (enumeration)msg_EXTERNAL,
-			PT_complex, "remote_voltage_A[V]", PADDR(check_voltage[0]),PT_DESCRIPTION,"remote node voltage, Phase A to ground",
-            PT_complex, "remote_voltage_B[V]", PADDR(check_voltage[1]),PT_DESCRIPTION,"remote node voltage, Phase B to ground",
-            PT_complex, "remote_voltage_C[V]", PADDR(check_voltage[2]),PT_DESCRIPTION,"remote node voltage, Phase C to ground",
+			PT_complex, "remote_voltage_A[V]", PADDR(check_voltage[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"remote node voltage, Phase A to ground",
+            PT_complex, "remote_voltage_B[V]", PADDR(check_voltage[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"remote node voltage, Phase B to ground",
+            PT_complex, "remote_voltage_C[V]", PADDR(check_voltage[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"remote node voltage, Phase C to ground",
 			PT_double, "tap_A_change_count",PADDR(tap_A_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase A since beginning of simulation (plus initial value)",
 			PT_double, "tap_B_change_count",PADDR(tap_B_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase B since beginning of simulation (plus initial value)",
 			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
@@ -100,6 +100,12 @@ int regulator::create()
 
 int regulator::init(OBJECT *parent)
 {
+    OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	bool TapInitialValue[3];
 	char jindex;
 	int result = link_object::init(parent);
@@ -107,8 +113,6 @@ int regulator::init(OBJECT *parent)
 	//Check for deferred
 	if (result == 2)
 		return 2;	//Return the deferment - no sense doing everything else!
-
-	OBJECT *obj = object_header(this);
 
 	if (!configuration)
 		throw "no regulator configuration specified.";
@@ -185,16 +189,7 @@ int regulator::init(OBJECT *parent)
 				
 			RNode_voltage[2] = new gld_property(RemoteNode,"voltage_C");
 
-
-
-
-
-
-
-
-
-
-			//Make sure it worked
+      // Make sure it worked
 
 			if (!RNode_voltage[2]->is_valid() || !RNode_voltage[2]->is_complex())
 			{
@@ -202,10 +197,8 @@ int regulator::init(OBJECT *parent)
 				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
-			
-	   
 	   }
-}
+    }
 	//Map the to-node connections
 	//Map to the property of interest - voltage_A
 	ToNode_voltage[0] = new gld_property(to,"voltage_A");
@@ -537,10 +530,13 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 				if (mech_t_next[i] <= curr_time_value) {
 					mech_flag[i] = 1;
 				}
+				else {
+					mech_flag[i] = 0;
+				}
 				if (dwell_t_next[i] <= curr_time_value) {
 					dwell_flag[i] = 1;
 				}
-				else if (dwell_t_next[i] > curr_time_value) {
+				else {
 					dwell_flag[i] = 0;
 				}
 			}
@@ -724,10 +720,13 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 			if (mech_t_next[0] <= curr_time_value) {
 				mech_flag[0] = 1;
 			}
+			else {
+				mech_flag[0] = 0;
+			}
 			if (dwell_t_next[0] <= curr_time_value) {
 				dwell_flag[0] = 1;
 			}
-			else if (dwell_t_next[0] > curr_time_value) {
+			else {
 				dwell_flag[0] = 0;
 			}
 
@@ -998,10 +997,8 @@ void regulator::reg_postPre_fxn(void)
 		if ((prev_tap[0] != tap[0]) || (prev_tap[1] != tap[1]) || (prev_tap[2] != tap[2]))	//Change has occurred
 		{
 			//Flag an update
-			//LOCK_OBJECT(NR_swing_bus);	//Lock SWING since we'll be modifying this
 			std::unique_lock<std::shared_mutex> nr_lock(SharedMutexManager::get_mutex(NR_swing_bus));
 			NR_admit_change = true;
-			//UNLOCK_OBJECT(NR_swing_bus);	//Unlock
 			nr_lock.unlock();
 
 			//Update our previous tap positions
@@ -1177,10 +1174,13 @@ double regulator::reg_postPost_fxn(double curr_time_value)
 				if (mech_t_next[i] <= curr_time_value) {
 					mech_flag[i] = 1;
 				}
+				else {
+					mech_flag[i] = 0;
+				}
 				if (dwell_t_next[i] <= curr_time_value) {
 					dwell_flag[i] = 1;
 				}
-				else if (dwell_t_next[i] > curr_time_value) {
+				else {
 					dwell_flag[i] = 0;
 				}
 			}
@@ -1546,8 +1546,6 @@ SIMULATIONMODE regulator::inter_deltaupdate_regulator(unsigned int64 delta_time,
 * @return 1 for a successfully created object, 0 for error
 */
 
-
-
 /* This can be added back in after tape has been moved to commit
 EXPORT TIMESTAMP commit_regulator(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
@@ -1567,7 +1565,7 @@ EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			regulator *my = object_data<regulator>(*obj);
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -1599,7 +1597,7 @@ EXPORT int init_regulator(OBJECT *obj)
 * @param pass the current pass for this sync call
 * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
 */
-EXPORT TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_regulator_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try {
 		regulator *pObj = object_data<regulator>(obj);
@@ -1620,10 +1618,40 @@ EXPORT TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	SYNC_CATCHALL(regulator);
 }
 
-EXPORT int isa_regulator(OBJECT *obj, char *classname)
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_regulator(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_regulator_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_regulator(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_regulator_impl(obj, t0, pass);
+}
+#endif
+
+EXPORT int isa_regulator_impl(OBJECT *obj, char *classname)
 {
 	return object_data<regulator>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_regulator(OBJECT *obj, char *classname) {
+  return isa_regulator_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_regulator(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_regulator_impl(obj, classname);
+}
+#endif
 
 //Export for deltamode
 EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
@@ -1646,11 +1674,7 @@ EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_ti
 EXPORT int regulator_kmldata(OBJECT *obj,int (*stream)(const char*,...))
 {
 	regulator *n = object_data<regulator>(obj);
-	int rv = 1;
-
-	rv = n->kmldata(stream);
-
-	return rv;
+	return n->kmldata(stream);
 }
 
 /**@}*/

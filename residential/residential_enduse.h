@@ -31,6 +31,7 @@ public:
 	loadshape shape;
 	enumeration re_override;
 	enumeration power_state;
+
 public:
 	static CLASS *oclass;
 	residential_enduse(MODULE *mod);

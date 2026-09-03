@@ -31,8 +31,7 @@ enum GLDApplicationType {
 
 enum GLDCheckPointMode {
   GLD_CHECKPOINT_MODE_NONE = 0,
-  GLD_CHECKPOINT_MODE_SAVE = 1,
-  GLD_CHECKPOINT_MODE_LOAD = 2
+  GLD_CHECKPOINT_MODE_SAVE = 1
 };
 
 // Forward declaration of GridLabD class
@@ -47,12 +46,13 @@ public:
   GridLabD();
 
   ~GridLabD() {
-    // Cleanup code goes here
+      // Cleanup code goes here
   }
-
-  nlohmann::json gld_model;
+  nlohmann::ordered_json gld_model;
   time_t started_at;
   int64 passes = 0, tsteps = 0;
+  // Set the configuration file path
+  GLDErrorCode set_config_file(const std::string& config_file);
 
   // Explicitly set the GridLAB-D installation root (directory or executable)
   static void set_install_root(const std::string &install_root);
@@ -60,14 +60,11 @@ public:
   // Retrieve the resolved installation root directory
   static std::string get_install_root();
 
-  // Retrieve the resolved GridLAB-D executable path
-  static std::string get_executable_path();
+    // Get the GLM data based on a query, optionally save to filepath
+    nlohmann::ordered_json get_checkpoint_json(const std::string& filepath = "");
 
   // Set the global environment (internal use - for subprocess initialization)
   void set_environment(const std::string &env);
-
-  // Set the configuration file path
-  GLDErrorCode set_config_file(const std::string &config_file);
 
   // Set working directory (for resolving relative paths in GLM files)
   GLDErrorCode set_working_directory(const std::string &dir);
@@ -85,9 +82,6 @@ public:
   // Setup GLD and return an error code
   GLDErrorCode setup_after_load();
 
-  // Get the GLM data based on a query, optionally save to filepath
-  nlohmann::json get_checkpoint_json(const std::string &filepath = "");
-
   // Set the GLM based on input data
   GLDErrorCode set_glm_data(const GLDData &data);
 
@@ -95,9 +89,6 @@ public:
   GLDErrorCode
   save_checkpoint(const std::string &save_path,
                   GLDCheckPointMode mode = GLD_CHECKPOINT_MODE_SAVE);
-
-  // Load simulation state
-  GLDErrorCode load_checkpoint(const std::string &file_path);
 
   // Add a new object to the model
   GLDErrorCode add_object(GLDData &object_data);
@@ -119,6 +110,13 @@ public:
 
   // Set prestep callback function
   GLDErrorCode set_prestep_callback(GLDCallback callback);
+
+  // Validation and testing
+  GLDErrorCode validate(const std::string& repo_root, 
+                        const std::vector<std::string>& modules = {});
+  
+  // Self-contained API health check (suitable for Python packages)
+  GLDErrorCode validate_api(bool verbose = true);
 
   // Set poststep callback function
   GLDErrorCode set_poststep_callback(GLDCallback callback);
@@ -166,7 +164,7 @@ public:
                             std::string &value);
 
   /** Get property metadata (type, units, description)
-   * @param object_name The name of the object  
+   * @param object_name The name of the object
    * @param property_name The name of the property
    * @param prop_type Output: property type enum value
    * @param unit_str Output: unit string (empty if no unit)
@@ -175,8 +173,7 @@ public:
    */
   GLDErrorCode get_property_info(const std::string &object_name,
                                  const std::string &property_name,
-                                 int &prop_type,
-                                 std::string &unit_str,
+                                 int &prop_type, std::string &unit_str,
                                  std::string &description);
 
   /** Set a property value on an object

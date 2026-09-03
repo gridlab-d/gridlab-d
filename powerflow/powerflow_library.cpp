@@ -1,11 +1,11 @@
 /** $Id: powerflow_library.cpp 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file powerflow_library.cpp
-	@addtogroup powerflow_library Powerflow library (abstract)
-	@ingroup powerflow
+        Copyright (C) 2008 Battelle Memorial Institute
+        @file powerflow_library.cpp
+        @addtogroup powerflow_library Powerflow library (abstract)
+        @ingroup powerflow
 
-	The powerflow_library class is an abstract class that implements 
-	basic elements of powerflow object configurations.  
+        The powerflow_library class is an abstract class that implements
+        basic elements of powerflow object configurations.
 
  @{
  **/
@@ -20,102 +20,119 @@
 //////////////////////////////////////////////////////////////////////////
 // powerflow_library CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* powerflow_library::oclass = nullptr;
-CLASS* powerflow_library::pclass = nullptr;
+CLASS *powerflow_library::oclass = nullptr;
+CLASS *powerflow_library::pclass = nullptr;
 
-powerflow_library::powerflow_library(MODULE *mod)
-{
-	if (oclass== nullptr)
-	{
-		oclass = gl_register_class(mod,"powerflow_library",sizeof(powerflow_library),PC_NOSYNC);
-		if (oclass== nullptr)
-			throw "unable to register class powerflow_library";
-		else
-			oclass->trl = TRL_PROVEN;
-	}
+powerflow_library::powerflow_library(MODULE *mod) {
+  if (oclass == nullptr) {
+    oclass = gl_register_class(mod, "powerflow_library",
+                               sizeof(powerflow_library), PC_NOSYNC);
+    if (oclass == nullptr)
+      throw "unable to register class powerflow_library";
+    else
+      oclass->trl = TRL_PROVEN;
+  }
 }
 
-powerflow_library::powerflow_library(CLASS *oclass)
-{
-	gl_create_foreign((OBJECT*)this);
+powerflow_library::powerflow_library(CLASS *oclass) {
+  gl_create_foreign((OBJECT *)this);
 }
 
-int powerflow_library::isa(char *classname)
-{
-	return strcmp(classname,"powerflow_library")==0;
+int powerflow_library::isa(char *classname) {
+  return strcmp(classname, "powerflow_library") == 0;
 }
 
-int powerflow_library::create(void)
-{
-	return 1;
-}
+int powerflow_library::create(void) { return 1; }
 
-int powerflow_library::init(OBJECT *parent)
-{
-	return 1;
-}
+int powerflow_library::init(OBJECT *parent) { return 1; }
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE: powerflow_library
 //////////////////////////////////////////////////////////////////////////
 
 /**
-* REQUIRED: allocate and initialize an object.
-*
-* @param obj a pointer to a pointer of the last object in the list
-* @param parent a pointer to the parent of this object
-* @return 1 for a successfully created object, 0 for error
-*/
-EXPORT int create_powerflow_library(OBJECT **obj, OBJECT *parent)
-{
-	try
-	{
-		*obj = gl_create_object(powerflow_library::oclass);
-		if (*obj!=nullptr)
-		{
-			powerflow_library *my = object_data<powerflow_library>(*obj);
-			gl_set_parent(*obj,parent);
-			return my->create();
-		}
-		else
-			return 0;
-	}
-	CREATE_CATCHALL(powerflow_library);
+ * REQUIRED: allocate and initialize an object.
+ *
+ * @param obj a pointer to a pointer of the last object in the list
+ * @param parent a pointer to the parent of this object
+ * @return 1 for a successfully created object, 0 for error
+ */
+EXPORT int create_powerflow_library(OBJECT **obj, OBJECT *parent) {
+  try {
+    *obj = gl_create_object(powerflow_library::oclass);
+    if (*obj != nullptr) {
+      powerflow_library *my = object_data<powerflow_library>(*obj);
+      // gl_set_parent(*obj,parent);
+      return my->create();
+    } else
+      return 0;
+  }
+  CREATE_CATCHALL(powerflow_library);
 }
 
 /**
-* Object initialization is called once after all object have been created
-*
-* @param obj a pointer to this object
-* @return 1 on success, 0 on error
-*/
-EXPORT int init_powerflow_library(OBJECT *obj)
-{
-	try {
-		powerflow_library *my = object_data<powerflow_library>(obj);
-		return my->init(obj->parent);
-	}
-	INIT_CATCHALL(powerflow_library);
+ * Object initialization is called once after all object have been created
+ *
+ * @param obj a pointer to this object
+ * @return 1 on success, 0 on error
+ */
+EXPORT int init_powerflow_library(OBJECT *obj) {
+  try {
+    powerflow_library *my = object_data<powerflow_library>(obj);
+    return my->init(obj->parent);
+  }
+  INIT_CATCHALL(powerflow_library);
 }
 
 /**
-* Sync is called when the clock needs to advance on the bottom-up pass (PC_BOTTOMUP)
-*
-* @param obj the object we are sync'ing
-* @param t0 this objects current timestamp
-* @param pass the current pass for this sync call
-* @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
-*/
-EXPORT TIMESTAMP sync_powerflow_library(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
-{
-	powerflow_library *pObj = object_data<powerflow_library>(obj);
-	gl_error("%s (powerflow_library:%d): sync should never be called", pObj->get_name(), pObj->get_id());
-	return TS_INVALID;
+ * Sync is called when the clock needs to advance on the bottom-up pass
+ * (PC_BOTTOMUP)
+ *
+ * @param obj the object we are sync'ing
+ * @param t0 this objects current timestamp
+ * @param pass the current pass for this sync call
+ * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
+ */
+static TIMESTAMP sync_powerflow_library_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  powerflow_library *pObj = object_data<powerflow_library>(obj);
+  gl_error("%s (powerflow_library:%d): sync should never be called",
+           pObj->get_name(), pObj->get_id());
+  return TS_INVALID;
 }
 
-EXPORT int isa_powerflow_library(OBJECT *obj, char *classname)
-{
-	return object_data<powerflow_library>(obj)->isa(classname);
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_powerflow_library(OBJECT *obj,
+                                                       TIMESTAMP t0,
+                                                       PASSCONFIG pass) {
+  return sync_powerflow_library_impl(obj, t0, pass);
 }
+#else
+extern "C" MODULE_API TIMESTAMP sync_powerflow_library(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_powerflow_library_impl(obj, t0, pass);
+}
+#endif
+
+EXPORT int isa_powerflow_library_impl(OBJECT *obj, char *classname) {
+  return object_data<powerflow_library>(obj)->isa(classname);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_powerflow_library(OBJECT *obj, char *classname) {
+  return isa_powerflow_library_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_powerflow_library(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_powerflow_library_impl(obj, classname);
+}
+#endif
 
 /**@}**/

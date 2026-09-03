@@ -87,6 +87,9 @@ thermal_storage::thermal_storage(MODULE *mod)
 			PT_double, "discharge_time", PADDR(discharge_time), PT_DESCRIPTION, "Flag indicating if discharging is available at the current time (1 or 0)",			//schedule?
 			PT_double, "discharge_rate[Btu/h]", PADDR(discharge_rate), PT_DESCRIPTION, "rating of discharge or cooling",
 			PT_double, "SOC[%]", PADDR(state_of_charge), PT_DESCRIPTION, "state of charge as percentage of total capacity",		//storage/stored capacity
+			PT_bool, "recharge", PADDR(recharge), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for recharge",
+			PT_timestamp, "last_timestep", PADDR(last_timestep), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for last timestep",
+			PT_timestamp, "next_timestep", PADDR(next_timestep), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT_VAR: internal variable for next timestep",
 			PT_double, "k[W/m/K]", PADDR(k), PT_DESCRIPTION, "coefficient of thermal conductivity (W/m/K)",
 			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			/* TROUBLESHOOT
@@ -138,16 +141,21 @@ int thermal_storage::create(void)
 	return res;
 }
 
-int thermal_storage::init(OBJECT *parent)
-{
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+int thermal_storage::init(OBJECT *parent) {
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
+    if (parent != nullptr) {
+        if ((parent->flags & OF_INIT) != OF_INIT) {
 			char objname[256];
 			gl_verbose("thermal_storage::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = object_header(this);
+
 	hdr->flags |= OF_SKIPSAFE;
 	gld_property *design_cooling_capacity_prop;
 	double design_cooling_capacity;
@@ -156,9 +164,10 @@ int thermal_storage::init(OBJECT *parent)
 	if (!(gl_object_isa(parent,"house","residential")))
 	{
 		GL_THROW("thermal_storage:%s must be parented to a house!",hdr->name);
-		/*  TROUBLESHOOT
-		The thermal_storage model is only valid for house objects.  Please parent it appropriately.
-		*/
+    /*  TROUBLESHOOT
+    The thermal_storage model is only valid for house objects.  Please parent it
+    appropriately.
+    */
 	}
 
 	//Link up the appropriate variables
@@ -170,10 +179,11 @@ int thermal_storage::init(OBJECT *parent)
 	if ((design_cooling_capacity_prop->is_valid() != true) || (design_cooling_capacity_prop->is_double() != true))
 	{
 		GL_THROW("thermal_storage:%d - %s - Unable to map house interface property",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map the parent house's properties, the thermal_storage object encountered an error.  Please
-		try again.  If the error persists, please submit your code and a bug report via the issues tracker.
-		*/
+    /*  TROUBLESHOOT
+    While attempting to map the parent house's properties, the thermal_storage
+    object encountered an error.  Please try again.  If the error persists,
+    please submit your code and a bug report via the issues tracker.
+    */
 	}
 
 	//Outside temperature
@@ -183,7 +193,6 @@ int thermal_storage::init(OBJECT *parent)
 	if ((outside_temperature->is_valid() != true) || (outside_temperature->is_double() != true))
 	{
 		GL_THROW("thermal_storage:%d - %s - Unable to map house interface property",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
-		//Defined above
 	}
 
 	//Thermal_storage_available
@@ -193,7 +202,6 @@ int thermal_storage::init(OBJECT *parent)
 	if ((thermal_storage_available->is_valid() != true) || (thermal_storage_available->is_bool() != true))
 	{
 		GL_THROW("thermal_storage:%d - %s - Unable to map house interface property",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
-		//Defined above
 	}
 	
 	//thermal_storage_active
@@ -203,10 +211,9 @@ int thermal_storage::init(OBJECT *parent)
 	if ((thermal_storage_active->is_valid() != true) || (thermal_storage_active->is_bool() != true))
 	{
 		GL_THROW("thermal_storage:%d - %s - Unable to map house interface property",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
-		//Defined above
 	}
 
-	//Pull the design cooling capacity for checks
+	//Pull the design cooling capacity (needed to validate discharge_rate setup)
 	design_cooling_capacity = design_cooling_capacity_prop->get_double();
 
 	//Check the cooling capacity
@@ -275,18 +282,20 @@ int thermal_storage::init(OBJECT *parent)
 			if (recharge_schedule_vals==nullptr)
 			{
 				GL_THROW("Failure to create default charging schedule");
-				/*  TROUBLESHOOT
-				While attempting to create the default charging schedule in the thermal_storage object, an error occurred.  Please try again.
-				If the error persists, please submit your code and a bug report via the track website.
-				*/
+                /*  TROUBLESHOOT
+                While attempting to create the default charging schedule in the
+                thermal_storage object, an error occurred.  Please try again. If the
+                error persists, please submit your code and a bug report via the track
+                website.
+                */
 			}
 		}
 
-		gl_verbose("thermal_storage charging defaulting to internal schedule");
-		/*  TROUBLESHOOT
-		recharge_schedule_type was not set to EXTERNAL, so the internal schedule definition will be used
-		for the recharging schedule.
-		*/
+        gl_verbose("thermal_storage charging defaulting to internal schedule");
+        /*  TROUBLESHOOT
+        recharge_schedule_type was not set to EXTERNAL, so the internal schedule
+        definition will be used for the recharging schedule.
+        */
 
 		//Assign to the schedule value
 		recharge_time_ptr = &recharge_schedule_vals->value;
@@ -313,18 +322,20 @@ int thermal_storage::init(OBJECT *parent)
 			if (discharge_schedule_vals==nullptr)
 			{
 				GL_THROW("Failure to create default discharging schedule");
-				/*  TROUBLESHOOT
-				While attempting to create the default discharging schedule in the thermal_storage object, an error occurred.  Please try again.
-				If the error persists, please submit your code and a bug report via the track website.
-				*/
+                /*  TROUBLESHOOT
+                While attempting to create the default discharging schedule in the
+                thermal_storage object, an error occurred.  Please try again. If the
+                error persists, please submit your code and a bug report via the track
+                website.
+                */
 			}
 		}
 
-		gl_verbose("thermal_storage discharging defaulting to internal schedule");
-		/*  TROUBLESHOOT
-		discharge_schedule_type was not set to EXTERNAL, so the internal schedule definition will be used
-		for the discharging availability schedule.
-		*/
+        gl_verbose("thermal_storage discharging defaulting to internal schedule");
+        /*  TROUBLESHOOT
+        discharge_schedule_type was not set to EXTERNAL, so the internal schedule
+        definition will be used for the discharging availability schedule.
+        */
 
 		//Assign to the schedule value
 		discharge_time_ptr = &discharge_schedule_vals->value;
@@ -515,7 +526,7 @@ EXPORT int create_thermal_storage(OBJECT **obj, OBJECT *parent)
 	if (*obj!=nullptr)
 	{
 		thermal_storage *my = object_data<thermal_storage>(*obj);
-		gl_set_parent(*obj,parent);
+		// gl_set_parent(*obj,parent);
 		try {
 			my->create();
 		}
@@ -550,7 +561,7 @@ EXPORT int init_thermal_storage(OBJECT *obj)
 	}
 }
 
-EXPORT int isa_thermal_storage(OBJECT *obj, char *classname)
+EXPORT int isa_thermal_storage_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<thermal_storage>(obj)->isa(classname);
@@ -559,27 +570,57 @@ EXPORT int isa_thermal_storage(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT TIMESTAMP sync_thermal_storage(OBJECT *obj, TIMESTAMP t1)
-{
-	thermal_storage *my = object_data<thermal_storage>(obj);
-	try {
-		TIMESTAMP t2 = my->sync(obj->clock, t1);
-		obj->clock = t1;
-		return t2;
-	}
-	catch (char *msg)
-	{
-		DATETIME dt;
-		char ts[64];
-		gl_localtime(t1,&dt);
-		gl_strtime(&dt,ts,sizeof(ts));
-		gl_error("%s::%s.init(OBJECT **obj={name='%s', id=%d},TIMESTAMP t1='%s'): %s", obj->oclass->module->name, obj->oclass->name, obj->name, obj->id, ts, msg);
-		/* TROUBLESHOOT
-			The synchronization operation of the specified object failed.
-			The message given provide additional details and can be looked up under the Exceptions section.
-		 */
-		return 0;
-	}
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_thermal_storage(OBJECT *obj, char *classname) {
+  return isa_thermal_storage_impl(obj, classname);
 }
+#else
+extern "C" MODULE_API int isa_thermal_storage(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_thermal_storage_impl(obj, classname);
+}
+#endif
+
+static TIMESTAMP sync_thermal_storage_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    try {
+        thermal_storage *my = object_data<thermal_storage>(obj);
+        TIMESTAMP t1 = TS_NEVER;
+        switch (pass) {
+        case PC_PRETOPDOWN:
+            break;
+        case PC_BOTTOMUP:
+            t1 = my->sync(obj->clock, t0);
+            obj->clock = t0;
+            break;
+        case PC_POSTTOPDOWN:
+            break;
+        default:
+            gl_error("thermal_storage::sync- invalid pass configuration");
+            t1 = TS_INVALID; // serious error in exec.c
+        }
+        return t1;
+    }
+    SYNC_CATCHALL(thermal_storage);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_thermal_storage(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_thermal_storage_impl(obj, t0, PC_BOTTOMUP);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_thermal_storage(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = PC_BOTTOMUP;
+    va_end(args);
+    return sync_thermal_storage_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

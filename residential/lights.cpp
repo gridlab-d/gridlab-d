@@ -106,17 +106,21 @@ int lights::create(void)
 	return res;
 }
 
-int lights::init(OBJECT *parent)
-{
-	if(parent != nullptr){
-		if((parent->flags & OF_INIT) != OF_INIT){
+int lights::init(OBJECT *parent) {
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent;
+#endif
+
+    if (parent != nullptr) {
+        if ((parent->flags & OF_INIT) != OF_INIT) {
 			char objname[256];
 			gl_verbose("lights::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
 	}
-	OBJECT *hdr = object_header(this);
-	hdr->flags |= OF_SKIPSAFE;
+    hdr->flags |= OF_SKIPSAFE;
 
 	// check the load configuration before initializing the parent class
 	if(shape.load > 1.0)
@@ -263,7 +267,6 @@ EXPORT int create_lights(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			lights *my = object_data<lights>(*obj);
-			gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -281,7 +284,7 @@ EXPORT int init_lights(OBJECT *obj)
 	INIT_CATCHALL(lights);
 }
 
-EXPORT int isa_lights(OBJECT *obj, char *classname)
+EXPORT int isa_lights_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<lights>(obj)->isa(classname);
@@ -290,15 +293,55 @@ EXPORT int isa_lights(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t1)
-{
-	try {
-		lights *my = object_data<lights>(obj);
-		TIMESTAMP t2 = my->sync(obj->clock, t1);
-		obj->clock = t1;
-		return t2;
-	}
-	SYNC_CATCHALL(lights);
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_lights(OBJECT *obj, char *classname) {
+  return isa_lights_impl(obj, classname);
 }
+#else
+extern "C" MODULE_API int isa_lights(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_lights_impl(obj, classname);
+}
+#endif
+
+static TIMESTAMP sync_lights_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
+    try {
+        lights *my = object_data<lights>(obj);
+        TIMESTAMP t2 = TS_NEVER;
+        switch (pass) {
+            case PC_PRETOPDOWN:
+                break;
+            case PC_BOTTOMUP:
+                t2 = my->sync(obj->clock, t1);
+                obj->clock = t1;
+                break;
+            case PC_POSTTOPDOWN:
+                break;
+            default:
+                gl_error("lights::sync- invalid pass configuration");
+                t2 = TS_INVALID; // serious error in exec.c
+        }
+        return t2;
+    }
+    SYNC_CATCHALL(lights);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_lights(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+    return sync_lights_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_lights(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_lights_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

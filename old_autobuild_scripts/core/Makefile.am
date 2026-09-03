@@ -47,7 +47,6 @@ gridlabd_bin_SOURCES = \
 	load_xml_handle.cpp load_xml_handle.h \
 	loadshape.c loadshape.h \
 	local.c local.h \
-	lock.cpp lock.h \
 	main.c \
 	match.c match.h \
 	matlab.c matlab.h \

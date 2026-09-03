@@ -17,7 +17,6 @@
 
 #include "occupantload.h"
 
-
 //////////////////////////////////////////////////////////////////////////
 // occupantload CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -65,6 +64,12 @@ int occupantload::create()
 
 int occupantload::init(OBJECT *parent)
 {
+    OBJECT *hdr = object_header(this);
+
+#ifdef __APPLE__
+    parent = hdr->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -75,7 +80,6 @@ int occupantload::init(OBJECT *parent)
 	if (number_of_occupants==0)	number_of_occupants = 4;		// defaulted to 4, but perhaps define it based on house size??
 	if (heatgain_per_person==0) heatgain_per_person = 400.0;	// Based on DOE-2, includes latent and sensible heatgain
 
-	OBJECT *hdr = object_header(this);
 	hdr->flags |= OF_SKIPSAFE;
 
 	if (parent==nullptr || (!gl_object_isa(parent,"house") && !gl_object_isa(parent,"house_e")))
@@ -110,9 +114,9 @@ int occupantload::init(OBJECT *parent)
 	if(shape.type != MT_UNKNOWN && shape.type != MT_ANALOG){
 		char outname[64];
 		if(hdr->name){
-			//sprintf(outname, "%s", hdr->name);
+			//snprintf(outname, sizeof(outname), "%s", hdr->name);
 		} else {
-			sprintf(outname, "occupancy_load:%i", hdr->id);
+			snprintf(outname, sizeof(outname), "occupancy_load:%i", hdr->id);
 		}
 		gl_warning("occupancy_load \'%s\' may not work properly with a non-analog load shape.", hdr->name ? hdr->name : outname);
 	}
@@ -136,7 +140,6 @@ TIMESTAMP occupantload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		gl_error("heatgain per person above 1600 Btu/hr (470W), reseting to 400 Btu/hr");
 		heatgain_per_person = 400.0;
 	}
-
 
 	if(shape.type == MT_UNKNOWN){
 		if(number_of_occupants < 0){
@@ -176,7 +179,7 @@ EXPORT int create_occupantload(OBJECT **obj, OBJECT *parent)
 		if (*obj!=nullptr)
 		{
 			occupantload *my = object_data<occupantload>(*obj);;
-			gl_set_parent(*obj,parent);
+			// gl_set_parent(*obj,parent);
 			my->create();
 			return 1;
 		}
@@ -196,7 +199,7 @@ EXPORT int init_occupantload(OBJECT *obj)
 	INIT_CATCHALL(occupantload);
 }
 
-EXPORT int isa_occupantload(OBJECT *obj, char *classname)
+EXPORT int isa_occupantload_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
 		return object_data<occupantload>(obj)->isa(classname);
@@ -205,16 +208,58 @@ EXPORT int isa_occupantload(OBJECT *obj, char *classname)
 	}
 }
 
-EXPORT TIMESTAMP sync_occupantload(OBJECT *obj, TIMESTAMP t0)
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_occupantload(OBJECT *obj, char *classname) {
+  return isa_occupantload_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_occupantload(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_occupantload_impl(obj, classname);
+}
+#endif
+
+static TIMESTAMP sync_occupantload_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	try
 	{
 		occupantload *my = object_data<occupantload>(obj);
-		TIMESTAMP t1 = my->sync(obj->clock, t0);
-		obj->clock = t0;
+        TIMESTAMP t1 = TS_NEVER;
+        switch (pass) {
+        case PC_PRETOPDOWN:
+            break;
+        case PC_BOTTOMUP:
+            t1 = my->sync(obj->clock, t0);
+            obj->clock = t0;
+            break;
+        case PC_POSTTOPDOWN:
+            break;
+        default:
+            gl_error("thermal_storage::sync- invalid pass configuration");
+            t1 = TS_INVALID; // serious error in exec.c
+        }
 		return t1;
 	}
 	SYNC_CATCHALL(occupantload);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_occupantload(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_occupantload_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_occupantload(OBJECT *obj, ...) {
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_occupantload_impl(obj, t0, pass);
+}
+#endif
 
 /**@}**/

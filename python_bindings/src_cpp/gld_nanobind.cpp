@@ -67,7 +67,6 @@ NB_MODULE(gridlabd_core, m) {
   nb::enum_<GLDCheckPointMode>(m, "GLDCheckPointMode")
       .value("NONE", GLD_CHECKPOINT_MODE_NONE)
       .value("SAVE", GLD_CHECKPOINT_MODE_SAVE)
-      .value("LOAD", GLD_CHECKPOINT_MODE_LOAD)
       .export_values();
 
   nb::enum_<GLDApplicationType>(m, "GLDApplicationType")
@@ -153,8 +152,6 @@ NB_MODULE(gridlabd_core, m) {
       .def("save_checkpoint", &GridLabD::save_checkpoint, nb::arg("save_path"),
            nb::arg("mode") = GLD_CHECKPOINT_MODE_SAVE,
            "Save the simulation state")
-      .def("load_checkpoint", &GridLabD::load_checkpoint, nb::arg("file_path"),
-           "Load a previously saved simulation state")
       .def("exit_gld", &GridLabD::exit_gld, nb::arg("filepath"),
            "Shutdown the simulation")
       .def("start", &GridLabD::setup_before_load,
@@ -252,17 +249,16 @@ NB_MODULE(gridlabd_core, m) {
             }
             return std::string(buffer);
           },
-          nb::arg("name"),
-          "Get a global variable value")
+          nb::arg("name"), "Get a global variable value")
       .def(
           "set_global",
-          [](GridLabD &self, const std::string &name, const std::string &value) {
+          [](GridLabD &self, const std::string &name,
+             const std::string &value) {
             std::string def = name + "=" + value;
             int result = global_setvar(def.c_str());
             return result;
           },
-          nb::arg("name"), nb::arg("value"),
-          "Set a global variable value");
+          nb::arg("name"), nb::arg("value"), "Set a global variable value");
 
 #ifdef VERSION_INFO
   m.attr("__version__") = NB_STRINGIFY(VERSION_INFO);

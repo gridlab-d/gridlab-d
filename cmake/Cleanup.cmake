@@ -167,7 +167,6 @@ LIST(APPEND cleanup_list
         connection/connection_la-main.lo
         gldcore/link/engine/glxengine_la-engine.lo
         gldcore/link/engine/glxengine_la-udpconnection.lo
-        gldcore/link/matlab/glxmatlab_la-matlab.lo
         gldcore/solvers/glsolvers_la-etp.lo
         gldcore/solvers/glsolvers_la-main.lo
         gldcore/solvers/glsolvers_la-modified_euler.lo
@@ -183,28 +182,6 @@ LIST(APPEND cleanup_list
         generators/generators_la-solar.lo
         generators/generators_la-windturb_dg.lo
         generators/generators_la-controller_dg.lo
-        market/market_la-auction.lo
-        market/market_la-bid.lo
-        market/market_la-collect.lo
-        market/market_la-controller.lo
-        market/market_la-curve.lo
-        market/market_la-double_controller.lo
-        market/market_la-generator_controller.lo
-        market/market_la-init.lo
-        market/market_la-main.lo
-        market/market_la-passive_controller.lo
-        market/market_la-stub_bidder.lo
-        market/market_la-stubauction.lo
-        market/market_la-supervisory_control.lo
-        mysql/mysql_la-collector.lo
-        mysql/mysql_la-database.lo
-        mysql/mysql_la-init.lo
-        mysql/mysql_la-main.lo
-        mysql/mysql_la-player.lo
-        mysql/mysql_la-recorder.lo
-        mysql/mysql_la-table_manager.lo
-        mysql/mysql_la-query_engine.lo
-        mysql/mysql_la-group_recorder.lo
         optimize/optimize_la-init.lo
         optimize/optimize_la-main.lo
         optimize/optimize_la-simple.lo
@@ -312,8 +289,6 @@ LIST(APPEND cleanup_list
         gldcore/link/matlab/glxmatlab.la
         gldcore/solvers/glsolvers.la
         generators/generators.la
-        market/market.la
-        mysql/mysql.la
         optimize/optimize.la
         tape_file/tape_file.la
         tape_plot/tape_plot.la
@@ -329,8 +304,6 @@ LIST(APPEND cleanup_list
         gldcore/link/matlab/glxmatlab.dll
         gldcore/solvers/glsolvers.dll
         generators/generators.dll
-        market/market.dll
-        mysql/mysql.dll
         optimize/optimize.dll
         tape_file/tape_file.dll
         tape_plot/tape_plot.dll
@@ -346,8 +319,6 @@ LIST(APPEND cleanup_list
         gldcore/link/matlab/glxmatlab.so
         gldcore/solvers/glsolvers.so
         generators/generators.so
-        market/market.so
-        mysql/mysql.so
         optimize/optimize.so
         tape_file/tape_file.so
         tape_plot/tape_plot.so

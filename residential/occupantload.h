@@ -30,7 +30,6 @@ public:
 	int init(OBJECT *parent);
 	int isa(char *classname);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-
 };
 
 #endif // _OCCUPANTLOAD_H
