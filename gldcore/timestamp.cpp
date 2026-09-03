@@ -810,7 +810,8 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset)
     }
 
     if (minutes == 0)
-    {if (tzname != nullptr)
+    {
+        if (tzname != nullptr)
         {
             snprintf(tzname, sizeof(tzname), "%s%d%s", buf1, hours, (rv == 2 ? "" : buf2));
         }
