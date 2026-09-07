@@ -142,6 +142,12 @@ jobs:
             out/build/ci-windows/**/CMakeOutput.log
             out/build/ci-windows/**/CMakeError.log
 
+      - name: Pull latest Code
+        run: | 
+          cd ${{ github.workspace }}\vcpkg
+          git pull origin master
+          cd ${{ github.workspace }}
+
       - name: Clean install prefix (Windows)
         shell: pwsh
         run: |
@@ -150,9 +156,6 @@ jobs:
             Write-Host "Removing previous install at $installRoot..."
             Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
           }
-
-      - name: Configure msys2
-        uses: msys2/setup-msys2@v2
 
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
