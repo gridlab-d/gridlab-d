@@ -135,6 +135,12 @@ jobs:
             .*/CMakeError\.log$
             .*/vcpkg/buildtrees/.+\.log$
 
+      - name: Pull latest Code
+        run: | 
+          cd ${{ github.workspace }}\vcpkg
+          git pull origin master
+          cd ${{ github.workspace }}
+
       - name: Upload vcpkg & CMake logs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
@@ -144,7 +150,7 @@ jobs:
             ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
             out/build/ci-windows/**/CMakeOutput.log
             out/build/ci-windows/**/CMakeError.log
-
+        
       - name: Clean install prefix (Windows)
         shell: pwsh
         run: |
