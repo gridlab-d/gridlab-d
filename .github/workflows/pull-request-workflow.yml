@@ -156,7 +156,8 @@ jobs:
         env:
           ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ACTIONS_CACHE_URL: "https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json"
-        run: >
+        run: |
+          pacman -S --needed git base-devel mingw-w64-x86_64-toolchain
           cmake -S .
           --log-level=VERBOSE
           --log-context
