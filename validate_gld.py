@@ -1,12 +1,12 @@
-from argparse import ArgumentParser
-from pathlib import Path
 import math
 import multiprocessing
+import os
 import shutil
 import subprocess
 import sys
 import time
-import os
+from argparse import ArgumentParser
+from pathlib import Path
 
 autotestFiles = []
 gldBinary = None
@@ -14,7 +14,7 @@ gldBinary = None
 
 def getGLDBinary():
     """
-    Check developement environment for the gridlabd binary file.
+    Check development environment for the gridlabd binary file.
     """
     global gldBinary
     gldBinary = shutil.which("gridlabd")
@@ -35,10 +35,9 @@ def getGLDBinary():
 
 def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
     """
-    Search through a module directory for a directory called autotest. Copy autotest to it's own individual directory
+    Search through a module directory for a directory called autotest. Copy autotest to its own individual directory
     to be run from. Capture all autotest files present in the autotest directory.
     """
-    global autotestFiles
     noValidateFile = moduleDirectory / "validate.no"
     noValidateFile.resolve()
     if not noValidateFile.exists():
@@ -68,11 +67,11 @@ def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
 
 
 
-def runAutotest(args: tuple[Path, str]) -> tuple[int, Path, Path, Path]:
+def runAutotest(test_args: tuple[Path, str]) -> tuple[int, Path, Path, Path]:
     """
     Run a single autotest file using GridLAB-D.
     """
-    autotestFile, binFile = args
+    autotestFile, binFile = test_args
 
     # Parent directory that holds the model and all its assets (players, CSVs, etc.)
     src_dir = autotestFile.parent                 # e.g., .../<module>/autotest
@@ -86,50 +85,31 @@ def runAutotest(args: tuple[Path, str]) -> tuple[int, Path, Path, Path]:
     # Compose command: run from parent directory, write outputs into work_dir
     command = [binFile, autotestFile.name]
     (work_dir / "gridlabd.start").write_text(f"RUN {autotestFile.name} via {binFile}\n")
-
                                              
     env = dict(os.environ)
     per_test_timeout_s = int(env.get("GLD_TEST_TIMEOUT", os.environ.get("GLD_TIMEOUT", "600")))
-
-
-    # # Capture raw bytes to avoid UnicodeDecodeError
-    # result = subprocess.run(
-    #     command,
-    #     cwd=work_dir,
-    #     stdout=subprocess.PIPE,
-    #     stderr=subprocess.PIPE,
-    #     text=False,  # <-- CRITICAL: captures bytes, no decoding
-    # )
 
     print(f"[run] {autotestFile}", flush=True)
     try:
             result = subprocess.run(
                 command,
                 cwd=work_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 text=False,  # capture bytes
                 env=env,
                 timeout=per_test_timeout_s,
+                check=False
             )
     except subprocess.TimeoutExpired as e:
             # Persist a clear timeout marker
             (work_dir / "gridlabd.out").write_text("")
             (work_dir / "gridlabd.err").write_text(f"TIMEOUT after {per_test_timeout_s}s\n{e}")
-            return (1, work_dir / autotestFile.name)
+            return 1, work_dir / autotestFile.name, (work_dir / "gridlabd.out"), (work_dir / "gridlabd.err")
 
 
     # Persist outputs (parity with validate.cpp)
     (work_dir / "gridlabd.out").write_bytes(result.stdout)
     (work_dir / "gridlabd.err").write_bytes(result.stderr)
-
-    # # Classification logic (same as your harness)
-    # rv = 0
-    # if result.returncode != 0 and "_err" not in autotestFile.stem:
-    #     rv = 1
-    # elif result.returncode == 0 and "_err" in autotestFile.stem:
-    #     rv = 2
-    # return (rv, work_dir / autotestFile.name)
 
     # check = (work_dir / "gridlabd.err").read_text()
     # if len(check):
@@ -149,7 +129,7 @@ def runAutotest(args: tuple[Path, str]) -> tuple[int, Path, Path, Path]:
         rv = 1
     elif result.returncode == 0 and "_err" in autotestFile.stem:
         rv = 2
-    return (rv, work_dir / autotestFile.name, (work_dir / "gridlabd.out"), (work_dir / "gridlabd.err"))
+    return rv, work_dir / autotestFile.name, (work_dir / "gridlabd.out"), (work_dir / "gridlabd.err")
 
 
 def getGLDVersionInfo() -> str:
@@ -157,7 +137,7 @@ def getGLDVersionInfo() -> str:
     Get the GridLAB-D version information.
     """
     command = [gldBinary, "--version"]
-    result = subprocess.run(command, capture_output=True, text=True)
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.returncode == 0:
         return result.stdout.strip()
     return "Unknown GridLAB-D version"
@@ -184,7 +164,6 @@ def processResults(results: list[tuple[int, Path, Path, Path]], resultsFile: Pat
     """
     Process the results of the autotest runs and output to validate.txt.
     """
-    global autotestFiles
     rv = 0
     gldInfo = getGLDVersionInfo()
     with errorFile.open("w") as ef:
@@ -217,11 +196,11 @@ def processResults(results: list[tuple[int, Path, Path, Path]], resultsFile: Pat
                     ef.write(f"\n== OUT:\t{out.read_text()}")
                     ef.write(f"\n== ERROR:\t{err.read_text()}")
             if passCount > 0:
-                f.write(f"\tPassing Tests:")
+                f.write("\tPassing Tests:")
                 for test in passingTests:
                     f.write(f"\n\t\t[PASS]\t{test}")
             if failCount > 0 or unexpectedPassCount > 0:
-                f.write(f"\n\tFailing Tests:")
+                f.write("\n\tFailing Tests:")
                 for test in failingTests1:
                     f.write(f"\n\t\t[FAIL]\t{test}...failed to run but was expected to pass.")
                 for test in failingTests2:
@@ -252,7 +231,6 @@ def processResults(results: list[tuple[int, Path, Path, Path]], resultsFile: Pat
 
 
 def main(module: str, runOptionalTests: bool, threads: int):
-    global autotestFiles
     rv = 0
     multiprocessing.set_start_method("spawn", force=True)
     procs = 1
@@ -276,7 +254,7 @@ def main(module: str, runOptionalTests: bool, threads: int):
         moduleDirectory = searchDirectoryBase / module
         moduleDirectory.resolve()
         if not moduleDirectory.exists() or not moduleDirectory.is_dir():
-            raise IOError(f"The module, {module}, does not exist.")
+            raise OSError(f"The module, {module}, does not exist.")
         processModuleDirectory(moduleDirectory, runOptionalTests)
         resultsFile = moduleDirectory / "validate.txt"
         resultsFile.resolve()
@@ -296,7 +274,6 @@ def main(module: str, runOptionalTests: bool, threads: int):
         total = len(autotestFiles)
         if procs > 1:
             with multiprocessing.Pool(procs) as p:
-                # results = p.starmap(runAutotest, autotestFiles)
                 for rv in p.imap_unordered(runAutotest, autotestFiles):  # <-- no lambda here
                     results.append(rv)
                     done += 1
@@ -357,8 +334,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    # main(args.module, args.run_optional_tests, args.threads)
-
     os.environ["GLD_TEST_TIMEOUT"] = str(args.timeout)
     main(args.module, args.run_optional_tests, args.threads)
 

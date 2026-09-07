@@ -437,6 +437,13 @@ int node::create(void)
     return result;
 }
 
+static bool checkpoint_loaded_runtime()
+{
+    char checkpoint_loaded[32] = "0";
+    gl_global_getvar("checkpoint_loaded", checkpoint_loaded, sizeof(checkpoint_loaded));
+    return (checkpoint_loaded[0] == '1' || checkpoint_loaded[0] == 'T' || checkpoint_loaded[0] == 't');
+}
+
 int node::init(OBJECT *parent)
 {
     OBJECT *obj = object_header(this);
@@ -643,7 +650,7 @@ int node::init(OBJECT *parent)
             }
 
             // Rank the child object (which should propagate upward) - but only do if not a checkpoint
-            if (!global_checkpoint_loaded)
+            if (!checkpoint_loaded_runtime())
             {
                 gl_set_rank(obj, 3); // Start as below normal nodes (but above links)
                                     // This way load postings should propogate during sync (bottom-up)
@@ -683,7 +690,7 @@ int node::init(OBJECT *parent)
             // Once fails, reached top of parent chain (theoretically)
 
             // Check ranking if not checkpoint
-            if (!global_checkpoint_loaded)
+            if (!checkpoint_loaded_runtime())
             {
                 if ((tmp_subnode_parent->rank + 2) > NR_expected_swing_rank)
                 {
@@ -896,7 +903,7 @@ int node::init(OBJECT *parent)
             else // Normal nodes and rival swing buses end up starting in the same rank
             {
                 //Only do if not checkpoint
-                if (!global_checkpoint_loaded)
+                if (!checkpoint_loaded_runtime())
                 {
                     if (obj->rank < 4)
                     {

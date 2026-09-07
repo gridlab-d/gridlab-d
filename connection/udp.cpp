@@ -177,7 +177,7 @@ size_t udp::send(const char *msg, size_t len) {
     tlim = 9;
   else if (tlim < 1)
     tlim = 1;
-  snprintf(temp, sizeof(temp), "%-1d %-3d %-7lu %-5.5s %-3.1f %-1d %-3d   ", header_version,
+  snprintf(temp, sizeof(temp), "%-1d %-3d %-7zu %-5.5s %-3.1f %-1d %-3d   ", header_version,
           header_size, len, message_format, message_version, tlim, 0);
   if (len > 1500 - strlen(temp)) {
     error("udp::send(const char *msg='%-10.10s', size_t len=%d): message is "

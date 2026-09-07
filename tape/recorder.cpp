@@ -545,7 +545,7 @@ static TIMESTAMP recorder_write(OBJECT *obj) {
       }
       snprintf(outbuffer, sizeof(outbuffer), "%s,%s", in_tok, my->last.value.get_string());
     } else { // no input file ~ write normal output
-      snprintf(outbuffer, sizeof(outbuffer), "%s", my->last.value);
+      snprintf(outbuffer, sizeof(outbuffer), "%s", my->last.value.get_string());
     }
     // fprintf
     fprintf(my->multifp, "%s,%s\n", ts, outbuffer.get_string());

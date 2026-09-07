@@ -1983,7 +1983,7 @@ static int commit_init()
 /* single / multiple threaded version of commit_all */
 static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 {
-    std::atomic_long result{static_cast<long>(TS_NEVER)};
+    std::atomic_llong result{TS_NEVER};
     SIMPLELINKLIST *item;
     unsigned int pc;
     static int n_commits = -1;

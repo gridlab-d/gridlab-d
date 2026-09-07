@@ -4,11 +4,11 @@
 #include "client.h"
 #include "server.h"
 
-#ifdef _MSC_VER
-char *strtok_r(char *str, const char *delim, char **saveptr) {
-  return strtok_s(str, delim, saveptr);
-}
-#endif
+//#ifdef _MSC_VER
+//char *strtok_r(char *str, const char *delim, char **saveptr) {
+//  return strtok_s(str, delim, saveptr);
+//}
+//#endif
 
 ////////////////////////////////////////////////////////////////////////////////////
 connection_mode::connection_mode(void) {

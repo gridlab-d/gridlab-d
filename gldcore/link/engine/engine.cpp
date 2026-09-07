@@ -304,7 +304,7 @@ bool add_global(ENGINELINK *engine, unsigned int index, GLOBALVAR *var) {
   if (gl_name(prop->get_object(), buffname, 255) == nullptr) {
     strcpy(buffname, "nullptr");
   }
-  int len = snprintf(buffer, sizeof(buffer), "GLOBAL %d %d %lu %s %s %s", index,
+  int len = snprintf(buffer, sizeof(buffer), "GLOBAL %d %d %zu %s %s %s", index,
                     (PROPERTYTYPE)prop->get_type(), // TODO convert this to text
                     prop->get_size(), buffname, prop->get_name(),
                     prop->get_string().get_buffer());
@@ -319,7 +319,7 @@ bool add_import(ENGINELINK *engine, unsigned int index,
   if (gl_name(prop->get_object(), buffname, 255) == nullptr) {
     strcpy(buffname, "nullptr");
   }
-  int len = snprintf(buffer, sizeof(buffer), "IMPORT %d %d %lu %s %s %s", index,
+  int len = snprintf(buffer, sizeof(buffer), "IMPORT %d %d %zu %s %s %s", index,
                     (PROPERTYTYPE)prop->get_type(), // TODO convert this to text
                     prop->get_size(), buffname, prop->get_name(),
                     prop->get_string().get_buffer());
@@ -334,7 +334,7 @@ bool add_export(ENGINELINK *engine, unsigned int index,
   if (gl_name(prop->get_object(), buffname, 255) == nullptr) {
     strcpy(buffname, "nullptr");
   }
-  int len = snprintf(buffer, sizeof(buffer), "EXPORT %d %d %lu %s %s %s", index,
+  int len = snprintf(buffer, sizeof(buffer), "EXPORT %d %d %zu %s %s %s", index,
                     (PROPERTYTYPE)prop->get_type(), // TODO convert this to text
                     prop->get_size(), buffname, prop->get_name(),
                     prop->get_string().get_buffer());

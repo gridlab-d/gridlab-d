@@ -2607,7 +2607,8 @@ void house_e::update_system(double dt)
 
     adj_cooling_cap = cooling_capacity_adj;
     adj_heating_cap = heating_capacity_adj;
-#pragma warning("house_e: add update_system voltage adjustment for heating")
+    
+    gl_verbose("house_e: add update_system voltage adjustment for heating");
     double voltage_adj = (((value_Circuit_V[0]).Mag() * (value_Circuit_V[0]).Mag()) / (240.0 * 240.0) * load.impedance_fraction + ((value_Circuit_V[0]).Mag() / 240.0) * load.current_fraction + load.power_fraction);
     double voltage_adj_resistive = ((value_Circuit_V[0]).Mag() * (value_Circuit_V[0]).Mag()) / (240.0 * 240.0);
 

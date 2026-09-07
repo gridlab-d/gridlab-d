@@ -242,7 +242,7 @@ sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
                 // In Mode B
                 if (sct_metrics_check_mode_B())
                 {
-                    if (~sck_armed_flag)
+                    if (!sck_armed_flag)
                     {
                         set_prop(prop_sck_armed_ptr, true); // arm sync_check
                     }
