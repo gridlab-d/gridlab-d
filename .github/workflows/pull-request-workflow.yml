@@ -151,25 +151,26 @@ jobs:
             Remove-Item -Path $installRoot -Recurse -Force -ErrorAction SilentlyContinue
           }
 
+      - name: Configure msys2
+        uses: msys2/setup-msys2@v2
+
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
         env:
           ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ACTIONS_CACHE_URL: "https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json"
-        run: |
-          pacman -S --needed git base-devel mingw-w64-x86_64-toolchain
-          
-          cmake -S . \
-          --log-level=VERBOSE \
-          --log-context \
-          --debug-output \
-          -B out/build/ci-windows \
-          -A x64 \
-          -DCPREFIX_CONFIGURATION_TYPES="Debug;Release" \
-          -DCMAKE_BUILD_TYPE="Release" \
-          -DVCPKG_TARGET_TRIPLET=x64-windows \
-          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
-          -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D" \
+        run: >
+          cmake -S .
+          --log-level=VERBOSE
+          --log-context
+          --debug-output
+          -B out/build/ci-windows
+          -A x64
+          -DCPREFIX_CONFIGURATION_TYPES="Debug;Release"
+          -DCMAKE_BUILD_TYPE="Release"
+          -DVCPKG_TARGET_TRIPLET=x64-windows
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D"
           -DGLD_CI_BUILD=ON
 
       - name: Build GridLAB-D (Release)
