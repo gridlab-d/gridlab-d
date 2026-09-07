@@ -124,9 +124,9 @@ jobs:
           msbuild-architecture: 'x64'
 
       - name: Setup vcpkg (manifest mode + cache)
-        uses: step-security/run-vcpkg@v11
+        uses: lukka/run-vcpkg@v11
         with:
-          runVcpkgInstall: true
+          runVcpkgInstall: false
           logCollectionRegExps: |
             .*/CMakeOutput\.log$
             .*/CMakeError\.log$
