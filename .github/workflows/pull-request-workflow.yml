@@ -158,17 +158,17 @@ jobs:
           ACTIONS_CACHE_URL: "https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json"
         run: |
           pacman -S --needed git base-devel mingw-w64-x86_64-toolchain
-          cmake -S .
-          --log-level=VERBOSE
-          --log-context
-          --debug-output
-          -B out/build/ci-windows
-          -A x64
-          -DCPREFIX_CONFIGURATION_TYPES="Debug;Release"
-          -DCMAKE_BUILD_TYPE="Release"
-          -DVCPKG_TARGET_TRIPLET=x64-windows
-          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D"
+          cmake -S . \
+          --log-level=VERBOSE \
+          --log-context \
+          --debug-output \
+          -B out/build/ci-windows \
+          -A x64 \
+          -DCPREFIX_CONFIGURATION_TYPES="Debug;Release" \
+          -DCMAKE_BUILD_TYPE="Release" \
+          -DVCPKG_TARGET_TRIPLET=x64-windows \
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+          -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D" \
           -DGLD_CI_BUILD=ON
 
       - name: Build GridLAB-D (Release)
