@@ -146,6 +146,8 @@ jobs:
         run: | 
           cd ${{ github.workspace }}\vcpkg
           git pull origin master
+          .\bootstrap-vcpkg.bat
+          vcpkg integrate install
           cd ${{ github.workspace }}
 
       - name: Clean install prefix (Windows)
