@@ -75,6 +75,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Build GridLAB-D
         run: |
@@ -90,7 +91,6 @@ jobs:
       - name: Install GridLAB-D
         working-directory: ${{github.workspace}}/build
         run: cmake --install . --config ${{env.BUILD_TYPE}} --prefix ${{ runner.temp }}/gridlabd-install
-
 
       - name: Package
         working-directory: ${{github.workspace}}/build
@@ -120,7 +120,7 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-
+          
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
         with:
@@ -135,12 +135,6 @@ jobs:
             .*/CMakeError\.log$
             .*/vcpkg/buildtrees/.+\.log$
 
-      - name: Pull latest Code
-        run: | 
-          cd ${{ github.workspace }}\vcpkg
-          git pull origin master
-          cd ${{ github.workspace }}
-
       - name: Upload vcpkg & CMake logs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
@@ -151,6 +145,14 @@ jobs:
             out/build/ci-windows/**/CMakeOutput.log
             out/build/ci-windows/**/CMakeError.log
         
+      - name: Pull latest Code
+        run: | 
+          cd ${{ github.workspace }}\vcpkg
+          git pull origin master
+          .\bootstrap-vcpkg.bat
+          vcpkg integrate install
+          cd ${{ github.workspace }}
+
       - name: Clean install prefix (Windows)
         shell: pwsh
         run: |
