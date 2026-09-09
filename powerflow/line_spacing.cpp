@@ -82,7 +82,7 @@ EXPORT int create_line_spacing(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(line_spacing::oclass);
     if (*obj != nullptr) {
-      line_spacing *my = /*OBJECTDATA(obj,<>)*/ object_data<line_spacing>(*obj);
+      line_spacing *my = object_data<line_spacing>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -90,8 +90,7 @@ EXPORT int create_line_spacing(OBJECT **obj, OBJECT *parent) {
   }
   CREATE_CATCHALL(line_spacing);
 }
-static TIMESTAMP sync_line_spacing_impl(OBJECT *obj, TIMESTAMP t1,
-                                        PASSCONFIG pass) {
+static TIMESTAMP sync_line_spacing_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return TS_NEVER;
 }
 
@@ -111,8 +110,20 @@ extern "C" MODULE_API TIMESTAMP sync_line_spacing(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_line_spacing(OBJECT *obj, char *classname) {
+EXPORT int isa_line_spacing_impl(OBJECT *obj, char *classname) {
   return strcmp(classname, "line_spacing") == 0;
 }
-
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_line_spacing(OBJECT *obj, char *classname) {
+  return isa_line_spacing_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_line_spacing(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_line_spacing_impl(obj, classname);
+}
+#endif
 /**@}**/

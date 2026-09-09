@@ -3082,8 +3082,22 @@ extern "C" MODULE_API TIMESTAMP sync_volt_var_control(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_volt_var_control(OBJECT *obj, char *classname) {
+EXPORT int isa_volt_var_control_impl(OBJECT *obj, char *classname) {
   return object_data<volt_var_control>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_volt_var_control(OBJECT *obj, char *classname) {
+  return isa_volt_var_control_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_volt_var_control(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_volt_var_control_impl(obj, classname);
+}
+#endif
 
 /**@}**/

@@ -84,6 +84,12 @@
  @{
  **/
 
+
+#ifdef _WIN32
+    #include <windows.h>
+#endif
+
+
 #include <algorithm> // Add this include for std::ranges
 #include <cctype>
 #include <csignal>
@@ -279,7 +285,7 @@ int exec_init()
 #if 0 /* isn't cooperating for strange reasons -mh */
 #ifdef _WIN32
 	glpathlen=strlen("GLPATH=");
-	sprintf(glpathvar, "GLPATH=");
+	snprintf(glpathvar, sizeof(glpathvar), "GLPATH=");
 	ExpandEnvironmentStrings(getenv("GLPATH"), glpathvar+glpathlen, (DWORD)(1024-glpathlen));
 #endif
 #endif
@@ -457,7 +463,7 @@ nlohmann::ordered_json do_checkpoint(const char *output_filename)
                 {
                     *last_dot = '\0';
                 }
-                sprintf(json_fn, "%s_%s", modelname_noext, "checkpoint.json");
+                snprintf(json_fn, sizeof(json_fn), "%s_%s", modelname_noext, "checkpoint.json");
             }
 
             // ── Resolve output directory (only when filename was auto-generated) ──
@@ -1334,9 +1340,7 @@ static void tp_do_object_sync(OBJECT *obj)
         /* if this event precedes next step, next step is now this event */
         if (data->step_to > this_t)
         {
-            // LOCK(data);
             data->step_to = this_t;
-            // UNLOCK(data);
         }
         // printf("data->step_to=%d, this_t=%d\n", data->step_to, this_t);
     }
@@ -1424,9 +1428,9 @@ static void ss_do_object_sync(int thread, void *item)
                 convert_from_timestamp(this_t < 0 ? -this_t : this_t, syncdate,
                                        sizeof(syncdate));
                 if (obj->name == nullptr)
-                    sprintf(objname, "%s:%d", obj->oclass->name, obj->id);
+                    snprintf(objname, sizeof(objname), "%s:%d", obj->oclass->name, obj->id);
                 else
-                    strcpy(objname, obj->name);
+                    snprintf(objname, sizeof(objname), "%s", obj->name);
                 fprintf(fp, "%s,%s,%d,%d,%s,%s\n", lastdate, passname.c_str(),
                         global_iteration_limit - iteration_counter, thread, objname,
                         syncdate);
@@ -1487,9 +1491,7 @@ static void ss_do_object_sync(int thread, void *item)
         /* if this event precedes next step, next step is now this event */
         if (data->step_to > this_t)
         {
-            // LOCK(data);
             data->step_to = this_t;
-            // UNLOCK(data);
         }
         // printf("data->step_to=%d, this_t=%d\n", data->step_to, this_t);
     }
@@ -1981,7 +1983,7 @@ static int commit_init()
 /* single / multiple threaded version of commit_all */
 static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 {
-    std::atomic_long result{static_cast<long>(TS_NEVER)};
+    std::atomic_llong result{TS_NEVER};
     SIMPLELINKLIST *item;
     unsigned int pc;
     static int n_commits = -1;

@@ -103,7 +103,7 @@ void CLeftView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint) {
     for (block = 0; block < sch->block; block++) {
       HTREEITEM hItem2 = tree.InsertItem(sch->blockname[block], hItem1);
       char refname[1024];
-      sprintf(refname, "schedule:%d", block);
+      snprintf(refname, sizeof(refname), "schedule:%d", block);
       pRef = new CTreeRef(refname, (DWORD_PTR)sch);
       tree.SetItemData(hItem2, (DWORD_PTR)pRef);
       tree.SetItemState(hItem1, TVIS_BOLD, TVIS_BOLD);

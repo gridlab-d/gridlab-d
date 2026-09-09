@@ -92,7 +92,7 @@ static int collector_open(OBJECT *obj) {
   if (strcmp(fname, "") == 0) {
     char *p;
     /* use group spec as default file name */
-    sprintf(fname, "%s.%s", my->group.get_string(), my->filetype.get_string());
+    snprintf(fname, sizeof(fname), "%s.%s", my->group.get_string(), my->filetype.get_string());
 
     /* but change disallowed characters to _ */
     for (p = fname; *p != '\0'; p++) {
@@ -137,7 +137,7 @@ static TIMESTAMP collector_write(OBJECT *obj) {
     gl_localtime(my->last.ts, &dt);
     gl_strtime(&dt, ts, sizeof(ts));
   } else
-    sprintf(ts, "%" FMT_INT64 "d", my->last.ts);
+    snprintf(ts, sizeof(ts), "%" FMT_INT64 "d", my->last.ts);
   if ((my->limit > 0 && my->samples > my->limit)       /* limit reached */
       || write_collector(my, ts, my->last.value) == 0) /* write failed */
   {
@@ -185,7 +185,7 @@ static TIMESTAMP collector_write(OBJECT *obj) {
 //	for (p=aggr; p!=nullptr && offset<size-33; p=p->next)
 //	{
 //		if (offset>0) strcpy(buffer+offset++,",");
-//		offset+=sprintf(buffer+offset,fmt,gl_run_aggregate(p));
+//		offset+=snprintf(buffer, sizeof(buffer)+offset,fmt,gl_run_aggregate(p));
 //		buffer[offset]='\0';
 //		count++;
 //	}
@@ -223,7 +223,7 @@ int read_aggregates(
     if (offset > 0) {
       strcpy(buffer + offset++, ",");
     }
-    offset += sprintf(buffer + offset, fmt, gl_run_aggregate(aggr));
+    offset += snprintf(buffer, sizeof(buffer) + offset, fmt, gl_run_aggregate(aggr));
     if (offset >= size - 33) {
       break; // Avoid buffer overflow.
     }
@@ -250,7 +250,7 @@ static TIMESTAMP sync_collector_impl(OBJECT *obj, TIMESTAMP t0,
 
   /* read property */
   if (my->aggr.empty()) {
-    sprintf(buffer,
+    snprintf(buffer, sizeof(buffer),
             "'%s' contains an aggregate that is not found in the group '%s'",
             (char *)my->property, (char *)my->group);
     my->status = TS_ERROR;
@@ -270,7 +270,7 @@ static TIMESTAMP sync_collector_impl(OBJECT *obj, TIMESTAMP t0,
   // link_aggregates(my->property,my->group)),read_aggregates(my->aggr,buffer,sizeof(buffer))==0)
   if (!my->aggr.empty() && (my->interval == 0 || my->interval == -1)) {
     if (read_aggregates(my->aggr, buffer, sizeof(buffer)) == 0) {
-      sprintf(buffer, "unable to read aggregate '%s' of group '%s'",
+      snprintf(buffer, sizeof(buffer), "unable to read aggregate '%s' of group '%s'",
               my->property.get_string(), my->group.get_string());
       close_collector(my);
       my->status = TS_ERROR;
@@ -280,7 +280,7 @@ static TIMESTAMP sync_collector_impl(OBJECT *obj, TIMESTAMP t0,
   if (!my->aggr.empty() && my->interval > 0) {
     if ((t0 >= my->last.ts + my->interval) || (t0 == my->last.ts)) {
       if (read_aggregates(my->aggr, buffer, sizeof(buffer)) == 0) {
-        sprintf(buffer, "unable to read aggregate '%s' of group '%s'",
+        snprintf(buffer, sizeof(buffer), "unable to read aggregate '%s' of group '%s'",
                 my->property.get_string(), my->group.get_string());
         close_collector(my);
         my->status = TS_ERROR;

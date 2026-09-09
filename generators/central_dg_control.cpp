@@ -89,7 +89,7 @@ int central_dg_control::create(void)
 /* Object initialization is called once after all object have been created */
 int central_dg_control::init(OBJECT *parent)
 {
-    OBJECT *thisObj = object_header(this);
+  OBJECT *thisObj = object_header(this);
 
 #ifdef __APPLE__
     parent = thisObj->parent; // AppleClang seems to have an issue with the parent pointer
@@ -231,7 +231,7 @@ int central_dg_control::init(OBJECT *parent)
         {
             break;
         }
-        battery_set[index] = object_data<battery>(obj);
+    battery_set[index] = object_data<battery>(obj);
         if (battery_set[index] == nullptr)
         {
             gl_error("Unable to map object as battery.");
@@ -277,8 +277,7 @@ int central_dg_control::init(OBJECT *parent)
             break;
         }
         solar_set[index] = object_data<solar>(obj);
-        if (solar_set[index] == nullptr)
-        {
+    if (solar_set[index] == nullptr) {
             gl_error("Unable to map object as solar.");
             /*  TROUBLESHOOT
             While trying to map a solar from the list as a solar object, a null
@@ -287,8 +286,7 @@ int central_dg_control::init(OBJECT *parent)
             return 0;
         }
         inverter_set[inverter_filled_to + 1] = object_data<inverter>(obj->parent);
-        if (inverter_set[inverter_filled_to + 1] == nullptr)
-        {
+    if (inverter_set[inverter_filled_to + 1] == nullptr) {
             gl_error("Unable to map object as inverter.");
             /*  TROUBLESHOOT
             While trying to map an inverter from the listof inverters an inverter

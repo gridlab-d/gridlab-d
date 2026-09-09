@@ -2402,7 +2402,7 @@ for the function name ?s could not be found.", funcName);
                 //TODO: deliver message to helics
                 stringstream payload;
                 char buffer[sizeof(len)];
-                sprintf(buffer, "%d", len);
+                snprintf(buffer, sizeof(buffer), "%d", len);
                 payload << "\"{\"from\":\"" << from << "\", " << "\"to\":\"" <<
 to << "\", " << "\"function\":\"" << funcName << "\", " <<  "\"data\":\"" <<
 message << "\", " << "\"data length\":\"" << buffer <<"\"}\""; string key =

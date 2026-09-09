@@ -165,7 +165,7 @@ char *gld_loadHndl::read_clock_prop(char *buffer, size_t len) {
     ;
   } else if (strcmp(propname, "timezone") == 0) {
     if (timestamp_set_tz(buffer) == nullptr) {
-      sprintf(errmsg, "timezone %s is not defined", timezone);
+      snprintf(errmsg, sizeof(errmsg), "timezone %s is not defined", timezone);
       return errmsg;
     }
   } else if (strcmp(propname, "timestamp") == 0) {
@@ -174,11 +174,11 @@ char *gld_loadHndl::read_clock_prop(char *buffer, size_t len) {
     } else if (time_value_datetimezone(buffer, &tsval)) {
       global_clock = tsval;
     } else {
-      sprintf(errmsg, "timestamp \"%s\" could not be resolved", buffer);
+      snprintf(errmsg, sizeof(errmsg), "timestamp \"%s\" could not be resolved", buffer);
       return errmsg;
     }
   } else {
-    sprintf(errmsg, "Unrecognized keyword in start_element_clock(%s)", buffer);
+    snprintf(errmsg, sizeof(errmsg), "Unrecognized keyword in start_element_clock(%s)", buffer);
     return errmsg;
   }
   return nullptr;
@@ -195,7 +195,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
   SAXParseException *e = nullptr;
   void *addr = object_get_addr(obj, propname); /* get the & to set later */
   if (this->obj == nullptr) {
-    sprintf(errmsg, "Null object pointer in read_object_prop(%s)", buffer);
+    snprintf(errmsg, sizeof(errmsg), "Null object pointer in read_object_prop(%s)", buffer);
     return errmsg; //	no object
   }
   if (this->prop == nullptr) {
@@ -219,7 +219,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
     } else if (strcmp(propname, "out") == 0) {
       obj->out_svc = convert_to_timestamp(buffer);
     } else {
-      sprintf(errmsg, "Null property pointer in read_object_prop(%s)", buffer);
+      snprintf(errmsg, sizeof(errmsg), "Null property pointer in read_object_prop(%s)", buffer);
       return errmsg;
     }
     return nullptr;
@@ -238,7 +238,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
       if (modep == nullptr) {
         // output_error("XML_Load: misformed random() value");
         load_state = false;
-        sprintf(errmsg, "Misformed random() value in read_object_prop(%s)",
+        snprintf(errmsg, sizeof(errmsg), "Misformed random() value in read_object_prop(%s)",
                 buffer);
         return errmsg;
       }
@@ -247,7 +247,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
         // output_message("XML_Load: '%s' ~ %s is not a valid random
         // distribution", buffer, modep);
         load_state = false;
-        sprintf(errmsg, "Invalid random distribution in read_object_prop(%s)",
+        snprintf(errmsg, sizeof(errmsg), "Invalid random distribution in read_object_prop(%s)",
                 buffer);
         return errmsg;
       } else {
@@ -259,7 +259,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
         unit = unit_find(strchr(buffer, ')') + 2);
         if (unit != nullptr && prop->unit != nullptr &&
             unit_convert_ex(unit, prop->unit, &realval) == 0) {
-          sprintf(errmsg,
+          snprintf(errmsg, sizeof(errmsg),
                   "Cannot convert units from %s to %s in read_object_prop(%s)",
                   unit->name, prop->unit->name, buffer);
           load_state = false;
@@ -276,8 +276,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
         if (strlen(unit_ptr) > 0) {
           if (unit != nullptr && prop->unit != nullptr &&
               unit_convert_ex(unit, prop->unit, &realval) == 0) {
-            sprintf(
-                errmsg,
+            snprintf(errmsg, sizeof(errmsg),
                 "Cannot convert units from %s to %s in read_object_prop(%s)",
                 unit->name, prop->unit->name, buffer);
             load_state = false;
@@ -288,7 +287,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
     }
     /* if((unit_ptr != nullptr) && (*unit_ptr != '\0')){;} */
     if (object_set_double_by_name(obj, propname, realval) == 0) {
-      sprintf(errmsg, "Could not set \"%s\" to %f in read_object_prop(%s)",
+      snprintf(errmsg, sizeof(errmsg), "Could not set \"%s\" to %f in read_object_prop(%s)",
               propname, realval, buffer);
       load_state = false;
       return errmsg;
@@ -299,7 +298,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
   case PT_object:
     if (add_unresolved(obj, PT_object, (void *)addr, oclass, buffer, "XML", 42,
                        UR_NONE) == nullptr) {
-      sprintf(errmsg, "Failure with add_unresolved() in read_object_prop(%s)",
+      snprintf(errmsg, sizeof(errmsg), "Failure with add_unresolved() in read_object_prop(%s)",
               buffer);
       return errmsg;
     }
@@ -309,7 +308,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
       if (object_set_value_by_name(obj, propname, buffer) == 0) {
         // output_error("XML_Load: property %s of %s:%s could not be set to
         // '%s'", propname, obj->oclass->name, obj->id, buffer);
-        sprintf(errmsg,
+        snprintf(errmsg, sizeof(errmsg),
                 "Property %s of %s:%i could not be set to \"%s\" in "
                 "read_object_prop()",
                 propname, obj->oclass->name, obj->id, buffer);
@@ -319,7 +318,7 @@ char *gld_loadHndl::read_object_prop(char *buffer, size_t len) {
         ;
       }
     } else {
-      sprintf(errmsg, "Invalid property id = %i in read_object_prop(%s)",
+      snprintf(errmsg, sizeof(errmsg), "Invalid property id = %i in read_object_prop(%s)",
               prop->ptype, buffer);
       return errmsg;
     }
@@ -346,7 +345,7 @@ void gld_loadHndl::characters(const XMLCh *const chars,
   case CLOCK_PROP:
     //	get prop
     if ((len = wcslen((const wchar_t *)chars)) < 1) {
-      sprintf(tbuff, "Unable to get length of characters in characters()");
+      snprintf(tbuff, sizeof(tbuff), "Unable to get length of characters in characters()");
       mbstowcs(wbuff, tbuff, 1024);
       e = new SAXParseException((const XMLCh *)wbuff, *(this->locator));
       error(*e);
@@ -354,7 +353,7 @@ void gld_loadHndl::characters(const XMLCh *const chars,
       return;
     }
     if (len != wcstombs(buffer, (const wchar_t *)chars, 1024)) {
-      sprintf(tbuff, "Unable to convert wcs to char in characters()");
+      snprintf(tbuff, sizeof(tbuff), "Unable to convert wcs to char in characters()");
       mbstowcs(wbuff, tbuff, 1024);
       e = new SAXParseException((const XMLCh *)wbuff, *(this->locator));
       error(*e);
@@ -609,7 +608,7 @@ char *gld_loadHndl::start_element_load(char *buffer, size_t len,
       minor = wcstol((const wchar_t *)_minor, nullptr, 10);
 
     if ((module = module_load(module_name, 0, nullptr)) == nullptr) {
-      sprintf(errmsg, "Unable to load module \"%s\" in start_element_load()",
+      snprintf(errmsg, sizeof(errmsg), "Unable to load module \"%s\" in start_element_load()",
               module_name);
       return errmsg;
     } else {
@@ -640,7 +639,7 @@ char *gld_loadHndl::start_element_load(char *buffer, size_t len,
   } else if (strcmp(buffer, "clock") == 0) {
     stack_state = CLOCK_STATE;
   } else {
-    sprintf(errmsg, "Unrecognized keyword in start_element_load(%s)", buffer);
+    snprintf(errmsg, sizeof(errmsg), "Unrecognized keyword in start_element_load(%s)", buffer);
     return errmsg;
   }
   return nullptr;
@@ -657,7 +656,7 @@ gld_loadHndl::start_element_module_build_object(const Attributes &attributes) {
   char *retval = nullptr;
   int first = -1, last = -1;
   if (attributes.getIndex((const XMLCh *)str_type) < 0) {
-    sprintf(errmsg,
+    snprintf(errmsg, sizeof(errmsg),
             "object tag without a type in start_element_module_build_object()");
     return errmsg;
   } else {
@@ -665,7 +664,7 @@ gld_loadHndl::start_element_module_build_object(const Attributes &attributes) {
              (const wchar_t *)attributes.getValue((const XMLCh *)str_type), 64);
     oclass = class_get_class_from_classname_in_module(object_type, module);
     if (oclass == nullptr) {
-      sprintf(errmsg,
+      snprintf(errmsg, sizeof(errmsg),
               "Class \"%s\" for module \"%s\"is not recognized in "
               "start_element_module_build_object()",
               object_type, module->name);
@@ -684,8 +683,7 @@ gld_loadHndl::start_element_module_build_object(const Attributes &attributes) {
     if (temp == nullptr) { /* no "..", just a number*/
       first = strtol(object_id, nullptr, 10);
       if (first < 0) {
-        sprintf(
-            errmsg,
+        snprintf(errmsg, sizeof(errmsg),
             "Invalid object id of %i in start_element_module_build_object()",
             first);
         return errmsg;
@@ -697,7 +695,7 @@ gld_loadHndl::start_element_module_build_object(const Attributes &attributes) {
         if (temp == object_id) { /* "..x", count */
           last = strtol(object_id + 2, nullptr, 10);
           if (last < 1) {
-            sprintf(errmsg,
+            snprintf(errmsg, sizeof(errmsg),
                     "Invalid object id of %i in "
                     "start_element_module_build_object()",
                     first);
@@ -712,7 +710,7 @@ gld_loadHndl::start_element_module_build_object(const Attributes &attributes) {
           *temp = '.';
           if (first < 0) {
             output_error("XML_Load: first ID < 0 !");
-            sprintf(errmsg,
+            snprintf(errmsg, sizeof(errmsg),
                     "Invalid object id of %i in "
                     "start_element_module_build_object()",
                     first);
@@ -720,7 +718,7 @@ gld_loadHndl::start_element_module_build_object(const Attributes &attributes) {
           }
           if (last < 1) {
             output_error("XML_Load: last ID < 1 !");
-            sprintf(errmsg,
+            snprintf(errmsg, sizeof(errmsg),
                     "Invalid object id of %i in "
                     "start_element_module_build_object()",
                     first);
@@ -728,7 +726,7 @@ gld_loadHndl::start_element_module_build_object(const Attributes &attributes) {
           }
           if (first >= last) {
             output_error("XML_Load: first id >= last id!");
-            sprintf(errmsg,
+            snprintf(errmsg, sizeof(errmsg),
                     "Invalid object id of %i in "
                     "start_element_module_build_object()",
                     first);
@@ -736,7 +734,7 @@ gld_loadHndl::start_element_module_build_object(const Attributes &attributes) {
           }
         }
       } else {
-        sprintf(errmsg,
+        snprintf(errmsg, sizeof(errmsg),
                 "Invalid ID format in start_element_module_build_object()");
         return errmsg;
       }
@@ -744,7 +742,7 @@ gld_loadHndl::start_element_module_build_object(const Attributes &attributes) {
   }
   if ((retval = build_object_vect(first, last)) !=
       0) { /* unable to call constructors */
-    sprintf(errmsg,
+    snprintf(errmsg, sizeof(errmsg),
             "Unable to create objects in start_element_module_build_object()");
     return errmsg;
   } else {
@@ -782,7 +780,7 @@ char *gld_loadHndl::start_element_module(char *buffer, size_t len,
     strcpy(propname, buffer);
     stack_state = MODULE_PROP;
   } else {
-    sprintf(errmsg, "Unrecognized keyword in start_element_module(%s)", buffer);
+    snprintf(errmsg, sizeof(errmsg), "Unrecognized keyword in start_element_module(%s)", buffer);
     return errmsg;
   }
   return nullptr;
@@ -791,7 +789,7 @@ char *gld_loadHndl::start_element_module(char *buffer, size_t len,
 char *gld_loadHndl::start_element_module_prop(char *buffer, size_t len,
                                               const Attributes &attributes) {
   char pname[323];
-  sprintf(pname, "%s::%s", this->module->name, buffer);
+  snprintf(pname, sizeof(pname), "%s::%s", this->module->name, buffer);
   if (global_find(pname)) {
     strcpy(propname, pname);
   } else {
@@ -837,7 +835,7 @@ char *gld_loadHndl::start_element_object(char *buffer, size_t len,
     strcpy(propname, buffer);
     stack_state = OBJECT_PROP;
   } else {
-    sprintf(errmsg, "Unrecognized property in start_element_object(%s)",
+    snprintf(errmsg, sizeof(errmsg), "Unrecognized property in start_element_object(%s)",
             buffer);
     return errmsg;
   }
@@ -903,7 +901,7 @@ char *gld_loadHndl::start_element_clock(char *buffer, size_t len,
     stack_state = CLOCK_PROP;
     strcpy(propname, "stoptime");
   } else { //	bad keyword
-    sprintf(errmsg, "Unrecognized keyword in start_element_clock(%s)", buffer);
+    snprintf(errmsg, sizeof(errmsg), "Unrecognized keyword in start_element_clock(%s)", buffer);
     return errmsg;
   }
   return nullptr;
@@ -984,8 +982,8 @@ void gld_loadHndl::startElement(const XMLCh *const uri,
     char tbuff[256];
     wchar_t wbuff[256];
     SAXParseException *e = nullptr;
-    sprintf(tbuff, "Error in start_element with tag \"%s\": %s", buffer,
-            retval);
+    snprintf(tbuff, sizeof(tbuff), "Error in start_element with tag \"%s\": %s", 
+            buffer, retval);
     mbstowcs(wbuff, tbuff, 1024);
     e = new SAXParseException((const XMLCh *)wbuff, *(this->locator));
     error(*e);
@@ -1007,7 +1005,7 @@ char *gld_loadHndl::build_object_vect(int start, int end) {
     if ((*oclass->create)(&obj, nullptr) == 0) {
       // output_error("XML_Load: Unable to create a lone object with ID = %i.",
       // start);
-      sprintf(errmsg,
+      snprintf(errmsg, sizeof(errmsg),
               "Unable to create a lone object with ID = %i in "
               "build_object_vect(%i, %i)",
               start, start, end);
@@ -1016,7 +1014,7 @@ char *gld_loadHndl::build_object_vect(int start, int end) {
     }
     if (start != -1) {
       if (load_set_index(obj, (OBJECTNUM)end) == 0) {
-        sprintf(errmsg, "Unable to index an item in build_object_vect(%i, %i)",
+        snprintf(errmsg, sizeof(errmsg), "Unable to index an item in build_object_vect(%i, %i)",
                 start, end);
         load_state = false;
         return errmsg;
@@ -1033,7 +1031,7 @@ char *gld_loadHndl::build_object_vect(int start, int end) {
     if (last > first) {
       count = last - first + 1;
     } else {
-      sprintf(errmsg, "last < first, aborting build_object_vect(%i, %i)", start,
+      snprintf(errmsg, sizeof(errmsg), "last < first, aborting build_object_vect(%i, %i)", start,
               end);
       load_state = false;
       return errmsg;
@@ -1045,7 +1043,7 @@ char *gld_loadHndl::build_object_vect(int start, int end) {
     if ((*oclass->create)((obj_vect[i]), nullptr) != 0) {
       if (start != -1) {
         if (load_set_index(obj_vect[i], (OBJECTNUM)i) == 0) {
-          sprintf(errmsg,
+          snprintf(errmsg, sizeof(errmsg),
                   "Unable to index a batch item in build_object_vect(%i, %i)",
                   start, end);
           load_state = false;
@@ -1054,7 +1052,7 @@ char *gld_loadHndl::build_object_vect(int start, int end) {
         }
       }
     } else { /* failed */
-      sprintf(errmsg, "Unable to create an object in build_object_vect(%i, %i)",
+      snprintf(errmsg, sizeof(errmsg), "Unable to create an object in build_object_vect(%i, %i)",
               start, end);
       load_state = false;
       /* cleanup existing objects, if any */

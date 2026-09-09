@@ -121,11 +121,11 @@ int occupantload::init(OBJECT *parent)
         char outname[64];
         if (hdr->name)
         {
-            // sprintf(outname, "%s", hdr->name);
+            // snprintf(outname, sizeof(outname), "%s", hdr->name);
         }
         else
         {
-            sprintf(outname, "occupancy_load:%i", hdr->id);
+            snprintf(outname, sizeof(outname), "occupancy_load:%i", hdr->id);
         }
         gl_warning("occupancy_load \'%s\' may not work properly with a non-analog load shape.", hdr->name ? hdr->name : outname);
     }
@@ -216,7 +216,7 @@ EXPORT int init_occupantload(OBJECT *obj)
     INIT_CATCHALL(occupantload);
 }
 
-EXPORT int isa_occupantload(OBJECT *obj, char *classname)
+EXPORT int isa_occupantload_impl(OBJECT *obj, char *classname)
 {
     if (obj != 0 && classname != 0)
     {
@@ -227,6 +227,20 @@ EXPORT int isa_occupantload(OBJECT *obj, char *classname)
         return 0;
     }
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_occupantload(OBJECT *obj, char *classname) {
+  return isa_occupantload_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_occupantload(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_occupantload_impl(obj, classname);
+}
+#endif
 
 static TIMESTAMP sync_occupantload_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {

@@ -1436,7 +1436,7 @@ EXPORT int create_fuse(OBJECT **obj, OBJECT *parent)
         *obj = gl_create_object(fuse::oclass);
         if (*obj != nullptr)
         {
-            fuse *my = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(*obj);
+            fuse *my = object_data<fuse>(*obj);
             // gl_set_parent(*obj,parent);
             return my->create();
         }
@@ -1450,7 +1450,7 @@ EXPORT int init_fuse(OBJECT *obj)
 {
     try
     {
-        fuse *my = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
+        fuse *my = object_data<fuse>(obj);
         return my->init(obj->parent);
     }
     INIT_CATCHALL(fuse);
@@ -1459,12 +1459,12 @@ EXPORT int init_fuse(OBJECT *obj)
 // Commit timestep - after all iterations are done
 EXPORT TIMESTAMP commit_fuse(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
-    fuse *fsr = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
+    fuse *fsr = object_data<fuse>(obj);
     try
     {
         if (solver_method == SM_FBS)
         {
-            link_object *plink = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
+            link_object *plink = object_data<link_object>(obj);
             plink->calculate_power();
 
             return (fsr->fuse_state(obj->parent) ? TS_NEVER : 0);
@@ -1483,7 +1483,7 @@ static TIMESTAMP sync_fuse_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     try
     {
-        fuse *pObj = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
+        fuse *pObj = object_data<fuse>(obj);
         TIMESTAMP t1 = TS_NEVER;
         switch (pass)
         {
@@ -1503,8 +1503,7 @@ static TIMESTAMP sync_fuse_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_fuse(OBJECT *obj, TIMESTAMP t0,
-                                          PASSCONFIG pass)
+extern "C" MODULE_API TIMESTAMP sync_fuse(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     return sync_fuse_impl(obj, t0, pass);
 }
@@ -1530,10 +1529,24 @@ extern "C" MODULE_API TIMESTAMP sync_fuse(OBJECT *obj, ...)
  *
  * @return true (1) if obj is a subtype of this class
  */
-EXPORT int isa_fuse(OBJECT *obj, char *classname)
+EXPORT int isa_fuse_impl(OBJECT *obj, char *classname)
 {
-    return /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj)->isa(classname);
+    return object_data<fuse>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_fuse(OBJECT *obj, char *classname) {
+  return isa_fuse_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_fuse(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_fuse_impl(obj, classname);
+}
+#endif
 
 // Function to change fuse states
 EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change,
@@ -1542,7 +1555,7 @@ EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change,
     char desA, desB, desC;
 
     // Map the Fuse
-    fuse *fuseobj = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
+  fuse *fuseobj = object_data<fuse>(thisobj);
 
     // Figure out what we need to call
     if ((phase_change & 0x04) == 0x04)
@@ -1589,7 +1602,7 @@ EXPORT int fuse_reliability_operation(OBJECT *thisobj,
                                       unsigned char desired_phases)
 {
     // Map the fuse
-    fuse *fuseobj = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
+  fuse *fuseobj = object_data<fuse>(thisobj);
 
     fuseobj->set_fuse_full_reliability(desired_phases);
 
@@ -1603,7 +1616,7 @@ EXPORT int create_fault_fuse(OBJECT *thisobj, OBJECT **protect_obj,
     int retval;
 
     // Link to ourselves
-    fuse *thisfuse = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
+  fuse *thisfuse = object_data<fuse>(thisobj);
 
     // Try to fault up
     retval = thisfuse->link_fault_on(protect_obj, fault_type, implemented_fault,
@@ -1617,7 +1630,7 @@ EXPORT int fix_fault_fuse(OBJECT *thisobj, int *implemented_fault,
     int retval;
 
     // Link to ourselves
-    fuse *thisfuse = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
+  fuse *thisfuse = object_data<fuse>(thisobj);
 
     // Clear the fault
     retval = thisfuse->link_fault_off(implemented_fault, imp_fault_name);
@@ -1634,7 +1647,7 @@ EXPORT int clear_fault_fuse(OBJECT *thisobj, int *implemented_fault,
     int retval;
 
     // Link to ourselves
-    fuse *thisfuse = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
+  fuse *thisfuse = object_data<fuse>(thisobj);
 
     // Clear the fault
     retval = thisfuse->clear_fault_only(implemented_fault, imp_fault_name);
@@ -1649,7 +1662,7 @@ EXPORT int fuse_fault_updates(OBJECT *thisobj,
                               unsigned char restoration_phases)
 {
     // Link to ourselves
-    fuse *thisfuse = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(thisobj);
+  fuse *thisfuse = object_data<fuse>(thisobj);
 
     // Call the update
     thisfuse->set_fuse_faulted_phases(restoration_phases);

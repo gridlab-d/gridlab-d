@@ -62,19 +62,12 @@ updating the cache using ccmake or cmake-gui (default values are shown).
 | CMAKE_INSTALL_PREFIX | Any path                                           | Install location                                | /usr/local        | %ProgramFiles%  |
 | GLD_USE_HELICS       | ON/OFF                                             | Enables detection and use of HELICS             | OFF               | OFF             |
 | GLD_HELICS_DIR       | Any path                                           | Hint indicating HELICS install directory        |                   |                 |
-| GLD_USE_MYSQL        | ON/OFF                                             | Enables detection and use of MySQL              | OFF               | OFF             |
-| GLD_MYSQL_DIR        | Any path                                           | Hint indicating MySQL install directory         |                   |                 |
 | GLD_DO_CLEANUP       | ON/OFF                                             | Remove files from old GridLAB-D build processes | OFF               | OFF             |
 
 ### Enable building with HELICS
 
 To enable HELICS set the `GLD_USE_HELICS` flag to `ON`
 if HELICS is in a custom path set `GLD_HELICS_DIR` to the install location in CMake or as an environmental variable
-
-### Enable building with MySQL
-
-To enable MySQL support set the `GLD_USE_MYSQL` flag to `ON`
-if MySQL is in a custom path set `GLD_MYSQL_DIR` to the install location in CMake or as an environmental variable
 
 ### Enable build debugging
 

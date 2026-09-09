@@ -500,8 +500,7 @@ EXPORT TIMESTAMP commit_schedule(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) {
   return TS_NEVER;
 }
 
-static TIMESTAMP sync_schedule_impl(OBJECT *obj, TIMESTAMP t0,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_schedule_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   schedule *my = OBJECTDATA(obj, schedule);
   TIMESTAMP t1 = my->sync(obj->clock, t0);
 
@@ -533,8 +532,7 @@ static TIMESTAMP sync_schedule_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_schedule(OBJECT *obj, TIMESTAMP t0,
-                                              PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_schedule(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_schedule_impl(obj, t0, pass);
 }
 #else

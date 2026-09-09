@@ -306,6 +306,7 @@ int solar::init_climate()
             }
 
             // Free up the list
+			gl_warning("Free up climates list");
             gl_free((void **)&climates);
         }
 
@@ -601,7 +602,6 @@ int solar::init(OBJECT *parent)
             efficiency = 0.10;
         break;
     }
-
     // efficiency dictates how much of the rate insolation the panel can capture and
     // turn into electricity
     // Rated power output
@@ -1022,7 +1022,8 @@ int solar::init(OBJECT *parent)
         default_voltage_array = V_Max / sqrt(3.0);
     }
 
-    climate_result = init_climate();
+	gl_warning("Initialize the climate");
+	climate_result = this->init_climate();
 
     // Check factors
     if ((soiling_factor < 0) || (soiling_factor > 1.0))
@@ -1126,6 +1127,11 @@ int solar::init(OBJECT *parent)
     }
 
     return climate_result; /* return 1 on success, 0 on failure */
+}
+// Isa function for identification
+int solar::isa(char *classname)
+{
+	return strcmp(classname, "solar") == 0;
 }
 
 TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
@@ -1741,6 +1747,24 @@ extern "C" MODULE_API TIMESTAMP sync_solar(OBJECT *obj, ...)
     PASSCONFIG pass = (PASSCONFIG)va_arg(args, int);
     va_end(args);
     return sync_solar_impl(obj, t1, pass);
+}
+#endif
+
+EXPORT int isa_solar_impl(OBJECT *obj, char *classname) {
+  return object_data<solar>(obj)->isa(classname);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_solar(OBJECT *obj, char *classname) {
+  return isa_solar_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_solar(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_solar_impl(obj, classname);
 }
 #endif
 

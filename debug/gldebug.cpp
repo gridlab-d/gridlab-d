@@ -125,7 +125,7 @@ g_debug::g_debug(MODULE *module) {
             "debugging options", PT_KEYWORD, "DETAILS", (gld::set)DBO_DETAILS,
             nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
     memset(this, 0, sizeof(g_debug));
@@ -271,7 +271,7 @@ size_t g_debug::message(char *fmt, ...) {
     va_start(ptr, fmt);
     if (debug_window) {
       char msg[1024];
-      len = vsprintf(msg, fmt, ptr);
+      len = vsnprintf(msg, sizeof(msg), fmt, ptr);
       console_message("%s", msg);
     } else {
       char buffer[64];
@@ -412,13 +412,13 @@ bool g_debug::cmd_info(char *args) {
   gld_global browser("browser");
   gld_global infourl("infourl");
 #ifdef _WIN32
-  sprintf(cmd, "start %s %s%s", (const char *)browser.get_string(),
+  snprintf(cmd, sizeof(cmd), "start %s %s%s", (const char *)browser.get_string(),
           (const char *)infourl.get_string(), args);
 #elif defined(MACOSX)
-  sprintf(cmd, "open -a %s %s%s", (const char *)browser.get_string(),
+  snprintf(cmd, sizeof(cmd), "open -a %s %s%s", (const char *)browser.get_string(),
           (const char *)infourl.get_string(), args);
 #else
-  sprintf(cmd, "%s '%s%s' & ps -p $! >/dev/null",
+  snprintf(cmd, sizeof(cmd), "%s '%s%s' & ps -p $! >/dev/null",
           (const char *)browser.get_string(),
           (const char *)infourl.get_string(), args);
 #endif
@@ -462,7 +462,7 @@ bool g_debug::cmd_list(char *args) {
   else if (strlen(args) > 0) // just class name
   {
     char buf[1024];
-    sprintf(buf, "class=%s", args);
+    snprintf(buf, sizeof(buf), "class=%s", args);
     list.set(buf);
   }
   if (!list.is_valid()) {
@@ -521,7 +521,7 @@ bool g_debug::cmd_list(char *args) {
         gld_clock(obj->get_valid_to()).to_string(valid_to, sizeof(valid_to));
       gld_class *oclass = obj->get_oclass();
       gld_module *module = oclass->get_module();
-      sprintf(details, "%s %c%c%c%c%c%c %s/%s/%d ", valid_to,
+      snprintf(details, sizeof(details), "%s %c%c%c%c%c%c %s/%s/%d ", valid_to,
               obj->get_flags() & OF_RECALC ? 'c' : '-',
               obj->get_flags() & OF_RERANK ? 'r' : '-',
               obj->get_flags() & OF_FOREIGN ? 'f' : '-',
@@ -745,7 +745,7 @@ int g_debug::console_message(const char *fmt, ...) {
   char buffer[1024];
   va_list ptr;
   va_start(ptr, fmt);
-  int len = vsprintf(buffer, fmt, ptr);
+  int len = vsnprintf(buffer, sizeof(buffer), fmt, ptr);
   va_end(ptr);
 
   // add message to list
@@ -814,7 +814,7 @@ bool g_debug::show_line(int row, const char *label, const char *fmt, ...) {
     va_list ptr;
     va_start(ptr, fmt);
     char buffer[1024];
-    vsprintf(buffer, fmt, ptr);
+    vsnprintf(buffer, sizeof(buffer), fmt, ptr);
     va_end(ptr);
     mvprintw(row, debugwnd.vpos + 1, "  |- %-12s %s", label,
              strcmp(buffer, "\"\"") == 0 ? "" : buffer);
@@ -827,7 +827,7 @@ void g_debug::console_show_object(void) {
   OBJECT *obj = my();
   unsigned int row = 2, col = debugwnd.vpos + 1, tab = 48;
   char buffer[1024];
-  sprintf(buffer, "Header %s", get_oclass()->get_name());
+  snprintf(buffer, sizeof(buffer), "Header %s", get_oclass()->get_name());
   show_line(row, buffer);
   show_line(++row, "id", "%d", get_id());
   show_line(++row, "group", "%s", get_groupid());
@@ -861,7 +861,7 @@ void g_debug::console_show_object(void) {
   show_line(++row, "rng_state", "%u", get_rng_state());
   show_line(++row, "heartbeat", "%llu s", get_heartbeat());
   show_line(++row, "flags", "0x%08x", get_flags());
-  sprintf(buffer, "Body %s", get_oclass()->get_name());
+  snprintf(buffer, sizeof(buffer), "Body %s", get_oclass()->get_name());
   show_line(++row, buffer);
   gld_property prop(my());
   for (; prop.is_valid(); prop.set_property(prop.get_next())) {

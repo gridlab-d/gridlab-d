@@ -556,7 +556,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root,
 //	output_debug("instance_slave_init_mem()");
 //	/* @todo open cache */
 //	local_inst.cacheid = global_master_port;
-//	sprintf(cacheName,"GLD-%" FMT_INT64 "x",global_master_port);
+//	snprintf(cacheName, sizeof(cacheName), "GLD-%" FMT_INT64 "x",global_master_port);
 //	local_inst.hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,cacheName);
 //	if ( 0 == local_inst.hMap )
 //	{
@@ -601,7 +601,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root,
 //	exec_sync_merge(nullptr,reinterpret_cast<sync_data*>(&local_inst.cache));
 //
 //	/* open slave signalling event */
-//	sprintf(eventName,"GLD-%" FMT_INT64 "x-S", global_master_port);
+//	snprintf(eventName, sizeof(eventName), "GLD-%" FMT_INT64 "x-S", global_master_port);
 //	local_inst.hSlave = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
 //	if ( !local_inst.hSlave )
 //	{
@@ -615,7 +615,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root,
 //	}
 //
 //	/* open master signalling event */
-//	sprintf(eventName,"GLD-%" FMT_INT64 "x-M", global_master_port);
+//	snprintf(eventName, sizeof(eventName), "GLD-%" FMT_INT64 "x-M", global_master_port);
 //	local_inst.hMaster = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
 //	if ( !local_inst.hMaster )
 //	{
@@ -684,7 +684,7 @@ STATUS instance_slave_parse_prop_list(char *line, linkage **root,
 //		return FAILED;
 //	}
 //	// handshake?
-//	sprintf(cmd, HS_CBK "%" FMT_INT64 "d", global_slave_id);
+//	snprintf(cmd, sizeof(cmd), HS_CBK "%" FMT_INT64 "d", global_slave_id);
 //	output_debug("cmd/cbk: %s", cmd);
 //	rv = send(local_inst.sockfd, cmd, (int)strlen(cmd), 0);
 //	if(0 == rv){

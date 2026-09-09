@@ -22,7 +22,6 @@
     "stoptime": "'2006-03-31 00:00:00'"
   },
   "modules": {
-    "market": {},
     "powerflow": {
       "solver_method": "FBS"
     },
@@ -30,16 +29,6 @@
     "assert": {}
   },
   "objects": {
-    "stubauction": {
-      "instances": [
-        {
-          "name": "STUB",
-          "unit": "price",
-          "period": 3600,
-          "next.P": 1.2
-        }
-      ]
-    },
     "node": {
       "instances": [
         {

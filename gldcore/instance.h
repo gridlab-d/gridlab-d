@@ -75,8 +75,6 @@ typedef struct s_instance {
   unsigned int id;
   char model[1024];
   char execdir[1024];
-  // pthread_t threadid;
-  // std::thread threadid;
 
   /* linkage information */
   linkage *read;  ///< link read from slave
@@ -134,16 +132,16 @@ typedef struct s_instance {
     struct {
       int sockfd; ///<
       FILE *stream;
-      // pthread_mutex_t sock_lock;
       unsigned int sock_lock;
-      // pthread_cond_t sock_signal;
-      // pthread_mutex_t wait_lock;
-      // pthread_cond_t wait_signal;
       int has_data;
       int has_data_lock;
     };
   };
   struct s_instance *next; ///<
+#ifdef __cplusplus
+  // Add a user-defined destructor to avoid C4624
+  ~s_instance() = delete;
+#endif
 } instance;                ///<
 
 typedef struct s_instance_pickle {

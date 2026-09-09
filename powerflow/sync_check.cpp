@@ -1208,10 +1208,24 @@ extern "C" MODULE_API TIMESTAMP sync_sync_check(OBJECT *obj, ...)
 }
 #endif
 
-EXPORT int isa_sync_check(OBJECT *obj, char *classname)
+EXPORT int isa_sync_check_impl(OBJECT *obj, char *classname)
 {
     return object_data<sync_check>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_sync_check(OBJECT *obj, char *classname) {
+  return isa_sync_check_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_sync_check(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_sync_check_impl(obj, classname);
+}
+#endif
 
 // Deltamode export
 EXPORT SIMULATIONMODE interupdate_sync_check(OBJECT *obj,

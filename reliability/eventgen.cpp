@@ -2776,6 +2776,11 @@ void eventgen::parse_external_fault_events(char *events_char)
     }
 }
 
+int eventgen::isa(char *classname) {
+  return strcmp(classname, "eventgen") == 0;
+}
+
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -2809,8 +2814,25 @@ EXPORT int init_eventgen(OBJECT *obj, OBJECT *parent)
     INIT_CATCHALL(eventgen);
 }
 
-static TIMESTAMP sync_eventgen_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass)
+EXPORT int isa_eventgen_impl(OBJECT *obj, char *classname) {
+  return object_data<eventgen>(obj)->isa(classname);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_eventgen(OBJECT *obj, char *classname) {
+  return isa_eventgen_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_eventgen(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_eventgen_impl(obj, classname);
+}
+#endif
+
+static TIMESTAMP sync_eventgen_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
     try
     {
@@ -2837,8 +2859,7 @@ static TIMESTAMP sync_eventgen_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass)
+extern "C" MODULE_API TIMESTAMP sync_eventgen(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
     return sync_eventgen_impl(obj, t1, pass);
 }

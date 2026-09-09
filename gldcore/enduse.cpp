@@ -386,8 +386,8 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 */
 	enduse *e = (enduse*)data;
 	int len = 0;
-#define OUTPUT_NZ(X) if (e->X!=0) len+=sprintf(string+len,"%s" #X ": %f", len>0?"; ":"", e->X)
-#define OUTPUT(X) len+=sprintf(string+len,"%s"#X": %f", len>0?"; ":"", e->X);
+#define OUTPUT_NZ(X) if (e->X!=0) len+=snprintf(string+len, sizeof(string)-len, "%s" #X ": %f", len>0?"; ":"", e->X)
+#define OUTPUT(X) len+=snprintf(string+len, sizeof(string)-len, "%s"#X": %f", len>0?"; ":"", e->X);
 	OUTPUT_NZ(impedance_fraction);
 	OUTPUT_NZ(current_fraction);
 	OUTPUT_NZ(power_fraction);
@@ -448,7 +448,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 			//strcpy(name,prefix);
 			//strcat(name, ".");
 			//strcat(name, p->name);
-			sprintf(name,"%s.%s",prefix,p->name);
+			snprintf(name, sizeof(name), "%s.%s", prefix, p->name);
 		}
 
 		if (p->type<_PT_LAST)

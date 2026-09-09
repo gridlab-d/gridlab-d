@@ -70,7 +70,7 @@ int convert_from_void(
 {
     if (size < 7)
         return 0;
-    return sprintf(buffer, "%s", "(void)");
+  return snprintf(buffer, size, "%s", "(void)");
 }
 
 /** Convert to a \e void
@@ -120,17 +120,17 @@ int convert_from_double(
             }
             else
             {
-                count = sprintf(temp, global_double_format, scale);
+        count = snprintf(temp, sizeof(temp), global_double_format, scale);
             }
         }
         else
         {
-            count = sprintf(temp, global_double_format, *(double *)data);
+      count = snprintf(temp, sizeof(temp), global_double_format, *(double *)data);
         }
     }
     else
     {
-        count = sprintf(temp, global_double_format, *(double *)data);
+    count = snprintf(temp, sizeof(temp), global_double_format, *(double *)data);
     }
 
     if (count < size + 1)
@@ -289,7 +289,7 @@ int convert_from_complex(
         double a = v->Arg();
         if (a > PI)
             a -= (2 * PI);
-        count = sprintf(temp, global_complex_format, m, a * 180 / PI, A);
+    count = snprintf(temp, sizeof(temp), global_complex_format, m, a * 180 / PI, A);
     }
     else if (cplex_output_type == R)
     {
@@ -297,12 +297,12 @@ int convert_from_complex(
         double a = v->Arg();
         if (a > PI)
             a -= (2 * PI);
-        count = sprintf(temp, global_complex_format, m, a, R);
+    count = snprintf(temp, sizeof(temp), global_complex_format, m, a, R);
     }
     else
     {
         count =
-            sprintf(temp, global_complex_format, v->Re() * scale, v->Im() * scale,
+        snprintf(temp, sizeof(temp), global_complex_format, v->Re() * scale, v->Im() * scale,
                     cplex_output_type ? cplex_output_type : 'i');
     }
     if (count < size - 1)
@@ -460,7 +460,7 @@ int convert_from_enumeration(
     /* no keyword found, return the numeric value instead */
     if (count == 0)
     {
-        count = sprintf(temp, "%d", value);
+    count = snprintf(temp, sizeof(temp), "%d", value);
     }
     if (count < size - 1)
     {
@@ -673,7 +673,7 @@ int convert_from_int16(
     PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
     char temp[1025];
-    int count = sprintf(temp, "%hd", *(short *)data);
+  int count = snprintf(temp, sizeof(temp), "%hd", *(short *)data);
     if (count < size - 1)
     {
         memcpy(buffer, temp, count);
@@ -758,7 +758,7 @@ int convert_from_int32(
     PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
     char temp[1025];
-    int count = sprintf(temp, "%d", *(int *)data);
+  int count = snprintf(temp, sizeof(temp), "%d", *(int *)data);
     if (count < size - 1)
     {
         memcpy(buffer, temp, static_cast<size_t>(count));
@@ -796,7 +796,7 @@ int convert_from_int64(
     PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
     char temp[1025];
-    int count = sprintf(temp, "%" FMT_INT64 "d", *(int64 *)data);
+  int count = snprintf(temp, sizeof(temp), "%" FMT_INT64 "d", *(int64 *)data);
     if (count < size - 1)
     {
         memcpy(buffer, temp, count);
@@ -837,7 +837,7 @@ int convert_from_char8(
     if (strchr((char *)data, ' ') != nullptr ||
         strchr((char *)data, ';') != nullptr || ((char *)data)[0] == '\0')
         format = "\"%s\"";
-    count = sprintf(temp, format, (char *)data);
+  count = snprintf(temp, sizeof(temp), format, (char *)data);
     if (count > size - 1)
     {
         return 0;
@@ -887,7 +887,7 @@ int convert_from_char32(
     if (strchr((char *)data, ' ') != nullptr ||
         strchr((char *)data, ';') != nullptr || ((char *)data)[0] == '\0')
         format = "\"%s\"";
-    count = sprintf(temp, format, (char *)data);
+  count = snprintf(temp, sizeof(temp), format, (char *)data);
     if (count > size - 1)
     {
         return 0;
@@ -1001,7 +1001,7 @@ int convert_from_char256(
     if (strchr((char *)data, ' ') != nullptr ||
         strchr((char *)data, ';') != nullptr || ((char *)data)[0] == '\0')
         format = "\"%s\"";
-    count = sprintf(temp, format, (char *)data);
+  count = snprintf(temp, sizeof(temp), format, (char *)data);
     if (count > size - 1)
     {
         return 0;
@@ -1106,7 +1106,7 @@ int convert_from_char1024(
     if (strchr((char *)data, ' ') != nullptr ||
         strchr((char *)data, ';') != nullptr || ((char *)data)[0] == '\0')
         format = "\"%s\"";
-    count = sprintf(temp, format, (char *)data);
+  count = snprintf(temp, sizeof(temp), format, (char *)data);
     if (count > size - 1)
     {
         return 0;
@@ -1130,13 +1130,15 @@ int convert_to_char1024(const char *_buffer, void *_data, PROPERTY *_prop)
     // Validate the input buffer pointer
     if (!_buffer)
     {
-        throw std::invalid_argument("The _buffer pointer is null.");
+    output_error("convert_to_char1024: The _buffer pointer is null.");
+    return 0;
     }
 
     // Validate the _data pointer
     if (!_data)
     {
-        throw std::invalid_argument("The _data pointer is null.");
+    output_error("convert_to_char1024: The _data pointer is null.");
+    return 0;
     }
 
     // Cast data to a character pointer
@@ -1160,7 +1162,8 @@ int convert_to_char1024(const char *_buffer, void *_data, PROPERTY *_prop)
         }
         else
         {
-            throw std::runtime_error("Failed to parse the quoted string.");
+      output_error("convert_to_char1024: Failed to parse the quoted string.");
+      return 0;
         }
     }
 
@@ -1171,7 +1174,8 @@ int convert_to_char1024(const char *_buffer, void *_data, PROPERTY *_prop)
     }
     else
     {
-        throw std::runtime_error("Failed to parse the input string.");
+    output_error("convert_to_char1024: Failed to parse the input string.");
+    return 0;
     }
 }
 
@@ -1233,7 +1237,7 @@ int convert_from_object(
 
     /* construct the object's name */
     if (obj->oclass != nullptr &&
-        (sprintf(temp, global_object_format, obj->oclass->name, obj->id) < size))
+      (snprintf(temp, sizeof(temp), global_object_format, obj->oclass->name, obj->id) < size))
         strcat(buffer, temp);
     else
         return 0;
@@ -1333,11 +1337,11 @@ int convert_from_boolean(char *buffer, int size, void *data, PROPERTY *prop)
     b = *(bool *)data;
     if (b == 1 && (size > 4))
     {
-        return sprintf(buffer, "TRUE");
+    return snprintf(buffer, size, "TRUE");
     }
     if (b == 0 && (size > 5))
     {
-        return sprintf(buffer, "FALSE");
+    return snprintf(buffer, size, "FALSE");
     }
     return 0;
 }
@@ -1456,7 +1460,7 @@ int convert_from_double_array(char *_buffer, int size, void *data,
 //		for ( m=0 ; m<a->cols() ; m++ )
 //		{
 //			if ( a->is_nan(n,m) )
-//				p += sprintf(buffer+p,"%s","NAN");
+//				p += snprintf(buffer+p,size-p,"%s","NAN");
 //			else
 //				p +=
 // convert_from_double(buffer+p,size,(void*)a->get_addr(n,m),prop); 			if (
@@ -1742,7 +1746,7 @@ int convert_from_complex_array(char *buffer, int size, void *data,
 //		for ( m=0 ; m<a->cols() ; m++ )
 //		{
 //			if (is_element_nan(*a,n,m) )
-//				p += sprintf(buffer+p,"%s","NAN");
+//				p += snprintf(buffer+p,size-p,"%s","NAN");
 //			else
 //				p +=
 // convert_from_complex(buffer+p,size,(void*)get_element_addr(*a,n,m),prop); 			if (
@@ -1893,7 +1897,7 @@ extern "C" int convert_unit_double(char *buffer, const char *unit,
  **/
 int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 {
-    int pos = sprintf(buffer, "%s", "{ ");
+  int pos = snprintf(buffer, len, "%s", "{ ");
     while (prop != nullptr)
     {
         void *addr = (char *)data + (size_t)prop->addr;
@@ -1902,7 +1906,7 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
         size_t n = spec->data_to_string(temp, sizeof(temp), addr, prop);
         if (pos + n >= len - 2)
             return -pos;
-        pos += sprintf(buffer + pos, "%s %s; ", prop->name, temp);
+    pos += snprintf(buffer + pos, len - pos, "%s %s; ", prop->name, temp);
         prop = prop->next;
     }
     strcpy(buffer + pos, "}");

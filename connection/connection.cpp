@@ -4,11 +4,11 @@
 #include "client.h"
 #include "server.h"
 
-#ifdef _MSC_VER
-char *strtok_r(char *str, const char *delim, char **saveptr) {
-  return strtok_s(str, delim, saveptr);
-}
-#endif
+//#ifdef _MSC_VER
+//char *strtok_r(char *str, const char *delim, char **saveptr) {
+//  return strtok_s(str, delim, saveptr);
+//}
+//#endif
 
 ////////////////////////////////////////////////////////////////////////////////////
 connection_mode::connection_mode(void) {
@@ -146,7 +146,7 @@ void connection_mode::error(const char *fmt, ...) {
   char msg[1024];
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf(msg, fmt, ptr);
+  vsnprintf(msg, sizeof(msg), fmt, ptr);
   va_end(ptr);
   gl_error("connection/%s: %s", get_mode_name(), msg);
 }
@@ -154,7 +154,7 @@ void connection_mode::warning(const char *fmt, ...) {
   char msg[1024];
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf(msg, fmt, ptr);
+  vsnprintf(msg, sizeof(msg), fmt, ptr);
   va_end(ptr);
   gl_warning("connection/%s: %s", get_mode_name(), msg);
 }
@@ -162,7 +162,7 @@ void connection_mode::info(const char *fmt, ...) {
   char msg[1024];
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf(msg, fmt, ptr);
+  vsnprintf(msg, sizeof(msg), fmt, ptr);
   va_end(ptr);
   gl_output("connection/%s: %s", get_mode_name(), msg);
 }
@@ -170,16 +170,16 @@ void connection_mode::debug(int level, const char *fmt, ...) {
   char msg[1024];
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf(msg, fmt, ptr);
+  vsnprintf(msg, sizeof(msg), fmt, ptr);
   va_end(ptr);
   gl_debug("connection/%s: %s", get_mode_name(), msg);
 }
 void connection_mode::exception(const char *fmt, ...) {
   static char msg[1024];
-  auto len = sprintf(msg, "connection/%s: ", get_mode_name());
+  auto len = snprintf(msg, sizeof(msg), "connection/%s: ", get_mode_name());
   va_list ptr;
   va_start(ptr, fmt);
-  vsprintf(msg + len, fmt, ptr);
+  vsnprintf(msg + len, sizeof(msg) - len, fmt, ptr);
   va_end(ptr);
   throw std::runtime_error(msg);
 }
@@ -351,7 +351,7 @@ int connection_mode::exchange(EXCHANGETRANSLATOR *xlate, const char *tag,
 int connection_mode::exchange(EXCHANGETRANSLATOR *xlate, const char *tag,
                               double &real) {
   char temp[1024];
-  int len = sprintf(temp, "%lg", real);
+  int len = snprintf(temp, sizeof(temp), "%lg", real);
   int status = xlate(transport, tag, temp, len, ETO_NONE);
   if (status > 0)
     status = sscanf(temp, "%lg", &real);
@@ -360,8 +360,8 @@ int connection_mode::exchange(EXCHANGETRANSLATOR *xlate, const char *tag,
 int connection_mode::exchange(EXCHANGETRANSLATOR *xlate, const char *tag,
                               int64 &integer) {
   char temp[1024];
-  int len = sprintf(temp, "%lld", integer);
-  int status = xlate(transport, tag, temp, sizeof(temp), ETO_NONE);
+  int len = snprintf(temp, sizeof(temp), "%lld", integer);
+  int status = xlate(transport, tag, temp, len, ETO_NONE);
   if (status > 0)
     status = sscanf(temp, "%lld", &integer);
   return status;
@@ -375,7 +375,7 @@ int connection_mode::exchange_schema(EXCHANGETRANSLATOR *xlate, cache *list) {
     gld_type type = prop.get_type();
     PROPERTYSPEC *spec = type.get_spec();
     char info[256];
-    sprintf(info, "%s %s:%s", spec->name, prop.get_object()->name,
+    snprintf(info, sizeof(info), "%s %s:%s", spec->name, prop.get_object()->name,
             prop.get_name());
     xlate(transport, map->remote_name, info, 256, ETO_QUOTES);
   }

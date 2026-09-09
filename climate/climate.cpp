@@ -26,12 +26,21 @@
 EXPORT_CREATE(climate)
 EXPORT_INIT(climate)
 EXPORT_SYNC(climate)
-EXPORT_ISA(climate)
 
 #define RAD(x) (x * PI) / 180
 
 #undef max
 #undef min
+
+#ifdef _WIN32
+#include <io.h> // Provides _access and related macros
+  #ifndef R_OK
+    #define R_OK 4  // Define POSIX-like `READ` flag compatibility for Windows
+  #endif
+#else
+#include <unistd.h> // For POSIX systems
+#endif
+
 
 // extern enum class RANDOMTYPE;
 
@@ -108,7 +117,7 @@ EXPORT int64 calculate_solar_radiation_shading_position_radians(OBJECT *obj, dou
 		// throw "climate/calc_solar: null object pointer in argument";
 		return 0;
 	}
-	cli = /*OBJECTDATA(obj, climate)*/ object_data<climate>(obj);
+	cli = object_data<climate>(obj);
 	if (gl_object_isa(obj, "climate", "climate") == 0)
 	{
 		// throw "climate/calc_solar: input object is not a climate object";
@@ -154,7 +163,7 @@ EXPORT int64 calc_solar_solpos_shading_position_rad(OBJECT *obj, double tilt, do
 	{
 		return 0;
 	}
-	cli = /*OBJECTDATA(obj, climate)*/ object_data<climate>(obj);
+	cli = object_data<climate>(obj);
 	if (gl_object_isa(obj, "climate", "climate") == 0)
 	{
 		return 0;
@@ -236,7 +245,7 @@ EXPORT int64 calc_solar_ideal_shading_position_radians(OBJECT *obj, double tilt,
 	{
 		return 0;
 	}
-	cli = /*OBJECTDATA(obj, climate)*/ object_data<climate>(obj);
+	cli = object_data<climate>(obj);
 	if (gl_object_isa(obj, "climate", "climate") == 0)
 	{
 		return 0;
@@ -733,14 +742,6 @@ int climate::create(void)
 	return 1;
 }
 
-int climate::isa(char *classname)
-{
-	if (classname != 0)
-		return (0 == strcmp(classname, "climate"));
-	else
-		return 0;
-}
-
 int climate::init(OBJECT *parent)
 {
 	char *dot = 0;
@@ -861,7 +862,7 @@ int climate::init(OBJECT *parent)
 				gl_verbose("climate::init(): deferring initialization on %s", gl_name(reader, objname, 255));
 				return 2; // defer
 			}
-			csv_reader *my = /*OBJECTDATA(reader, csv_reader)*/ object_data<csv_reader>(reader);
+			csv_reader *my = object_data<csv_reader>(reader);
 			reader_hndl = my;
 			rv = my->open(my->filename);
 			//			my->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &wind_speed, &rainfall, &snowdepth);
@@ -2100,7 +2101,7 @@ void climate::write_out_cloud_pattern(char pattern)
 	ofstream out_file;
 
 	char buffer[100];
-	sprintf(buffer, "cloud_pattern_%010lld.csv", prev_NTime);
+	snprintf(buffer, sizeof(buffer), "cloud_pattern_%010lld.csv", prev_NTime);
 	std::string file_string = buffer;
 	out_file.open(file_string.c_str(), ios::out);
 
@@ -2353,9 +2354,9 @@ void climate::update_forecasts(TIMESTAMP t0)
 		gl_forecast_save(fc,t0,dt,Nh,t);
 #ifdef NEVER
 		char buffer[1024];
-		int len = sprintf(buffer,"%d",fc->starttime);
+		int len = snprintf(buffer, sizeof(buffer), "%d",fc->starttime);
 		for ( h=3; h<72; h+=3 )
-			len += sprintf(buffer+len,",%.1f",fc->values[h]);
+			len += snprintf(buffer+len, sizeof(buffer)-len, ",%.1f",fc->values[h]);
 		printf("%s\n",buffer);
 #endif
 	}
@@ -2405,7 +2406,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	if (t0 > TS_ZERO && reader_type == (enumeration)RT::RT_CSV)
 	{
 		gld_clock now(t0);
-		csv_reader *cr = /*OBJECTDATA(reader, csv_reader)*/ object_data<csv_reader>(reader);
+		csv_reader *cr = object_data<csv_reader>(reader);
 		csv_rv = cr->get_data(t0, &temperature, &humidity, &solar_direct, &solar_diffuse, &solar_global, &global_horizontal_extra, &wind_speed, &wind_dir, &opq_sky_cov, &tot_sky_cov, &rainfall, &snowdepth, &pressure);
 		// calculate the solar radiation
 		double sol_time = sa->solar_time((double)now.get_hour() + now.get_minute() / 60.0 + now.get_second() / 3600.0 + (now.get_is_dst() ? -1 : 0), now.get_yearday(), RAD(tz_meridian), RAD(reader->longitude));
@@ -2668,5 +2669,23 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 	else
 		return tmy_rv;
 }
+
+EXPORT int isa_climate_impl(OBJECT *obj, char *classname) {
+  return strcmp(classname, "climate") == 0;
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_climate(OBJECT *obj, char *classname) {
+  return isa_climate_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_climate(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_climate_impl(obj, classname);
+}
+#endif
 
 /**@}**/

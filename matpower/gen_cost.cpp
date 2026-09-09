@@ -137,8 +137,7 @@ EXPORT int init_gen_cost(OBJECT *obj, OBJECT *parent) {
   return 0;
 }
 
-static TIMESTAMP sync_gen_cost_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_gen_cost_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
   gen_cost *my = OBJECTDATA(obj, gen_cost);
   try {
@@ -167,8 +166,7 @@ static TIMESTAMP sync_gen_cost_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_gen_cost(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_gen_cost(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_gen_cost_impl(obj, t1, pass);
 }
 #else

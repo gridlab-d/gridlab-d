@@ -197,8 +197,7 @@ EXPORT int init_recloser(OBJECT *obj)
 }
 
 // Syncronizing function
-static TIMESTAMP sync_recloser_impl(OBJECT *obj, TIMESTAMP t0,
-                                    PASSCONFIG pass)
+static TIMESTAMP sync_recloser_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     try
     {
@@ -222,8 +221,7 @@ static TIMESTAMP sync_recloser_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_recloser(OBJECT *obj, TIMESTAMP t0,
-                                              PASSCONFIG pass)
+extern "C" MODULE_API TIMESTAMP sync_recloser(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     return sync_recloser_impl(obj, t0, pass);
 }
@@ -239,10 +237,24 @@ extern "C" MODULE_API TIMESTAMP sync_recloser(OBJECT *obj, ...)
 }
 #endif
 
-EXPORT int isa_recloser(OBJECT *obj, char *classname)
+EXPORT int isa_recloser_impl(OBJECT *obj, char *classname)
 {
     return object_data<recloser>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_recloser(OBJECT *obj, char *classname) {
+  return isa_recloser_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_recloser(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_recloser_impl(obj, classname);
+}
+#endif
 
 // Function to change recloser states - just call underlying switch routine
 EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,

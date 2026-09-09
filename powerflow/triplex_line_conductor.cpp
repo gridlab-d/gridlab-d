@@ -154,8 +154,22 @@ extern "C" MODULE_API TIMESTAMP sync_triplex_line_conductor(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_triplex_line_conductor(OBJECT *obj, char *classname) {
+EXPORT int isa_triplex_line_conductor_impl(OBJECT *obj, char *classname) {
   return object_data<triplex_line_conductor>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_triplex_line_conductor(OBJECT *obj, char *classname) {
+  return isa_triplex_line_conductor_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_triplex_line_conductor(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_triplex_line_conductor_impl(obj, classname);
+}
+#endif
 
 /**@}**/

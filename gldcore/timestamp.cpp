@@ -644,13 +644,13 @@ int strdatetime(DATETIME *t, char *buffer, int size)
     {
         if (t->nanosecond != 0)
         {
-            len = sprintf(tbuffer, "%04d-%02d-%02d %02d:%02d:%02d.%09d %s", t->year,
+            len = snprintf(tbuffer, sizeof(tbuffer), "%04d-%02d-%02d %02d:%02d:%02d.%09d %s", t->year,
                           t->month, t->day, t->hour, t->minute, t->second,
                           t->nanosecond, t->tz);
         }
         else
         {
-            len = sprintf(tbuffer, "%04d-%02d-%02d %02d:%02d:%02d %s", t->year,
+            len = snprintf(tbuffer, sizeof(tbuffer), "%04d-%02d-%02d %02d:%02d:%02d %s", t->year,
                           t->month, t->day, t->hour, t->minute, t->second, t->tz);
         }
     }
@@ -658,13 +658,13 @@ int strdatetime(DATETIME *t, char *buffer, int size)
     {
         if (t->nanosecond != 0)
         {
-            len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d.%09d %s", t->month,
+            len = snprintf(tbuffer, sizeof(tbuffer), "%02d-%02d-%04d %02d:%02d:%02d.%09d %s", t->month,
                           t->day, t->year, t->hour, t->minute, t->second,
                           t->nanosecond, t->tz);
         }
         else
         {
-            len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d %s", t->month,
+            len = snprintf(tbuffer, sizeof(tbuffer), "%02d-%02d-%04d %02d:%02d:%02d %s", t->month,
                           t->day, t->year, t->hour, t->minute, t->second, t->tz);
         }
     }
@@ -672,13 +672,13 @@ int strdatetime(DATETIME *t, char *buffer, int size)
     {
         if (t->nanosecond != 0)
         {
-            len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d.%09d %s", t->day,
+            len = snprintf(tbuffer, sizeof(tbuffer), "%02d-%02d-%04d %02d:%02d:%02d.%09d %s", t->day,
                           t->month, t->year, t->hour, t->minute, t->second,
                           t->nanosecond, t->tz);
         }
         else
         {
-            len = sprintf(tbuffer, "%02d-%02d-%04d %02d:%02d:%02d %s", t->day,
+            len = snprintf(tbuffer, sizeof(tbuffer), "%02d-%02d-%04d %02d:%02d:%02d %s", t->day,
                           t->month, t->year, t->hour, t->minute, t->second, t->tz);
         }
     }
@@ -811,9 +811,9 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset)
 
     if (minutes == 0)
     {
-        if (tzname)
+        if (tzname != nullptr)
         {
-            sprintf(tzname, "%s%d%s", buf1, hours, (rv == 2 ? "" : buf2));
+            snprintf(tzname, sizeof(tzname), "%s%d%s", buf1, hours, (rv == 2 ? "" : buf2));
         }
 
         if (offset)
@@ -827,7 +827,7 @@ int tz_info(char *tzspec, char *tzname, char *std, char *dst, time_t *offset)
     {
         if (tzname != nullptr)
         {
-            sprintf(tzname, "%s%d:%02d%s", buf1, hours, minutes, buf2);
+            snprintf(tzname, sizeof(tzname), "%s%d:%02d%s", buf1, hours, minutes, buf2);
         }
 
         if (offset != nullptr)
@@ -847,7 +847,7 @@ char *tz_locale(char *country, char *province, char *city)
     FILE *fp = nullptr;
     char buffer[1024];
     char target[256];
-    int len = sprintf(target, "%s/%s/%s", country, province, city);
+  int len = snprintf(target, sizeof(target), "%s/%s/%s", country, province, city);
 
     if (find_file(TZFILE, nullptr, R_OK, filepath, sizeof(filepath)) == nullptr)
     {
@@ -1244,21 +1244,21 @@ int convert_from_timestamp_delta(TIMESTAMP ts, DELTAT delta_t, char *buffer,
                  */
             }
             else
-                len = sprintf(temp, "%s", "NEVER");
+                len = snprintf(temp, sizeof(temp), "%s", "NEVER");
         }
     }
     else if (ts >= DAY)
-        len = sprintf(temp, "%lfd", (double)ts / DAY);
+        len = snprintf(temp, sizeof(temp), "%lfd", (double)ts / DAY);
     else if (ts >= HOUR)
-        len = sprintf(temp, "%lfh", (double)ts / HOUR);
+    len = snprintf(temp, sizeof(temp), "%lfh", (double)ts / HOUR);
     else if (ts >= MINUTE)
-        len = sprintf(temp, "%lfm", (double)ts / MINUTE);
+    len = snprintf(temp, sizeof(temp), "%lfm", (double)ts / MINUTE);
     else if (ts >= SECOND)
-        len = sprintf(temp, "%lfs", (double)ts / SECOND);
+    len = snprintf(temp, sizeof(temp), "%lfs", (double)ts / SECOND);
     else if (ts == 0)
-        len = sprintf(temp, "%s", "INIT");
+    len = snprintf(temp, sizeof(temp), "%s", "INIT");
     else
-        len = sprintf(temp, "%" FMT_INT64 "d", ts);
+        len = snprintf(temp, sizeof(temp), "%" FMT_INT64 "d", ts);
     if (len < size)
     {
         if (ts == TS_NEVER)
@@ -1309,21 +1309,21 @@ int convert_from_deltatime_timestamp(double ts_v, char *buffer, int size)
                  */
             }
             else
-                len = sprintf(temp, "%s", "NEVER");
+                len = snprintf(temp, sizeof(temp), "%s", "NEVER");
         }
     }
     else if (ts >= DAY)
-        len = sprintf(temp, "%lfd", (double)ts / DAY);
+        len = snprintf(temp, sizeof(temp), "%lfd", (double)ts / DAY);
     else if (ts >= HOUR)
-        len = sprintf(temp, "%lfh", (double)ts / HOUR);
+    len = snprintf(temp, sizeof(temp), "%lfh", (double)ts / HOUR);
     else if (ts >= MINUTE)
-        len = sprintf(temp, "%lfm", (double)ts / MINUTE);
+    len = snprintf(temp, sizeof(temp), "%lfm", (double)ts / MINUTE);
     else if (ts >= SECOND)
-        len = sprintf(temp, "%lfs", (double)ts / SECOND);
+    len = snprintf(temp, sizeof(temp), "%lfs", (double)ts / SECOND);
     else if (ts == 0)
-        len = sprintf(temp, "%s", "INIT");
+    len = snprintf(temp, sizeof(temp), "%s", "INIT");
     else
-        len = sprintf(temp, "%" FMT_INT64 "d", ts);
+        len = snprintf(temp, sizeof(temp), "%" FMT_INT64 "d", ts);
     if (len < size)
     {
         if (ts == TS_NEVER)

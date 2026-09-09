@@ -164,9 +164,7 @@ option(GLD_USE_SUPERLU "Use SuperLU package for LU Decomposition in Powerflow" O
 option(GLD_USE_HELICS "Link with HELICS" OFF)
 option(GLD_USE_FNCS "Link with FNCS" OFF)
 option(GLD_USE_HDF5 "Link with HDF5" OFF)
-option(GLD_USE_MYSQL "Link with MySQL" OFF)
 set(GLD_HELICS_DIR "" CACHE PATH "Search path for HELICS library")
-set(GLD_MYSQL_DIR "" CACHE PATH "Search path for MySQL library")
 set(GLD_FNCS_DIR "" CACHE PATH "Search path for FNCS library")
 set(GLD_ZeroMQ_DIR "" CACHE PATH "Search path for ZeroMQ library (FNCS dependency)")
 set(GLD_CZMQ_DIR "" CACHE PATH "Search path for CZMQ library (FNCS dependency)")
@@ -214,8 +212,6 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/${GLD_PACKAGE}")
 # which point to directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 option(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
-
-
 
 # --- CMakeLists.txt patch ---
 function(set_portable_rpath tgt)
@@ -342,8 +338,6 @@ set(GLD_MODULES
         commercial
         connection
         generators
-        market
-        mysql
         optimize
         powerflow
         reliability
@@ -512,8 +506,6 @@ add_subdirectory(climate)
 add_subdirectory(commercial)
 add_subdirectory(connection)
 add_subdirectory(generators)
-add_subdirectory(market)
-add_subdirectory(mysql)
 add_subdirectory(optimize)
 add_subdirectory(powerflow)
 add_subdirectory(reliability)
@@ -602,10 +594,8 @@ set(GLD_LIBS
         climate
         commercial
         connection
-	    gldapi
+        gldapi
         generators
-        market
-        mysql
         optimize
         powerflow
         reliability

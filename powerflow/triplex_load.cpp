@@ -1133,8 +1133,7 @@ EXPORT int init_triplex_load(OBJECT *obj)
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-static TIMESTAMP sync_triplex_load_impl(OBJECT *obj, TIMESTAMP t0,
-                                        PASSCONFIG pass)
+static TIMESTAMP sync_triplex_load_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     try
     {
@@ -1175,10 +1174,24 @@ extern "C" MODULE_API TIMESTAMP sync_triplex_load(OBJECT *obj, ...)
 }
 #endif
 
-EXPORT int isa_triplex_load(OBJECT *obj, char *classname)
+EXPORT int isa_triplex_load_impl(OBJECT *obj, char *classname)
 {
     return object_data<triplex_load>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_triplex_load(OBJECT *obj, char *classname) {
+  return isa_triplex_load_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_triplex_load(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_triplex_load_impl(obj, classname);
+}
+#endif
 
 // Deltamode export
 EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj,

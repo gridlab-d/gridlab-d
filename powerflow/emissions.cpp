@@ -990,7 +990,7 @@ EXPORT int create_emissions(OBJECT **obj, OBJECT *parent)
         *obj = gl_create_object(emissions::oclass);
         if (*obj != nullptr)
         {
-            emissions *my = /*OBJECTDATA(obj,<>)*/ object_data<emissions>(*obj);
+            emissions *my = object_data<emissions>(*obj);
             // gl_set_parent(*obj,parent);
             return my->create();
         }
@@ -1008,7 +1008,7 @@ EXPORT int init_emissions(OBJECT *obj, OBJECT *parent)
 {
     try
     {
-        return /*OBJECTDATA(obj,<>)*/ object_data<emissions>(obj)->init(parent);
+        return object_data<emissions>(obj)->init(parent);
     }
     catch (const char *msg)
     {
@@ -1031,7 +1031,7 @@ EXPORT int init_emissions(OBJECT *obj, OBJECT *parent)
 static TIMESTAMP sync_emissions_impl(OBJECT *obj, TIMESTAMP t0,
                                      PASSCONFIG pass)
 {
-    emissions *pObj = /*OBJECTDATA(obj,<>)*/ object_data<emissions>(obj);
+    emissions *pObj = object_data<emissions>(obj);
     try
     {
         TIMESTAMP t1 = TS_NEVER;
@@ -1080,9 +1080,22 @@ extern "C" MODULE_API TIMESTAMP sync_emissions(OBJECT *obj, ...)
 }
 #endif
 
-EXPORT int isa_emissions(OBJECT *obj, char *classname)
+EXPORT int isa_emissions_impl(OBJECT *obj, char *classname)
 {
-    return /*OBJECTDATA(obj,<>)*/ object_data<emissions>(obj)->isa(classname);
+    return object_data<emissions>(obj)->isa(classname);
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_emissions(OBJECT *obj, char *classname) {
+  return isa_emissions_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_emissions(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_emissions_impl(obj, classname);
+}
+#endif
 /**@}**/

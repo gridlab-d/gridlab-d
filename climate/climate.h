@@ -17,13 +17,6 @@
 #include "solar_angles.h"
 #include "weather_reader.h"
 
-#ifdef _WIN32
-#include <io.h> // Provides _access and related macros
-#define R_OK 4  // Define POSIX-like `READ` flag compatibility for Windows
-#else
-#include <unistd.h> // For POSIX systems
-#endif
-
 typedef enum
 {
     CP_H = 0,
@@ -1577,7 +1570,6 @@ public:
     climate(MODULE *module);
     int create(void);
     int init(OBJECT *parent);
-    int isa(char *classname);
     TIMESTAMP presync(TIMESTAMP t0);
     inline TIMESTAMP sync(TIMESTAMP t0) { return TS_NEVER; };
     inline TIMESTAMP postsync(TIMESTAMP t0) { return TS_NEVER; };

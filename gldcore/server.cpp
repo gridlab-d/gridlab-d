@@ -492,17 +492,17 @@ static void http_send(HTTPCNX *http)
 {
   char header[4096];
   int len = 0;
-  len += sprintf(header + len, "HTTP/1.1 %s",
+  len += snprintf(header + len, sizeof(header) - len, "HTTP/1.1 %s",
                  http->status ? http->status : HTTP_INTERNALSERVERERROR);
   IN_MYCONTEXT output_verbose("%s (len=%d, mime=%s)", header, http->len,
                               http->type ? http->type : "none");
-  len += sprintf(header + len, "\nContent-Length: %zd\n", http->len);
+  len += snprintf(header + len, sizeof(header) - len, "\nContent-Length: %zd\n", http->len);
   if (http->type && http->type[0] != '\0')
-    len += sprintf(header + len, "Content-Type: %s\n", http->type);
-  len += sprintf(header + len, "Cache-Control: no-cache\n");
-  len += sprintf(header + len, "Cache-Control: no-store\n");
-  len += sprintf(header + len, "Expires: -1\n");
-  len += sprintf(header + len, "\n");
+    len += snprintf(header + len, sizeof(header) - len, "Content-Type: %s\n", http->type);
+  len += snprintf(header + len, sizeof(header) - len, "Cache-Control: no-cache\n");
+  len += snprintf(header + len, sizeof(header) - len, "Cache-Control: no-store\n");
+  len += snprintf(header + len, sizeof(header) - len, "Expires: -1\n");
+  len += snprintf(header + len, sizeof(header) - len, "\n");
   send_data(http->s, header, len);
   if (http->len > 0)
     send_data(http->s, http->buffer, http->len);
@@ -512,7 +512,7 @@ static void http_send(HTTPCNX *http)
  * bytes needed to store result */
 static size_t http_rewrite(char *out, char *in, size_t len, size_t limit)
 {
-  char name[64], *n;
+  char name[64], *n = name;
   size_t count = 0;
   enum
   {
@@ -649,7 +649,7 @@ static int http_format(HTTPCNX *http, const char *format, ...)
   va_list ptr;
 
   va_start(ptr, format);
-  len = vsprintf(data, format, ptr);
+  len = vsnprintf(data, sizeof(data), format, ptr);
   va_end(ptr);
 
   http_write(http, data, len);
@@ -805,45 +805,45 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer,
       switch (spec[2] == '\0' ? cvalue.Notation() : spec[2])
       {
       case I: // i-notation
-        sprintf(fmt, "%%.%c%c%%+.%c%ci %%s", spec[0], spec[1], spec[0],
+        snprintf(fmt, sizeof(fmt), "%%.%c%c%%+.%c%ci %%s", spec[0], spec[1], spec[0],
                 spec[1]);
         snprintf(buffer, len, fmt, cvalue.Re(), cvalue.Im(), uname);
         break;
       case J: // j-notation
-        sprintf(fmt, "%%.%c%c%%+.%c%cj %%s", spec[0], spec[1], spec[0],
+        snprintf(fmt, sizeof(fmt), "%%.%c%c%%+.%c%cj %%s", spec[0], spec[1], spec[0],
                 spec[1]);
         snprintf(buffer, len, fmt, cvalue.Re(), cvalue.Im(), uname);
         break;
       case A: // degrees
-        sprintf(fmt, "%%.%c%c%%+.%c%cd %%s", spec[0], spec[1], spec[0],
+        snprintf(fmt, sizeof(fmt), "%%.%c%c%%+.%c%cd %%s", spec[0], spec[1], spec[0],
                 spec[1]);
         snprintf(buffer, len, fmt, cvalue.Mag(), cvalue.Arg() * 180 / PI,
                  uname);
         break;
       case R: // radians
-        sprintf(fmt, "%%.%c%c%%+.%c%cr %%s", spec[0], spec[1], spec[0],
+        snprintf(fmt, sizeof(fmt), "%%.%c%c%%+.%c%cr %%s", spec[0], spec[1], spec[0],
                 spec[1]);
         snprintf(buffer, len, fmt, cvalue.Mag(), cvalue.Arg(), uname);
         break;
       case 'M': // magnitude only
-        sprintf(fmt, "%%.%c%c %%s", spec[0], spec[1]);
+        snprintf(fmt, sizeof(fmt), "%%.%c%c %%s", spec[0], spec[1]);
         snprintf(buffer, len, fmt, cvalue.Mag(), uname);
         break;
       case 'D': // angle only in degrees
-        sprintf(fmt, "%%.%c%c deg", spec[0], spec[1]);
+        snprintf(fmt, sizeof(fmt), "%%.%c%c deg", spec[0], spec[1]);
         snprintf(buffer, len, fmt, cvalue.Arg() * 180 / PI, uname);
         break;
       case 'R': // angle only in radians
-        sprintf(fmt, "%%.%c%c rad", spec[0], spec[1]);
-        sprintf(buffer, fmt, cvalue.Arg(), uname);
+        snprintf(fmt, sizeof(fmt), "%%.%c%c rad", spec[0], spec[1]);
+        snprintf(buffer, len, fmt, cvalue.Arg(), uname);
         break;
       case 'X': // real part only
-        sprintf(fmt, "%%.%c%c %%s", spec[0], spec[1]);
-        sprintf(buffer, fmt, cvalue.Re(), uname);
+        snprintf(fmt, sizeof(fmt), "%%.%c%c %%s", spec[0], spec[1]);
+        snprintf(buffer, len, fmt, cvalue.Re(), uname);
         break;
       case 'Y': // imaginary part only
-        sprintf(fmt, "%%.%c%c %%s", spec[0], spec[1]);
-        sprintf(buffer, fmt, cvalue.Im(), uname);
+        snprintf(fmt, sizeof(fmt), "%%.%c%c %%s", spec[0], spec[1]);
+        snprintf(buffer, len, fmt, cvalue.Im(), uname);
         break;
       default:
         output_error("object '%s' property '%s' complex angle notation '%c' is "
@@ -854,7 +854,7 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer,
     }
     else /* handle doubles */
     {
-      sprintf(fmt, "%%.%c%c %%s", spec[0], spec[1]);
+      snprintf(fmt, sizeof(fmt), "%%.%c%c %%s", spec[0], spec[1]);
       rvalue = *object_get_double_quick(obj, prop);
       if (!unit_convert_ex(prop->unit, unit, &rvalue))
       {
@@ -863,7 +863,7 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer,
             arg1, arg2, prop->unit->name, unit);
         return 0;
       }
-      sprintf(buffer, fmt, rvalue, uname);
+      snprintf(buffer, len, fmt, rvalue, uname);
     }
   }
   else if (!object_get_value_by_name(obj, arg2, buffer, len))
@@ -1579,12 +1579,12 @@ int http_run_java(HTTPCNX *http, char *uri)
   }
 
   /* setup gnuplot command */
-  sprintf(script, "%s", uri);
-  sprintf(command, "java -jar %s", script);
+  snprintf(script, sizeof(script), "%s", uri);
+  snprintf(command, sizeof(command), "java -jar %s", script);
 
   /* temporary cut off of plt extension to build output file */
   *jar = '\0';
-  sprintf(output, "%s.%s", uri, ext);
+  snprintf(output, sizeof(output), "%s.%s", uri, ext);
   *jar = '.';
 
   /* run gnuplot */
@@ -1642,12 +1642,12 @@ int http_run_perl(HTTPCNX *http, char *uri)
   }
 
   /* setup gnuplot command */
-  sprintf(script, "%s", uri);
-  sprintf(command, "perl %s", script);
+  snprintf(script, sizeof(script), "%s", uri);
+  snprintf(command, sizeof(command), "perl %s", script);
 
   /* temporary cut off of plt extension to build output file */
   *pl = '\0';
-  sprintf(output, "%s.%s", uri, ext);
+  snprintf(output, sizeof(output), "%s.%s", uri, ext);
   *pl = '.';
 
   /* run gnuplot */
@@ -1703,12 +1703,12 @@ int http_run_python(HTTPCNX *http, char *uri)
   }
 
   /* setup gnuplot command */
-  sprintf(script, "%s", uri);
-  sprintf(command, "python %s", script);
+  snprintf(script, sizeof(script), "%s", uri);
+  snprintf(command, sizeof(command), "python %s", script);
 
   /* temporary cut off of plt extension to build output file */
   *py = '\0';
-  sprintf(output, "%s.%s", uri, ext);
+  snprintf(output, sizeof(output), "%s.%s", uri, ext);
   *py = '.';
 
   /* run gnuplot */
@@ -1764,16 +1764,16 @@ int http_run_r(HTTPCNX *http, char *uri)
   }
 
   /* setup gnuplot command */
-  sprintf(script, "%s", uri);
+  snprintf(script, sizeof(script), "%s", uri);
 #ifdef _WIN32
-  sprintf(command, "r CMD BATCH %s", script);
+  snprintf(command, sizeof(command), "r CMD BATCH %s", script);
 #else
-  sprintf(command, "R --vanilla CMD BATCH %s", script);
+  snprintf(command, sizeof(command), "R --vanilla CMD BATCH %s", script);
 #endif
 
   /* temporary cut off of plt extension to build output file */
   *r = '\0';
-  sprintf(output, "%s.%s", uri, ext);
+  snprintf(output, sizeof(output), "%s.%s", uri, ext);
   *r = '.';
 
   /* run gnuplot */
@@ -1829,12 +1829,12 @@ int http_run_scilab(HTTPCNX *http, char *uri)
   }
 
   /* setup gnuplot command */
-  sprintf(script, "%s", uri);
-  sprintf(command, "scilab %s", script);
+  snprintf(script, sizeof(script), "%s", uri);
+  snprintf(command, sizeof(command), "scilab %s", script);
 
   /* temporary cut off of plt extension to build output file */
   *sce = '\0';
-  sprintf(output, "%s.%s", uri, ext);
+  snprintf(output, sizeof(output), "%s.%s", uri, ext);
   *sce = '.';
 
   /* run gnuplot */
@@ -1890,12 +1890,12 @@ int http_run_octave(HTTPCNX *http, char *uri)
   }
 
   /* setup gnuplot command */
-  sprintf(script, "%s", uri);
-  sprintf(command, "octave %s", script);
+  snprintf(script, sizeof(script), "%s", uri);
+  snprintf(command, sizeof(command), "octave %s", script);
 
   /* temporary cut off of plt extension to build output file */
   *m = '\0';
-  sprintf(output, "%s.%s", uri, ext);
+  snprintf(output, sizeof(output), "%s.%s", uri, ext);
   *m = '.';
 
   /* run gnuplot */
@@ -1951,15 +1951,15 @@ int http_run_gnuplot(HTTPCNX *http, char *uri)
   }
 
   /* setup gnuplot command */
-  sprintf(script, "%s", uri);
+  snprintf(script, sizeof(script), "%s", uri);
 #ifdef _WIN32
-  sprintf(command, "wgnuplot %s", script);
+  snprintf(command, sizeof(command), "wgnuplot %s", script);
 #else
-  sprintf(command, "gnuplot %s", script);
+  snprintf(command, sizeof(command), "gnuplot %s", script);
 #endif
   /* temporary cut off of plt extension to build output file */
   *plt = '\0';
-  sprintf(output, "%s.%s", uri, ext);
+  snprintf(output, sizeof(output), "%s.%s", uri, ext);
   *plt = '.';
 
   /* run gnuplot */

@@ -141,13 +141,12 @@ void transformer::fetch_double(double **prop, const char *name,
         char tname[32];
         char *namestr = (hdr->name ? hdr->name : tname);
         char msg[256];
-        sprintf(tname, "transformer:%i", hdr->id);
+    snprintf(tname, sizeof(tname), "transformer:%i", hdr->id);
         if (name == nullptr || name[0] == '\0')
-            sprintf(msg,
-                    "%s: transformer unable to find property: name is not defined",
+      snprintf(msg, sizeof(msg), "%s: transformer unable to find property: name is not defined",
                     namestr);
         else
-            sprintf(msg, "%s: transformer unable to find %s", namestr, name);
+      snprintf(msg, sizeof(msg), "%s: transformer unable to find %s", namestr, name);
         throw(msg);
     }
 }
@@ -2555,9 +2554,22 @@ EXPORT int recalc_deltamode_saturation(OBJECT *obj, bool *deltaIsat)
     return result;
 }
 
-EXPORT int isa_transformer(OBJECT *obj, char *classname)
+EXPORT int isa_transformer_impl(OBJECT *obj, char *classname)
 {
     return object_data<transformer>(obj)->isa(classname);
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_transformer(OBJECT *obj, char *classname) {
+  return isa_transformer_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_transformer(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_transformer_impl(obj, classname);
+}
+#endif
 /**@}**/

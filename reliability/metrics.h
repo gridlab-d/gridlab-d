@@ -85,6 +85,7 @@ public:
   metrics(MODULE *module);
   int create(void);
   int init(OBJECT *parent);
+  int isa(char *classname);
   TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
   char1024 customer_group;
   OBJECT *module_metrics_obj;

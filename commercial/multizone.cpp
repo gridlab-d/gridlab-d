@@ -92,8 +92,8 @@ TIMESTAMP multizone::presync(TIMESTAMP t0, TIMESTAMP t1) {
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1) {
   if (t1 > t0 && t0 > 0) {
-    office *pFrom = /*OBJECTDATA(from,office)*/ object_data<office>(from);
-    office *pTo = /*OBJECTDATA(to, office)*/ object_data<office>(to);
+    office *pFrom = object_data<office>(from);
+    office *pTo = object_data<office>(to);
 
     /* initial delta T */
     double dT =
@@ -111,7 +111,6 @@ TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1) {
 
     double x;
     x = dQ * (t1 - t0);
-    // LOCKED(from, pFrom->Qz -= x);
     {
       std::unique_lock<std::shared_mutex> lock(
           SharedMutexManager::get_mutex(from));
@@ -121,7 +120,6 @@ TIMESTAMP multizone::sync(TIMESTAMP t0, TIMESTAMP t1) {
     {
       std::unique_lock<std::shared_mutex> lock(
           SharedMutexManager::get_mutex(to));
-      // LOCKED(to, pTo->Qz += dQ);
       pTo->Qz += dQ;
     }
 
@@ -152,8 +150,7 @@ EXPORT int create_multizone(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(multizone::oclass);
     if (*obj != nullptr) {
-      multizone *my =
-          /*OBJECTDATA(*obj, multizone)*/ object_data<multizone>(*obj);
+      multizone *my = object_data<multizone>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -165,7 +162,7 @@ EXPORT int create_multizone(OBJECT **obj, OBJECT *parent) {
 EXPORT int init_multizone(OBJECT *obj, OBJECT *parent) {
   try {
     if (obj != nullptr)
-      return /*OBJECTDATA(obj, multizone)*/ object_data<multizone>(obj)->init(
+      return object_data<multizone>(obj)->init(
           parent);
     else
       return 0;
@@ -176,7 +173,7 @@ EXPORT int init_multizone(OBJECT *obj, OBJECT *parent) {
 static TIMESTAMP sync_multizone_impl(OBJECT *obj, TIMESTAMP t1,
                                      PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
-  multizone *my = /*OBJECTDATA(obj, multizone)*/ object_data<multizone>(obj);
+  multizone *my = object_data<multizone>(obj);
   try {
     switch (pass) {
     case PC_PRETOPDOWN:

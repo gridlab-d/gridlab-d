@@ -483,8 +483,7 @@ EXPORT int init_performance_motor(OBJECT *obj) {
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-static TIMESTAMP sync_performance_motor_impl(OBJECT *obj, TIMESTAMP t0,
-                                             PASSCONFIG pass) {
+static TIMESTAMP sync_performance_motor_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   TIMESTAMP t1 = TS_INVALID;
   performance_motor *my = object_data<performance_motor>(obj);
   try {
@@ -535,13 +534,27 @@ extern "C" MODULE_API TIMESTAMP sync_performance_motor(OBJECT *obj, ...) {
  *
  * @return 0 if obj is a subtype of this class
  */
-EXPORT int isa_performance_motor(OBJECT *obj, char *classname) {
+EXPORT int isa_performance_motor_impl(OBJECT *obj, char *classname) {
   if (obj != 0 && classname != 0) {
     return object_data<performance_motor>(obj)->isa(classname);
   } else {
     return 0;
   }
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_performance_motor(OBJECT *obj, char *classname) {
+  return isa_performance_motor_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_performance_motor(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_performance_motor_impl(obj, classname);
+}
+#endif
 
 /**
  * DELTA MODE

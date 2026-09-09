@@ -940,11 +940,11 @@ EXPORT int check()
     }
     else if (gl_object_isa(obj, "link"))
     {
-      link_object *pLink = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(obj);
+      link_object *pLink = object_data<link_object>(obj);
       OBJECT *from = pLink->from;
       OBJECT *to = pLink->to;
-      node *tNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(to);
-      node *fNode = /*OBJECTDATA(obj,<>)*/ object_data<node>(from);
+      node *tNode = object_data<node>(to);
+      node *fNode = object_data<node>(from);
       /* count 'to' reference */
       tomap[to->id]++;
       /* check link connections */
@@ -1134,7 +1134,7 @@ EXPORT int check()
         link_object *l;
         if (!gl_object_isa(now, "link"))
           continue;
-        l = /*OBJECTDATA(obj,<>)*/ object_data<link_object>(now);
+        l = object_data<link_object>(now);
         if ((l->from != front->ptr) && (l->to != front->ptr))
         {
           continue;

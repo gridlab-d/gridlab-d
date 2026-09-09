@@ -26,23 +26,21 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
         else
             oclass->trl = TRL_DEMONSTRATED;
 
-        if (gl_publish_variable(oclass,
-                                PT_enumeration, "check_mode", PADDR(fcheck_state), PT_DESCRIPTION, "Frequency of fault checks",
-                                PT_KEYWORD, "SINGLE", (enumeration)SINGLE,
-                                PT_KEYWORD, "ONCHANGE", (enumeration)ONCHANGE,
-                                PT_KEYWORD, "ALL", (enumeration)ALLT,
-                                PT_KEYWORD, "SINGLE_DEBUG", (enumeration)SINGLE_DEBUG,
-                                PT_KEYWORD, "SWITCHING", (enumeration)SWITCHING,
-                                PT_char1024, "output_filename", PADDR(output_filename), PT_DESCRIPTION, "Output filename for list of unsupported nodes",
-                                PT_bool, "reliability_mode", PADDR(reliability_mode), PT_DESCRIPTION, "General flag indicating if fault_check is operating under faulting or restoration mode -- reliability set this",
-                                PT_bool, "strictly_radial", PADDR(reliability_search_mode), PT_DESCRIPTION, "Flag to indicate if a system is known to be strictly radial -- uses radial assumptions for reliability alterations",
-                                PT_bool, "full_output_file", PADDR(full_print_output), PT_DESCRIPTION, "Flag to indicate if the output_filename report contains both supported and unsupported nodes -- if false, just does unsupported",
-                                PT_bool, "grid_association", PADDR(grid_association_mode), PT_DESCRIPTION, "Flag to indicate if multiple, distinct grids are allowed in a GLM, or if anything not attached to the master swing is removed",
-                                PT_object, "eventgen_object", PADDR(rel_eventgen), PT_DESCRIPTION, "Link to generic eventgen object to handle unexpected faults",
-                                PT_bool, "force_reassociation", PADDR(force_reassociation), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: flag to force island reassociation",
-                                nullptr) < 1)
-            GL_THROW("unable to publish properties in %s", __FILE__);
-        if (gl_publish_function(oclass, "reliability_alterations", (FUNCTIONADDR)powerflow_alterations) == nullptr)
+		if(gl_publish_variable(oclass,
+			PT_enumeration, "check_mode", PADDR(fcheck_state),PT_DESCRIPTION,"Frequency of fault checks",
+				PT_KEYWORD, "SINGLE", (enumeration)SINGLE,
+				PT_KEYWORD, "ONCHANGE", (enumeration)ONCHANGE,
+				PT_KEYWORD, "ALL", (enumeration)ALLT,
+				PT_KEYWORD, "SINGLE_DEBUG", (enumeration)SINGLE_DEBUG,
+				PT_KEYWORD, "SWITCHING", (enumeration)SWITCHING,
+			PT_char1024,"output_filename",PADDR(output_filename),PT_DESCRIPTION,"Output filename for list of unsupported nodes",
+			PT_bool,"reliability_mode",PADDR(reliability_mode),PT_DESCRIPTION,"General flag indicating if fault_check is operating under faulting or restoration mode -- reliability set this",
+			PT_bool,"strictly_radial",PADDR(reliability_search_mode),PT_DESCRIPTION,"Flag to indicate if a system is known to be strictly radial -- uses radial assumptions for reliability alterations",
+			PT_bool,"full_output_file",PADDR(full_print_output),PT_DESCRIPTION,"Flag to indicate if the output_filename report contains both supported and unsupported nodes -- if false, just does unsupported",
+			PT_bool,"grid_association",PADDR(grid_association_mode),PT_DESCRIPTION,"Flag to indicate if multiple, distinct grids are allowed in a GLM, or if anything not attached to the master swing is removed",
+			PT_object,"eventgen_object",PADDR(rel_eventgen),PT_DESCRIPTION,"Link to generic eventgen object to handle unexpected faults",PT_bool, "force_reassociation", PADDR(force_reassociation), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: flag to force island reassociation",
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			if (gl_publish_function(oclass,"reliability_alterations",(FUNCTIONADDR)powerflow_alterations)==nullptr)
             GL_THROW("Unable to publish remove from service function");
         if (gl_publish_function(oclass, "handle_sectionalizer", (FUNCTIONADDR)handle_sectionalizer) == nullptr)
             GL_THROW("Unable to publish sectionalizer special function");
@@ -93,10 +91,10 @@ int fault_check::init(OBJECT *parent)
     OBJECT *obj = object_header(this);
 
 #ifdef __APPLE__
-    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+  parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
 #endif
-    FILE *FPoint;
 
+    FILE *FPoint;
     // Register us in the global - so faults know who they gonna call
     if (fault_check_object == nullptr) // Make sure we're the only one
     {
@@ -2491,6 +2489,7 @@ void fault_check::associate_grids(void)
 void fault_check::search_associated_grids(unsigned int node_int,
                                           int grid_counter)
 {
+  gl_warning("search_associated_grids: Entering for node '%s' (%d), assigning to grid %d", NR_busdata[node_int].name, node_int, grid_counter);
     unsigned int index;
     int node_ref;
 
@@ -2520,6 +2519,7 @@ void fault_check::search_associated_grids(unsigned int node_int,
             // See if the other side has been handled
             if (NR_busdata[node_ref].island_number == -1)
             {
+		gl_warning("search_associated_grids: ...recursing from '%s' to unassigned node '%s'", NR_busdata[node_int].name, NR_busdata[node_ref].name);
                 // Set the appropriate side
                 NR_busdata[node_ref].island_number = grid_counter;
 
@@ -2532,6 +2532,7 @@ void fault_check::search_associated_grids(unsigned int node_int,
             }
             else if (NR_busdata[node_ref].island_number != grid_counter)
             {
+		gl_warning("search_associated_grids: DUPLICATE ASSIGNMENT! Node '%s' is in grid %d but we are in grid %d", NR_busdata[node_ref].name, NR_busdata[node_ref].island_number, grid_counter);
                 GL_THROW("fault_check: duplicate grid assignment on node %s!",
                          NR_busdata[node_ref].name);
                 /*  TROUBLESHOOT
@@ -2736,7 +2737,7 @@ EXPORT int create_fault_check(OBJECT **obj, OBJECT *parent)
         *obj = gl_create_object(fault_check::oclass);
         if (*obj != nullptr)
         {
-            fault_check *my = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(*obj);
+            fault_check *my = object_data<fault_check>(*obj);
             // gl_set_parent(*obj,parent);
             return my->create();
         }
@@ -2750,7 +2751,7 @@ EXPORT int init_fault_check(OBJECT *obj, OBJECT *parent)
 {
     try
     {
-        fault_check *my = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(obj);
+        fault_check *my = object_data<fault_check>(obj);
         return my->init(parent);
     }
     INIT_CATCHALL(fault_check);
@@ -2765,12 +2766,11 @@ EXPORT int init_fault_check(OBJECT *obj, OBJECT *parent)
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-static TIMESTAMP sync_fault_check_impl(OBJECT *obj, TIMESTAMP t0,
-                                       PASSCONFIG pass)
+static TIMESTAMP sync_fault_check_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     try
     {
-        fault_check *pObj = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(obj);
+        fault_check *pObj = object_data<fault_check>(obj);
         TIMESTAMP t1 = TS_NEVER;
         switch (pass)
         {
@@ -2790,37 +2790,47 @@ static TIMESTAMP sync_fault_check_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0,
-                                                 PASSCONFIG pass)
+extern "C" MODULE_API TIMESTAMP sync_fault_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
     return sync_fault_check_impl(obj, t0, pass);
 }
 #else
-extern "C" TIMESTAMP sync_fault_check(OBJECT *obj, ...)
+extern "C" MODULE_API TIMESTAMP sync_fault_check(OBJECT *obj, ...)
 {
     va_list args;
-    TIMESTAMP t0;
-    PASSCONFIG pass;
-
     va_start(args, obj);
-    t0 = va_arg(args, TIMESTAMP);
-    pass = va_arg(args, PASSCONFIG);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
     va_end(args);
     return sync_fault_check_impl(obj, t0, pass);
 }
 #endif
 
-EXPORT int isa_fault_check(OBJECT *obj, char *classname)
+EXPORT int isa_fault_check_impl(OBJECT *obj, char *classname)
 {
-    return /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(obj)->isa(classname);
+    return object_data<fault_check>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_fault_check(OBJECT *obj, char *classname) {
+  return isa_fault_check_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_fault_check(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_fault_check_impl(obj, classname);
+}
+#endif
 
 // Function to remove/restore out of service items following a reliability fault
 EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink,
                                  bool rest_mode)
 {
     fault_check *thsfltchk =
-        /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(thisobj);
+      object_data<fault_check>(thisobj);
 
     // Perform the removal
     thsfltchk->support_check_alterations(baselink, rest_mode);
@@ -2910,7 +2920,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
                     // Propogate downstream and momentary flag objects
                     // map the fault_check object - do as recursion and function is in
                     // space
-                    fltyobj = /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(
+          fltyobj = object_data<fault_check>(
                         fault_check_object);
 
                     // Call the function
@@ -2973,7 +2983,7 @@ EXPORT STATUS powerflow_disable_island(OBJECT *thisobj, int island_number)
 {
     // Fault check object link
     fault_check *fltyobj =
-        /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(fault_check_object);
+      object_data<fault_check>(fault_check_object);
 
     // Call the function
     return fltyobj->disable_island(island_number);
@@ -2986,7 +2996,7 @@ EXPORT STATUS powerflow_rescan_topo(OBJECT *thisobj,
 {
     // Fault check object link
     fault_check *fltyobj =
-        /*OBJECTDATA(obj,<>)*/ object_data<fault_check>(fault_check_object);
+      object_data<fault_check>(fault_check_object);
 
     // Call the function
     return fltyobj->rescan_topology(bus_that_called_reset);

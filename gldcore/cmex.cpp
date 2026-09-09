@@ -215,19 +215,19 @@ static void set_object_data(const mxArray *data) {
                      "couldn't read the string value '%s' from field '%s'",
                      id, value, name);
       else if (mxIsDouble(pField) &&
-               sprintf(value, "%lg", *(double *)mxGetPr(pField)) < 1)
+               snprintf(value, sizeof(value), "%lg", *(double *)mxGetPr(pField)) < 1)
         output_error("set_object_data(const mxArray *data={id='%s',...}) "
                      "couldn't read the double value '%lg' from field '%s'",
                      id, *(double *)mxGetPr(pField), name);
       else if (mxIsComplex(pField) &&
-               sprintf(value, "%lg%+lgi", *(double *)mxGetPr(pField),
+               snprintf(value, sizeof(value), "%lg%+lgi", *(double *)mxGetPr(pField),
                        *(double *)mxGetPi(pField)) < 1)
         output_error(
             "set_object_data(const mxArray *data={id='%s',...}) couldn't read "
             "the complex value '%lg%+lgi' from field '%s'",
             id, *(double *)mxGetPr(pField), *(double *)mxGetPi(pField), name);
       else if (mxIsUint32(pField) &&
-               sprintf(value, "%lu", *(unsigned int *)mxGetPr(pField)) < 1)
+               snprintf(value, sizeof(value), "%lu", *(unsigned int *)mxGetPr(pField)) < 1)
         output_error("set_object_data(const mxArray *data={id='%s',...}) "
                      "couldn't read the uint32 value '%lu' from field '%s'",
                      id, *(unsigned int *)mxGetPr(pField), name);
@@ -252,7 +252,7 @@ static int cmex_printerr(char *format, ...) {
   static char buffer[1024];
   va_list ptr;
   va_start(ptr, format);
-  count += vsprintf(buffer, format, ptr);
+  count += vsnprintf(buffer, sizeof(buffer), format, ptr);
   va_end(ptr);
   if (strncmp(buffer, "ERROR", 5) == 0 || strncmp(buffer, "FATAL", 5) == 0)
     mexErrMsgTxt(buffer);
@@ -455,7 +455,7 @@ void cmex_setenv(int nlhs, mxArray *plhs[],       /**< () */
       output_error("value too long");
     else {
       char env[2050];
-      if (sprintf(env, "%s=%s", name, value) < 0)
+      if (snprintf(env, sizeof(env), "%s=%s", name, value) < 0)
         output_error("unable to make environment value");
       else if (putenv(env) < 0)
         output_error("unable to save environment value");
@@ -541,12 +541,12 @@ void cmex_create(
       else if (mxIsChar(p[1]) && mxGetString(p[1], value, sizeof(value)))
         output_error("property %s (arg %d) value couldn't be read", name, n);
       else if (mxIsDouble(p[1]) &&
-               sprintf(value, "%lg", *(double *)mxGetPr(p[1])) < 1)
+               snprintf(value, sizeof(value), "%lg", *(double *)mxGetPr(p[1])) < 1)
         output_error(
             "property %s (arg %d) value couldn't be converted from double",
             name, n);
       else if (mxIsComplex(p[1]) &&
-               sprintf(value, "%lg%+lgi", *(double *)mxGetPr(p[1]),
+               snprintf(value, sizeof(value), "%lg%+lgi", *(double *)mxGetPr(p[1]),
                        *(double *)mxGetPi(p[1])) < 1)
         output_error(
             "property %s (arg %d) value couldn't be converted from complex",
@@ -723,7 +723,7 @@ void cmex_set(int nlhs, mxArray *plhs[], /**< () */
         output_error("unable to set %s:%d/%s to %lg", obj->oclass->name,
                      obj->id, prop->name, v);
     } else if (mxIsComplex(prhs[2]) || mxIsDouble(prhs[2])) {
-      sprintf(value, "%lg%+lgi", *mxGetPr(prhs[2]),
+      snprintf(value, sizeof(value), "%lg%+lgi", *mxGetPr(prhs[2]),
               mxIsComplex(prhs[2]) ? *mxGetPi(prhs[2]) : 0);
       if (object_set_value_by_name(obj, prop->name, value) == 0)
         output_error("unable to set %s:%d/%s to %s", obj->oclass->name, obj->id,

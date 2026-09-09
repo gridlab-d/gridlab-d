@@ -193,6 +193,7 @@ public:
     solar(MODULE *module);
     int create(void);
     int init(OBJECT *parent);
+  int isa(char *classname);
     void derate_panel(double Tamb, double Insol);
     void calculate_IV(double Tamb, double Insol);
     int init_climate(void);

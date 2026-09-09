@@ -5327,7 +5327,7 @@ EXPORT int create_inverter(OBJECT **obj, OBJECT *parent)
         *obj = gl_create_object(inverter::oclass);
         if (*obj != nullptr)
         {
-            inverter *my = /*OBJECTDATA(*obj, inverter)*/ object_data<inverter>(*obj);
+			inverter *my = object_data<inverter>(*obj);
             // gl_set_parent(*obj,parent);
             return my->create();
         }
@@ -5342,7 +5342,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
     try
     {
         if (obj != nullptr)
-            return /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj)->init(parent);
+			return object_data<inverter>(obj)->init(parent);
         else
             return 0;
     }
@@ -5352,7 +5352,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 static TIMESTAMP sync_inverter_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
     TIMESTAMP t2 = TS_NEVER;
-    inverter *my = /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj);
+	inverter *my = object_data<inverter>(obj);
     try
     {
         switch (pass)
@@ -5393,7 +5393,21 @@ extern "C" MODULE_API TIMESTAMP sync_inverter(OBJECT *obj, ...)
 }
 #endif
 
-EXPORT int isa_inverter(OBJECT *obj, char *classname)
+EXPORT int isa_inverter_impl(OBJECT *obj, char *classname)
 {
-    return /*OBJECTDATA(obj,inverter)*/ object_data<inverter>(obj)->isa(classname);
+	return object_data<inverter>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_inverter(OBJECT *obj, char *classname) {
+  return isa_inverter_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_inverter(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_inverter_impl(obj, classname);
+}
+#endif

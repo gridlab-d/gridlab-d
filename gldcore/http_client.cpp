@@ -95,7 +95,7 @@ HTTP *hopen(const char *url, int maxlen) {
   }
 
   /* format/send request */
-  len = sprintf(request,
+  len = snprintf(request, sizeof(request),
                 "GET %s HTTP/1.1\r\nHost: %s:80\r\nUser-Agent: "
                 "GridLAB-D/%d.%d\r\nConnection: close\r\n\r\n",
                 filespec, hostname, REV_MAJOR, REV_MINOR);
@@ -263,7 +263,7 @@ const char *http_get_header_data(HTTPRESULT *result, const char *param) {
   char *ptr;
   if (param == nullptr)
     return result->header.data;
-  sprintf(target, "\n%s: ", param);
+  snprintf(target, sizeof(target), "\n%s: ", param);
   ptr = strstr(result->header.data, target);
   if (ptr == nullptr)
     return nullptr;

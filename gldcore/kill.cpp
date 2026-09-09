@@ -32,7 +32,7 @@
           HANDLE hEvent;
           unsigned int sig = (unsigned int)(int64)param;
           pid_t pid = (pid_t)_getpid();
-          sprintf(name, "gridlabd.%u.%u", pid, sig);
+          snprintf(name, sizeof(name), "gridlabd.%u.%u", pid, sig);
           hEvent = CreateEventA(nullptr, TRUE, FALSE, name);
           output_verbose("creating gridlabd signal handler %u for process %u", sig,
                          pid);
@@ -64,7 +64,7 @@
     {
       char name[32];
       HANDLE hEvent;
-      sprintf(name, "gridlabd.%u.%u", pid,
+      snprintf(name, sizeof(name), "gridlabd.%u.%u", pid,
               sig == 0 ? SIGINT : sig); /* use INT for sig==0 just to check */
       hEvent = OpenEventA(EVENT_MODIFY_STATE, FALSE, name);
 

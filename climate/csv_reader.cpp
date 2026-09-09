@@ -34,14 +34,29 @@ EXPORT int create_csv_reader(OBJECT **obj, OBJECT *parent){
 }
 
 EXPORT int init_csv_reader(OBJECT **obj, OBJECT *parent){
-	csv_reader *my = /*OBJECTDATA(obj, csv_reader)*/   object_data<csv_reader>(obj) ;
+	csv_reader *my = object_data<csv_reader>(obj) ;
 	return 1; // let the climate object cause the file to open
 }
 
 /// Synchronize the cliamte object
-EXPORT TIMESTAMP sync_csv_reader(OBJECT *obj, TIMESTAMP t0){
+static TIMESTAMP sync_csv_reader_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass){
 	return TS_NEVER; // really doesn't do anything
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_csv_reader(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
+  return sync_csv_reader_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_csv_reader(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+  PASSCONFIG pass = va_arg(args, PASSCONFIG);
+  va_end(args);
+  return sync_csv_reader_impl(obj, t0, pass);
+}
+#endif
 
 csv_reader::csv_reader(){
 	////memset(this, 0, sizeof(csv_reader));

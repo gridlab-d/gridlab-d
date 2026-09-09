@@ -66,7 +66,7 @@ static const char *GetLastErrorMsg(void)
 		*p = ' ';
 	while ((p = strchr((char *)lpMsgBuf, '\r')) != nullptr)
 		*p = ' ';
-	sprintf(szBuf, "%s (error code %d)", lpMsgBuf, dw);
+	snprintf(szBuf, sizeof(szBuf), "%s (error code %d)", (char *)lpMsgBuf, dw);
 
 	LocalFree(lpMsgBuf);
 	return szBuf;
@@ -75,7 +75,7 @@ static DIR *opendir(const char *dirname)
 {
 	WIN32_FIND_DATA fd;
 	char search[MAX_PATH];
-	sprintf(search, "%s/*", dirname);
+	snprintf(search, sizeof(search), "%s/*", dirname);
 	HANDLE dh = FindFirstFile(search, &fd);
 	if (dh == INVALID_HANDLE_VALUE)
 	{
@@ -149,7 +149,7 @@ static int vsystem(const char *fmt, ...)
 	char command[1024];
 	va_list ptr;
 	va_start(ptr, fmt);
-	vsprintf(command, fmt, ptr);
+	vsnprintf(command, sizeof(command), fmt, ptr);
 	va_end(ptr);
 	output_debug("calling system('%s')", command);
 	int rc = system(command);
@@ -170,7 +170,7 @@ static bool destroy_dir(char *name)
 		if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
 		{
 			char file[1024];
-			sprintf(file, "%s/%s", name, dp->d_name);
+			snprintf(file, sizeof(file), "%s/%s", name, dp->d_name);
 			if (unlink(file) != 0)
 			{
 				output_error("destroy_dir(char *name='%s'): unlink('%s') returned '%s'", name, dp->d_name, strerror(errno));
@@ -320,7 +320,7 @@ static size_t process_dir(const char *path)
 	while ((dp = readdir(dirp)) != nullptr)
 	{
 		char item[1024];
-		size_t len = sprintf(item, "%s/%s", path, dp->d_name);
+		size_t len = snprintf(item, sizeof(item), "%s/%s", path, dp->d_name);
 		char *ext = strrchr(dp->d_name, '.');
 		if (dp->d_name[0] == '.')
 			continue; // ignore anything that starts with a dot

@@ -422,7 +422,7 @@ extern "C" void outgoing_route_function(char *from, char *to, char *funcName,
   size_t hexlen = 0;
   FUNCTIONRELAY *relay = find_relay_function(funcName, rclass);
   if (relay == nullptr) {
-    throw("native::outgoing_route_function: the relay function for function "
+      gl_error("native::outgoing_route_function: the relay function for function "
           "name %s could not be found.",
           funcName);
   }
@@ -435,7 +435,7 @@ extern "C" void outgoing_route_function(char *from, char *to, char *funcName,
 
   // check from and to names
   if (to == nullptr || from == nullptr) {
-    throw("from objects and to objects must be named.");
+      gl_error("from objects and to objects must be named.");
   }
 
   // write from and to names to transport
@@ -452,7 +452,7 @@ extern "C" void outgoing_route_function(char *from, char *to, char *funcName,
 
   // deliver message to transport
   if (transport->send(message, msglen) < 0) {
-    throw("Message failed to be sent.");
+      gl_error("Message failed to be sent.");
   }
 }
 

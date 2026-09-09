@@ -52,7 +52,7 @@ char *memory_read_player(struct player *my, char *buffer, unsigned int size) {
   else {
     double *ptr = (double *)my->memory->buffer->prop->addr + my->memory->index;
     my->memory->index += 2;
-    sprintf(temp, "%" FMT_INT64 "d,%lg", (TIMESTAMP)ptr[0], ptr[1]);
+    snprintf(temp, sizeof(temp), "%" FMT_INT64 "d,%lg", (TIMESTAMP)ptr[0], ptr[1]);
     // TODO: Review use of std::min<unsigned long> here
     strncpy(buffer, temp, std::min<unsigned long>(size, sizeof(temp)));
     return buffer;

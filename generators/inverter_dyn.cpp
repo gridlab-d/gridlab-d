@@ -8703,9 +8703,7 @@ EXPORT int create_inverter_dyn(OBJECT **obj, OBJECT *parent)
     {
         *obj = gl_create_object(inverter_dyn::oclass);
         if (*obj != nullptr)
-        {
-            inverter_dyn *my =
-                /*OBJECTDATA(*obj,<>)*/ object_data<inverter_dyn>(*obj);
+        {inverter_dyn *my = object_data<inverter_dyn>(*obj);
             // gl_set_parent(*obj, parent);
             return my->create();
         }
@@ -8720,7 +8718,7 @@ EXPORT int init_inverter_dyn(OBJECT *obj, OBJECT *parent)
     try
     {
         if (obj != nullptr)
-            return /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj)->init(
+      return object_data<inverter_dyn>(obj)->init(
                 parent);
         else
             return 0;
@@ -8728,11 +8726,10 @@ EXPORT int init_inverter_dyn(OBJECT *obj, OBJECT *parent)
     INIT_CATCHALL(inverter_dyn);
 }
 
-static TIMESTAMP sync_inverter_dyn_impl(OBJECT *obj, TIMESTAMP t1,
-                                        PASSCONFIG pass)
+static TIMESTAMP sync_inverter_dyn_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
     TIMESTAMP t2 = TS_NEVER;
-    inverter_dyn *my = /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj);
+    inverter_dyn *my = object_data<inverter_dyn>(obj);
     try
     {
         switch (pass)
@@ -8775,15 +8772,29 @@ extern "C" MODULE_API TIMESTAMP sync_inverter_dyn(OBJECT *obj, ...)
 }
 #endif
 
-EXPORT int isa_inverter_dyn(OBJECT *obj, char *classname)
+EXPORT int isa_inverter_dyn_impl(OBJECT *obj, char *classname)
 {
-    return /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj)->isa(classname);
+    return object_data<inverter_dyn>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_inverter_dyn(OBJECT *obj, char *classname) {
+  return isa_inverter_dyn_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_inverter_dyn(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_inverter_dyn_impl(obj, classname);
+}
+#endif
 
 EXPORT STATUS preupdate_inverter_dyn(OBJECT *obj, TIMESTAMP t0,
                                      unsigned int64 delta_time)
 {
-    inverter_dyn *my = /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj);
+    inverter_dyn *my = object_data<inverter_dyn>(obj);
     STATUS status_output = FAILED;
 
     try
@@ -8803,7 +8814,7 @@ EXPORT SIMULATIONMODE
 interupdate_inverter_dyn(OBJECT *obj, unsigned int64 delta_time,
                          unsigned long dt, unsigned int iteration_count_val)
 {
-    inverter_dyn *my = /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj);
+    inverter_dyn *my = object_data<inverter_dyn>(obj);
     SIMULATIONMODE status = SM_ERROR;
     try
     {
@@ -8818,31 +8829,14 @@ interupdate_inverter_dyn(OBJECT *obj, unsigned int64 delta_time,
     }
 }
 
-// EXPORT STATUS postupdate_inverter_dyn(OBJECT *obj, gld::complex
-// *useful_value, unsigned int mode_pass)
-// {
-// 	inverter_dyn *my = /*OBJECTDATA(obj,<>)*/
-// object_data<inverter_dyn>(obj); 	STATUS status = FAILED; 	try
-// 	{
-// 		status = my->post_deltaupdate(useful_value, mode_pass);
-// 		return status;
-// 	}
-// 	catch (char *msg)
-// 	{
-// 		gl_error("postupdate_inverter_dyn(obj=%d;%s): %s", obj->id,
-// obj->name ? obj->name : "unnamed", msg); 		return status;
-// 	}
-// }
-
-//// Define export function that update the VSI current injection IGenerated to
-/// the grid
+// Define export function that update the VSI current injection IGenerated to the grid
 EXPORT STATUS inverter_dyn_NR_current_injection_update(
     OBJECT *obj, int64 iteration_count, bool *converged_failure)
 {
     STATUS temp_status;
 
     // Map the node
-    inverter_dyn *my = /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(obj);
+  inverter_dyn *my = object_data<inverter_dyn>(obj);
 
     // Call the function, where we can update the IGenerated injection
     temp_status = my->updateCurrInjection(iteration_count, converged_failure);
@@ -8858,8 +8852,7 @@ EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj,
     STATUS temp_status;
 
     // Map us
-    inverter_dyn *this_inv =
-        /*OBJECTDATA(obj,<>)*/ object_data<inverter_dyn>(this_obj);
+  inverter_dyn *this_inv = object_data<inverter_dyn>(this_obj);
 
     // Call the function to register us
     temp_status = this_inv->DC_object_register(DC_obj);

@@ -5161,10 +5161,24 @@ EXPORT STATUS update_diesel_dg(OBJECT *obj, unsigned int64 dt, unsigned int iter
 }
 */
 
-EXPORT int isa_diesel_dg(OBJECT *obj, char *classname)
+EXPORT int isa_diesel_dg_impl(OBJECT *obj, char *classname)
 {
     return object_data<diesel_dg>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_diesel_dg(OBJECT *obj, char *classname) {
+  return isa_diesel_dg_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_diesel_dg(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_diesel_dg_impl(obj, classname);
+}
+#endif
 
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {

@@ -602,7 +602,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			char buffer[1024];
 
 			/* add ./ to the beginning of the path */
-			sprintf(buffer, "./%s", tpath);
+			snprintf(buffer, sizeof(buffer), "./%s", tpath);
 			strcpy(tpath, buffer);
 		}
 #endif
@@ -835,7 +835,7 @@ static void _module_list(char *path)
 
 	/* open directory */
 #ifdef _WIN32
-	sprintf(search, "%s\\*.dll", path);
+	snprintf(search, sizeof(search), "%s\\*.dll", path);
 	hFind = FindFirstFile(search, &sFind);
 	if (hFind == INVALID_HANDLE_VALUE)
 		return;
@@ -938,7 +938,7 @@ void module_list(void)
 int module_setvar(MODULE *mod, const char *varname, char *value)
 {
 	char modvarname[2048];
-	sprintf(modvarname, "%s::%s", mod->name, varname);
+	snprintf(modvarname, sizeof(modvarname), "%s::%s", mod->name, varname);
 	return global_setvar(modvarname, value) == SUCCESS;
 }
 
@@ -946,7 +946,7 @@ void *module_getvar(MODULE *mod, const char *varname, char *value,
 					unsigned int size)
 {
 	char modvarname[2048];
-	sprintf(modvarname, "%s::%s", mod->name, varname);
+	snprintf(modvarname, sizeof(modvarname), "%s::%s", mod->name, varname);
 	return global_getvar(modvarname, value, size);
 }
 
@@ -957,12 +957,12 @@ void *module_getvar_old(MODULE *mod, const char *varname, char *value,
 	{
 		if (strcmp(varname, "major") == 0)
 		{
-			sprintf(value, "%d", mod->major);
+			snprintf(value, size, "%d", mod->major);
 			return value;
 		}
 		else if (strcmp(varname, "minor") == 0)
 		{
-			sprintf(value, "%d", mod->minor);
+			snprintf(value, size, "%d", mod->minor);
 			return value;
 		}
 		else
@@ -976,7 +976,7 @@ double *module_getvar_addr(MODULE *mod, const char *varname)
 {
 	char modvarname[2048];
 	GLOBALVAR *var;
-	sprintf(modvarname, "%s::%s", mod->name, varname);
+	snprintf(modvarname, sizeof(modvarname), "%s::%s", mod->name, varname);
 	var = global_find(modvarname);
 	if (var != nullptr)
 		return static_cast<double *>(var->prop->addr);
@@ -1032,7 +1032,7 @@ int module_saveall_xml(FILE *fp)
 		char tname[2048];
 		size_t tlen;
 		gvptr = global_getnext(nullptr);
-		sprintf(tname, "%s::", mod->name);
+		snprintf(tname, sizeof(tname), "%s::", mod->name);
 		tlen = strlen(tname);
 		count += fprintf(fp, "\t<module type=\"%s\" ", mod->name);
 		if (mod->major > 0)
@@ -1093,7 +1093,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod)
 		}
 		else
 		{
-			sprintf(oname, "%s:%i", obj->oclass->name, obj->id);
+			snprintf(oname, sizeof(oname), "%s:%i", obj->oclass->name, obj->id);
 		}
 		if ((oclass == nullptr) || (obj->oclass != oclass))
 			oclass = obj->oclass;
@@ -1109,7 +1109,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod)
 			}
 			else
 			{
-				sprintf(oname, "%s:%i", obj->parent->oclass->name, obj->parent->id);
+				snprintf(oname, sizeof(oname), "%s:%i", obj->parent->oclass->name, obj->parent->id);
 			}
 			count += fprintf(fp, "\t\t\t<parent>%s</parent>\n", oname.get_string());
 		}
@@ -1453,7 +1453,7 @@ static int execf(const char *format, /**< format string  */
 	int rc;
 	va_list ptr;
 	va_start(ptr, format);
-	vsprintf(command, format, ptr); /* note the lack of check on buffer overrun */
+	vsnprintf(command, sizeof(command), format, ptr); /* note the lack of check on buffer overrun */
 	va_end(ptr);
 	if (cc_verbose || global_verbose_mode)
 		output_message(command);
@@ -2143,15 +2143,15 @@ int sched_getinfo(int n, char *buf, size_t sz)
 				m = (int)(s / 60);
 				s = s % 60;
 				if (h > 0)
-					sprintf(t, "%4d:%02d:%02d", h, m, (int)s);
+					snprintf(t, sizeof(t), "%4d:%02d:%02d", h, m, (int)s);
 				else if (m > 0)
-					sprintf(t, "     %2d:%02d", m, (int)s);
+					snprintf(t, sizeof(t), "     %2d:%02d", m, (int)s);
 				else
-					sprintf(t, "       %2ds", (int)s);
+					snprintf(t, sizeof(t), "       %2ds", (int)s);
 			}
 			else if (process_map[n].stoptime != TS_NEVER)
 			{
-				sprintf(t, "%.0f%%",
+				snprintf(t, sizeof(t), "%.0f%%",
 						100.0 * (process_map[n].progress - process_map[n].starttime) /
 							(process_map[n].stoptime - process_map[n].starttime));
 			}
@@ -2188,11 +2188,11 @@ int sched_getinfo(int n, char *buf, size_t sz)
 
 		/* print info */
 		sz =
-			sprintf(buf, "%4d %5d %10s %-7s %-23s %s", n, process_map[n].pid, t,
+			snprintf(buf, sizeof(buf), "%4d %5d %10s %-7s %-23s %s", n, process_map[n].pid, t,
 					status, process_map[n].progress == TS_ZERO ? "INIT" : ts, name);
 	}
 	else
-		sz = sprintf(buf, "%4d   -", n);
+		sz = snprintf(buf, sizeof(buf), "%4d   -", n);
 	// sched_unlock(n);
 	lock.unlock();
 	return (int)sz;
@@ -2724,7 +2724,7 @@ void sched_continuous(void)
 			for (n = 0; n < n_procs; n++)
 			{
 				if (sched_getinfo(n, line, sizeof(line)) < 0)
-					sprintf(message, "ERROR: unable to read process %d", n);
+					snprintf(message, sizeof(message), "ERROR: unable to read process %d", n);
 				if (n == sel)
 					attron(A_BOLD);
 				mvprintw(n + 4, 0, "%s", line);
@@ -2744,14 +2744,14 @@ void sched_continuous(void)
 		case KEY_UP:
 			if (sel > 0)
 				sel--;
-			sprintf(message, "Process %d selected", sel);
+			snprintf(message, sizeof(message), "Process %d selected", sel);
 			refresh_count = 0;
 			break;
 		case KEY_DOWN:
 			if (sel < n_procs - 1)
 				sel++;
 			refresh_count = 0;
-			sprintf(message, "Process %d selected", sel);
+			snprintf(message, sizeof(message), "Process %d selected", sel);
 			break;
 		case 'q':
 		case 'Q':
@@ -2760,25 +2760,25 @@ void sched_continuous(void)
 		case 'k':
 		case 'K':
 			sched_pkill(sel);
-			sprintf(message, "Kill signal sent to process %d", sel);
+			snprintf(message, sizeof(message), "Kill signal sent to process %d", sel);
 			refresh_count = 0;
 			break;
 		case 'c':
 		case 'C':
 			sched_clear();
-			sprintf(message, "Defunct processes cleared ok");
+			snprintf(message, sizeof(message), "Defunct processes cleared ok");
 			refresh_count = 0;
 			break;
 		case 'r':
 		case 'R':
 			show_progress = 0;
-			sprintf(message, "Runtime display selected");
+			snprintf(message, sizeof(message), "Runtime display selected");
 			refresh_count = 0;
 			break;
 		case 'p':
 		case 'P':
 			show_progress = 1;
-			sprintf(message, "Progress display selected");
+			snprintf(message, sizeof(message), "Progress display selected");
 			refresh_count = 0;
 			break;
 		default:

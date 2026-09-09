@@ -1880,10 +1880,24 @@ extern "C" MODULE_API TIMESTAMP sync_regulator(OBJECT *obj, ...)
 }
 #endif
 
-EXPORT int isa_regulator(OBJECT *obj, char *classname)
+EXPORT int isa_regulator_impl(OBJECT *obj, char *classname)
 {
     return object_data<regulator>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_regulator(OBJECT *obj, char *classname) {
+  return isa_regulator_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_regulator(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_regulator_impl(obj, classname);
+}
+#endif
 
 // Export for deltamode
 EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)

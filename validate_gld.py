@@ -1,12 +1,12 @@
-from argparse import ArgumentParser
-from pathlib import Path
 import math
 import multiprocessing
+import os
 import shutil
 import subprocess
 import sys
 import time
-import os
+from argparse import ArgumentParser
+from pathlib import Path
 
 autotestFiles = []
 gldBinary = None
@@ -14,7 +14,7 @@ gldBinary = None
 
 def getGLDBinary():
     """
-    Check developement environment for the gridlabd binary file.
+    Check development environment for the gridlabd binary file.
     """
     global gldBinary
     gldBinary = shutil.which("gridlabd")
@@ -35,10 +35,9 @@ def getGLDBinary():
 
 def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
     """
-    Search through a module directory for a directory called autotest. Copy autotest to it's own individual directory
+    Search through a module directory for a directory called autotest. Copy autotest to its own individual directory
     to be run from. Capture all autotest files present in the autotest directory.
     """
-    global autotestFiles
     noValidateFile = moduleDirectory / "validate.no"
     noValidateFile.resolve()
     if not noValidateFile.exists():
@@ -68,11 +67,11 @@ def processModuleDirectory(moduleDirectory: Path, runOptionalTests: bool):
 
 
 
-def runAutotest(args: tuple[Path, str]) -> tuple[int, Path]:
+def runAutotest(test_args: tuple[Path, str]) -> tuple[int, Path, Path, Path]:
     """
     Run a single autotest file using GridLAB-D.
     """
-    autotestFile, binFile = args
+    autotestFile, binFile = test_args
 
     # Parent directory that holds the model and all its assets (players, CSVs, etc.)
     src_dir = autotestFile.parent                 # e.g., .../<module>/autotest
@@ -86,52 +85,35 @@ def runAutotest(args: tuple[Path, str]) -> tuple[int, Path]:
     # Compose command: run from parent directory, write outputs into work_dir
     command = [binFile, autotestFile.name]
     (work_dir / "gridlabd.start").write_text(f"RUN {autotestFile.name} via {binFile}\n")
-
                                              
     env = dict(os.environ)
     per_test_timeout_s = int(env.get("GLD_TEST_TIMEOUT", os.environ.get("GLD_TIMEOUT", "600")))
-
-
-    # # Capture raw bytes to avoid UnicodeDecodeError
-    # result = subprocess.run(
-    #     command,
-    #     cwd=work_dir,
-    #     stdout=subprocess.PIPE,
-    #     stderr=subprocess.PIPE,
-    #     text=False,  # <-- CRITICAL: captures bytes, no decoding
-    # )
 
     print(f"[run] {autotestFile}", flush=True)
     try:
             result = subprocess.run(
                 command,
                 cwd=work_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 text=False,  # capture bytes
                 env=env,
                 timeout=per_test_timeout_s,
+                check=False
             )
     except subprocess.TimeoutExpired as e:
             # Persist a clear timeout marker
             (work_dir / "gridlabd.out").write_text("")
             (work_dir / "gridlabd.err").write_text(f"TIMEOUT after {per_test_timeout_s}s\n{e}")
-            return (1, work_dir / autotestFile.name)
+            return 1, work_dir / autotestFile.name, (work_dir / "gridlabd.out"), (work_dir / "gridlabd.err")
 
 
     # Persist outputs (parity with validate.cpp)
     (work_dir / "gridlabd.out").write_bytes(result.stdout)
     (work_dir / "gridlabd.err").write_bytes(result.stderr)
 
-    # # Classification logic (same as your harness)
-    # rv = 0
-    # if result.returncode != 0 and "_err" not in autotestFile.stem:
-    #     rv = 1
-    # elif result.returncode == 0 and "_err" in autotestFile.stem:
-    #     rv = 2
-    # return (rv, work_dir / autotestFile.name)
-
-
+    # check = (work_dir / "gridlabd.err").read_text()
+    # if len(check):
+    #     print(check); 
     
     rv = 0
     # Signal termination: negative return code on POSIX
@@ -147,7 +129,7 @@ def runAutotest(args: tuple[Path, str]) -> tuple[int, Path]:
         rv = 1
     elif result.returncode == 0 and "_err" in autotestFile.stem:
         rv = 2
-    return (rv, work_dir / autotestFile.name)
+    return rv, work_dir / autotestFile.name, (work_dir / "gridlabd.out"), (work_dir / "gridlabd.err")
 
 
 def getGLDVersionInfo() -> str:
@@ -155,73 +137,100 @@ def getGLDVersionInfo() -> str:
     Get the GridLAB-D version information.
     """
     command = [gldBinary, "--version"]
-    result = subprocess.run(command, capture_output=True, text=True)
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
     if result.returncode == 0:
         return result.stdout.strip()
     return "Unknown GridLAB-D version"
 
+def print_file_efficiently(resultsFile: Path):
+    try:
+        content = ""
+        with resultsFile.open('r') as file:
+            for line in file:
+                    content = content + line + "\n"
+    except FileNotFoundError:
+        print(f"The file '{resultsFile}' does not exist.")
 
-def processResults(results: list[tuple], resultsFile: Path, testPerformance: int) -> int:
+def read_file_efficiently(resultsFile: Path):
+    try:
+        with resultsFile.open('r') as file:
+            for line in file:
+                if '[PASS]' not in line:
+                    print(line, end='')
+    except FileNotFoundError:
+        print(f"The file '{resultsFile}' does not exist.")
+
+def processResults(results: list[tuple[int, Path, Path, Path]], resultsFile: Path, errorFile: Path, testPerformance: int) -> int:
     """
     Process the results of the autotest runs and output to validate.txt.
     """
-    global autotestFiles
     rv = 0
     gldInfo = getGLDVersionInfo()
-    with resultsFile.open("w") as f:
-        f.write(f"GridLAB-D Version Info:\n\t{gldInfo}\n\n")
-        f.write("Autotest Results:\n")
-        passCount = 0
-        failCount = 0
-        unexpectedPassCount = 0
-        passingTests = []
-        failingTests1 = []
-        failingTests2 = []
-        for resultTuple in results:
-            result, autotestFile = resultTuple
-            if result == 0:
-                passCount += 1
-                passingTests.append(autotestFile)
-            elif result == 1:
-                failCount += 1
-                failingTests1.append(autotestFile)
-            elif result == 2:
-                unexpectedPassCount += 1
-                failingTests2.append(autotestFile)
-        if passCount > 0:
-            f.write(f"\tPassing Tests:")
-            for test in passingTests:
-                f.write(f"\n\t\t[PASS]\t{test}")
-        if failCount > 0 or unexpectedPassCount > 0:
-            f.write(f"\n\tFailing Tests:")
-            for test in failingTests1:
-                f.write(f"\n\t\t[FAIL]\t{test}...failed to run but was expected to pass.")
-            for test in failingTests2:
-                f.write(f"\n\t\t[FAIL]\t{test}...ran successfully but was expected to fail.")
-        f.write("\nResults Summary:\n")
-        f.write(f"\tTotal Tests Run: {len(results)}.\n")
-        f.write(f"\tTotal Tests Pass: {passCount}.\n")
-        f.write(f"\tTotal Tests Fail: {failCount + unexpectedPassCount}.\n")
-        f.write(
-            f"\tPass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n"
-        )
-        f.write(f"\tTotal Test Time: {testPerformance} seconds.")
-        print(
-            "\nResults Summary:\n"
-            f"Total Tests Run: {len(results)}.\n"
-            f"Total Tests Pass: {passCount}.\n"
-            f"Total Tests Fail: {failCount + unexpectedPassCount}.\n"
-            f"Pass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n"
-            f"Total Test Time: {testPerformance} seconds.\n"
-            f"Full results written to {resultsFile}."
-        )
+    with errorFile.open("w") as ef:
+        ef.write(f"GridLAB-D Version Info:\n\t{gldInfo}\n\n")
+        ef.write("Autotest Failed Results:\n")
+        with resultsFile.open("w") as f:
+            f.write(f"GridLAB-D Version Info:\n\t{gldInfo}\n\n")
+            f.write("Autotest Results:\n")
+            passCount = 0
+            failCount = 0
+            unexpectedPassCount = 0
+            passingTests = []
+            failingTests1 = []
+            failingTests2 = []
+            for resultTuple in results:
+                result, autotestFile, out, err = resultTuple
+                if result == 0:
+                    passCount += 1
+                    passingTests.append(autotestFile)
+                elif result == 1:
+                    failCount += 1
+                    failingTests1.append(autotestFile)
+                    ef.write(f"\n== FAIL:\t{autotestFile}")
+                    ef.write(f"\n== OUT:\t{out.read_text()}")
+                    ef.write(f"\n== ERROR:\t{err.read_text()}")
+                elif result == 2:
+                    unexpectedPassCount += 1
+                    failingTests2.append(autotestFile)
+                    ef.write(f"\n== FAIL:\t{autotestFile}")
+                    ef.write(f"\n== OUT:\t{out.read_text()}")
+                    ef.write(f"\n== ERROR:\t{err.read_text()}")
+            if passCount > 0:
+                f.write("\tPassing Tests:")
+                for test in passingTests:
+                    f.write(f"\n\t\t[PASS]\t{test}")
+            if failCount > 0 or unexpectedPassCount > 0:
+                f.write("\n\tFailing Tests:")
+                for test in failingTests1:
+                    f.write(f"\n\t\t[FAIL]\t{test}...failed to run but was expected to pass.")
+                for test in failingTests2:
+                    f.write(f"\n\t\t[FAIL]\t{test}...ran successfully but was expected to fail.")
+            
+            f.write("\nResults Summary:\n")
+            f.write(f"\tTotal Tests Run: {len(results)}.\n")
+            f.write(f"\tTotal Tests Pass: {passCount}.\n")
+            f.write(f"\tTotal Tests Fail: {failCount + unexpectedPassCount}.\n")
+            f.write(
+                f"\tPass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n"
+            )
+            f.write(f"\tTotal Test Time: {testPerformance} seconds.")
+            print(
+                "\nResults Summary:\n"
+                f"Total Tests Run: {len(results)}.\n"
+                f"Total Tests Pass: {passCount}.\n"
+                f"Total Tests Fail: {failCount + unexpectedPassCount}.\n"
+                f"Pass Percentage: {math.floor((float(passCount) / float(len(results))) * 100.0)}%.\n"
+                f"Total Test Time: {testPerformance} seconds.\n"
+                f"Full results written to {resultsFile}."
+            )
+    # read_file_efficiently(resultsFile)
     if failCount > 0 or unexpectedPassCount > 0:
+        read_file_efficiently(errorFile)
         rv = 1
     return rv
 
 
 def main(module: str, runOptionalTests: bool, threads: int):
-    global autotestFiles
     rv = 0
     multiprocessing.set_start_method("spawn", force=True)
     procs = 1
@@ -236,12 +245,16 @@ def main(module: str, runOptionalTests: bool, threads: int):
     resultsFile.resolve()
     if resultsFile.exists():
         resultsFile.unlink()
+    errorFile = searchDirectoryBase / "validate_errors.txt"
+    errorFile.resolve()
+    if errorFile.exists():
+        errorFile.unlink()
     # Search for autotest files
     if module != "all":
         moduleDirectory = searchDirectoryBase / module
         moduleDirectory.resolve()
         if not moduleDirectory.exists() or not moduleDirectory.is_dir():
-            raise IOError(f"The module, {module}, does not exist.")
+            raise OSError(f"The module, {module}, does not exist.")
         processModuleDirectory(moduleDirectory, runOptionalTests)
         resultsFile = moduleDirectory / "validate.txt"
         resultsFile.resolve()
@@ -261,7 +274,6 @@ def main(module: str, runOptionalTests: bool, threads: int):
         total = len(autotestFiles)
         if procs > 1:
             with multiprocessing.Pool(procs) as p:
-                # results = p.starmap(runAutotest, autotestFiles)
                 for rv in p.imap_unordered(runAutotest, autotestFiles):  # <-- no lambda here
                     results.append(rv)
                     done += 1
@@ -277,7 +289,7 @@ def main(module: str, runOptionalTests: bool, threads: int):
                 print(f"[progress] {percentDone}% autotests completed...", flush=True, end="\r")
         endTime = time.perf_counter_ns()
         testPerformance = math.ceil((endTime - startTime) / 1.0e9)
-        rv = processResults(results, resultsFile, testPerformance)
+        rv = processResults(results, resultsFile, errorFile, testPerformance)
     elif module != "all":
         print(
             f"No autotest files were found recursively searching from {moduleDirectory}. Exiting."
@@ -322,8 +334,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    # main(args.module, args.run_optional_tests, args.threads)
-
     os.environ["GLD_TEST_TIMEOUT"] = str(args.timeout)
     main(args.module, args.run_optional_tests, args.threads)
 

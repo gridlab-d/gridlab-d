@@ -402,7 +402,7 @@ EXPORT int init_microwave(OBJECT *obj)
     INIT_CATCHALL(microwave);
 }
 
-EXPORT int isa_microwave(OBJECT *obj, char *classname)
+EXPORT int isa_microwave_impl(OBJECT *obj, char *classname)
 {
     if (obj != 0 && classname != 0)
     {
@@ -413,6 +413,20 @@ EXPORT int isa_microwave(OBJECT *obj, char *classname)
         return 0;
     }
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_microwave(OBJECT *obj, char *classname) {
+  return isa_microwave_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_microwave(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_microwave_impl(obj, classname);
+}
+#endif
 
 static TIMESTAMP sync_microwave_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {

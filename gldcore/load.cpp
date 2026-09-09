@@ -216,9 +216,9 @@ static char *format_object(OBJECT *obj)
 	static char256 buffer;
 	strcpy(buffer, "(unidentified)");
 	if (obj->name == nullptr)
-		sprintf(buffer, global_object_format, obj->oclass->name, obj->id);
+		snprintf(buffer, sizeof(buffer), global_object_format, obj->oclass->name, obj->id);
 	else
-		sprintf(buffer, "%s (%s:%d)", obj->name, obj->oclass->name, obj->id);
+		snprintf(buffer, sizeof(buffer), "%s (%s:%d)", obj->name, obj->oclass->name, obj->id);
 	return buffer;
 }
 
@@ -407,7 +407,7 @@ static int append_init(const char *format, ...)
 	static char code[1024];
 	va_list ptr;
 	va_start(ptr, format);
-	vsprintf(code, format, ptr);
+	vsnprintf(code, sizeof(code), format, ptr);
 	va_end(ptr);
 
 	if (strlen(init_block) + strlen(code) > global_inline_block_size)
@@ -430,7 +430,7 @@ static int append_code(const char *format, ...)
 	static char code[65536];
 	va_list ptr;
 	va_start(ptr, format);
-	vsprintf(code, format, ptr);
+	vsnprintf(code, sizeof(code), format, ptr);
 	va_end(ptr);
 
 	if (strlen(code_block) + strlen(code) > global_inline_block_size)
@@ -453,7 +453,7 @@ static int append_global(const char *format, ...)
 	static char code[1024];
 	va_list ptr;
 	va_start(ptr, format);
-	vsprintf(code, format, ptr);
+	vsnprintf(code, sizeof(code), format, ptr);
 	va_end(ptr);
 
 	if (strlen(global_block) + strlen(code) > global_inline_block_size)
@@ -486,7 +486,7 @@ static STATUS exec_cmd(const char *format, ...)
 	char cmd[1024];
 	va_list ptr;
 	va_start(ptr, format);
-	vsprintf(cmd, format, ptr);
+	vsnprintf(cmd, sizeof(cmd), format, ptr);
 	va_end(ptr);
 	output_debug("Running '%s' in '%s'", cmd, getcwd(nullptr, 0));
 	return system(cmd) == 0 ? SUCCESS : FAILED;
@@ -513,27 +513,27 @@ static char *setup_class(CLASS *oclass)
 	int len = 0;
 	/* no longer needed now that property extension works */
 	PROPERTY *prop;
-	len += sprintf(buffer + len, "\tOBJECT obj; obj.oclass = oclass; %s *t = (%s*)((&obj)+1);\n", oclass->name, oclass->name);
-	len += sprintf(buffer + len, "\toclass->size = sizeof(%s);\n", oclass->name);
-	//	len += sprintf(buffer+len,"\tif (callback->define_map(oclass,\n");
+	len += snprintf(buffer + len, sizeof(buffer) - len, "\tOBJECT obj; obj.oclass = oclass; %s *t = (%s*)((&obj)+1);\n", oclass->name, oclass->name);
+	len += snprintf(buffer + len, sizeof(buffer) - len, "\toclass->size = sizeof(%s);\n", oclass->name);
+	//	len += snprintf(buffer+len,"\tif (callback->define_map(oclass,\n");
 	for (prop = oclass->pmap; prop != nullptr; prop = prop->next)
 	{
-		len += sprintf(buffer + len, "\t(*(callback->properties.get_property))(&obj,\"%s\",nullptr)->addr = (PROPERTYADDR)((char*)&(t->%s) - (char*)t);\n", prop->name, prop->name);
+		len += snprintf(buffer + len, sizeof(buffer) - len, "\t(*(callback->properties.get_property))(&obj,\"%s\",nullptr)->addr = (PROPERTYADDR)((char*)&(t->%s) - (char*)t);\n", prop->name, prop->name);
 		//		if (prop->unit==nullptr)
-		//			len += sprintf(buffer+len,"\t\tPT_%s,\"%s\",(char*)&(t->%s)-(char*)t,\n",
+		//			len += snprintf(buffer+len, sizeof(buffer) - len,"\t\tPT_%s,\"%s\",(char*)&(t->%s)-(char*)t,\n",
 		//				class_get_property_typename(prop->ptype),prop->name,prop->name);
 		//		else
-		//			len += sprintf(buffer+len,"\t\tPT_%s,\"%s[%s]\",(char*)&(t->%s)-char(*)t,\n",
+		//			len += snprintf(buffer+len, sizeof(buffer) - len,"\t\tPT_%s,\"%s[%s]\",(char*)&(t->%s)-char(*)t,\n",
 		//				class_get_property_typename(prop->ptype),prop->name,prop->unit->name,prop->name);
 		//		if (prop->keywords)
 		//		{
 		//			KEYWORD *key;
 		//			for (key=prop->keywords; key!=nullptr; key=key->next)
-		//				len += sprintf(buffer+len, "\t\t\tPT_KEYWORD, \"%s\", %d,\n", key->name, key->value);
+		//				len += snprintf(buffer+len, sizeof(buffer) - len, "\t\t\tPT_KEYWORD, \"%s\", %d,\n", key->name, key->value);
 		//		}
 	}
-	//	len += sprintf(buffer+len,"\t\tnullptr)<1) throw(\"unable to publish properties in class %s\");\n", oclass->name);
-	len += sprintf(buffer + len, "\t/* begin init block */\n%s\n\t/* end init block */\n", init_block);
+	//	len += snprintf(buffer+len, sizeof(buffer) - len,"\t\tnullptr)<1) throw(\"unable to publish properties in class %s\");\n", oclass->name);
+	len += snprintf(buffer + len, sizeof(buffer) - len, "\t/* begin init block */\n%s\n\t/* end init block */\n", init_block);
 	return buffer;
 }
 
@@ -549,7 +549,7 @@ static int write_file(FILE *fp, const char *data, ...)
 	char *b;
 	va_list ptr;
 	va_start(ptr, data);
-	vsprintf(buffer, data, ptr);
+	vsnprintf(buffer, sizeof(buffer), data, ptr);
 	va_end(ptr);
 	while ((c = strstr(d, "/*RESETLINE*/\n")) != nullptr)
 	{
@@ -706,10 +706,10 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		}
 		if (strlen(tmp) > 0 && tmp[strlen(tmp) - 1] != '/' && tmp[strlen(tmp) - 1] != '\\')
 			strcat(tmp, "/");
-		sprintf(cfile, "%s%s.cpp", (use_msvc || global_gdb || global_gdb_window) ? "" : tmp, oclass->name);
-		sprintf(ofile, "%s%s.%s", (use_msvc || global_gdb || global_gdb_window) ? "" : tmp, oclass->name, use_msvc ? "obj" : "o");
-		sprintf(file, "%s%s", (use_msvc || global_gdb || global_gdb_window) ? "" : tmp, oclass->name);
-		sprintf(afile, "%s" DLEXT, oclass->name);
+		snprintf(cfile, sizeof(cfile), "%s%s.cpp", (use_msvc || global_gdb || global_gdb_window) ? "" : tmp, oclass->name);
+		snprintf(ofile, sizeof(ofile), "%s%s.%s", (use_msvc || global_gdb || global_gdb_window) ? "" : tmp, oclass->name, use_msvc ? "obj" : "o");
+		snprintf(file, sizeof(file), "%s%s", (use_msvc || global_gdb || global_gdb_window) ? "" : tmp, oclass->name);
+		snprintf(afile, sizeof(afile), "%s" DLEXT, oclass->name);
 
 		/* peek at library file */
 		fp = fopen(afile, "r");
@@ -752,7 +752,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			ifs_off = 0;
 			for (lptr = header_list; lptr != 0; lptr = lptr->next)
 			{
-				sprintf(include_file_str + ifs_off, "#include \"%s\"\n;", lptr->file);
+				snprintf(include_file_str + ifs_off, sizeof(include_file_str) - ifs_off, "#include \"%s\"\n;", lptr->file);
 				ifs_off += strlen(lptr->file) + 13;
 			}
 			if (write_file(fp, "/* automatically generated from GridLAB-D */\n\n"
@@ -808,14 +808,14 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				char mopt[8] = "";
 				const char *libs = "-lstdc++";
 #ifdef _WIN32
-				snprintf(mopt, sizeof(mopt), "-m%d", sizeof(void *) * 8);
+				snprintf(mopt, sizeof(mopt), "-m%I64u", sizeof(void *) * 8);
 				libs = "";
 #endif
 
 				auto cxx_flags = std::string("-I\"") + global_gl_include.string() + "\"" +
 								 " -I\"" + global_gl_share.string() + "\"" +
 								 " -fPIC";
-				sprintf(execstr, R"(%s %s %s %s %s -c "%s" -o "%s")",
+				snprintf(execstr, sizeof(execstr), R"(%s %s %s %s %s -c "%s" -o "%s")",
 						getenv("CXX") ? getenv("CXX") : DEFAULT_CXX,
 						global_warn_mode ? "-w" : "",
 						global_debug_output ? "-g -O0" : "-O2",
@@ -833,7 +833,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				sprintf(ldstr, R"(%s %s %s %s -shared -Wl,"%s" -o "%s" %s)",
+				snprintf(ldstr, sizeof(ldstr), R"(%s %s %s %s -shared -Wl,"%s" -o "%s" %s)",
 						getenv("CXX") ? getenv("CXX") : DEFAULT_CXX,
 						mopt,
 						global_debug_output ? "-g -O0" : "-O2",
@@ -859,25 +859,25 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			{
 				char exports[1024] = "/EXPORT:init ";
 
-				sprintf(exports + strlen(exports), "/EXPORT:create_%s ", oclass->name); /* create is required */
+				snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:create_%s ", oclass->name); /* create is required */
 				if (functions & FN_INIT)
-					sprintf(exports + strlen(exports), "/EXPORT:init_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:init_%s ", oclass->name);
 				if (functions & FN_PRECOMMIT)
-					sprintf(exports + strlen(exports), "/EXPORT:precommit_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:precommit_%s ", oclass->name);
 				if (functions & FN_PRESYNC || functions & FN_SYNC || functions & FN_POSTSYNC)
-					sprintf(exports + strlen(exports), "/EXPORT:sync_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:sync_%s ", oclass->name);
 				if (functions & FN_ISA)
-					sprintf(exports + strlen(exports), "/EXPORT:isa_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:isa_%s ", oclass->name);
 				if (functions & FN_NOTIFY)
-					sprintf(exports + strlen(exports), "/EXPORT:notify_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:notify_%s ", oclass->name);
 				if (functions & FN_PLC)
-					sprintf(exports + strlen(exports), "/EXPORT:plc_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:plc_%s ", oclass->name);
 				if (functions & FN_RECALC)
-					sprintf(exports + strlen(exports), "/EXPORT:recalc_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:recalc_%s ", oclass->name);
 				if (functions & FN_COMMIT)
-					sprintf(exports + strlen(exports), "/EXPORT:commit_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:commit_%s ", oclass->name);
 				if (functions & FN_FINALIZE)
-					sprintf(exports + strlen(exports), "/EXPORT:finalize_%s ", oclass->name);
+					snprintf(exports + strlen(exports), sizeof(exports) - strlen(exports), "/EXPORT:finalize_%s ", oclass->name);
 
 				if (exec_cmd("cl /Od /DWIN32 /D_DEBUG /D_WINDOWS /D_USRDLL /D_CRT_SECURE_NO_DEPRECATE /D_WINDLL /D_MBCS /Gm /EHsc /RTC1 "
 #if __WORDSIZE__ == 64
@@ -917,7 +917,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 		output_verbose("loading dynamic link library %s...", afile);
 
 #ifdef _WIN32
-		sprintf(tbuf, "%s\\%s", getcwd(nullptr, 0), oclass->name);
+		snprintf(tbuf, sizeof(tbuf), "%s\\%s", getcwd(nullptr, 0), oclass->name);
 		mod = module_load(tbuf, 0, nullptr);
 #else
 		mod = module_load(oclass->name, 0, nullptr);
@@ -1374,7 +1374,7 @@ static int pattern(PARSER, const char *pattern, char *result, int size)
 {
 	char format[64];
 	START;
-	sprintf(format, "%%%s", pattern);
+	snprintf(format, sizeof(format), "%%%s", pattern);
 	if (sscanf(_p, format, result) == 1)
 		_n = (int)strlen(result);
 	DONE;
@@ -2809,11 +2809,11 @@ static int expanded_value(char *text, char *result, int size, const char *delims
 				else if (strcmp(varname, "hostaddr") == 0)
 					strcpy(value, global_hostaddr);
 				else if (strcmp(varname, "cpu") == 0)
-					sprintf(value, "%d", sched_get_cpuid(0));
+					snprintf(value, sizeof(value), "%d", sched_get_cpuid(0));
 				else if (strcmp(varname, "pid") == 0)
-					sprintf(value, "%d", sched_get_procid());
+					snprintf(value, sizeof(value), "%d", sched_get_procid());
 				else if (strcmp(varname, "port") == 0)
-					sprintf(value, "%d", global_server_portnum);
+					snprintf(value, sizeof(value), "%d", global_server_portnum);
 				else if (strcmp(varname, "mastername") == 0)
 					strcpy(value, "localhost"); /* @todo copy actual master name */
 				else if (strcmp(varname, "masteraddr") == 0)
@@ -2823,7 +2823,7 @@ static int expanded_value(char *text, char *result, int size, const char *delims
 				else if (strcmp(varname, "id") == 0)
 				{
 					if (current_object)
-						sprintf(value, "%d", current_object->id);
+						snprintf(value, sizeof(value), "%d", current_object->id);
 					else
 						strcpy(value, "");
 				}
@@ -3159,7 +3159,7 @@ static int module_block(PARSER)
 	/* foreign module */
 	if (TERM(name(HERE, fmod, sizeof(fmod))) && LITERAL("::") && TERM(name(HERE, mod, sizeof(mod))))
 	{
-		sprintf(module_name, "%s::%s", fmod, mod);
+		snprintf(module_name, sizeof(module_name), "%s::%s", fmod, mod);
 		if ((module = module_load(module_name, 0, nullptr)) != nullptr)
 		{
 			ACCEPT;
@@ -3471,7 +3471,7 @@ static int source_code(PARSER, char *code, int size)
 			if (c1 == '*' && c2 == '/')
 			{
 				if (!global_debug_output && global_getvar("noglmrefs", buffer, 63) == nullptr)
-					sprintf(code + strlen(code), "#line %d \"%s\"\n", linenum, forward_slashes(filename));
+					snprintf(code + strlen(code), sizeof(code) - strlen(code), "#line %d \"%s\"\n", linenum, forward_slashes(filename));
 				state = CODE;
 			}
 			break;
@@ -4147,7 +4147,7 @@ static int property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref, OBJECT *fro
 		{
 			// add to unresolved list
 			char id[1024];
-			sprintf(id, "%s.%s", oname, pname);
+			snprintf(id, sizeof(id), "%s.%s", oname, pname);
 			*ref = (void *)add_unresolved(from, PT_double, nullptr, from->oclass, id, filename, linenum, UR_TRANSFORM);
 			ACCEPT;
 		}
@@ -4470,7 +4470,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				if (subobj->name)
 					strcpy(objname, subobj->name);
 				else
-					sprintf(objname, "%s:%d", subobj->oclass->name, subobj->id);
+					snprintf(objname, sizeof(objname), "%s:%d", subobj->oclass->name, subobj->id);
 				if (object_set_value_by_name(obj, propname, objname))
 					ACCEPT
 				else
@@ -5544,7 +5544,7 @@ static int gui_entity_parameter(PARSER, GUIENTITY *entity)
 		{
 			char fullname[256];
 			ACCEPT;
-			sprintf(fullname, "%s::%s", modname, varname);
+			snprintf(fullname, sizeof(fullname), "%s::%s", modname, varname);
 			gui_set_variablename(entity, fullname);
 			DONE;
 		}
@@ -7436,7 +7436,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		if (sscanf(term, "\"%[^\"]\"", value) == 1)
 		{
 			char *start = line;
-			int len = sprintf(line, "@%s;%d\n", value, 0);
+			int len = snprintf(line, size, "@%s;%d\n", value, 0);
 			line += len;
 			size -= len;
 			strcpy(oldfile, filename); // push old filename
@@ -7453,7 +7453,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 			else
 			{
 				//				line+=len; size-=len; // not relevant to the block loader, was already consumed
-				len = sprintf(line, "@%s;%d\n", filename, linenum);
+				len = snprintf(line, size, "@%s;%d\n", filename, linenum);
 				line += len;
 				size -= len;
 				return size > 0;
@@ -7482,7 +7482,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 			}
 
 			/* local cache file name */
-			len = sprintf(line, "@%s;%d\n", value, 0);
+			len = snprintf(line, size, "@%s;%d\n", value, 0);
 			size -= len;
 			line += len;
 			strcpy(tmpname, value);
@@ -7518,7 +7518,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 			}
 			else
 			{
-				sprintf(line + len, "@%s;%d\n", filename, linenum);
+				snprintf(line + len, size - len, "@%s;%d\n", filename, linenum);
 				return true;
 			}
 		}
@@ -8044,7 +8044,7 @@ STATUS loadall(char *file)
 	// 	 */
 	// 	else
 	// 	{
-	// 		sprintf(filename, "gridlabd.conf");
+	// 		snprintf(filename, sizeof(filename), "gridlabd.conf");
 	// 		if (loadall_glm_roll(conf) == FAILED)
 	// 		{
 	// 			return FAILED;

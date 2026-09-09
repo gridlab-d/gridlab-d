@@ -137,7 +137,7 @@ int gui_is_action(GUIENTITY *entity) {
 
 /* SET OPERATIONS */
 void gui_set_srcref(GUIENTITY *entity, char *filename, int linenum) {
-  sprintf(entity->srcref, "%s(%d)", filename, linenum);
+  snprintf(entity->srcref, sizeof(entity->srcref), "%s(%d)", filename, linenum);
 }
 void gui_set_type(GUIENTITY *entity, GUIENTITYTYPE type) {
   entity->type = type;
@@ -179,7 +179,7 @@ void gui_set_wait(GUIENTITY *entity, char *wait) {
 /* GET OPERATIONS */
 char *gui_get_dump(GUIENTITY *entity) {
   static char buffer[4096];
-  sprintf(buffer,
+  snprintf(buffer, sizeof(buffer),
           "{type=%s,srcref='%s',value='%s',globalname='%s',object='%s',"
           "property='%s',action='%s',span=%d}",
           gui_get_typename(entity), entity->srcref, entity->value,
@@ -201,7 +201,7 @@ char *gui_get_value(GUIENTITY *entity) {
       strcpy(entity->value,
              obj->parent ? object_name(obj->parent, buffer, 63) : "");
     else if (strcmp(entity->propertyname, "rank") == 0)
-      sprintf(entity->value, "%d", obj->rank);
+      snprintf(entity->value, sizeof(entity->value), "%d", obj->rank);
     else if (strcmp(entity->propertyname, "clock") == 0)
       convert_from_timestamp(obj->clock, entity->value, sizeof(entity->value));
     else if (strcmp(entity->propertyname, "valid_to") == 0)
@@ -248,7 +248,7 @@ PROPERTY *gui_get_property(GUIENTITY *entity) {
 char *gui_get_name(GUIENTITY *entity) {
   if (gui_get_object(entity)) {
     static char buffer[1024];
-    sprintf(buffer, "%s.%s", entity->objectname, entity->propertyname);
+    snprintf(buffer, sizeof(buffer), "%s.%s", entity->objectname, entity->propertyname);
     return buffer;
   } else if (gui_get_variable(entity))
     return entity->var->prop->name;
@@ -382,7 +382,7 @@ Retry:
 #ifdef _WIN32
     const char *const_env = entity->env;
     const char *const_buffer = buffer;
-    sprintf(const_cast<char *>("%s=%s"), const_env, const_buffer);
+    snprintf(env, sizeof(env), "%s=%s", const_env, const_buffer);
     putenv(env);
 #else
     setenv(entity->env, buffer, 1);
@@ -531,9 +531,9 @@ static void gui_output_html_textarea(GUIENTITY *entity) {
   char rows[32] = "";
   char cols[32] = "";
   if (entity->height > 0)
-    sprintf(rows, " rows=\"%d\"", entity->height);
+    snprintf(rows, sizeof(rows), " rows=\"%d\"", entity->height);
   if (entity->width > 0)
-    sprintf(cols, " cols=\"%d\"", entity->width);
+    snprintf(cols, sizeof(cols), " cols=\"%d\"", entity->width);
   gui_html_output(fp, "<textarea class=\"browse\"%s%s >\n", rows, cols);
   if (src == nullptr) {
     gui_html_output(fp, "***'%s' is not found: %s***", entity->source,
@@ -604,17 +604,17 @@ static void gui_output_html_graph(GUIENTITY *entity) {
   FILE *plot = nullptr;
 
   /* setup gnuplot command */
-  sprintf(script, "%s.plt", entity->source);
+  snprintf(script, sizeof(script), "%s.plt", entity->source);
 #ifdef _WIN32
-  sprintf(command, "start wgnuplot %s", script);
+  snprintf(command, sizeof(command), "start wgnuplot %s", script);
 #else
-  sprintf(command, "gnuplot %s", script);
+  snprintf(command, sizeof(command), "gnuplot %s", script);
 #endif
-  sprintf(image, "%s.png", entity->source);
+  snprintf(image, sizeof(image), "%s.png", entity->source);
   if (entity->width > 0)
-    sprintf(width, " width=\"%d\"", entity->width);
+    snprintf(width, sizeof(width), " width=\"%d\"", entity->width);
   if (entity->height > 0)
-    sprintf(height, " height=\"%d\"", entity->height);
+    snprintf(height, sizeof(height), " height=\"%d\"", entity->height);
 
   /* generate script */
   plot = fopen(script, "w");
@@ -770,7 +770,7 @@ static void gui_entity_html_content(GUIENTITY *entity) {
         const_cast<char *>(prop->ptype == PT_set ? "multiple" : "");
     char size[64] = "";
     if (entity->size > 0)
-      sprintf(size, "size=\"%d\"", entity->size);
+      snprintf(size, sizeof(size), "size=\"%d\"", entity->size);
     if (!entity->parent || gui_get_type(entity->parent) != GUI_SPAN)
       newcol(entity);
     gui_html_output(fp,
@@ -1031,10 +1031,10 @@ STATUS gui_startup(int argc, char *argv[]) {
   if (started)
     return SUCCESS;
 #ifdef _WIN32
-  sprintf(cmd, "start %s http://localhost:%d/gui/", global_browser,
+  snprintf(cmd, sizeof(cmd), "start %s http://localhost:%d/gui/", global_browser,
           global_server_portnum);
 #else
-  sprintf(cmd, "%s http://localhost:%d/gui/ & ps -p $! >/dev/null",
+  snprintf(cmd, sizeof(cmd), "%s http://localhost:%d/gui/ & ps -p $! >/dev/null",
           global_browser, global_server_portnum);
 #endif
   if (system(cmd) != 0) {

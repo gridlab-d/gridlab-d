@@ -36,45 +36,6 @@ class parser {
 
 private:
 #define PARSER char *_p
-#define START int _mm = 0, _m = 0, _n = 0;
-#define ACCEPT                                                                 \
-  {                                                                            \
-    _n += _m;                                                                  \
-    _p += _m;                                                                  \
-    _m = 0;                                                                    \
-  }
-#define HERE (_p + _m)
-#define OR                                                                     \
-  {                                                                            \
-    _m = 0;                                                                    \
-  }
-#define REJECT                                                                 \
-  {                                                                            \
-    return 0;                                                                  \
-  }
-#define WHITE (TERM(white(HERE)))
-#define LITERAL(X)                                                             \
-  (_mm = literal(HERE, (const_cast<char *>(X))), _m += _mm, _mm > 0)
-#define TERM(X) (_mm = (X), _m += _mm, _mm > 0)
-#define COPY(X)                                                                \
-  {                                                                            \
-    size--;                                                                    \
-    (X)[_n++] = *_p++;                                                         \
-  }
-#define DONE return _n;
-#define BEGIN_REPEAT                                                           \
-  {                                                                            \
-    char *__p = _p;                                                            \
-    int __mm = _mm, __m = _m, __n = _n;
-#define REPEAT                                                                 \
-  _p = __p;                                                                    \
-  _m = __m;                                                                    \
-  _mm = __mm;                                                                  \
-  _n = __n;
-#define END_REPEAT }
-#define UR_TRANSFORM 0x02
-#define UR_RANKS 0x01
-#define UR_NONE 0x00
 
 public:
   string filename = "";

@@ -102,14 +102,12 @@ int line::create() {
 
 int line::init(OBJECT *parent) {
   OBJECT *obj = object_header(this);
-  OBJECT *obj_this = object_header(this);
 
 #ifdef __APPLE__
-  parent =
-      obj_this
-          ->parent; // AppleClang seems to have an issue with the parent pointer
+  parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
 #endif
-  gld_property *fNode_nominal, *tNode_nominal;
+
+gld_property *fNode_nominal, *tNode_nominal;
   double f_nominal_voltage, t_nominal_voltage;
   gld::complex Zabc_mat_temp[3][3], Yabc_mat_temp[3][3];
 
@@ -444,7 +442,7 @@ EXPORT int create_line(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(line::oclass);
     if (*obj != nullptr) {
-      line *my = /*OBJECTDATA(obj,<>)*/ object_data<line>(*obj);
+      line *my = object_data<line>(*obj);
       // gl_set_parent(*obj,parent);
       return my->create();
     } else
@@ -455,7 +453,7 @@ EXPORT int create_line(OBJECT **obj, OBJECT *parent) {
 
 static TIMESTAMP sync_line_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   try {
-    line *pObj = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
+    line *pObj = object_data<line>(obj);
     TIMESTAMP t1 = TS_NEVER;
     switch (pass) {
     case PC_PRETOPDOWN:
@@ -474,8 +472,7 @@ static TIMESTAMP sync_line_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t1,
-                                          PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_line(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_line_impl(obj, t1, pass);
 }
 #else
@@ -491,14 +488,28 @@ extern "C" MODULE_API TIMESTAMP sync_line(OBJECT *obj, ...) {
 
 EXPORT int init_line(OBJECT *obj) {
   try {
-    line *my = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
+    line *my = object_data<line>(obj);
     return my->init(obj->parent);
   }
   INIT_CATCHALL(line);
 }
 
-EXPORT int isa_line(OBJECT *obj, char *classname) {
-  return /*OBJECTDATA(obj,<>)*/ object_data<line>(obj)->isa(classname);
+EXPORT int isa_line_impl(OBJECT *obj, char *classname) {
+  return object_data<line>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_line(OBJECT *obj, char *classname) {
+  return isa_line_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_line(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_line_impl(obj, classname);
+}
+#endif
 
 /**@}**/

@@ -12,7 +12,7 @@ CODE(dt,dev)
 {
 	static int count=100;
 	static char msg[16];
-	sprintf(msg,"Test %d",count);
+	snprintf(msg, sizeof(msg),"Test %d",count);
 	if (dt>0) SNDMSG("to",msg);
 	if (count-->0) return (int)(rand()*60); else return NEVER;
 }

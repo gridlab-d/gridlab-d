@@ -63,7 +63,7 @@ static mxArray *matlab_exec(MATLABLINK *matlab, char *format, ...) {
   char cmd[4096];
   va_list ptr;
   va_start(ptr, format);
-  vsprintf(cmd, format, ptr);
+  vsnprintf(cmd, sizeof(cmd), format, ptr);
   va_end(ptr);
   engEvalString(matlab->engine, cmd);
   if (matlab->output_buffer && strcmp(matlab->output_buffer, "") != 0)

@@ -248,9 +248,23 @@ extern "C" MODULE_API TIMESTAMP sync_series_reactor(OBJECT *obj, ...)
 }
 #endif
 
-EXPORT int isa_series_reactor(OBJECT *obj, char *classname)
+EXPORT int isa_series_reactor_impl(OBJECT *obj, char *classname)
 {
 	return object_data<series_reactor>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_series_reactor(OBJECT *obj, char *classname) {
+  return isa_series_reactor_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_series_reactor(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_series_reactor_impl(obj, classname);
+}
+#endif
 
 /**@}**/

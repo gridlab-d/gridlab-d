@@ -117,7 +117,7 @@ void CGldEditorView::LoadObject(OBJECT *obj) {
   list.SetItemText(nItem, Type, "OBJECTNUM");
   list.SetItemText(nItem, Class, "OBJECTHDR");
   list.SetItemText(nItem, Access, "REFERENCE");
-  sprintf(buffer, "%d", obj->id);
+  snprintf(buffer, sizeof(buffer), "%d", obj->id);
   list.SetItemText(nItem, Data, buffer);
 
   nItem = list.InsertItem(list.GetItemCount(), "class");
@@ -130,7 +130,7 @@ void CGldEditorView::LoadObject(OBJECT *obj) {
   list.SetItemText(nItem, Type, "OBJECTRANK");
   list.SetItemText(nItem, Class, "OBJECTHDR");
   list.SetItemText(nItem, Access, "REFERENCE");
-  sprintf(buffer, "%d", obj->oclass->size);
+  snprintf(buffer, sizeof(buffer), "%d", obj->oclass->size);
   list.SetItemText(nItem, Data, buffer);
 
   nItem = list.InsertItem(list.GetItemCount(), "parent");
@@ -143,7 +143,7 @@ void CGldEditorView::LoadObject(OBJECT *obj) {
   list.SetItemText(nItem, Type, "OBJECTRANK");
   list.SetItemText(nItem, Class, "OBJECTHDR");
   list.SetItemText(nItem, Access, "PUBLIC");
-  sprintf(buffer, "%d", obj->rank);
+  snprintf(buffer, sizeof(buffer), "%d", obj->rank);
   list.SetItemText(nItem, Data, buffer);
 
   nItem = list.InsertItem(list.GetItemCount(), "in_svc");
@@ -249,7 +249,7 @@ void CGldEditorView::LoadClass(CLASS *oclass) {
   list.SetItemText(nItem, Type, "set");
   list.SetItemText(nItem, Class, "");
   list.SetItemText(nItem, Access, "PROTECTED");
-  strcpy(buffer, "");
+  snprintf(buffer, sizeof(buffer), "");
   if (oclass->passconfig & PC_PRETOPDOWN)
     strcat(buffer, "PRETOPDOWN");
   if (oclass->passconfig & PC_BOTTOMUP)
@@ -312,7 +312,7 @@ void CGldEditorView::LoadModule(MODULE *mod) {
   list.SetItemText(nItem, Data, buffer);
 
   nItem = list.InsertItem(list.GetItemCount(), "Version");
-  sprintf(buffer, "%d.%02d", mod->major, mod->minor);
+  snprintf(buffer, sizeof(buffer), "%d.%02d", mod->major, mod->minor);
   list.SetItemText(nItem, Data, buffer);
 
   CLASS *oclass;
@@ -467,7 +467,7 @@ void CGldEditorView::LoadSolver(void) {
         if (ranks[pass]->ordinal[i] == nullptr)
           continue;
 
-        sprintf(buffer, "%d", i);
+        snprintf(buffer, sizeof(buffer), "%d", i);
         list.SetItemText(nItem, Rank, buffer);
 
         for (item = ranks[pass]->ordinal[i]->first; item != nullptr;
@@ -475,7 +475,7 @@ void CGldEditorView::LoadSolver(void) {
           OBJECT *obj = (OBJECT *)item->data;
           list.SetItemText(nItem, Object, obj->name);
 
-          sprintf(buffer, "%d", obj->tp_affinity);
+          snprintf(buffer, sizeof(buffer), "%d", obj->tp_affinity);
           list.SetItemText(nItem, ProcId, buffer);
 
           list.SetItemText(nItem, Status,
@@ -528,14 +528,14 @@ void CGldEditorView::LoadFile(char *filename) {
          fgets(buffer, sizeof(buffer), fp)) {
     line++;
     char linenum[64];
-    sprintf(linenum, "%d", list.GetItemCount());
+    snprintf(linenum, sizeof(linenum), "%d", list.GetItemCount());
     nItem = list.InsertItem(list.GetItemCount(), linenum);
     CString text(buffer);
     text.Replace("\n", "");
     list.SetItemText(nItem, Text, text);
     if (list.GetItemCount() > 100) {
       nItem = list.InsertItem(list.GetItemCount(), "MORE");
-      sprintf(buffer, "- %d", line);
+      snprintf(buffer, sizeof(buffer), "- %d", line);
       list.SetItemText(nItem, Text, buffer);
       break;
     }
@@ -578,12 +578,12 @@ void CGldEditorView::LoadScheduleBlock(SCHEDULE *sch, unsigned int block) {
   int year = 2000;
   for (int month = 1; month <= 12; month++) {
     char buffer[64];
-    sprintf(buffer, "%s", months[month - 1]);
+    snprintf(buffer, sizeof(buffer), "%s", months[month - 1]);
     int nItem = list.InsertItem(list.GetItemCount(), buffer);
     int hItem[24];
     for (int hour = 0; hour < 24; hour++) {
       char buffer[64];
-      sprintf(buffer, "    %d:00", hour);
+      snprintf(buffer, sizeof(buffer), "    %d:00", hour);
       hItem[hour] = list.InsertItem(list.GetItemCount(), buffer);
     }
     for (int day = 0; day < 7; day++) {
@@ -594,7 +594,7 @@ void CGldEditorView::LoadScheduleBlock(SCHEDULE *sch, unsigned int block) {
         SCHEDULEINDEX ref = schedule_index(sch, ts);
         double value = schedule_value(sch, ref);
         char buffer[64];
-        sprintf(buffer, "%g%c", value,
+        snprintf(buffer, sizeof(buffer), "%g%c", value,
                 schedule_dtnext(sch, ref) < 60 ? '*' : ' ');
         list.SetItemText(hItem[hour], dowCol[dt.weekday], buffer);
       }

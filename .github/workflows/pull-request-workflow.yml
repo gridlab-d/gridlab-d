@@ -21,22 +21,18 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
     runs-on: ${{matrix.os}}
+
     steps:
       - name: Install Dependencies
         run: |
-          sudo apt update
-          sudo apt install -yq --no-install-recommends \
+          sudo apt-get update -yq
+          sudo apt-get install -yq --no-install-recommends \
             build-essential \
             cmake \
             ninja-build \
             libboost-dev \
             libeigen3-dev \
             nlohmann-json3-dev
-
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
 
       - name: Build HELICS Cache
         id: cache-helics
@@ -55,37 +51,35 @@ jobs:
           repository: "GMLC-TDC/HELICS"
           ref: ${{ env.helics-ref }}
           submodules: "recursive"
+          fetch-depth: 0
           path: helics-build
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Build HELICS
         working-directory: ${{github.workspace}}/helics-build
         run: |
-          threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build/build \
           -G Ninja \
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
+          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $(nproc)
           cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
         uses: actions/checkout@v6
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Build GridLAB-D
         run: |
-          threads=`nproc`
           cmake -S . -B ${{github.workspace}}/build \
           -G Ninja \
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
           -DGLD_USE_HELICS=ON \
           -DGLD_HELICS_DIR=~/.cache/HELICS \
           -DGLD_CI_BUILD=ON
-          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
+          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $(nproc)
 
       - name: Install GridLAB-D
         working-directory: ${{github.workspace}}/build
@@ -96,8 +90,12 @@ jobs:
         run: |
           # Add installed GridLAB-D binaries to PATH
           export PATH=$PATH:~/.temp/GridLAB-D/bin
-          # Run integration validation from repository root
-          python validate_gld.py -T 1
+
+          # Validate using GridLAB-D
+          # gridlabd -T $(nproc) --validate
+
+          # Validate using python script
+          python validate_gld.py -T $(nproc)
 
       - name: Upload validation artifacts
         if: always()
@@ -117,18 +115,39 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: 'x64'
 
       - name: Setup vcpkg (manifest mode + cache)
         uses: lukka/run-vcpkg@v11
         with:
-          runVcpkgInstall: true
+          runVcpkgInstall: false
           logCollectionRegExps: |
             .*/CMakeOutput\.log$
             .*/CMakeError\.log$
             .*/vcpkg/buildtrees/.+\.log$
+
+      - name: Upload vcpkg & CMake logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-and-cmake-logs
+          path: |
+            ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
+            out/build/ci-windows/**/CMakeOutput.log
+            out/build/ci-windows/**/CMakeError.log
+
+      - name: Pull latest Code
+        run: |
+          cd ${{ github.workspace }}\vcpkg
+          git pull origin master
+          .\bootstrap-vcpkg.bat
+          vcpkg integrate install
+          cd ${{ github.workspace }}
 
       - name: Clean install prefix (Windows)
         shell: pwsh
@@ -141,18 +160,20 @@ jobs:
 
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
+        env:
+          ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTIONS_CACHE_URL: "https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json"
         run: >
           cmake -S .
           --log-level=VERBOSE
           --log-context
           --debug-output
           -B out/build/ci-windows
-          -G "Visual Studio 17 2022"
           -A x64
-          -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+          -DCMAKE_BUILD_TYPE="Release"
           -DVCPKG_TARGET_TRIPLET=x64-windows
-          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D"
           -DGLD_CI_BUILD=ON
 
       - name: Build GridLAB-D (Release)
@@ -162,17 +183,43 @@ jobs:
           CFLAGS: "/W0"
           CXXFLAGS: "/W0"
 
+      - name: Verify gldapi.dll before install
+        shell: pwsh
+        run: |
+          $src = Resolve-Path "out/build/ci-windows/bin/Release/gldapi.dll"
+          Write-Host "Found: $src"
+          Get-Item $src | Format-List *
+
+      - name: Show install prefix
+        shell: pwsh
+        run: |
+          Write-Host "CMAKE_INSTALL_PREFIX=$env:USERPROFILE\.temp\GridLAB-D"
+          if (Test-Path "$env:USERPROFILE\.temp\GridLAB-D") {
+            Get-ChildItem "$env:USERPROFILE\.temp\GridLAB-D" -Recurse | Select-Object FullName
+          } else {
+            Write-Host "Install prefix does not yet exist."
+          }
+
       - name: Install GridLAB-D (Release)
         shell: pwsh
         run: cmake --install out/build/ci-windows --config Release --verbose
+
+      - name: List installed DLLs and EXEs
+        shell: pwsh
+        run: |
+          $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
+          Write-Host "Listing under $installRoot..."
+          Get-ChildItem -Path $installRoot -Include *.dll, *.exe -Recurse | ForEach-Object {
+            Write-Host $_.FullName
+          }
 
       # Python-based validation
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
-      - name: Run Python GridLAB-D validator (Windows) (JSON)
+      - name: Run GridLAB-D autotests
         shell: pwsh
         run: |
           $prefix = "$env:USERPROFILE\.temp\GridLAB-D"
@@ -181,10 +228,14 @@ jobs:
           $share  = Join-Path $prefix "share"
           $gldcore= Join-Path $pwd "gldcore"
 
-          # Ensure the validator sees GLD binaries and modules
+          # Add installed GridLAB-D binaries to PATH
           $env:PATH   = "$env:PATH;$bin"
           $env:GLPATH = "$pwd;$prefix;$bin;$lib;$share;$gldcore"
 
+          # Validate using GriaLAB-D
+          # gridlabd -T 1 --validate
+
+          # Validate using python script
           python validate_gld.py -T 1
 
       - name: Upload validation artefacts (Windows)
@@ -195,3 +246,99 @@ jobs:
           path: |
             validate.txt
           if-no-files-found: ignore
+
+  macos-build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-26
+    runs-on: ${{matrix.os}}
+
+    steps:
+      # Macos-26 come with brew installed
+      - name: Install Homebrew dependencies
+        run: |
+          brew update
+          brew list
+          env HOMEBREW_NO_AUTO_UPDATE=1 
+          brew install boost eigen
+
+      - name: Print toolchain info
+        run: |
+          sw_vers
+          clang --version
+          cmake --version
+          ninja --version
+
+      #     - name: Build HELICS Cache
+      #       id: cache-helics
+      #       uses: actions/cache@v4
+      #       env:
+      #         cache-name: cache-helics
+      #       with:
+      #         path: ~/.cache/HELICS
+      #         key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+      #         restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+
+      #     - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+      #       name: Checkout HELICS
+      #       uses: actions/checkout@v5
+      #       with:
+      #         repository: 'GMLC-TDC/HELICS'
+      #         ref: ${{ env.helics-ref }}
+      #         submodules: 'recursive'
+      #         fetch-depth: 0
+      #         path: helics-build
+
+      #     - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+      #       name: Build HELICS
+      #       working-directory: ${{github.workspace}}/helics-build
+      #       run: |
+      #         threads=`sysctl -n hw.logicalcpu`
+      #         cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+      #         -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON \
+      #         -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} -DHELICS_DISABLE_WEBSERVER=ON
+      #         cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
+      #         cmake --install ${{github.workspace}}/helics-build/build
+
+      - name: Checkout GridLAB-D
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Clean build
+        run: |
+          rm -rf build/ out/ CMakeCache.txt CMakeFiles 2>/dev/null || true
+
+      - name: Configure CMake for Build GridLAB-D
+        run: |
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} \
+          -DCMAKE_C_COMPILER=/usr/bin/clang \
+          -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+      - name: Buiild GridLAB-D
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          cmake --build . --config ${{env.BUILD_TYPE}} --parallel $threads
+
+      - name: Install GridLAB-D
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
+        run: |
+          cmake --install . --config ${{env.BUILD_TYPE}}
+
+      - name: Run GridLAB-D autotests
+        working-directory: ${{github.workspace}}
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          # Add installed GridLAB-D binaries to PATH
+          export PATH=$PATH:~/.temp/GridLAB-D/bin
+
+          # Validate using GriaLAB-D
+          # gridlabd -T $threads --validate
+
+          # Validate using python script
+          python3 validate_gld.py -T $threads

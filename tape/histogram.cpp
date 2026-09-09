@@ -407,7 +407,7 @@ int histogram::init(OBJECT *parent) {
   if (strcmp(fname, "") == 0)
 
     /* use object name-id as default file name */
-    sprintf(fname, "%s-%d.%s", obj->parent->oclass->name, obj->parent->id,
+    snprintf(fname, sizeof(fname), "%s-%d.%s", obj->parent->oclass->name, obj->parent->id,
             ftype.get_string());
 
   /* if type is file or file is stdin */
@@ -545,9 +545,9 @@ TIMESTAMP histogram::sync(TIMESTAMP t0, TIMESTAMP t1) {
 
     /* write bins */
     for (i = 0; i < bin_count; ++i) {
-      off += sprintf(line + off, "%i", binctr[i]);
+      off += snprintf(line + off, sizeof(line) - off, "%i", binctr[i]);
       if (i != bin_count) {
-        off += sprintf(line + off, ",");
+        off += snprintf(line + off, sizeof(line) - off, ",");
       }
     }
 
@@ -659,8 +659,22 @@ extern "C" MODULE_API TIMESTAMP sync_histogram(OBJECT *obj, ...) {
  *
  * @return true (1) if obj is a subtype of this class
  */
-EXPORT int isa_histogram(OBJECT *obj, char *classname) {
+EXPORT int isa_histogram_impl(OBJECT *obj, char *classname) {
   return object_data<histogram>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_histogram(OBJECT *obj, char *classname) {
+  return isa_histogram_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_histogram(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_histogram_impl(obj, classname);
+}
+#endif
 
 /**@}*/

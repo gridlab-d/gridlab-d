@@ -95,7 +95,7 @@ static int shaper_open(OBJECT *obj) {
   if (strcmp(fname, "") == 0)
 
     /* use object name-id as default file name */
-    sprintf(fname, "%s-%d.%s", obj->parent->oclass->name, obj->parent->id,
+    snprintf(fname, sizeof(fname), "%s-%d.%s", obj->parent->oclass->name, obj->parent->id,
             my->filetype.get_string());
 
   /* if type is file or file is stdin */

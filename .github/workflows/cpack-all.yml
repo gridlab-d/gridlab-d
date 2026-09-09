@@ -2,6 +2,7 @@ name: GridLAB-D Build
 
 on:
   workflow_dispatch:    # allows "Run workflow" button in GitHub UI
+
   push:
     branches:
       - "release/*"
@@ -11,11 +12,10 @@ on:
 permissions:
   contents: write
 
-
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  helics-ref: "v3.6.0"
+  helics-ref: "v3.6.1"
 
 jobs:
   linux-build:
@@ -25,6 +25,7 @@ jobs:
           - os: ubuntu-latest
             arch: x86_64
     runs-on: ${{matrix.os}}
+
     steps:
       - name: Install Dependencies
         run: |
@@ -62,44 +63,40 @@ jobs:
         name: Build HELICS
         working-directory: ${{github.workspace}}/helics-build
         run: |
-          threads=`nproc`
-          cmake -B "${{github.workspace}}/helics-build/build" \
+          cmake -B ${{github.workspace}}/helics-build/build \
           -G Ninja \
           -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
+          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $(nproc)
           cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
         uses: actions/checkout@v6
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Build GridLAB-D
         run: |
-          threads=`nproc`
-          cmake -B ${{github.workspace}}/build \
+          cmake -S . -B ${{github.workspace}}/build \
           -G Ninja \
           -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
           -DGLD_USE_HELICS=ON \
           -DGLD_HELICS_DIR=~/.cache/HELICS \
           -DGLD_CI_BUILD=ON
-          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
+          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $(nproc)
 
-      - name: Install
+      - name: Install GridLAB-D
         working-directory: ${{github.workspace}}/build
-        run: cmake --install . --config Release --prefix ${{ runner.temp }}/staging
-
+        run: cmake --install . --config ${{env.BUILD_TYPE}} --prefix ${{ runner.temp }}/gridlabd-install
 
       - name: Package
         working-directory: ${{github.workspace}}/build
         run: |
           STAGING="${{ runner.temp }}/gridlabd-install"
-          rm -rf "$STAGING"
-          cmake --install . --prefix "$STAGING"
           mkdir -p packages
           tar czf packages/gridlabd-linux-x86_64.tar.gz -C "$STAGING" .
-          
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
         with:
@@ -108,9 +105,6 @@ jobs:
             ${{github.workspace}}/build/packages
             !${{github.workspace}}/build/packages/_CPack_Packages
 
-  # ─────────────────────────────────────────────
-  # Windows: Visual Studio 2022 + vcpkg + Python validator
-  # ─────────────────────────────────────────────
   win-build:
     runs-on: windows-latest
     timeout-minutes: 60
@@ -124,19 +118,35 @@ jobs:
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: 'x64'
 
       - name: Setup vcpkg (manifest mode + cache)
         uses: lukka/run-vcpkg@v11
         with:
-          runVcpkgInstall: true
+          runVcpkgInstall: false
           logCollectionRegExps: |
             .*/CMakeOutput\.log$
             .*/CMakeError\.log$
             .*/vcpkg/buildtrees/.+\.log$
-        env:
-          VCPKG_INSTALL_OPTIONS: "--debug"
 
-   
+      - name: Upload vcpkg & CMake logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcpkg-and-cmake-logs
+          path: |
+            ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
+            out/build/ci-windows/**/CMakeOutput.log
+            out/build/ci-windows/**/CMakeError.log
+
+      - name: Pull latest Code
+        run: |
+          cd ${{ github.workspace }}\vcpkg
+          git pull origin master
+          .\bootstrap-vcpkg.bat
+          vcpkg integrate install
+          cd ${{ github.workspace }}
 
       - name: Clean install prefix (Windows)
         shell: pwsh
@@ -149,18 +159,20 @@ jobs:
 
       - name: Configure CMake (VS2022 + vcpkg toolchain)
         shell: pwsh
+        env:
+          ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTIONS_CACHE_URL: "https://nuget.pkg.github.com//gridlab-d/gridlab-d/index.json"
         run: >
           cmake -S .
           --log-level=VERBOSE
           --log-context
           --debug-output
           -B out/build/ci-windows
-          -G "Visual Studio 17 2022"
           -A x64
-          -DCMAKE_CONFIGURATION_TYPES="Debug;Release"
+          -DCMAKE_BUILD_TYPE="Release"
           -DVCPKG_TARGET_TRIPLET=x64-windows
-          "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-          "-DCMAKE_INSTALL_PREFIX=$env:USERPROFILE/.temp/GridLAB-D"
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DCMAKE_INSTALL_PREFIX="$env:USERPROFILE/.temp/GridLAB-D"
           -DGLD_CI_BUILD=ON
 
       - name: Build GridLAB-D (Release)
@@ -169,6 +181,67 @@ jobs:
         env:
           CFLAGS: "/W0"
           CXXFLAGS: "/W0"
+
+      - name: Verify gldapi.dll before install
+        shell: pwsh
+        run: |
+          $src = Resolve-Path "out/build/ci-windows/bin/Release/gldapi.dll"
+          Write-Host "Found: $src"
+          Get-Item $src | Format-List *
+
+      - name: Show install prefix
+        shell: pwsh
+        run: |
+          Write-Host "CMAKE_INSTALL_PREFIX=$env:USERPROFILE\.temp\GridLAB-D"
+          if (Test-Path "$env:USERPROFILE\.temp\GridLAB-D") {
+            Get-ChildItem "$env:USERPROFILE\.temp\GridLAB-D" -Recurse | Select-Object FullName
+          } else {
+            Write-Host "Install prefix does not yet exist."
+          }
+
+      - name: Install GridLAB-D (Release)
+        shell: pwsh
+        run: cmake --install out/build/ci-windows --config Release --verbose
+
+      - name: List installed DLLs and EXEs
+        shell: pwsh
+        run: |
+          $installRoot = "$env:USERPROFILE\.temp\GridLAB-D"
+          Write-Host "Listing under $installRoot..."
+          Get-ChildItem -Path $installRoot -Include *.dll, *.exe -Recurse | ForEach-Object {
+            Write-Host $_.FullName
+          }
+
+      # - name: Build HELICS Cache
+      #   id: cache-helics
+      #   uses: actions/cache@v3
+      #   env:
+      #     cache-name: cache-helics
+      #   with:
+      #     path: ${{github.workspace}}/.cache/HELICS
+      #     key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+      #     restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+
+      # - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+      #   name: Checkout HELICS
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: 'GMLC-TDC/HELICS'
+      #     ref: ${{ env.helics-ref }}
+      #     submodules: 'recursive'
+      #     fetch-depth: 0
+      #     path: helics-build
+
+      # - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+      #   name: Build HELICS
+      #   working-directory: ${{github.workspace}}/helics-build
+      #   run: |
+      #     threads=`nproc`
+      #     workspace="$(cygpath -u '${{github.workspace}}')"
+      #     cmake -G "Unix Makefiles" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.cache/HELICS" \
+      #      -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
+      #     cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
+      #     cmake --install ./build
 
       - name: Package
         shell: pwsh
@@ -179,61 +252,28 @@ jobs:
           cmake --install . --config Release --prefix $staging
           New-Item -ItemType Directory -Force -Path packages | Out-Null
           Compress-Archive -Path "$staging/*" -DestinationPath packages/gridlabd-windows-x64.zip
-      
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
         with:
           name: Windows Package
           path: ${{github.workspace}}/out/build/ci-windows/packages/gridlabd-windows-x64.zip
 
-  # ─────────────────────────────────────────────
-  # macOS: AppleClang + Homebrew + Python validator
-  # ─────────────────────────────────────────────
   macos-build:
-    runs-on: macos-26 # ARM64 macOS runner
-    timeout-minutes: 600
+    strategy:
+      matrix:
+        include:
+          - os: macos-26
+    runs-on: ${{matrix.os}}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: Cache Homebrew (optional)
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/Library/Caches/Homebrew
-            /Library/Caches/Homebrew
-          key: brew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('ci/Brewfile') }}
-          restore-keys: |
-            brew-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Install build tools and Eigen via Homebrew
-        shell: bash
+      # Macos-26 come with brew installed
+      - name: Install Homebrew dependencies
         run: |
-          set -euxo pipefail
-
-          if ! command -v brew >/dev/null 2>&1; then
-            echo "Homebrew not found"; exit 1
-          fi
-
           brew update
-
-          if [[ -f ci/Brewfile ]]; then
-            brew bundle --file=ci/Brewfile
-          else
-            brew install cmake ninja pkg-config eigen
-          fi
-
-          HOMEBREW_PREFIX="$(brew --prefix)"
-          echo "HOMEBREW_PREFIX=${HOMEBREW_PREFIX}"
-
-          # Help CMake find Homebrew-installed packages
-          export PKG_CONFIG_PATH="${HOMEBREW_PREFIX}/lib/pkgconfig:${HOMEBREW_PREFIX}/share/pkgconfig:${PKG_CONFIG_PATH:-}"
-          echo "CMAKE_PREFIX_PATH=${HOMEBREW_PREFIX}" >> "$GITHUB_ENV"
-          echo "PKG_CONFIG_PATH=${PKG_CONFIG_PATH}"   >> "$GITHUB_ENV"
+          brew list
+          env HOMEBREW_NO_AUTO_UPDATE=1 
+          brew install boost eigen
 
       - name: Print toolchain info
         run: |
@@ -241,51 +281,47 @@ jobs:
           clang --version
           cmake --version
           ninja --version
-          brew list --versions cmake ninja pkg-config eigen
+
+      - name: Checkout GridLAB-D
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
       - name: Clean build
         run: |
           rm -rf build/ out/ CMakeCache.txt CMakeFiles 2>/dev/null || true
 
-      - name: Configure CMake (AppleClang + Ninja)
-        shell: bash
-        env:
-          CMAKE_PREFIX_PATH: ${{ env.CMAKE_PREFIX_PATH }}
-          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
+      - name: Configure CMake for Build GridLAB-D
         run: |
-          set -euxo pipefail
-          BUILD_DIR="out/build/ci-macos"
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} \
+          -DCMAKE_C_COMPILER=/usr/bin/clang \
+          -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+          -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-          cmake -S . -B "$BUILD_DIR" \
-            -G Ninja \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
-            -DCMAKE_BUILD_TYPE="Release" \
-            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}" \
-            -DCMAKE_MACOSX_RPATH=ON \
-            -DCMAKE_INSTALL_RPATH="$HOME/.temp/GridLAB-D/lib;$HOME/.temp/GridLAB-D/lib/gridlabd"
+      - name: Buiild GridLAB-D
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          cmake --build . --config ${{env.BUILD_TYPE}} --parallel $threads
 
-      - name: Build
-        working-directory: out/build/ci-macos
-        run: cmake --build . --config Release
-        
-      - name: Install
-        working-directory: out/build/ci-macos
-        run: cmake --install . --config Release --prefix ${{ runner.temp }}/staging
-    
+      - name: Install GridLAB-D
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
+        run: |
+          cmake --install . --config ${{env.BUILD_TYPE}}  --prefix ${{ runner.temp }}/gridlabd-install
+
       - name: Package
-        working-directory: out/build/ci-macos
+        working-directory: ${{github.workspace}}/build-${{matrix.arch}}
         run: |
           STAGING="${{ runner.temp }}/gridlabd-install"
-          rm -rf "$STAGING"
-          cmake --install . --prefix "$STAGING"
           mkdir -p packages
           tar czf packages/gridlabd-macos-arm64.tar.gz -C "$STAGING" .
-          
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v7
         with:
           name: Mac Package
           path: |
-            ${{github.workspace}}/out/build/ci-macos/packages
-            !${{github.workspace}}/out/build/ci-macos/packages/_CPack_Packages
+            ${{github.workspace}}/build-${{matrix.arch}}/packages
+            !${{github.workspace}}/build-${{matrix.arch}}/packages/_CPack_Packages

@@ -261,9 +261,23 @@ TIMESTAMP load_tracker::postsync(TIMESTAMP t0, TIMESTAMP t1) {
   return TS_NEVER;
 }
 
-EXPORT int isa_load_tracker(OBJECT *obj, char *classname) {
+EXPORT int isa_load_tracker_impl(OBJECT *obj, char *classname) {
   return object_data<load_tracker>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_load_tracker(OBJECT *obj, char *classname) {
+  return isa_load_tracker_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_load_tracker(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_load_tracker_impl(obj, classname);
+}
+#endif
 
 EXPORT int create_load_tracker(OBJECT **obj, OBJECT *parent) {
   try {
@@ -287,8 +301,7 @@ EXPORT int init_load_tracker(OBJECT *obj) {
   INIT_CATCHALL(load_tracker);
 }
 
-static TIMESTAMP sync_load_tracker_impl(OBJECT *obj, TIMESTAMP t0,
-                                        PASSCONFIG pass) {
+static TIMESTAMP sync_load_tracker_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   load_tracker *pObj = object_data<load_tracker>(obj);
   try {
     TIMESTAMP t1;

@@ -16,7 +16,58 @@
 
 #include "generators.h"
 
-EXPORT int isa_inverter(OBJECT *obj, char *classname);
+EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
+EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+EXPORT STATUS postupdate_inverter(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
+
+//Alternative PI version Dynamic control Inverter state variable structure
+typedef struct {
+	double P_Out[3];		///< The real power output
+	double Q_Out[3];		///< The reactive power output
+	double ed[3];			///< The error in real power output
+	double eq[3];			///< The error in reactive power output
+	double ded[3];		///< The change in real power error
+	double deq[3];		///< The change in reactive power error
+	double md[3];			///< The d axis current modulator of the inverter
+	double mq[3];			///< The q axis current modulator of the inverter
+	double dmd[3];			///< The change in d axis current modulator of the inverter
+	double dmq[3];			///< The change in q axis current modulator of the inverter
+	gld::complex Idq[3];			///< The dq axis current output of the inverter
+	gld::complex Iac[3];	///< The AC current out of the inverter terminals
+
+	// Terminal voltage state variable for VSI isochronous mode
+	double V_StateVal[3];	// Magnitude of the VSI terminal voltage
+	double dV_StateVal[3];	// Change in magnitude of the VSI terminal voltage
+	double e_source_mag[3];	// VSI e_source magnitude
+
+	// Frequency state variable for f/p droop
+	double f_mea_delayed; // Delay measured frequency value seen by the inverter
+	double df_mea_delayed; // The change of the frequency
+
+	// Voltage state variable for v/q droop
+	double V_mea_delayed[3]; // Delay measured terminal voltage values seen by the inverter
+	double dV_mea_delayed[3]; // The change of the terminal voltage values
+
+	// Real power state variable for f/p drrop in VSI inverter
+	double p_mea_delayed;
+	double dp_mea_delayed;
+
+	// Reactive power state variable for f/p drrop in VSI inverter
+	double q_mea_delayed;
+	double dq_mea_delayed;
+
+	// Pmax controller stuff
+    double fmax_ini_StateVal;
+    double dfmax_ini_StateVal;
+    double fmax_StateVal;
+
+	// Pmin controller stuff
+    double fmin_ini_StateVal;
+    double dfmin_ini_StateVal;
+    double fmin_StateVal;
+
+} INV_STATE;
 
 // Simple PID controller
 typedef struct

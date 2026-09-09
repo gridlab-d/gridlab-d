@@ -170,7 +170,7 @@ EXPORT int init_plugload(OBJECT *obj)
     INIT_CATCHALL(plugload);
 }
 
-EXPORT int isa_plugload(OBJECT *obj, char *classname)
+EXPORT int isa_plugload_impl(OBJECT *obj, char *classname)
 {
     if (obj != 0 && classname != 0)
     {
@@ -181,6 +181,20 @@ EXPORT int isa_plugload(OBJECT *obj, char *classname)
         return 0;
     }
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_plugload(OBJECT *obj, char *classname) {
+  return isa_plugload_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_plugload(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_plugload_impl(obj, classname);
+}
+#endif
 
 static TIMESTAMP sync_plugload_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {

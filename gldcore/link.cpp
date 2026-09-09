@@ -145,7 +145,7 @@ int link_initall(void) {
           item = mod->add_object(obj->name);
         else {
           char id[256];
-          sprintf(id, "%s:%d", obj->oclass->name, obj->id);
+          snprintf(id, sizeof(id), "%s:%d", obj->oclass->name, obj->id);
           item = mod->add_object(id);
         }
         item->data = (void *)obj;
@@ -324,7 +324,7 @@ glxlink::glxlink(char *filename) {
 bool glxlink::set_target(char *name) {
   char libname[1024];
   char path[1024];
-  sprintf(libname, PREFIX "glx%s" DLEXT, name);
+  snprintf(libname, sizeof(libname), PREFIX "glx%s" DLEXT, name);
   if (find_file(libname, nullptr, X_OK | R_OK, path, sizeof(path)) != nullptr) {
     // load library
     handle = DLLOAD(path);

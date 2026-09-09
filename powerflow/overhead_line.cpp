@@ -1091,9 +1091,23 @@ EXPORT int init_overhead_line(OBJECT *obj) {
   INIT_CATCHALL(overhead_line);
 }
 
-EXPORT int isa_overhead_line(OBJECT *obj, char *classname) {
-  return /*OBJECTDATA(obj,<>)*/ object_data<line>(obj)->isa(classname);
+EXPORT int isa_overhead_line_impl(OBJECT *obj, char *classname) {
+  return object_data<line>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_overhead_line(OBJECT *obj, char *classname) {
+  return isa_overhead_line_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_overhead_line(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_overhead_line_impl(obj, classname);
+}
+#endif
 
 EXPORT int recalc_overhead_line(OBJECT *obj) {
   object_data<overhead_line>(obj)->recalc();

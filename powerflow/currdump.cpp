@@ -151,7 +151,7 @@ void currdump::dump(TIMESTAMP t) {
       link_current_values[2] = link_current_value_link[2]->get_complex();
 
       if (obj->name == nullptr) {
-        sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
+        snprintf(namestr, sizeof(namestr), "%s:%i", obj->oclass->name, obj->id);
       }
       if (mode == CDM_RECT) {
         fprintf(outfile, "%s,%f,%f,%f,%f,%f,%f\n",
@@ -206,7 +206,7 @@ EXPORT int create_currdump(OBJECT **obj, OBJECT *parent) {
   try {
     *obj = gl_create_object(currdump::oclass);
     if (*obj != nullptr) {
-      currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(*obj);
+      currdump *my = object_data<currdump>(*obj);
       // gl_set_parent(*obj, parent);
       return my->create();
     }
@@ -217,7 +217,7 @@ EXPORT int create_currdump(OBJECT **obj, OBJECT *parent) {
 }
 
 EXPORT int init_currdump(OBJECT *obj) {
-  currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(obj);
+  currdump *my = object_data<currdump>(obj);
   try {
     return my->init(obj->parent);
   } catch (const char *msg) {
@@ -226,9 +226,8 @@ EXPORT int init_currdump(OBJECT *obj) {
   }
 }
 
-static TIMESTAMP sync_currdump_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass) {
-  currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(obj);
+static TIMESTAMP sync_currdump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
+  currdump *my = object_data<currdump>(obj);
   TIMESTAMP rv;
   obj->clock = t1;
   rv = my->runtime > t1 ? my->runtime : TS_NEVER;
@@ -236,8 +235,7 @@ static TIMESTAMP sync_currdump_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_currdump(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_currdump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_currdump_impl(obj, t1, pass);
 }
 #else
@@ -252,7 +250,7 @@ extern "C" MODULE_API TIMESTAMP sync_currdump(OBJECT *obj, ...) {
 #endif
 
 EXPORT TIMESTAMP commit_currdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) {
-  currdump *my = /*OBJECTDATA(obj,<>)*/ object_data<currdump>(obj);
+  currdump *my = object_data<currdump>(obj);
   try {
     return my->commit(t1);
   } catch (const char *msg) {
@@ -261,8 +259,22 @@ EXPORT TIMESTAMP commit_currdump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2) {
   }
 }
 
-EXPORT int isa_currdump(OBJECT *obj, char *classname) {
-  return /*OBJECTDATA(obj,<>)*/ object_data<currdump>(obj)->isa(classname);
+EXPORT int isa_currdump_impl(OBJECT *obj, char *classname) {
+  return object_data<currdump>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_currdump(OBJECT *obj, char *classname) {
+  return isa_currdump_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_currdump(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_currdump_impl(obj, classname);
+}
+#endif
 
 /**@}*/

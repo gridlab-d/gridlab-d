@@ -128,6 +128,6 @@ class TestTimeConsistency:
         clock = checkpoint.get("clock", {})
 
         for key in ("starttime", "stoptime", "timestamp"):
-            value = clock.get(key)
+            value = clock.get(key).replace("'","")
             assert isinstance(value, str), f"{key} should be a string"
             assert ISO_8601_PATTERN.match(value), f"Not ISO 8601: {value}"

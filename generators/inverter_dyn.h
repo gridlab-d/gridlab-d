@@ -7,7 +7,6 @@
 
 #include "generators.h"
 
-EXPORT int isa_inverter_dyn(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_inverter_dyn(OBJECT *obj, TIMESTAMP t0,
                                      unsigned int64 delta_time);
 EXPORT SIMULATIONMODE

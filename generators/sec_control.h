@@ -10,7 +10,6 @@
 
 #include "generators.h"
 
-EXPORT int isa_sec_control(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_sec_control(OBJECT *obj, TIMESTAMP t0,
                                     unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_sec_control(OBJECT *obj,

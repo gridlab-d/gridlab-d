@@ -1545,10 +1545,24 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int isa_meter(OBJECT *obj, char *classname)
+EXPORT int isa_meter_impl(OBJECT *obj, char *classname)
 {
     return object_data<meter>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_meter(OBJECT *obj, char *classname) {
+  return isa_meter_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_meter(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_meter_impl(obj, classname);
+}
+#endif
 
 EXPORT int create_meter(OBJECT **obj, OBJECT *parent)
 {

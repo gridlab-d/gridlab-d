@@ -1,5 +1,42 @@
 #include "parser.h"
 
+#define START int _mm = 0, _m = 0, _n = 0;
+#define ACCEPT                                                                 \
+  {                                                                            \
+    _n += _m;                                                                  \
+    _p += _m;                                                                  \
+    _m = 0;                                                                    \
+  }
+#define HERE (_p + _m)
+#define OR                                                                     \
+  {                                                                            \
+    _m = 0;                                                                    \
+  }
+#define REJECT                                                                 \
+  {                                                                            \
+    return 0;                                                                  \
+  }
+#define WHITE (TERM(white(HERE)))
+#define LITERAL(X)                                                             \
+  (_mm = literal(HERE, (const_cast<char *>(X))), _m += _mm, _mm > 0)
+#define TERM(X) (_mm = (X), _m += _mm, _mm > 0)
+#define COPY(X)                                                                \
+  {                                                                            \
+    size--;                                                                    \
+    (X)[_n++] = *_p++;                                                         \
+  }
+#define DONE return _n;
+#define BEGIN_REPEAT                                                           \
+  {                                                                            \
+    char *__p = _p;                                                            \
+    int __mm = _mm, __m = _m, __n = _n;
+#define REPEAT                                                                 \
+  _p = __p;                                                                    \
+  _m = __m;                                                                    \
+  _mm = __mm;                                                                  \
+  _n = __n;
+#define END_REPEAT }
+
 int parser::findLastIndex(string str, char x)
 {
     int index = -1;
@@ -187,7 +224,7 @@ int parser::pattern(PARSER, const char *pattern, char *result, int size)
 {
     char format[64];
     START;
-    sprintf(format, "%%%s", pattern);
+    snprintf(format, sizeof(format), "%%%s", pattern);
     if (sscanf(_p, format, result) == 1)
         _n = (int)strlen(result);
     DONE;
@@ -1384,11 +1421,11 @@ string parser::expanded_value(string text)
         replaceAll(text, "{gridlabd}", global_execdir);
         replaceAll(text, "{hostname}", global_hostname);
         replaceAll(text, "{hostaddr}", global_hostaddr);
-        sprintf(val, "%d", sched_get_cpuid(0));
+        snprintf(val, sizeof(val), "%d", sched_get_cpuid(0));
         replaceAll(text, "{cpu}", val);
-        sprintf(val, "%d", sched_get_procid());
+        snprintf(val, sizeof(val), "%d", sched_get_procid());
         replaceAll(text, "{pid}", val);
-        sprintf(val, "%d", global_server_portnum);
+        snprintf(val, sizeof(val), "%d", global_server_portnum);
         replaceAll(text, "{port}", val);
         replaceAll(text, "{mastername}",
                    "localhost"); /* @todo copy actual master name */
@@ -1397,7 +1434,7 @@ string parser::expanded_value(string text)
         replaceAll(text, "{masterport}",
                    "6267"); /* @todo copy actual master port */
         if (current_object)
-            sprintf(val, "%d", current_object->id);
+        snprintf(val, sizeof(val), "%d", current_object->id);
         else
             strcpy(val, "");
         replaceAll(text, "{id}", val);
@@ -1681,7 +1718,7 @@ int parser::property_ref(PARSER, TRANSFORMSOURCE *xstype, void **ref,
         {
             // add to unresolved list
             char id[1088];
-            sprintf(id, "%s.%s", oname, pname);
+            snprintf(id, sizeof(id), "%s.%s", oname, pname);
             *ref = (void *)add_unresolved(from, PT_double, nullptr, from->oclass, id,
                                           this->filename.data(), UR_TRANSFORM);
             ACCEPT;
@@ -1961,9 +1998,9 @@ char *parser::format_object(OBJECT *obj)
     static char256 buffer;
     strcpy(buffer, "(unidentified)");
     if (obj->name == nullptr)
-        sprintf(buffer, global_object_format, obj->oclass->name, obj->id);
+        snprintf(buffer, sizeof(buffer), global_object_format, obj->oclass->name, obj->id);
     else
-        sprintf(buffer, "%s (%s:%d)", obj->name, obj->oclass->name, obj->id);
+        snprintf(buffer, sizeof(buffer), "%s (%s:%d)", obj->name, obj->oclass->name, obj->id);
     return buffer;
 }
 

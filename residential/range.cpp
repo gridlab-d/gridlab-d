@@ -1302,7 +1302,7 @@ EXPORT int init_range(OBJECT *obj)
     return my->init(obj->parent);
 }
 
-EXPORT int isa_range(OBJECT *obj, char *classname)
+EXPORT int isa_range_impl(OBJECT *obj, char *classname)
 {
     if (obj != 0 && classname != 0)
     {
@@ -1313,6 +1313,20 @@ EXPORT int isa_range(OBJECT *obj, char *classname)
         return 0;
     }
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_range(OBJECT *obj, char *classname) {
+  return isa_range_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_range(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_range_impl(obj, classname);
+}
+#endif
 
 static TIMESTAMP sync_range_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
@@ -1370,7 +1384,7 @@ EXPORT int commit_range(OBJECT *obj)
     return my->commit();
 }
 
-EXPORT TIMESTAMP plc_range(OBJECT *obj, TIMESTAMP t0)
+EXPORT TIMESTAMP plc_range_impl(OBJECT *obj, TIMESTAMP t0)
 {
     // this will be disabled if a PLC object is attached to the range
     if (obj->clock <= ROUNDOFF)
@@ -1383,5 +1397,21 @@ EXPORT TIMESTAMP plc_range(OBJECT *obj, TIMESTAMP t0)
     /// @todo If external plc codes return a timestamp, it will allow sync sooner but not later than oven time to transition (ticket #147)
     return TS_NEVER;
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP plc_range(OBJECT *obj, TIMESTAMP t0)
+{
+    return plc_range_impl(obj, t0);
+}
+#else
+extern "C" MODULE_API TIMESTAMP plc_range(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    va_end(args);
+    return plc_range_impl(obj, t0);
+}
+#endif
 
 /**@}**/

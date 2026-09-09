@@ -145,7 +145,7 @@ public:
     static char tmp[128];
     OBJECT *obj = object_header(this);
     return obj->name ? obj->name
-                     : (sprintf(tmp, "%s:%d", obj->oclass->name, obj->id) > 0
+                     : (snprintf(tmp, sizeof(tmp), "%s:%d", obj->oclass->name, obj->id) > 0
                             ? tmp
                             : "(unknown)");
   };

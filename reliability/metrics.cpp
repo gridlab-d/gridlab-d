@@ -1167,6 +1167,10 @@ EXPORT STATUS metrics_event_ended_secondary(
   return SUCCESS;
 }
 
+int metrics::isa(char *classname) {
+  return strcmp(classname, "metrics") == 0;
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -1193,6 +1197,24 @@ EXPORT int init_metrics(OBJECT *obj, OBJECT *parent) {
   INIT_CATCHALL(metrics);
 }
 
+EXPORT int isa_metrics_impl(OBJECT *obj, char *classname) {
+  return object_data<metrics>(obj)->isa(classname);
+}
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_metrics(OBJECT *obj, char *classname) {
+  return isa_metrics_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_metrics(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_metrics_impl(obj, classname);
+}
+#endif
+
 static TIMESTAMP sync_metrics_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   TIMESTAMP t2 = TS_NEVER;
   metrics *my = object_data<metrics>(obj);
@@ -1215,8 +1237,7 @@ static TIMESTAMP sync_metrics_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_metrics(OBJECT *obj, TIMESTAMP t1,
-                                             PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_metrics(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_metrics_impl(obj, t1, pass);
 }
 #else

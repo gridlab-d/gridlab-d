@@ -103,8 +103,8 @@ NB_MODULE(gridlabd_core, m) {
                   "contain share/ with tzinfo.txt)")
       .def_static("get_install_root", &GridLabD::get_install_root,
                   "Get the GridLAB-D installation root directory")
-      .def_static("get_executable_path", &GridLabD::get_executable_path,
-                  "Get the GridLAB-D executable path")
+//      .def_static("get_executable_path", &GridLabD::get_executable_path,
+//                   "Get the GridLAB-D executable path")
       .def("set_config_file", &GridLabD::set_config_file,
            nb::arg("config_file"), "Set the configuration file path")
       .def("set_working_directory", &GridLabD::set_working_directory,
@@ -258,7 +258,7 @@ NB_MODULE(gridlabd_core, m) {
           "get_checkpoint_json",
           [](GridLabD &self, const std::string &filepath) {
             nlohmann::json value = self.get_checkpoint_json(filepath);
-                              normalize_checkpoint_clock(value);
+            normalize_checkpoint_clock(value);
             return value.dump();
           },
           nb::arg("filepath") = std::string(),

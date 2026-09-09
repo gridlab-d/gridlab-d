@@ -125,7 +125,7 @@ static int recorder_open(OBJECT *obj) {
   if (strcmp(fname, "") == 0)
 
     /* use object name-id as default file name */
-    sprintf(fname, "%s-%d.%s", obj->parent->oclass->name, obj->parent->id,
+    snprintf(fname, sizeof(fname), "%s-%d.%s", obj->parent->oclass->name, obj->parent->id,
             my->filetype.get_string());
 
   /* open multiple-run input file & temp output file */
@@ -134,7 +134,7 @@ static int recorder_open(OBJECT *obj) {
       gl_error("transient recorders cannot use multi-run output files");
       return 0;
     }
-    sprintf(my->multitempfile, "temp_%s", my->file.get_string());
+    snprintf(my->multitempfile, sizeof(my->multitempfile), "temp_%s", my->file.get_string());
     my->multifp = fopen(my->multitempfile, "w");
     if (my->multifp == nullptr) {
       gl_error("unable to open \'%s\' for multi-run output",
@@ -188,7 +188,7 @@ static int recorder_open(OBJECT *obj) {
           } else if (strncmp(inbuffer, "# target", strlen("# target")) == 0) {
             // verify same target
             char256 target;
-            sprintf(target, "%s %d", obj->parent->oclass->name,
+            snprintf(target, sizeof(target), "%s %d", obj->parent->oclass->name,
                     obj->parent->id);
             if (0 != strncmp(target, data, strlen(data))) {
               gl_warning(
@@ -266,7 +266,7 @@ static int recorder_open(OBJECT *obj) {
         }
         // following block matches below
         while (tprop != nullptr) {
-          sprintf(shortstr, ",%s(%i)", tprop->name, rep);
+          snprintf(shortstr, sizeof(shortstr), ",%s(%i)", tprop->name, rep);
           len = (int)strlen(shortstr);
           if (len > lenmax) {
             gl_error("multi-run recorder output full property list is larger "
@@ -294,13 +294,13 @@ static int recorder_open(OBJECT *obj) {
       PROPERTY *tprop = my->target;
       fprintf(my->multifp, "# repetition 0\n");
       // no string from previous runs to append new props to
-      sprintf(propstr, "# timestamp");
+      snprintf(propstr, sizeof(propstr), "# timestamp");
       len = (int)strlen(propstr);
       lenmax -= len;
       i = len;
       // following block matches above
       while (tprop != nullptr) {
-        sprintf(shortstr, ",%s(0)", tprop->name);
+        snprintf(shortstr, sizeof(shortstr), ",%s(0)", tprop->name);
         len = (int)strlen(shortstr);
         if (len > lenmax) {
           gl_error("multi-run recorder output full property list is larger "
@@ -378,13 +378,13 @@ static int recorder_open(OBJECT *obj) {
         }
         // print the property, and if there is one, the unit
         if (unit != 0) {
-          sprintf(my->out_property.get_string() + offset, "%s%s[%s]",
+          snprintf(my->out_property.get_string() + offset, sizeof(my->out_property.get_string()) - offset, "%s%s[%s]",
                   (first ? "" : ","), propstr,
                   (unitstr[0] ? unitstr : unit->name));
           offset += strlen(propstr) + (first ? 0 : 1) + 2 +
                     strlen(unitstr[0] ? unitstr : unit->name);
         } else {
-          sprintf(my->out_property.get_string() + offset, "%s%s",
+          snprintf(my->out_property.get_string() + offset, sizeof(my->out_property.get_string()) - offset, "%s%s",
                   (first ? "" : ","), propstr);
           offset += strlen(propstr) + (first ? 0 : 1);
         }
@@ -407,7 +407,7 @@ static int recorder_open(OBJECT *obj) {
         }
         // print just the property, regardless of type or explicitly declared
         // property
-        sprintf(my->out_property.get_string() + offset, "%s%s",
+        snprintf(my->out_property.get_string() + offset, sizeof(my->out_property.get_string()) - offset, "%s%s",
                 (first ? "" : ","), propstr);
         offset += strlen(propstr) + (first ? 0 : 1);
         first = 0;
@@ -485,7 +485,7 @@ static TIMESTAMP recorder_write(OBJECT *obj) {
     }
     /* else leave INIT in the buffer */
   } else
-    sprintf(ts, "%" FMT_INT64 "d", my->last.ts);
+    snprintf(ts, sizeof(ts), "%" FMT_INT64 "d", my->last.ts);
   if ((my->limit > 0 && my->samples > my->limit) /* limit reached */ ||
       write_recorder(my, ts, my->last.value) == 0) /* write failed */
   {
@@ -543,9 +543,9 @@ static TIMESTAMP recorder_write(OBJECT *obj) {
         gl_warning("timestamp mismatch between current input line and "
                    "simulation time");
       }
-      sprintf(outbuffer, "%s,%s", in_tok, my->last.value.get_string());
+      snprintf(outbuffer, sizeof(outbuffer), "%s,%s", in_tok, my->last.value.get_string());
     } else { // no input file ~ write normal output
-      strcpy(outbuffer, my->last.value);
+      snprintf(outbuffer, sizeof(outbuffer), "%s", my->last.value.get_string());
     }
     // fprintf
     fprintf(my->multifp, "%s,%s\n", ts, outbuffer.get_string());
@@ -754,8 +754,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop,
   return count;
 }
 
-static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0,
-                                    PASSCONFIG pass) {
+static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   TIMESTAMP return_value;
   struct recorder *my = object_data<struct recorder>(obj);
   typedef enum { NONE = '\0', LT = '<', EQ = '=', GT = '>' } COMPAREOP;
@@ -770,8 +769,8 @@ static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0,
 
   if (obj->parent == nullptr) {
     char tb[32];
-    sprintf(buffer, "'%s' lacks a parent object",
-            obj->name ? obj->name : (sprintf(tb, "recorder:%i", obj->id), tb));
+    snprintf(buffer, sizeof(buffer), "'%s' lacks a parent object",
+            obj->name ? obj->name : (snprintf(tb, sizeof(tb), "recorder:%i", obj->id), tb));
     close_recorder(my);
     my->status = TS_ERROR;
     return sync_recorder_error(&obj, &my, buffer);
@@ -787,7 +786,7 @@ static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0,
     my->target = link_properties(my, obj->parent, my->property);
   }
   if (my->target == nullptr) {
-    sprintf(buffer, "'%s' contains a property of %s %d that is not found",
+    snprintf(buffer, sizeof(buffer), "'%s' contains a property of %s %d that is not found",
             my->property.get_string(), obj->parent->oclass->name,
             obj->parent->id);
     close_recorder(my);
@@ -817,7 +816,7 @@ static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0,
   if ((my->target != nullptr) && (my->interval == 0 || my->interval == -1)) {
     if (read_properties(my, obj->parent, my->target, buffer, sizeof(buffer)) ==
         0) {
-      sprintf(buffer, "unable to read property '%s' of %s %d",
+      snprintf(buffer, sizeof(buffer), "unable to read property '%s' of %s %d",
               my->property.get_string(), obj->parent->oclass->name,
               obj->parent->id);
       close_recorder(my);
@@ -829,7 +828,7 @@ static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0,
         ((t0 == my->last.ts) && (my->last.ns == 0))) {
       if (read_properties(my, obj->parent, my->target, buffer,
                           sizeof(buffer)) == 0) {
-        sprintf(buffer, "unable to read property '%s' of %s %d",
+        snprintf(buffer, sizeof(buffer), "unable to read property '%s' of %s %d",
                 my->property.get_string(), obj->parent->oclass->name,
                 obj->parent->id);
         close_recorder(my);
@@ -891,8 +890,7 @@ static TIMESTAMP sync_recorder_impl(OBJECT *obj, TIMESTAMP t0,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0,
-                                              PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
   return sync_recorder_impl(obj, t0, pass);
 }
 #else

@@ -22,7 +22,7 @@ STATUS instance_cnx_mmap(instance *inst) {
   }
 
   /* setup cache */
-  sprintf(cachename, "GLD-%" FMT_INT64 "x", inst->cacheid);
+  snprintf(cachename, sizeof(cachename), "GLD-%" FMT_INT64 "x", inst->cacheid);
   inst->hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, cachename);
   if (!inst->hMap) {
     inst->hMap = CreateFileMapping(INVALID_HANDLE_VALUE, &secAttr,
@@ -71,7 +71,7 @@ STATUS instance_cnx_mmap(instance *inst) {
   memcpy(inst->buffer, inst->cache, inst->cachesize);
 
   /* setup master signalling event */
-  sprintf(eventname, "GLD-%" FMT_INT64 "x-M", inst->cacheid);
+  snprintf(eventname, sizeof(eventname), "GLD-%" FMT_INT64 "x-M", inst->cacheid);
   inst->hMaster = CreateEvent(&secAttr, FALSE, FALSE,
                               eventname); /* initially unsignalled */
   if (!(inst->hMaster)) {
@@ -83,7 +83,7 @@ STATUS instance_cnx_mmap(instance *inst) {
   }
 
   /* setup slave signalling event */
-  sprintf(eventname, "GLD-%" FMT_INT64 "x-S", inst->cacheid);
+  snprintf(eventname, sizeof(eventname), "GLD-%" FMT_INT64 "x-S", inst->cacheid);
   inst->hSlave = CreateEvent(&secAttr, FALSE, FALSE,
                              eventname); /* initially unsignalled */
   if (!(inst->hSlave)) {
@@ -176,7 +176,7 @@ STATUS instance_cnx_shmem(instance *inst) { return FAILED; }
 //	}
 //
 //	// send HS_SYN
-//	sprintf(sendcmd, HS_SYN);
+//	snprintf(sendcmd, sizeof(sendcmd), HS_SYN);
 //	rv = send(outsockfd, sendcmd, 1+(int)strlen(HS_SYN), 0);
 //	output_debug("%d = send(%d, %x, %d, 0)", rv, outsockfd, sendcmd,
 //1+strlen(HS_SYN)); 	if(1 > rv){ 		output_error("instance_cnx_socket(): error
@@ -240,7 +240,7 @@ STATUS instance_cnx_shmem(instance *inst) { return FAILED; }
 //
 //	// build command
 //	// HS_CMD dir file r_port cacheid profile relax debug verbose warn quiet
-//avlbalance 	sprintf(sendcmd, HS_CMD	"dir=\"%s\" file=\"%s\" port=%d id=%"
+//avlbalance 	snprintf(sendcmd, sizeof(sendcmd), HS_CMD "dir=\"%s\" file=\"%s\" port=%d id=%"
 //FMT_INT64 "d %s %s %s %s %s %s %s", 		inst->execdir, 		inst->model,
 //		inst->return_port,
 //		inst->cacheid,
@@ -437,7 +437,7 @@ STATUS instance_cnx_shmem(instance *inst) { return FAILED; }
 //recv(%d, %x, 1024, 0)", rv, inst->sockfd, cmd);
 //	}
 //
-//	sprintf(cmd, MSG_START);
+//	snprintf(cmd, sizeof(cmd), MSG_START);
 //	rv = send(inst->sockfd, cmd, (int)strlen(MSG_START), 0);
 //	if(0 > rv){
 //		output_error("instance_cnx_socket(): error sending start

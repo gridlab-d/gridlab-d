@@ -79,7 +79,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_complex, "measured_voltage_1[V]", PADDR(measured_voltage[0]),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"measured voltage, phase 1 to ground",
 			PT_complex, "measured_voltage_2[V]", PADDR(measured_voltage[1]),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"measured voltage, phase 2 to ground",
 			PT_complex, "measured_voltage_N[V]", PADDR(measured_voltage[2]),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"measured voltage, phase N to ground",
-			
+
 			//Voltage average items
 			PT_double, "measured_real_max_voltage_1_in_interval[V]", PADDR(measured_real_max_voltage_in_interval[0]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 1 over a specified interval",
 			PT_double, "measured_real_max_voltage_2_in_interval[V]", PADDR(measured_real_max_voltage_in_interval[1]),PT_DESCRIPTION,"measured real max line-to-ground voltage on phase 2 over a specified interval",
@@ -1262,10 +1262,24 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int isa_triplex_meter(OBJECT *obj, char *classname)
+EXPORT int isa_triplex_meter_impl(OBJECT *obj, char *classname)
 {
     return object_data<triplex_meter>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_triplex_meter(OBJECT *obj, char *classname) {
+  return isa_triplex_meter_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_triplex_meter(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_triplex_meter_impl(obj, classname);
+}
+#endif
 
 // EXPORT int create_triplex_meter(OBJECT **obj, OBJECT *parent)
 //{

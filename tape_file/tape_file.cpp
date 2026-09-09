@@ -45,7 +45,7 @@ EXPORT int open_player(struct player *my, char *fname, char *flags) {
   my->fp =
       (strcmp(fname, "-") == 0 ? stdin : (ff ? fopen(ff, flags) : nullptr));
   if (my->fp == nullptr) {
-    sprintf(my->lasterr, "player file %s: %s", fname, strerror(errno));
+    snprintf(my->lasterr, sizeof(my->lasterr), "player file %s: %s", fname, strerror(errno));
     my->status = TS_DONE;
     return 0;
   } else {
@@ -164,7 +164,7 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags) {
   my->fp =
       (strcmp(fname, "-") == 0 ? stdin : (ff ? fopen(ff, flags) : nullptr));
   if (my->fp == nullptr) {
-    sprintf(my->lasterr, "shaper file %s: %s", fname, strerror(errno));
+    snprintf(my->lasterr, sizeof(my->lasterr), "shaper file %s: %s", fname, strerror(errno));
     goto Error;
   }
   my->status = TS_OPEN;
@@ -189,38 +189,38 @@ EXPORT int open_shaper(struct shaper *my, char *fname, char *flags) {
       int h, d, m, w;
       if (sscanf(line, "%s %s %s %s %[^,],%[^,\n]", min, hour, day, month,
                  weekday, value) < 6) {
-        sprintf(my->lasterr, "%s(%d) : shape '%s' missing specification '%s'",
+        snprintf(my->lasterr, sizeof(my->lasterr), "%s(%d) : shape '%s' missing specification '%s'",
                 file, linenum, group, line);
         goto Error;
       }
       /* minutes are ignored right now */
       if (min[0] != '*') // gl_warning
       {
-        sprintf(my->lasterr, "%s(%d) : minutes are ignored in '%s'", file,
+        snprintf(my->lasterr, sizeof(my->lasterr), "%s(%d) : minutes are ignored in '%s'", file,
                 linenum, line);
         goto Error;
       }
       hours = hourmap(hour);
       if (hours == nullptr) {
-        sprintf(my->lasterr, "%s(%d): hours in '%s' not valid", file, linenum,
+        snprintf(my->lasterr, sizeof(my->lasterr), "%s(%d): hours in '%s' not valid", file, linenum,
                 line);
         goto Error;
       }
       days = daymap(day);
       if (days == nullptr) {
-        sprintf(my->lasterr, "%s(%d): days in '%s' not valid", file, linenum,
+        snprintf(my->lasterr, sizeof(my->lasterr), "%s(%d): days in '%s' not valid", file, linenum,
                 line);
         goto Error;
       }
       months = monthmap(month);
       if (months == nullptr) {
-        sprintf(my->lasterr, "%s(%d): months in '%s' not valid", file, linenum,
+        snprintf(my->lasterr, sizeof(my->lasterr), "%s(%d): months in '%s' not valid", file, linenum,
                 line);
         goto Error;
       }
       weekdays = weekdaymap(weekday);
       if (weekdays == nullptr) {
-        sprintf(my->lasterr, "%s(%d): weekdays in '%s' not valid", file,
+        snprintf(my->lasterr, sizeof(my->lasterr), "%s(%d): weekdays in '%s' not valid", file,
                 linenum, line);
         goto Error;
       }

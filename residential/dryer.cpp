@@ -963,7 +963,7 @@ EXPORT int init_dryer(OBJECT *obj)
     return my->init(obj->parent);
 }
 
-EXPORT int isa_dryer(OBJECT *obj, char *classname)
+EXPORT int isa_dryer_impl(OBJECT *obj, char *classname)
 {
     if (obj != 0 && classname != 0)
     {
@@ -975,12 +975,17 @@ EXPORT int isa_dryer(OBJECT *obj, char *classname)
     }
 }
 
-// EXPORT TIMESTAMP sync_dryer(OBJECT *obj, TIMESTAMP t0)
-//{
-//	dryer *my = object_data<dryer>(obj);
-//	TIMESTAMP t1 = my->sync(obj->clock, t0);
-//	obj->clock = t0;
-//	return t1;
-// }
-
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_dryer(OBJECT *obj, char *classname) {
+  return isa_dryer_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_dryer(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_dryer_impl(obj, classname);
+}
+#endif
 /**@}**/

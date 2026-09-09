@@ -352,7 +352,8 @@ TIMESTAMP bus::presync(TIMESTAMP t0, TIMESTAMP t1) {
   // }
 
   if (tempbus->ifheader == 1) {
-    LOCK_OBJECT(obj);
+    std::unique_lock<std::shared_mutex> lock_obj(
+      SharedMutexManager::get_mutex(obj));
     double sum_PD, sum_QD;
 
     sum_PD = tempbus->feeder0.Re() + tempbus->feeder1.Re() +
@@ -367,7 +368,7 @@ TIMESTAMP bus::presync(TIMESTAMP t0, TIMESTAMP t1) {
              tempbus->feeder6.Im() + tempbus->feeder7.Im() +
              tempbus->feeder8.Im() + tempbus->feeder9.Im();
 
-    UNLOCK_OBJECT(obj);
+    lock_obj.unlock();
 
     setObjectValue_Double2Complex(obj, "feeder0", 0, 0);
     setObjectValue_Double2Complex(obj, "feeder1", 0, 0);

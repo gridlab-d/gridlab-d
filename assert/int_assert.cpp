@@ -47,7 +47,7 @@ int_assert::int_assert(MODULE *module) {
             PT_int32, "within", get_within_offset(), PT_char1024, "target",
             get_target_offset(), nullptr) < 1) {
       char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
 

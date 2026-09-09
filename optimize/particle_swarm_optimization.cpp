@@ -80,7 +80,7 @@ particle_swarm_optimization::particle_swarm_optimization(MODULE *module) {
 
             nullptr) < 1) {
       static char msg[256];
-      sprintf(msg, "unable to publish properties in %s", __FILE__);
+      snprintf(msg, sizeof(msg), "unable to publish properties in %s", __FILE__);
       throw msg;
     }
 

@@ -71,6 +71,7 @@ public:
     rectifier(MODULE *module);
     int create(void);
     int init(OBJECT *parent);
+  int isa(char *classname);
 
     TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
     TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

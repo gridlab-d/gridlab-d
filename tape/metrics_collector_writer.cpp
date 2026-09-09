@@ -70,7 +70,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
   // check for filename
   if (0 == filename[0]) {
     // if no filename, auto-generate based on ID
-    sprintf(filename, "%256s-%256i-metrics_collector_output", oclass->name,
+    snprintf(filename, sizeof(filename), "%256s-%256i-metrics_collector_output", oclass->name,
             obj->id);
     gl_warning("metrics_collector_writer::init(): no filename defined, "
                "auto-generating '%s'",
@@ -84,7 +84,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
   // check for extension
   if (0 == extension[0]) {
     // if no filename, auto-generate based on ID
-    sprintf(extension, "json");
+    snprintf(extension, sizeof(extension), "json");
     gl_warning("metrics_collector_writer::init(): no extension defined, "
                "auto-generating '%s'",
                extension.get_string());
@@ -93,7 +93,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
   } else {
     if (!(strcmp(extension, m_json.c_str()) == 0) &&
         !(strcmp(extension, m_h5.c_str()) == 0)) {
-      sprintf(extension, "json");
+      snprintf(extension, sizeof(extension), "json");
       gl_warning("metrics_collector_writer::init(): bad extension defined, "
                  "auto-generating '%s'",
                  extension.get_string());
@@ -103,7 +103,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
       if (strcmp(extension, m_h5.c_str()) == 0)
         gl_warning("metrics_collector_writer::init(): H5 extension defined, "
                    "but HDF library not found");
-      sprintf(extension, "json");
+      snprintf(extension, sizeof(extension), "json");
       gl_warning("metrics_collector_writer::init(): bad extension defined, "
                  "auto-generating '%s'",
                  extension.get_string());
@@ -118,12 +118,12 @@ int metrics_collector_writer::init(OBJECT *parent) {
     gl_warning(
         "metrics_collector_writer::init(): no option to set alternate metrics "
         "file name give, so going with default, as if alternate no");
-    sprintf(alternate, "no");
+    snprintf(alternate, sizeof(alternate), "no");
   } else {
     if (!(strcmp(alternate, "no") == 0) && !(strcmp(alternate, "yes") == 0)) {
       gl_warning("metrics_collector_writer::init(): bad alternate option "
                  "given. Should be either no or yes. Default = no");
-      sprintf(alternate, "no");
+      snprintf(alternate, sizeof(alternate), "no");
     } else {
       if (strcmp(alternate, "yes") == 0) {
         if (!(0 == allextensions[0])) {
@@ -135,7 +135,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
           } else {
             if (strcmp(allextensions, "yes") == 0) {
               both = true;
-              sprintf(extension, "json");
+              snprintf(extension, sizeof(extension), "json");
             }
           }
         }
@@ -737,7 +737,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 
   // Write Time -> represents the time from the StartTime
   writeTime = t1 - startTime; // in seconds
-  sprintf(time_str, "%d", writeTime);
+  snprintf(time_str, sizeof(time_str), "%d", writeTime);
 
   //	cout << "write_line at " << writeTime << " seconds, final " <<
   //final_write << ", now " << t1 << endl;
@@ -2188,8 +2188,22 @@ EXPORT int commit_metrics_collector_writer(OBJECT *obj) {
   return rv;
 }
 
-EXPORT int isa_metrics_collector_writer(OBJECT *obj, char *classname) {
+EXPORT int isa_metrics_collector_writer_impl(OBJECT *obj, char *classname) {
   return object_data<metrics_collector_writer>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_metrics_collector_writer(OBJECT *obj, char *classname) {
+  return isa_metrics_collector_writer_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_metrics_collector_writer(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_metrics_collector_writer_impl(obj, classname);
+}
+#endif
 
 // EOF

@@ -328,7 +328,7 @@ inline void GL_THROW(char *format, ...)
 	static char buffer[1024];
 	va_list ptr;
 	va_start(ptr, format);
-	vsprintf(buffer, format, ptr);
+	vsnprintf(buffer, sizeof(buffer), format, ptr);
 	va_end(ptr);
 	throw std::runtime_error(buffer);
 }
@@ -338,7 +338,7 @@ inline void GL_THROW(const char *format, ...)
 	static char buffer[1024];
 	va_list ptr;
 	va_start(ptr, format);
-	vsprintf(buffer, format, ptr);
+	vsnprintf(buffer, sizeof(buffer), format, ptr);
 	va_end(ptr);
 	throw std::runtime_error(buffer);
 }
@@ -614,7 +614,7 @@ inline bool gl_object_isa(OBJECT *obj, const char *type, const char *modname = n
   // Prefer the per-class ISA first (it works in your LLDB probe)
   if (obj->oclass && obj->oclass->isa)
     is_type = (obj->oclass->isa(obj, const_cast<char *>(type)) != 0);
-
+    
   // If that didn’t match, try the core callback ancestry search
   if (!is_type && callback && callback->object_isa)
     is_type = ((*callback->object_isa)(obj, type) != 0);
@@ -626,7 +626,7 @@ inline bool gl_object_isa(OBJECT *obj, const char *type, const char *modname = n
   if (modname && *modname)
   {
     const MODULE *runtime_mod = (obj->oclass ? obj->oclass->module : nullptr);
-    const std::string_view lhs = gl_normalize_module_name(sv_or_empty(runtime_mod && runtime_mod->name ? runtime_mod->name : nullptr));
+    const std::string_view lhs = gl_normalize_module_name(sv_or_empty(runtime_mod && runtime_mod->name[0] != '\0' ? runtime_mod->name : nullptr));
     const std::string_view rhs = gl_normalize_module_name(sv_or_empty(modname));
     return lhs == rhs;
   }
@@ -1253,9 +1253,9 @@ inline char *gl_name(OBJECT *my, char *buffer, size_t size)
 	if (my == NULL || buffer == NULL)
 		return NULL;
 	if (my->name == NULL)
-		sprintf(temp, "%s:%d", my->oclass->name, my->id);
+		snprintf(temp, sizeof(temp), "%s:%d", my->oclass->name, my->id);
 	else
-		sprintf(temp, "%s", my->name);
+		snprintf(temp, sizeof(temp), "%s", my->name);
 	if (size < strlen(temp))
 		return NULL;
 	strcpy(buffer, temp);
@@ -2497,7 +2497,7 @@ public:
 		}
 	}
 
-	inline OBJECT *my() { return this ? (((OBJECT *)this) - 1) : NULL; }
+	inline OBJECT *my() { return ((OBJECT *)this) - 1; }
 
 private:
 	// Make gld_object not copy-constructable.
@@ -2517,7 +2517,7 @@ public: // header read accessors (no locking)
 	inline OBJECTNUM get_id(void) { return my()->id; };
 	inline char *get_groupid(void) { return my()->groupid.get_string(); };
 	inline gld_class *get_oclass(void) { return (gld_class *)my()->oclass; };
-	inline gld_object *get_parent(void) { return my()->parent ? object_data<gld_object>(my()->parent) /*OBJECTDATA(my()->parent, gld_object)*/ : NULL; };
+	inline gld_object *get_parent(void) { return my()->parent ? object_data<gld_object>(my()->parent) : NULL; };
 	inline OBJECTRANK get_rank(void) { return my()->rank; };
 	inline TIMESTAMP get_clock(void) { return my()->clock; };
 	inline TIMESTAMP get_valid_to(void) { return my()->valid_to; };
@@ -2569,23 +2569,6 @@ public: // member lookup functions
 	inline PROPERTY *get_property(char *name, PROPERTYSTRUCT *pstruct = NULL) { return callback->properties.get_property(my(), name, pstruct); };
 	inline FUNCTIONADDR get_function(const char *name) { return (*callback->function.get)(my()->oclass->name, name); };
 
-public: // external accessors
-        // template <class T> inline void getp(PROPERTY &prop, T &value) {
-        //	//rlock();
-        //	wlock();
-        //	value=*(T*)(get_addr(my(),&prop));
-        //	wunlock();
-        //};
-        // template <class T> inline void setp(PROPERTY &prop, T &value) {
-        // wlock(); *(T*)(get_addr(my(),&prop)   /*GETADDR(my(), &prop)*/) =
-        // value; wunlock(); };
-  /*template <class T> inline void getp(PROPERTY& prop, T& value, gld_rlock&) {
-   * value = *(T*)(get_addr(my(), &prop)); };*/
-  // template <class T> inline void getp(PROPERTY &prop, T &value, gld_wlock&) {
-  // value=*(T*)(get_addr(my(),&prop)); }; template <class T> inline void
-  // setp(PROPERTY &prop, T &value, gld_wlock&) {
-  // *(T*)(get_addr(my(),&prop))=value; };
-
 public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->object.set_dependent(my(), obj); };
 	inline int set_parent(OBJECT *obj) { return callback->object.set_parent(my(), obj); };
@@ -2598,9 +2581,9 @@ public: // iterators
 	inline static gld_object *get_first(void)
 	{
 		OBJECT *o = callback->object.get_first();
-		return object_data<gld_object>(o); /*OBJECTDATA(o, gld_object);*/
+		return object_data<gld_object>(o); 
 	};
-	inline gld_object *get_next(void) { return object_data<gld_object>(my()->next); /*OBJECTDATA(my()->next, gld_object);*/ };
+	inline gld_object *get_next(void) { return object_data<gld_object>(my()->next); };
 
 public: // exceptions
 	inline void exception(const char *msg, ...)
@@ -2608,7 +2591,7 @@ public: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s: ", get_name()), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s: ", get_name()), sizeof(buf) - snprintf(buf, sizeof(buf), "%s: ", get_name()), msg, ptr);
 		va_end(ptr);
 		throw (const char *)buf;
 	};
@@ -2617,7 +2600,7 @@ public: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s: ", get_name()), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s: ", get_name()), sizeof(buf) - snprintf(buf, sizeof(buf), "%s: ", get_name()), msg, ptr);
 		va_end(ptr);
 		gl_error("%s", buf);
 	};
@@ -2626,7 +2609,7 @@ public: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s: ", get_name()), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s: ", get_name()), sizeof(buf) - snprintf(buf, sizeof(buf), "%s: ", get_name()), msg, ptr);
 		va_end(ptr);
 		gl_warning("%s", buf);
 	};
@@ -2635,7 +2618,7 @@ public: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s: ", get_name()), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s: ", get_name()), sizeof(buf) - snprintf(buf, sizeof(buf), "%s: ", get_name()), msg, ptr);
 		va_end(ptr);
 		gl_debug("%s", buf);
 	};
@@ -2727,7 +2710,7 @@ public: // constructors/casts
 			return;
 		}
 		char1024 vn;
-		sprintf(vn, "%s::%s", m, n);
+		snprintf(vn, sizeof(vn), "%s::%s", m, n);
 		GLOBALVAR *v = callback->global.find(vn.get_string());
 		pstruct.prop = (v ? v->prop : NULL);
 	};
@@ -2744,11 +2727,11 @@ public: // read accessors
 	{
 		if (pstruct.part[0] != '\0')
 		{
-			sprintf(return_val, "%s_%s", pstruct.prop->name, pstruct.part);
+			snprintf(return_val, sizeof(return_val), "%s_%s", pstruct.prop->name, pstruct.part);
 		}
 		else
 		{
-			sprintf(return_val, "%s", pstruct.prop->name);
+			snprintf(return_val, sizeof(return_val), "%s", pstruct.prop->name);
 		}
 		return return_val;
 	};
@@ -3051,7 +3034,7 @@ private: // exceptions
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf + sprintf(buf, "%s.%s: ", /*OBJECTDATA(obj, gld_object)*/ object_data<gld_object>(obj)->get_name(), pstruct.prop->name), msg, ptr);
+		vsnprintf(buf + snprintf(buf, sizeof(buf), "%s.%s: ", object_data<gld_object>(obj)->get_name(), pstruct.prop->name), sizeof(buf) - snprintf(buf, sizeof(buf), "%s.%s: ", object_data<gld_object>(obj)->get_name(), pstruct.prop->name), msg, ptr);
 		va_end(ptr);
 		throw (const char *)buf;
 	};
@@ -3235,7 +3218,7 @@ public:
 		static char buf[1024];
 		va_list ptr;
 		va_start(ptr, msg);
-		vsprintf(buf, msg, ptr);
+		vsnprintf(buf, sizeof(buf), msg, ptr);
 		va_end(ptr);
 		throw (const char *)buf;
 	};
@@ -3401,7 +3384,7 @@ static inline gld_property *map_enum_value(OBJECT *obj, const char *name)
 		try                                                                     \
 		{                                                                       \
 			if (obj != NULL)                                                    \
-				return /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->init(parent); \
+				return object_data<C>(obj)->init(parent); \
 			else                                                                \
 				return 0;                                                       \
 		}                                                                       \
@@ -3522,8 +3505,7 @@ static inline gld_property *map_enum_value(OBJECT *obj, const char *name)
 // Core impl generator (mimics your expansion)
 // ------------------------------
 #define EXPORT_SYNC_IMPL_C(NAME, CLASS)                                        \
-  static TIMESTAMP sync_##NAME##_impl(OBJECT *object, TIMESTAMP t0,            \
-                                      PASSCONFIG pass)                         \
+  static TIMESTAMP sync_##NAME##_impl(OBJECT *object, TIMESTAMP t0, PASSCONFIG pass) \
   {                                                                            \
     try                                                                        \
     {                                                                          \
@@ -3576,8 +3558,7 @@ static inline gld_property *map_enum_value(OBJECT *obj, const char *name)
 #ifndef __APPLE__
 
 #define EXPORT_SYNC_C(NAME, CLASS)                                          \
-  extern "C" MODULE_API TIMESTAMP sync_##NAME(OBJECT *object, TIMESTAMP t0, \
-                                              PASSCONFIG pass)              \
+  extern "C" MODULE_API TIMESTAMP sync_##NAME(OBJECT *object, TIMESTAMP t0, PASSCONFIG pass) \
   {                                                                         \
     return sync_##NAME##_impl(object, t0, pass);                            \
   }
@@ -3628,22 +3609,22 @@ static inline gld_property *map_enum_value(OBJECT *obj, const char *name)
 // Emit BOTH when CLASS == NAME
 #define EXPORT_SYNC(NAME) EXPORT_SYNC2(NAME, NAME)
 
-#define EXPORT_ISA_C(X, C)                                                                         \
-	EXPORT int isa_##X(OBJECT *obj, char *name)                                                    \
-	{                                                                                              \
-		return (obj != 0 && name != 0) ? /*OBJECTDATA(obj,C)*/ object_data<C>(obj)->isa(name) : 0; \
-	}
+#define EXPORT_ISA_C(X, C)                                                   \
+ 	EXPORT int isa_##X(OBJECT *obj, char *name)                              \
+ 	{                                                                        \
+ 		return (obj != 0 && name != 0) ? object_data<C>(obj)->isa(name) : 0; \
+ 	}
 /// Implement class isa export
 #define EXPORT_ISA(X) EXPORT_ISA_C(X, X)
 
-#define EXPORT_PLC_C(X, C)                                                       \
-	EXPORT TIMESTAMP plc_##X(OBJECT *obj, TIMESTAMP t1)                          \
-	{                                                                            \
-		try                                                                      \
-		{                                                                        \
-			return object_data<C>(obj)->plc(t1); /*OBJECTDATA(obj,C)->plc(t1);*/ \
-		}                                                                        \
-		T_CATCHALL(plc, X);                                                      \
+#define EXPORT_PLC_C(X, C)                              \
+	EXPORT TIMESTAMP plc_##X(OBJECT *obj, TIMESTAMP t1) \
+	{                                                   \
+		try                                             \
+		{                                               \
+			return object_data<C>(obj)->plc(t1);        \
+		}                                               \
+		T_CATCHALL(plc, X);                             \
 	}
 /// Implement class plc export
 #define EXPORT_PLC(X) EXPORT_PLC_C(X, X)
@@ -3752,10 +3733,10 @@ private:
 		static char buffer[1024] = "";
 		va_list ptr;
 		va_start(ptr, fmt);
-		int len = vsprintf(buffer, fmt, ptr);
+		int len = vsnprintf(buffer, sizeof(buffer), fmt, ptr);
 		va_end(ptr);
 		if (errno != 0)
-			sprintf(buffer + len, " (%s)", strerror(errno));
+			snprintf(buffer + len, sizeof(buffer) - len, " (%s)", strerror(errno));
 		throw (const char *)buffer;
 	};
 

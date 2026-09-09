@@ -687,7 +687,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "inverter:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "inverter:%d", obj->id);
                 node_object["id"] = buffer;
             }
 
@@ -699,7 +699,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "%s:%d", obj->parent->oclass->name, obj->parent->id);
+        snprintf(buffer, sizeof(buffer), "%s:%d", obj->parent->oclass->name, obj->parent->id);
                 node_object["node_id"] = buffer;
             }
 
@@ -814,7 +814,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "diesel_dg:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "diesel_dg:%d", obj->id);
                 node_object["id"] = buffer;
             }
 
@@ -826,7 +826,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "%s:%d", obj->parent->oclass->name, obj->parent->id);
+        snprintf(buffer, sizeof(buffer), "%s:%d", obj->parent->oclass->name, obj->parent->id);
                 node_object["node_id"] = buffer;
             }
 
@@ -962,7 +962,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "node:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "node:%d", obj->id);
                 node_object["id"] = buffer;
             }
 
@@ -1078,7 +1078,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "meter:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "meter:%d", obj->id);
                 node_object["id"] = buffer;
             }
 
@@ -1198,19 +1198,19 @@ STATUS jsondump::dump_system(void)
                 // Load array portions
                 load_object["node_id"] = obj->name;
 
-                sprintf(buffer, "load_%s", obj->name);
+        snprintf(buffer, sizeof(buffer), "load_%s", obj->name);
                 load_object["id"] = buffer;
             }
             else
             {
                 //"Make" a value
-                sprintf(buffer, "load:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "load:%d", obj->id);
                 node_object["id"] = buffer;
 
                 // Load array portions
                 load_object["node_id"] = buffer;
 
-                sprintf(buffer, "load_object_%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "load_object_%d", obj->id);
                 load_object["id"] = buffer;
             }
 
@@ -1396,9 +1396,8 @@ STATUS jsondump::dump_system(void)
             }
 
             pTransformer[index] =
-                /*OBJECTDATA(obj,<>)*/ object_data<transformer>(obj);
-            if (pTransformer[index] == nullptr)
-            {
+                object_data<transformer>(obj);
+      if (pTransformer[index] == nullptr) {
                 gl_error("Unable to map object as transformer object.");
                 return FAILED;
             }
@@ -1412,7 +1411,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "transformer:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "transformer:%d", obj->id);
                 line_object["id"] = buffer;
             }
 
@@ -1424,7 +1423,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pTransformer[index]->from->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pTransformer[index]->from->oclass->name,
                         pTransformer[index]->from->id);
                 line_object["node1_id"] = buffer;
             }
@@ -1437,7 +1436,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pTransformer[index]->to->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pTransformer[index]->to->oclass->name,
                         pTransformer[index]->to->id);
                 line_object["node2_id"] = buffer;
             }
@@ -1553,7 +1552,7 @@ STATUS jsondump::dump_system(void)
             // write line_code
             if (pTransformer[index]->configuration->name == nullptr)
             {
-                sprintf(buffer, "trans_config:%d",
+                snprintf(buffer, sizeof(buffer), "trans_config:%d",
                         pTransformer[index]->configuration->id);
                 line_object["line_code"] = buffer;
             }
@@ -1619,7 +1618,7 @@ STATUS jsondump::dump_system(void)
                 break;
             }
 
-            pRegulator[index] = /*OBJECTDATA(obj,<>)*/ object_data<regulator>(obj);
+            pRegulator[index] = object_data<regulator>(obj);
             if (pRegulator[index] == nullptr)
             {
                 gl_error("Unable to map object as regulator object.");
@@ -1635,7 +1634,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "regulator:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "regulator:%d", obj->id);
                 line_object["id"] = buffer;
             }
 
@@ -1647,7 +1646,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pRegulator[index]->from->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pRegulator[index]->from->oclass->name,
                         pRegulator[index]->from->id);
                 line_object["node1_id"] = buffer;
             }
@@ -1660,7 +1659,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pRegulator[index]->to->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pRegulator[index]->to->oclass->name,
                         pRegulator[index]->to->id);
                 line_object["node2_id"] = buffer;
             }
@@ -1776,7 +1775,7 @@ STATUS jsondump::dump_system(void)
             // write line_code
             if (pRegulator[index]->configuration->name == nullptr)
             {
-                sprintf(buffer, "reg_config:%d", pRegulator[index]->configuration->id);
+                snprintf(buffer, sizeof(buffer), "reg_config:%d", pRegulator[index]->configuration->id);
                 line_object["line_code"] = buffer;
             }
             else
@@ -1839,7 +1838,7 @@ STATUS jsondump::dump_system(void)
                 break;
             }
 
-            pOhLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
+            pOhLine[index] = object_data<line>(obj);
             if (pOhLine[index] == nullptr)
             {
                 gl_error("Unable to map object as overhead_line object.");
@@ -1855,7 +1854,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "overhead_line:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "overhead_line:%d", obj->id);
                 line_object["id"] = buffer;
             }
 
@@ -1867,7 +1866,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pOhLine[index]->from->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pOhLine[index]->from->oclass->name,
                         pOhLine[index]->from->id);
                 line_object["node1_id"] = buffer;
             }
@@ -1880,7 +1879,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pOhLine[index]->to->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pOhLine[index]->to->oclass->name,
                         pOhLine[index]->to->id);
                 line_object["node2_id"] = buffer;
             }
@@ -1995,7 +1994,7 @@ STATUS jsondump::dump_system(void)
             // write line_code
             if (pOhLine[index]->configuration->name == nullptr)
             {
-                sprintf(buffer, "line_config:%d", pOhLine[index]->configuration->id);
+                snprintf(buffer, sizeof(buffer), "line_config:%d", pOhLine[index]->configuration->id);
                 line_object["line_code"] = buffer;
             }
             else
@@ -2058,7 +2057,7 @@ STATUS jsondump::dump_system(void)
                 break;
             }
 
-            pUgLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
+            pUgLine[index] = object_data<line>(obj);
             if (pUgLine[index] == nullptr)
             {
                 gl_error("Unable to map object as underground_line object.");
@@ -2074,7 +2073,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "underground_line:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "underground_line:%d", obj->id);
                 line_object["id"] = buffer;
             }
 
@@ -2086,7 +2085,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pUgLine[index]->from->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pUgLine[index]->from->oclass->name,
                         pUgLine[index]->from->id);
                 line_object["node1_id"] = buffer;
             }
@@ -2099,7 +2098,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pUgLine[index]->to->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pUgLine[index]->to->oclass->name,
                         pUgLine[index]->to->id);
                 line_object["node2_id"] = buffer;
             }
@@ -2214,7 +2213,7 @@ STATUS jsondump::dump_system(void)
             // write line_code
             if (pUgLine[index]->configuration->name == nullptr)
             {
-                sprintf(buffer, "line_config:%d", pUgLine[index]->configuration->id);
+                snprintf(buffer, sizeof(buffer), "line_config:%d", pUgLine[index]->configuration->id);
                 line_object["line_code"] = buffer;
             }
             else
@@ -2277,7 +2276,7 @@ STATUS jsondump::dump_system(void)
                 break;
             }
 
-            pTpLine[index] = /*OBJECTDATA(obj,<>)*/ object_data<line>(obj);
+            pTpLine[index] = object_data<line>(obj);
             if (pTpLine[index] == nullptr)
             {
                 gl_error("Unable to map object as triplex_line object.");
@@ -2293,7 +2292,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "triplex_line:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "triplex_line:%d", obj->id);
                 line_object["id"] = buffer;
             }
 
@@ -2305,7 +2304,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pTpLine[index]->from->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pTpLine[index]->from->oclass->name,
                         pTpLine[index]->from->id);
                 line_object["node1_id"] = buffer;
             }
@@ -2318,7 +2317,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pTpLine[index]->to->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pTpLine[index]->to->oclass->name,
                         pTpLine[index]->to->id);
                 line_object["node2_id"] = buffer;
             }
@@ -2433,7 +2432,7 @@ STATUS jsondump::dump_system(void)
             // write line_code
             if (pTpLine[index]->configuration->name == nullptr)
             {
-                sprintf(buffer, "line_config:%d", pTpLine[index]->configuration->id);
+                snprintf(buffer, sizeof(buffer), "line_config:%d", pTpLine[index]->configuration->id);
                 line_object["line_code"] = buffer;
             }
             else
@@ -2502,7 +2501,7 @@ STATUS jsondump::dump_system(void)
                 break;
             }
 
-            pSwitch[index] = /*OBJECTDATA(obj,<>)*/ object_data<switch_object>(obj);
+            pSwitch[index] = object_data<switch_object>(obj);
             if (pSwitch[index] == nullptr)
             {
                 gl_error("Unable to map object as switch object.");
@@ -2518,7 +2517,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "switch:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "switch:%d", obj->id);
                 line_object["id"] = buffer;
             }
 
@@ -2530,7 +2529,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pSwitch[index]->from->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pSwitch[index]->from->oclass->name,
                         pSwitch[index]->from->id);
                 line_object["node1_id"] = buffer;
             }
@@ -2543,7 +2542,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pSwitch[index]->to->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pSwitch[index]->to->oclass->name,
                         pSwitch[index]->to->id);
                 line_object["node2_id"] = buffer;
             }
@@ -2700,9 +2699,8 @@ STATUS jsondump::dump_system(void)
             }
 
             pSectionalizer[index] =
-                /*OBJECTDATA(obj,<>)*/ object_data<sectionalizer>(obj);
-            if (pSectionalizer[index] == nullptr)
-            {
+                object_data<sectionalizer>(obj);
+      if (pSectionalizer[index] == nullptr) {
                 gl_error("Unable to map object as sectionalizer object.");
                 return FAILED;
             }
@@ -2716,7 +2714,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "sectionalizer:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "sectionalizer:%d", obj->id);
                 line_object["id"] = buffer;
             }
 
@@ -2728,7 +2726,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pSectionalizer[index]->from->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pSectionalizer[index]->from->oclass->name,
                         pSectionalizer[index]->from->id);
                 line_object["node1_id"] = buffer;
             }
@@ -2741,7 +2739,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pSectionalizer[index]->to->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pSectionalizer[index]->to->oclass->name,
                         pSectionalizer[index]->to->id);
                 line_object["node2_id"] = buffer;
             }
@@ -2900,7 +2898,7 @@ STATUS jsondump::dump_system(void)
                 break;
             }
 
-            pRecloser[index] = /*OBJECTDATA(obj,<>)*/ object_data<recloser>(obj);
+            pRecloser[index] = object_data<recloser>(obj);
             if (pRecloser[index] == nullptr)
             {
                 gl_error("Unable to map object as recloser object.");
@@ -2916,7 +2914,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "recloser:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "recloser:%d", obj->id);
                 line_object["id"] = buffer;
             }
 
@@ -2928,7 +2926,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pRecloser[index]->from->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pRecloser[index]->from->oclass->name,
                         pRecloser[index]->from->id);
                 line_object["node1_id"] = buffer;
             }
@@ -2941,7 +2939,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pRecloser[index]->to->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pRecloser[index]->to->oclass->name,
                         pRecloser[index]->to->id);
                 line_object["node2_id"] = buffer;
             }
@@ -3101,7 +3099,7 @@ STATUS jsondump::dump_system(void)
                 break;
             }
 
-            pFuse[index] = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
+            pFuse[index] = object_data<fuse>(obj);
             if (pFuse[index] == nullptr)
             {
                 gl_error("Unable to map object as fuse object.");
@@ -3117,7 +3115,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 //"Make" a value
-                sprintf(buffer, "fuse:%d", obj->id);
+        snprintf(buffer, sizeof(buffer), "fuse:%d", obj->id);
                 line_object["id"] = buffer;
             }
 
@@ -3129,7 +3127,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pFuse[index]->from->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pFuse[index]->from->oclass->name,
                         pFuse[index]->from->id);
                 line_object["node1_id"] = buffer;
             }
@@ -3142,7 +3140,7 @@ STATUS jsondump::dump_system(void)
             else
             {
                 // Make value
-                sprintf(buffer, "%s:%d", pFuse[index]->to->oclass->name,
+        snprintf(buffer, sizeof(buffer), "%s:%d", pFuse[index]->to->oclass->name,
                         pFuse[index]->to->id);
                 line_object["node2_id"] = buffer;
             }
@@ -3385,7 +3383,7 @@ STATUS jsondump::dump_system(void)
                 //  write line_code
                 if (pLineConf[index]->name == nullptr)
                 {
-                    sprintf(buffer, "line_config:%d", pLineConf[index]->id);
+                    snprintf(buffer, sizeof(buffer), "line_config:%d", pLineConf[index]->id);
                     line_configuration_object["line_code"] = buffer;
                 }
                 else
@@ -3474,7 +3472,7 @@ STATUS jsondump::dump_system(void)
                 //  write line_code
                 if (pTpLineConf[index]->name == nullptr)
                 {
-                    sprintf(buffer, "line_config:%d", pTpLineConf[index]->id);
+                    snprintf(buffer, sizeof(buffer), "line_config:%d", pTpLineConf[index]->id);
                     line_configuration_object["line_code"] = buffer;
                 }
                 else
@@ -3556,7 +3554,7 @@ STATUS jsondump::dump_system(void)
                 // write line_code
                 if (pTransConf[index]->name == nullptr)
                 {
-                    sprintf(buffer, "trans_config:%d", pTransConf[index]->id);
+                    snprintf(buffer, sizeof(buffer), "trans_config:%d", pTransConf[index]->id);
                     line_configuration_object["line_code"] = buffer;
                 }
                 else
@@ -3622,7 +3620,7 @@ STATUS jsondump::dump_system(void)
                 // write line_code
                 if (pRegConf[index]->name == nullptr)
                 {
-                    sprintf(buffer, "reg_config:%d", pRegConf[index]->id);
+                    snprintf(buffer, sizeof(buffer), "reg_config:%d", pRegConf[index]->id);
                     line_configuration_object["line_code"] = buffer;
                 }
                 else
@@ -3844,7 +3842,7 @@ STATUS jsondump::dump_reliability(void)
             }
 
             // Directly obtain the data information from the object
-            fuseData = /*OBJECTDATA(obj,<>)*/ object_data<fuse>(obj);
+      fuseData = object_data<fuse>(obj);
 
             // Write device name
             protect_obj["Name"] = obj->name;
@@ -3853,17 +3851,17 @@ STATUS jsondump::dump_reliability(void)
             // Append opening status to array
             if ((fuseData->phases & 0x04) == 0x04)
             {
-                sprintf(buffer, "%d", (fuseData->phase_A_state == 1) ? true : false);
+                snprintf(buffer, sizeof(buffer), "%d", (fuseData->phase_A_state == 1) ? true : false);
                 jsonArray.push_back(buffer);
             }
             if ((fuseData->phases & 0x02) == 0x02)
             {
-                sprintf(buffer, "%d", ((fuseData->phase_B_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((fuseData->phase_B_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
             if ((fuseData->phases & 0x01) == 0x01)
             {
-                sprintf(buffer, "%d", ((fuseData->phase_C_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((fuseData->phase_C_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
 
@@ -3896,7 +3894,7 @@ STATUS jsondump::dump_reliability(void)
             }
 
             // Directly obtain the data information from the object
-            reclData = /*OBJECTDATA(obj,<>)*/ object_data<recloser>(obj);
+      reclData = object_data<recloser>(obj);
 
             // Write device name
             protect_obj["Name"] = obj->name;
@@ -3905,17 +3903,17 @@ STATUS jsondump::dump_reliability(void)
             // Append opening status to array
             if ((reclData->phases & 0x04) == 0x04)
             {
-                sprintf(buffer, "%d", ((reclData->phase_A_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((reclData->phase_A_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
             if ((reclData->phases & 0x02) == 0x02)
             {
-                sprintf(buffer, "%d", ((reclData->phase_B_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((reclData->phase_B_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
             if ((reclData->phases & 0x01) == 0x01)
             {
-                sprintf(buffer, "%d", ((reclData->phase_C_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((reclData->phase_C_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
 
@@ -3948,7 +3946,7 @@ STATUS jsondump::dump_reliability(void)
             }
 
             // Directly obtain the data information from the object
-            secData = /*OBJECTDATA(obj,<>)*/ object_data<sectionalizer>(obj);
+      secData = object_data<sectionalizer>(obj);
 
             // Write device name
             protect_obj["Name"] = obj->name;
@@ -3957,17 +3955,17 @@ STATUS jsondump::dump_reliability(void)
             // Append opening status to array
             if ((secData->phases & 0x04) == 0x04)
             {
-                sprintf(buffer, "%d", ((secData->phase_A_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((secData->phase_A_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
             if ((secData->phases & 0x02) == 0x02)
             {
-                sprintf(buffer, "%d", ((secData->phase_B_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((secData->phase_B_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
             if ((secData->phases & 0x01) == 0x01)
             {
-                sprintf(buffer, "%d", ((secData->phase_C_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((secData->phase_C_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
 
@@ -4007,7 +4005,7 @@ STATUS jsondump::dump_reliability(void)
             }
 
             // Directly obtain the data information from the object
-            capData = /*OBJECTDATA(obj,<>)*/ object_data<capacitor>(obj);
+      capData = object_data<capacitor>(obj);
 
             // Write device name
             other_obj["Name"] = obj->name;
@@ -4016,17 +4014,17 @@ STATUS jsondump::dump_reliability(void)
             // Append opening status to array
             if ((capData->pt_phase & 0x04) == 0x04)
             {
-                sprintf(buffer, "%d", ((capData->switchA_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((capData->switchA_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
             if ((capData->pt_phase & 0x02) == 0x02)
             {
-                sprintf(buffer, "%d", ((capData->switchB_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((capData->switchB_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
             if ((capData->pt_phase & 0x01) == 0x01)
             {
-                sprintf(buffer, "%d", ((capData->switchC_state == 1) ? true : false));
+                snprintf(buffer, sizeof(buffer), "%d", ((capData->switchC_state == 1) ? true : false));
                 jsonArray.push_back(buffer);
             }
 
@@ -4059,7 +4057,7 @@ STATUS jsondump::dump_reliability(void)
             }
 
             // Directly obtain the data information from the object
-            regData = /*OBJECTDATA(obj,<>)*/ object_data<regulator>(obj);
+      regData = object_data<regulator>(obj);
 
             // Write device name
             other_obj["Name"] = obj->name;
@@ -4344,7 +4342,7 @@ EXPORT int create_jsondump(OBJECT **obj, OBJECT *parent)
         *obj = gl_create_object(jsondump::oclass);
         if (*obj != nullptr)
         {
-            jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(*obj);
+            jsondump *my = object_data<jsondump>(*obj);
             // gl_set_parent(*obj, parent);
             return my->create();
         }
@@ -4358,7 +4356,7 @@ EXPORT int create_jsondump(OBJECT **obj, OBJECT *parent)
 
 EXPORT int init_jsondump(OBJECT *obj)
 {
-    jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
+    jsondump *my = object_data<jsondump>(obj);
     try
     {
         return my->init(obj->parent);
@@ -4370,12 +4368,11 @@ EXPORT int init_jsondump(OBJECT *obj)
     }
 }
 
-static TIMESTAMP sync_jsondump_impl(OBJECT *obj, TIMESTAMP t1,
-                                    PASSCONFIG pass)
+static TIMESTAMP sync_jsondump_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
     try
     {
-        jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
+        jsondump *my = object_data<jsondump>(obj);
         TIMESTAMP rv;
         obj->clock = t1;
         rv = my->runtime > t1 ? my->runtime : TS_NEVER;
@@ -4385,8 +4382,7 @@ static TIMESTAMP sync_jsondump_impl(OBJECT *obj, TIMESTAMP t1,
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_jsondump(OBJECT *obj, TIMESTAMP t1,
-                                              PASSCONFIG pass)
+extern "C" MODULE_API TIMESTAMP sync_jsondump(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 {
     return sync_jsondump_impl(obj, t1, pass);
 }
@@ -4406,7 +4402,7 @@ EXPORT TIMESTAMP commit_jsondump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 {
     try
     {
-        jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
+        jsondump *my = object_data<jsondump>(obj);
         return my->commit(t1);
     }
     I_CATCHALL(commit, jsondump);
@@ -4415,7 +4411,7 @@ EXPORT TIMESTAMP commit_jsondump(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 EXPORT STATUS finalize_jsondump(OBJECT *obj)
 {
 
-    jsondump *my = /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj);
+  jsondump *my = object_data<jsondump>(obj);
 
     try
     {
@@ -4444,9 +4440,23 @@ EXPORT STATUS finalize_jsondump(OBJECT *obj)
     }
 }
 
-EXPORT int isa_jsondump(OBJECT *obj, char *classname)
+EXPORT int isa_jsondump_impl(OBJECT *obj, char *classname)
 {
-    return /*OBJECTDATA(obj,<>)*/ object_data<jsondump>(obj)->isa(classname);
+    return object_data<jsondump>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_jsondump(OBJECT *obj, char *classname) {
+  return isa_jsondump_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_jsondump(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_jsondump_impl(obj, classname);
+}
+#endif
 
 /**@}*/

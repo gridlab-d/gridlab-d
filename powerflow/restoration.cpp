@@ -5944,14 +5944,12 @@ EXPORT int init_restoration(OBJECT *obj, OBJECT *parent) {
  * @param pass the current pass for this sync call
  * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
  */
-static TIMESTAMP sync_restoration_impl(OBJECT *obj, TIMESTAMP t1,
-                                       PASSCONFIG pass) {
+static TIMESTAMP sync_restoration_impl(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return TS_NEVER;
 }
 
 #ifndef __APPLE__
-extern "C" MODULE_API TIMESTAMP sync_restoration(OBJECT *obj, TIMESTAMP t1,
-                                                 PASSCONFIG pass) {
+extern "C" MODULE_API TIMESTAMP sync_restoration(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass) {
   return sync_restoration_impl(obj, t1, pass);
 }
 #else
@@ -5965,8 +5963,22 @@ extern "C" MODULE_API TIMESTAMP sync_restoration(OBJECT *obj, ...) {
 }
 #endif
 
-EXPORT int isa_restoration(OBJECT *obj, char *classname) {
+EXPORT int isa_restoration_impl(OBJECT *obj, char *classname) {
   return object_data<restoration>(obj)->isa(classname);
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_restoration(OBJECT *obj, char *classname) {
+  return isa_restoration_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_restoration(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_restoration_impl(obj, classname);
+}
+#endif
 
 /**@}**/

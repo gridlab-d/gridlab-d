@@ -13,7 +13,6 @@
 
 #include "generators.h"
 
-EXPORT int isa_diesel_dg(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
