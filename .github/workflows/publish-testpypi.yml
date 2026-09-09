@@ -8,30 +8,37 @@ on:
 jobs:
   build-and-publish:
     name: Build and Publish to TestPyPI
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     environment: testpypi
     permissions:
       id-token: write  # IMPORTANT: Mandatory for trusted publishing
     
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.12', '3.14']
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: recursive
+        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install System Dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential
+        sudo apt update -yq
+        sudo apt install -yq --no-install-recommends \
+          build-essential \
+          cmake \
+          ninja-build \
+          libboost-dev \
+          libeigen3-dev \
+          nlohmann-json3-dev
 
     - name: Build GridLAB-D Core
       run: |
@@ -44,9 +51,10 @@ jobs:
     - name: Build Python Wheel for Python ${{ matrix.python-version }}
       run: |
         cd python_bindings
-        pip install build auditwheel
+        ./prepare_pypi_build.sh
+        pip install setuptools wheel twine build
         # Build the wheel
-        python -m build --wheel
+        python -m build
         # Repair the wheel to add manylinux tags
         auditwheel repair dist/*.whl -w dist/
         # Remove the old linux_x86_64 wheel
@@ -63,7 +71,7 @@ jobs:
   publish:
     name: Publish all wheels to TestPyPI
     needs: build-and-publish
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     environment: testpypi
     permissions:
       id-token: write
