@@ -19,10 +19,10 @@ on:
         default: all
         options: [all, unix]
       publish:
-        description: Package index to publish to after all wheel tests pass
+        description: Publish to PyPI after all wheel tests pass
         type: choice
         default: none
-        options: [none, testpypi, pypi]
+        options: [none, pypi]
 
 jobs:
   build_wheels:
@@ -156,31 +156,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -c "import gridlabd; print(gridlabd.version()); print(gridlabd.hello()); g = gridlabd.GridLabD(); print(g.get_clock())"
 
-  upload_test_pypi:
-    name: Upload to Test PyPI
-    needs: [build_wheels, test_abi3]
-    runs-on: ubuntu-latest
-    environment: testpypi
-    permissions:
-      id-token: write
-    if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.publish == 'testpypi') ||
-      (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feature/1478'))
-    
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: wheels-*
-          merge-multiple: true
-          path: dist
-      
-      - name: Publish to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
-          print-hash: true
-
   upload_pypi:
     name: Upload to PyPI
     needs: [build_wheels, test_abi3]
@@ -191,7 +166,9 @@ jobs:
     if: >-
       (github.event_name == 'workflow_dispatch' && inputs.publish == 'pypi' &&
       (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')) ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      (github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' ||
+      github.ref == 'refs/heads/feature/1478'))
 
     steps:
       - uses: actions/download-artifact@v4
