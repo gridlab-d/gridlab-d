@@ -1,0 +1,73 @@
+[build-system]
+requires = ["scikit-build-core >=0.8", "nanobind >=3.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "gridlabd"
+version = "6.0.0a1"
+description = "Python bindings for GridLAB-D power system simulation"
+readme = "README.md"
+license = {text = "Battelle Open Source License"}
+authors = [{name = "GridLAB-D Team", email = "gridlabd@pnnl.gov"}]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.19.0",
+    "nanobind-backend>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/gridlab-d/gridlab-d"
+Repository = "https://github.com/gridlab-d/gridlab-d"
+Documentation = "https://gridlab-d.shoutwiki.com/wiki/Main_Page"
+
+[tool.scikit-build]
+# Split mode targets the CPython 3.10 stable ABI.
+wheel.py-api = "cp310"
+wheel.expand-macos-universal-tags = false
+cmake.version = ">=3.26"
+cmake.build-type = "Release"
+wheel.packages = ["src/gridlabd"]
+sdist.include = [
+    "CMakeLists.txt", 
+    "src_cpp/*", 
+    "src/**",
+    "prebuilt/**"
+]
+sdist.exclude = [".git*", "*.pyc", "__pycache__", "build", "dist", ".venv"]
+
+
+[tool.cibuildwheel]
+# Build once per platform; test this ABI3 wheel on all supported Python versions.
+build = ["cp310-*"]
+
+# Skip unsupported 32-bit and musl builds
+skip = ["*-win32", "*-manylinux_i686", "*-musllinux_*"]
+
+# Test command to verify the wheel works
+test-command = 'python -c "import gridlabd; print(gridlabd.version()); print(gridlabd.hello())"'
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64"]
+# Install build dependencies
+before-all = "/opt/python/cp310-cp310/bin/python -m pip install cmake patchelf && /opt/python/cp310-cp310/bin/cmake -S {project} -B {project}/build -DCMAKE_BUILD_TYPE=Release && /opt/python/cp310-cp310/bin/cmake --build {project}/build --parallel 4"
+
+# Build against glibc 2.28 to match the nanobind-backend Linux compatibility floor.
+manylinux-x86_64-image = "manylinux_2_28"
+repair-wheel-command = "auditwheel repair --plat manylinux_2_28_x86_64 --only-plat -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.macos]
+archs = ["universal2"]
+# Install CMake on macOS
+before-all = "python -m pip install cmake && cmake -S {project} -B {project}/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES='x86_64;arm64' -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 && cmake --build {project}/build --parallel 4"
+
+# Target macOS 11.0+ (Big Sur and later)
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }

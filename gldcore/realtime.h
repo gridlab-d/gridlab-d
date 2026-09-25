@@ -10,8 +10,7 @@
 #include "globals.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 extern time_t realtime_now();

@@ -1,0 +1,1 @@
+cmake -DGridLABD_DIR=${GridLabD_DIR} -DCMAKE_INSTALL_PREFIX="/Users/abhy245/gridlabd-dir/gridlab-d/test_gldapi/install" -DCMAKE_BUILD_TYPE=Debug ..

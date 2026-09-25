@@ -156,6 +156,39 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "sigma1", PADDR(sigma1),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 1 associated with synch. react.",
 			PT_double, "sigma2", PADDR(sigma2),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 2 associated with synch. react.",
 
+			// SPIM checkpoint variables
+			PT_double, "trip_prev", PADDR(trip_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous trip timer value",
+			PT_double, "reconnect_prev", PADDR(reconnect_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous reconnect timer value",
+			PT_int32, "motor_trip_prev", PADDR(motor_trip_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous motor trip state",
+			PT_complex, "psi_b_prev", PADDR(psi_b_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous backward rotating flux",
+			PT_complex, "psi_f_prev", PADDR(psi_f_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous forward rotating flux",
+			PT_complex, "psi_dr_prev", PADDR(psi_dr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous rotor d axis flux",
+			PT_complex, "psi_qr_prev", PADDR(psi_qr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous rotor q axis flux",
+			PT_complex, "Ids_prev", PADDR(Ids_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous d-axis stator current",
+			PT_complex, "Iqs_prev", PADDR(Iqs_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous q-axis stator current",
+			PT_complex, "If_prev", PADDR(If_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous forward current",
+			PT_complex, "Ib_prev", PADDR(Ib_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous backward current",
+			PT_complex, "Is_prev", PADDR(Is_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous motor current",
+			PT_complex, "motor_elec_power_prev", PADDR(motor_elec_power_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous motor electrical power",
+			PT_double, "Telec_prev", PADDR(Telec_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous electrical torque",
+			PT_double, "wr_prev", PADDR(wr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous rotor speed",
+			PT_double, "psi_sat_prev", PADDR(psi_sat_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous saturation flux",
+
+			// Under voltage protection checkpoint variables
+			PT_double, "uv_relay_time", PADDR(uv_relay_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: under-voltage relay time accumulator",
+			PT_int32, "uv_lockout", PADDR(uv_lockout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: under-voltage relay lockout state",
+
+			// TPIM checkpoint variables
+			PT_complex, "phips_prev", PADDR(phips_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous positive sequence stator flux",
+			PT_complex, "phins_cj_prev", PADDR(phins_cj_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous conjugate of negative sequence stator flux",
+			PT_complex, "phipr_prev", PADDR(phipr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous positive sequence rotor flux",
+			PT_complex, "phinr_cj_prev", PADDR(phinr_cj_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous conjugate of negative sequence rotor flux",
+			PT_double, "wr_pu_prev", PADDR(wr_pu_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous per-unit rotor speed",
+			PT_complex, "Ips_prev", PADDR(Ips_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous positive sequence stator current",
+			PT_complex, "Ipr_prev", PADDR(Ipr_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous positive sequence rotor current",
+			PT_complex, "Ins_cj_prev", PADDR(Ins_cj_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous conjugate of negative sequence stator current",
+			PT_complex, "Inr_cj_prev", PADDR(Inr_cj_prev), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "CHECKPOINT VAR: previous conjugate of negative sequence rotor current",
+
 			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
@@ -257,10 +290,8 @@ int motor::create()
     Rs= 0.262;
     Xs= 1.206;
     rs_pu = -999;  // pu
-    lls = -999;  //  pu
     lm = -999;  // pu
     rr_pu = -999;  // pu
-    llr = -999;  // pu
 
     // Parameters are for 3000 W motor
     Kfric = 0.0;  // pu
@@ -296,13 +327,20 @@ int motor::create()
 
 int motor::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+    OBJECT *obj = object_header(this);
+
+#ifdef __APPLE__
+    parent = obj->parent; // AppleClang seems to have an issue with the parent pointer
+#endif
+
 	int result;
 	bool temp_house_motor_state;
 	double temp_house_capacity_info, temp_house_cop;
 	enumeration temp_house_type;
 	gld_property *temp_gld_property;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
+	double lls;
+	double llr;
 
 	//See if we have a house connection defined -- if so, do this after that initializes (to get data)
 	if (mtr_house_pointer != nullptr)
@@ -419,7 +457,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;
@@ -480,7 +518,7 @@ int motor::init(OBJECT *parent)
 			}
 
 			//Pull the value
-			temp_gld_property->getp<enumeration>(temp_house_type, *test_rlock);
+			temp_gld_property->getp<enumeration>(temp_house_type, test_rlock);
 
 			//Delete the connection
 			delete temp_gld_property;
@@ -545,7 +583,7 @@ int motor::init(OBJECT *parent)
 
 		//Set the flag and push it
 		temp_house_motor_state = true;
-		temp_gld_property->setp<bool>(temp_house_motor_state,*test_rlock);
+		temp_gld_property->setp<bool>(temp_house_motor_state,test_rlock);
 
 		//Now that it is done, kill it
 		delete temp_gld_property;
@@ -564,7 +602,7 @@ int motor::init(OBJECT *parent)
 		}
 
 		//Check the initial state - pull the value (not sure it is actually set yet)
-		mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+		mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 		//Determine our state
 		if (temp_house_motor_state)
@@ -793,7 +831,7 @@ TIMESTAMP motor::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock = nullptr;
+	unsigned int test_rlock = 0;
 
 	// update voltage and frequency
 	updateFreqVolt();
@@ -804,7 +842,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		if (mtr_house_state_pointer != nullptr)
 		{
 			//Pull the updated state
-			mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+			mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 			//Set the motor state
 			if (temp_house_motor_state)
@@ -989,11 +1027,13 @@ TIMESTAMP motor::postsync(TIMESTAMP t0, TIMESTAMP t1)
 //Module-level call
 SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	OBJECT *hdr = OBJECTHDR(this);
+	OBJECT *hdr = object_header(this);
 	STATUS return_status_val;
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock = nullptr;
-	double deltat, deltat_ndiv;
+	unsigned int  test_rlock = 0;
+	double curr_delta_time;
+	double deltat; 
+	double deltat_ndiv;
 
 	// make sure to capture the current time
 	curr_delta_time = gl_globaldeltaclock;
@@ -1039,7 +1079,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			if (mtr_house_state_pointer != nullptr)
 			{
 				//Pull the updated state
-				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 				//Set the motor state
 				if (temp_house_motor_state)
@@ -1095,7 +1135,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			if (mtr_house_state_pointer != nullptr)
 			{
 				//Pull the updated state
-				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,test_rlock);
 
 				//Set the motor state
 				if (temp_house_motor_state)
@@ -1307,7 +1347,7 @@ void motor::updateFreqVolt() {
 	{
 		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0) // if we have a parent, reference the voltage and frequency of the parent
 		{
-			node *parNode = OBJECTDATA(SubNodeParent,node);
+			node *parNode = object_data<node>(SubNodeParent);
 			if (triplex_connected)
 			{
 				//See which type of triplex
@@ -1368,7 +1408,7 @@ void motor::updateFreqVolt() {
 	{
 		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0) // if we have a parent, reference the voltage and frequency of the parent
 		{
-			node *parNode = OBJECTDATA(SubNodeParent,node);
+			node *parNode = object_data<node>(SubNodeParent);
 			// obtain 3-phase voltages
 			Vas = parNode->voltage[0]/parNode->nominal_voltage;
 			Vbs = parNode->voltage[1]/parNode->nominal_voltage;
@@ -1656,6 +1696,8 @@ void motor::TPIMStateOFF() {
 
 // Function to calculate the solution to the steady state SPIM model
 void motor::SPIMSteadyState(TIMESTAMP t1) {
+	gld::complex TF[16];
+	gld::complex ITF[16];
 	double wr_delta = 1;
     psi_sat = 1;
 	double psi = -1;
@@ -2247,8 +2289,8 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 		*obj = gl_create_object(motor::oclass);
 		if (*obj!=nullptr)
 		{
-			motor *my = OBJECTDATA(*obj,motor);
-			gl_set_parent(*obj,parent);
+			motor *my = object_data<motor>(*obj);
+			//gl_set_parent(*obj,parent);
 			return my->create();
 		}
 		else
@@ -2266,7 +2308,7 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 EXPORT int init_motor(OBJECT *obj)
 {
 	try {
-		motor *my = OBJECTDATA(obj,motor);
+		motor *my = object_data<motor>(obj);
 		return my->init(obj->parent);
 	}
 	INIT_CATCHALL(motor);
@@ -2280,10 +2322,10 @@ EXPORT int init_motor(OBJECT *obj)
 * @param pass the current pass for this sync call
 * @return t1, where t1>t0 on success, t1=t0 for retry, t1<t0 on failure
 */
-EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+static TIMESTAMP sync_motor_impl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	TIMESTAMP t1 = TS_INVALID;
-	motor *my = OBJECTDATA(obj,motor);
+	motor *my = object_data<motor>(obj);
 	try
 	{
 		switch (pass) {
@@ -2307,6 +2349,23 @@ EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return t1;
 }
 
+#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
+{
+    return sync_motor_impl(obj, t0, pass);
+}
+#else
+extern "C" MODULE_API TIMESTAMP sync_motor(OBJECT *obj, ...)
+{
+    va_list args;
+    va_start(args, obj);
+    TIMESTAMP t0 = va_arg(args, TIMESTAMP);
+    PASSCONFIG pass = va_arg(args, PASSCONFIG);
+    va_end(args);
+    return sync_motor_impl(obj, t0, pass);
+}
+#endif
+
 /**
 * Allows the core to discover whether obj is a subtype of this class.
 *
@@ -2315,21 +2374,35 @@ EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 *
 * @return 0 if obj is a subtype of this class
 */
-EXPORT int isa_motor(OBJECT *obj, char *classname)
+EXPORT int isa_motor_impl(OBJECT *obj, char *classname)
 {
 	if(obj != 0 && classname != 0){
-		return OBJECTDATA(obj,motor)->isa(classname);
+		return object_data<motor>(obj)->isa(classname);
 	} else {
 		return 0;
 	}
 }
+
+#ifndef __APPLE__
+extern "C" MODULE_API int isa_motor(OBJECT *obj, char *classname) {
+  return isa_motor_impl(obj, classname);
+}
+#else
+extern "C" MODULE_API int isa_motor(OBJECT *obj, ...) {
+  va_list args;
+  va_start(args, obj);
+  char *classname = va_arg(args, char *);
+  va_end(args);
+  return isa_motor_impl(obj, classname);
+}
+#endif
 
 /** 
 * DELTA MODE
 */
 EXPORT SIMULATIONMODE interupdate_motor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	motor *my = OBJECTDATA(obj,motor);
+	motor *my = object_data<motor>(obj);
 	SIMULATIONMODE status = SM_ERROR;
 	try
 	{

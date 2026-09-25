@@ -1,0 +1,73 @@
+//This will test the accuracy of the HVAC energy use and temperature behavior
+//This test is an example of a balanced day
+//test_HVAC_balance.glm created by Andy Fisher
+//for this day the HVAC should never come on
+#set minimum_timestep=1;
+
+module residential{
+	implicit_enduses NONE;
+}
+module tape;
+module assert;
+module climate;
+module powerflow;
+
+clock{
+	timezone PST+8PDT;
+	starttime '2001-05-5 05:00:00';
+	stoptime '2001-05-6 05:00:02';
+}
+
+
+object climate{
+	tmyfile "WA-Yakima.tmy2";
+}
+
+schedule heatspt{
+	* * * * * 60;
+}
+
+schedule coolspt{
+	* * * * * 75;
+}
+
+object triplex_meter{
+	nominal_voltage 120;
+	phases AS;
+	object house{
+		system_mode OFF;
+		auxiliary_strategy DEADBAND;
+		heating_system_type HEAT_PUMP;
+		cooling_system_type ELECTRIC;
+		air_temperature 61.8;
+		mass_temperature 62.2;
+		heating_setpoint heatspt*1;
+		cooling_setpoint coolspt*1;
+		object recorder{
+			property panel.energy;
+			file "test_HVAC_balance.csv";
+			interval 1;
+			limit 86444;
+		};
+		object complex_assert{
+			target "panel.energy";
+			in '2001-05-6 5:00:00';
+			once ONCE_TRUE;
+			value 0+0i;
+			within 0.001;//asserting house_e within 1 percent of Rob's ETP result
+		};
+	};
+	object recorder{
+		property measured_real_power,measured_real_energy;
+		file "test_HVAC_balance.csv";
+		interval 1;
+		limit 86444;
+	};
+	object double_assert{
+		target "measured_real_energy";
+		in '2001-05-6 5:00:00';
+		once ONCE_TRUE;
+		value 0;
+		within 0.001;//asserting house_e within 1 percent of Rob's ETP result
+	};
+}

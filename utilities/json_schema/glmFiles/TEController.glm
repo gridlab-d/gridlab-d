@@ -1,0 +1,692 @@
+clock {
+     timezone EST+5EDT;
+     timestamp '2009-07-21 00:00:00';
+     stoptime '2009-07-25 00:00:00';
+}
+
+#set profiler=1;
+#set double_format=%+.12lg
+#set randomseed=10;
+#set relax_naming_rules=1;
+#set minimum_timestep=1;
+#include "water_and_setpoint_schedule_v3.glm";
+
+#include "appliance_schedules.glm";
+
+
+module tape;
+module climate;
+module generators;
+module market;
+module residential {
+     implicit_enduses NONE;
+};
+module powerflow {
+     solver_method FBS;
+     NR_iteration_limit 100;
+};
+
+class player {
+      double value;
+}
+
+
+object climate {
+     name "CA-San_francisco";
+     tmyfile "OH-Columbus_Port_Columbus_Intl_A.tmy3";
+     interpolate QUADRATIC;
+};
+
+
+object auction {
+    name Market1;
+    period 300;
+    special_mode BUYERS_ONLY;
+    unit kW;
+    init_price 0.1;
+    init_stdev 0.01;
+    object player {
+        file price.player;
+        property current_market.clearing_price;
+   };
+}
+
+class auction {
+	double current_price_mean_24h;
+	double current_price_stdev_24h;
+}
+
+object player {
+    name phase_A_load;
+    file phase_A.player;
+    loop 1;
+}
+object player {
+    name phase_B_load;
+    file phase_B.player;
+    loop 1;
+}
+object player {
+    name phase_C_load;
+    file phase_C.player;
+    loop 1;
+}
+
+object regulator_configuration {     
+      name regulator_configuration;     
+      name feeder_reg_cfg;     
+      Control OUTPUT_VOLTAGE;     
+      band_center 7200.0;     
+      band_width 120;     
+      connect_type WYE_WYE;     
+      time_delay 30;     
+      raise_taps 16;     
+      lower_taps 16;     
+      regulation 0.10;     
+      tap_pos_A 0;     
+      tap_pos_B 0;     
+      tap_pos_C 0;     
+} 
+
+object transformer_configuration {
+      name substation_config;
+      connect_type WYE_WYE;
+      install_type PADMOUNT;
+      primary_voltage 140000 V;
+      secondary_voltage 7200 V;
+      power_rating 750000;
+      powerA_rating 250000;
+      powerB_rating 250000;
+      powerC_rating 250000;
+      impedance 0.0015+0.00675j;
+}
+
+object transformer_configuration {
+     name default_transformer_A;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 124 V;
+     power_rating 250;
+     powerA_rating 250;
+     impedance 0.015+0.0675j;
+}
+
+object transformer_configuration {
+     name default_transformer_B;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 124 V;
+     power_rating 250;
+     powerB_rating 250;
+     impedance 0.015+0.0675j;
+}
+
+object transformer_configuration {
+     name default_transformer_C;
+     connect_type SINGLE_PHASE_CENTER_TAPPED;
+     install_type PADMOUNT;
+     primary_voltage 7200 V;
+     secondary_voltage 124 V;
+     power_rating 250;
+     powerC_rating 250;
+     impedance 0.015+0.0675j;
+}
+
+object triplex_line_conductor {
+      name Name_1_0_AA_triplex;
+      resistance 0.57;
+      geometric_mean_radius 0.0111;
+}
+
+object triplex_line_configuration {
+      name TLCFG;
+      conductor_1 Name_1_0_AA_triplex;
+      conductor_2 Name_1_0_AA_triplex;
+      conductor_N Name_1_0_AA_triplex;
+      insulation_thickness 0.08;
+      diameter 0.368;
+}
+
+object meter {
+     bustype SWING;
+     name ROOT;
+     phases ABCN;
+     nominal_voltage 230000;
+     object recorder {
+          property measured_real_power, measured_reactive_power;
+          limit 100000000;
+          interval 300;
+          file totalload_batt_GLD_Demo_50_nodes.csv;
+     };
+     object player {
+          property voltage_A;
+          loop 100;
+          file V_A.player;
+     };
+     object player {
+          property voltage_B;
+          loop 100;
+          file V_B.player;
+     };
+     object player {
+          property voltage_C;
+          loop 100;
+          file V_C.player;
+     };
+     phases ABCN;
+}
+
+object transformer {
+      phases ABCN;
+      groupid F1_Network_Trans;
+      name F1_Transformer1;
+      from ROOT;
+      to F1_transformer_meter;
+      configuration substation_config;
+}
+
+object meter {
+     name F1_transformer_meter;
+     phases ABCN;
+     nominal_voltage 7200;
+}
+
+object regulator {     
+      name R1-12-47-1_reg_1;     
+      from F1_transformer_meter;     
+      to reg_node;     
+      phases ABCN;     
+      configuration regulator_configuration;     
+}  
+
+object node {
+	name reg_node;
+	phases ABCN;
+	nominal_voltage 7200;
+}
+
+//Maybe optional load?
+object load {
+    name F1_unresp_load;
+    nominal_voltage 7200;
+    phases ABCN;
+    parent reg_node;
+    constant_power_A_real phase_A_load.value*0.0167;
+    constant_power_B_real phase_B_load.value*0.0167;
+    constant_power_C_real phase_C_load.value*0.0167;
+};
+
+object transformer {
+     name F1_center_tap_transformer_A;
+     phases AS;
+     from reg_node;
+     to F1_triplex_node_A;
+     configuration default_transformer_A;
+}
+
+object transformer {
+     name F1_center_tap_transformer_B;
+     phases BS;
+     from reg_node;
+     to F1_triplex_node_B;
+     configuration default_transformer_B;
+}
+
+object transformer {
+     name F1_center_tap_transformer_C;
+     phases CS;
+     from reg_node;
+     to F1_triplex_node_C;
+     configuration default_transformer_C;
+}
+
+
+// One triplex meter for each of the phases
+object triplex_meter {
+     name F1_triplex_node_A;
+     phases AS;
+     nominal_voltage 124.00;
+}
+
+object triplex_meter {
+     name F1_triplex_node_B;
+     phases BS;
+     nominal_voltage 124.00;
+}
+
+object triplex_meter {
+     name F1_triplex_node_C;
+     phases CS;
+     nominal_voltage 124.00;
+}
+
+
+//Phase A houses
+
+//Each house gets its own triplex line from the appropriate triplex meter node to the 
+// house's specific triplex meter
+object triplex_line {
+     from F1_triplex_node_A;
+     to F1_tpm_flatrate_A1;
+     groupid F1_Triplex_Line;
+     phases AS;
+     length 10;
+     configuration TLCFG;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases AS;
+     name F1_tpm_flatrate_A1;
+     groupid F1_flatrate_meter;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases AS;
+     name F1_tpm_rt_A1;
+     groupid F1_rt_meter;
+     parent F1_tpm_flatrate_A1;
+}
+
+object house {
+     name F1_H_1;
+     //Residential_2
+     parent F1_tpm_rt_A1;
+     schedule_skew -685;
+     Rroof 33.69;
+     Rwall 17.71;
+     Rfloor 17.02;
+     Rdoors 5;
+     Rwindows 1.81;
+     airchange_per_hour 0.80;
+     hvac_power_factor 0.97;
+     cooling_system_type ELECTRIC;
+     heating_system_type GAS;
+     fan_type ONE_SPEED;
+     hvac_breaker_rating 200;
+     total_thermal_mass_per_floor_area 3.01;
+     motor_efficiency AVERAGE;
+     motor_model BASIC;
+     cooling_COP 3.90;
+     floor_area 1040;
+     number_of_doors 2;
+     heating_setpoint cooling1*1-10;
+
+     object controller {
+          name F1_C_1;
+          use_override ON;
+          override override;
+          market Market1;
+          schedule_skew -685;
+          bid_mode ON;
+          control_mode RAMP;
+          //base_setpoint cooling1*0.977+3.56;
+          base_setpoint 75;
+          setpoint cooling_setpoint;
+          target air_temperature;
+          deadband thermostat_deadband;
+          use_predictive_bidding TRUE;
+          average_target current_price_mean_24h;
+          standard_deviation_target current_price_stdev_24h;
+          period 300;
+          demand last_cooling_load;
+          range_high 4.000;
+          range_low -2.000;
+          ramp_high 2.600;
+          ramp_low 2.600;
+          total total_load;
+          load hvac_load;
+          state power_state;
+     };
+
+     object ZIPload {
+          schedule_skew -685;
+          base_power LIGHTS*1.8752;
+          power_fraction 0.600000;
+          impedance_fraction 0.400000;
+          current_fraction 0.000000;
+          power_pf -0.780;
+          current_pf 0.420;
+          impedance_pf -0.880;
+          heat_fraction 0.91;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power CLOTHESWASHER*0.4354;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.70;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power REFRIGERATOR*0.7763;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.86;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power DRYER*1.0019;
+          power_fraction 0.100000;
+          impedance_fraction 0.800000;
+          current_fraction 0.100000;
+          power_pf 0.900;
+          current_pf 0.900;
+          impedance_pf 1.000;
+          heat_fraction 0.77;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power FREEZER*0.9110;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.80;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power RANGE*1.0590;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.86;
+     };
+     object ZIPload {
+          schedule_skew -685;
+          base_power MICROWAVE*0.6381;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.94;
+     };
+}
+
+
+
+
+
+// Phase B houses
+
+object triplex_line {
+     from F1_triplex_node_B;
+     to F1_tpm_flatrate_B17;
+     groupid F1_Triplex_Line;
+     phases BS;
+     length 10;
+     configuration TLCFG;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases BS;
+     name F1_tpm_flatrate_B17;
+     groupid F1_flatrate_meter;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases BS;
+     name F1_tpm_rt_B17;
+     groupid F1_rt_meter;
+     parent F1_tpm_flatrate_B17;
+}
+
+object house {
+     name F1_H_17;
+     //Residential_5
+     parent F1_tpm_rt_B17;
+     schedule_skew 769;
+     Rroof 15.73;
+     Rwall 6.84;
+     Rfloor 4.85;
+     Rdoors 3;
+     Rwindows 1.39;
+     airchange_per_hour 1.31;
+     hvac_power_factor 0.97;
+     cooling_system_type ELECTRIC;
+     heating_system_type GAS;
+     fan_type ONE_SPEED;
+     hvac_breaker_rating 200;
+     total_thermal_mass_per_floor_area 4.33;
+     motor_efficiency AVERAGE;
+     motor_model BASIC;
+     cooling_COP 2.50;
+     floor_area 727;
+     number_of_doors 1;
+     heating_setpoint cooling1*1-10;
+
+     object controller {
+          name F1_C_17;
+          use_override ON;
+          override override;
+          market Market1;
+          schedule_skew 769;
+          bid_mode ON;
+          control_mode RAMP;
+          //base_setpoint cooling1*0.954+5.21;
+          base_setpoint 75;
+          setpoint cooling_setpoint;
+          target air_temperature;
+          deadband thermostat_deadband;
+          use_predictive_bidding TRUE;
+          average_target current_price_mean_24h;
+          standard_deviation_target current_price_stdev_24h;
+          period 300;
+          demand last_cooling_load;
+          range_high 4.000;
+          range_low -4.000;
+          ramp_high 3.000;
+          ramp_low 3.000;
+          total total_load;
+          load hvac_load;
+          state power_state;
+     };
+
+     object ZIPload {
+          schedule_skew 769;
+          base_power LIGHTS*1.5531;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.67;
+     };
+     object ZIPload {
+          schedule_skew 769;
+          base_power CLOTHESWASHER*0.7993;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.80;
+     };
+     object ZIPload {
+          schedule_skew 769;
+          base_power REFRIGERATOR*0.7096;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.81;
+     };
+     object ZIPload {
+          schedule_skew 769;
+          base_power DRYER*0.3796;
+          power_fraction 0.100000;
+          impedance_fraction 0.800000;
+          current_fraction 0.100000;
+          power_pf 0.900;
+          current_pf 0.900;
+          impedance_pf 1.000;
+          heat_fraction 0.95;
+     };
+     object ZIPload {
+          schedule_skew 769;
+          base_power FREEZER*0.4954;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.78;
+     };
+     object ZIPload {
+          schedule_skew 769;
+          base_power RANGE*0.4252;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.83;
+     };
+     object ZIPload {
+          schedule_skew 769;
+          base_power MICROWAVE*0.5466;
+          power_fraction 1.000000;
+          impedance_fraction 0.000000;
+          current_fraction 0.000000;
+          power_pf 0.970;
+          current_pf 0.970;
+          impedance_pf 0.970;
+          heat_fraction 0.85;
+     };
+}
+
+
+
+// Phase C houses
+object triplex_line {
+     from F1_triplex_node_C;
+     to F1_tpm_flatrate_C34;
+     groupid F1_Triplex_Line;
+     phases CS;
+     length 10;
+     configuration TLCFG;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases CS;
+     name F1_tpm_flatrate_C34;
+     groupid F1_flatrate_meter;
+}
+
+object triplex_meter {
+     nominal_voltage 124;
+     phases CS;
+     name F1_tpm_rt_C34;
+     groupid F1_rt_meter;
+     parent F1_tpm_flatrate_C34;
+}
+
+object house {
+     name F1_H_34;
+     //Residential_1
+     parent F1_tpm_rt_C34;
+     schedule_skew 1551;
+     Rroof 16.67;
+     Rwall 9.50;
+     Rfloor 10.24;
+     Rdoors 3;
+     Rwindows 1.58;
+     airchange_per_hour 0.90;
+     hvac_power_factor 0.97;
+     cooling_system_type ELECTRIC;
+     heating_system_type GAS;
+     fan_type ONE_SPEED;
+     hvac_breaker_rating 200;
+     total_thermal_mass_per_floor_area 3.37;
+     motor_efficiency AVERAGE;
+     motor_model BASIC;
+     cooling_COP 2.72;
+     floor_area 1073;
+     number_of_doors 2;
+     heating_setpoint cooling1*1-10;
+
+     object controller {
+          name F1_C_34;
+          use_override ON;
+          override override;
+          market Market1;
+          schedule_skew 1551;
+          bid_mode ON;
+          control_mode RAMP;
+          //base_setpoint cooling1*0.982+5.27;
+          base_setpoint 75;
+          setpoint cooling_setpoint;
+          target air_temperature;
+          deadband thermostat_deadband;
+          use_predictive_bidding TRUE;
+          average_target current_price_mean_24h;
+          standard_deviation_target current_price_stdev_24h;
+          period 300;
+          demand last_cooling_load;
+           range_high 6.000;
+           range_low -3.000;
+           ramp_high 2.400;
+           ramp_low 2.400;
+          total total_load;
+          load hvac_load;
+          state power_state;
+     };
+
+     object ZIPload {
+          schedule_skew 1551;
+          base_power LIGHTS*2.3319;
+          power_fraction 0.000000;
+          impedance_fraction 1.000000;
+          current_fraction 0.000000;
+          power_pf 0.000;
+          current_pf 0.000;
+          impedance_pf 1.000;
+          heat_fraction 0.78;
+     };
+}
+
+
+// Add recorders here
+object group_recorder
+{
+	name cooling_setpoint_recorder;
+	interval 300;
+	file cooling_setpoint.csv;
+	property cooling_setpoint;
+	group "class=house";
+}
+
+object group_recorder{
+	name controller_recorder;
+	interval 300;
+	file clearing_price.csv;
+	property current_market.clearing_price;
+	group "class=auction";
+}

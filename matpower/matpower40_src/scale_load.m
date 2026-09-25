@@ -11,13 +11,13 @@ function [bus, gen] = scale_load(load, bus, gen, load_zone, opt)
 %       or as a target quantity. If there are nz load zones this
 %       vector has nz elements.
 %
-%   BUS - standard BUS matrix with nb rows, where the fixed active
+%   BUS - standard BUS matrix with nb.rows(), where the fixed active
 %       and reactive loads available for scaling are specified in
 %       columns PD and QD
 %
-%   GEN - (optional) standard GEN matrix with ng rows, where the
+%   GEN - (optional) standard GEN matrix with ng.rows(), where the
 %       dispatchable loads available for scaling are specified by
-%       columns PG, QG, PMIN, QMIN and QMAX (in rows for which
+%       columns PG, QG, PMIN, QMIN and QMAX (in.rows() for which
 %       ISLOAD(GEN) returns true). If GEN is empty, it assumes
 %       there are no dispatchable loads.
 %

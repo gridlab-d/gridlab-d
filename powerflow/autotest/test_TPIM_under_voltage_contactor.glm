@@ -1,10 +1,10 @@
 //Simple test system
 #set profiler=1
 //#set pauseatexit=1
-#set randomseed=39;
+#set randomseed=39
 
 clock {
-	timezone "PST+8PDT";
+	timezone PST+8PDT;
 	starttime '2001-08-01 12:00:00 PDT';
 	stoptime '2001-08-01 12:00:03 PDT';
 }
@@ -520,8 +520,8 @@ object motor {
     contactor_open_Vmin 0.6;
     contactor_close_Vmax 0.8;
     object enum_assert {
-    target motor_status;
-    flags DELTAMODE;
+        target motor_status;
+        flags DELTAMODE;
         object player {
             property value;
             file "../TPIM_under_voltage_contactor_status.player";

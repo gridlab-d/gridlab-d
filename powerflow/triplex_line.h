@@ -4,20 +4,19 @@
 #ifndef _TRIPLEXLINE_H
 #define _TRIPLEXLINE_H
 
-class triplex_line : public line
-{
+class triplex_line : public line {
 public:
-    static CLASS *oclass;
-    static CLASS *pclass;
-        
+  static CLASS *oclass;
+  static CLASS *pclass;
+
 public:
-	int init(OBJECT *parent);
-	triplex_line(MODULE *mod);
-	void recalc(void);
-	inline triplex_line(CLASS *cl=oclass):line(cl){};
-	int isa(char *classname);
-	int create(void);
-	void phase_conductor_checks(void);
+  int init(OBJECT *parent);
+  triplex_line(MODULE *mod);
+  void recalc(void);
+  inline triplex_line(CLASS *cl = oclass) : line(cl) {};
+  int isa(char *classname);
+  int create(void);
+  void phase_conductor_checks(void);
 };
 
 EXPORT int recalc_triplex_line(OBJECT *obj);

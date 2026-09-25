@@ -6,30 +6,27 @@
 
 #include "powerflow.h"
 
-typedef enum {
-	VDM_RECT,
-	VDM_POLAR
-} VDMODE;
+typedef enum { VDM_RECT, VDM_POLAR } VDMODE;
 
-class voltdump : public gld_object
-{
+class voltdump : public gld_object {
 public:
-	TIMESTAMP runtime;
-	char32 group;
-	char256 filename;
-	int32 runcount;
-	enumeration mode;		///< dumps the voltages in either polar or rectangular notation
+  TIMESTAMP runtime;
+  char32 group;
+  char256 filename;
+  int32 runcount;
+  enumeration
+      mode; ///< dumps the voltages in either polar or rectangular notation
 public:
-	static CLASS *oclass;
-public:
-	voltdump(MODULE *mod);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP commit(TIMESTAMP t);
-	int isa(char *classname);
+  static CLASS *oclass;
 
-	void dump(TIMESTAMP t);
+public:
+  voltdump(MODULE *mod);
+  int create(void);
+  int init(OBJECT *parent);
+  TIMESTAMP commit(TIMESTAMP t);
+  int isa(char *classname);
+
+  void dump(TIMESTAMP t);
 };
 
 #endif // _VOLTDUMP_H
-

@@ -47,6 +47,7 @@ add_library(${GLD_MODULE_NAME}
         elcap2010.h
 )
 
+
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
 target_include_directories(${GLD_MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
@@ -56,3 +57,4 @@ if (GLD_USE_CLANG_TIDY)
             CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
             )
 endif ()
+

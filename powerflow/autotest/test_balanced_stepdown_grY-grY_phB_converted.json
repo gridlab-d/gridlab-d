@@ -1,0 +1,230 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $id$",
+      "// Copyright (C) 2008 Battelle Memorial Institute",
+      "//  An example case of IEEE 4 node system using Balanced step-down grY-grY tranformer.",
+      "//  Using one phase-B line at the end node,",
+      "//  Using static load at the node 4.",
+      "/////////////////////////////////////////////",
+      "// BEGIN",
+      "/////////////////////////////////////////////"
+    ]
+  },
+  "_directives": {
+    "#define": {
+      "stylesheet": "C:\\Documents and Settings\\D3Y074\\My Documents\\GridLab-D\\trunk\\VS2005\\gridlabd-2_0\";"
+    },
+    "#set": {
+      "relax_naming_rules": 1
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "object_declaration": "overhead_line_conductor:100",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "object_declaration": "overhead_line_conductor:101",
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "object_declaration": "line_spacing:200",
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        },
+        {
+          "object_declaration": "line_spacing:201",
+          "distance_BN": 4.272002
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "object_declaration": "line_configuration:300",
+          "conductor_A": "overhead_line_conductor:100",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_C": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:200"
+        },
+        {
+          "object_declaration": "line_configuration:301",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:201"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "object_declaration": "transformer_configuration:400",
+          "connect_type": 1,
+          "power_rating": 6000,
+          "powerA_rating": 2000,
+          "powerB_rating": 2000,
+          "powerC_rating": 2000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "object_declaration": "node:1",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node2",
+          "object_declaration": "node:2",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "object_declaration": "node:3",
+          "phases": "ABCN",
+          "voltage_A": "+2401.777+0.000j",
+          "voltage_B": "-1200.889-2080.000j",
+          "voltage_C": "-1200.889+2080.000j",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "object_declaration": "overhead_line:12",
+          "phases": "ABCN",
+          "from": "node:1",
+          "to": "node:2",
+          "length": 2000,
+          "configuration": "line_configuration:300"
+        },
+        {
+          "object_declaration": "overhead_line:34",
+          "phases": "BN",
+          "from": "node:3",
+          "to": "load:4",
+          "length": 2500,
+          "configuration": "line_configuration:301"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "node2",
+          "target": "voltage_A",
+          "within": 5,
+          "value": "+7197.98+0.644302d "
+        },
+        {
+          "parent": "node2",
+          "target": "voltage_B",
+          "within": 5,
+          "value": "+7039.31-120.602d "
+        },
+        {
+          "parent": "node2",
+          "target": "voltage_C",
+          "within": 5,
+          "value": "+7258.91+119.711d "
+        },
+        {
+          "parent": "node:3",
+          "target": "voltage_A",
+          "within": 5,
+          "value": "+2401.25+0.644302d "
+        },
+        {
+          "parent": "node:3",
+          "target": "voltage_B",
+          "within": 5,
+          "value": "+2188.33-124.193d "
+        },
+        {
+          "parent": "node:3",
+          "target": "voltage_C",
+          "within": 5,
+          "value": "+2421.58+119.711d "
+        },
+        {
+          "parent": "load:4",
+          "target": "voltage_A",
+          "within": 5,
+          "value": "+0+0d"
+        },
+        {
+          "parent": "load:4",
+          "target": "voltage_B",
+          "within": 5,
+          "value": "+1639.84-135.454d"
+        },
+        {
+          "parent": "load:4",
+          "target": "voltage_C",
+          "within": 5,
+          "value": "+0+0d"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "object_declaration": "transformer:23",
+          "phases": "ABCN",
+          "from": "node:2",
+          "to": "node:3",
+          "configuration": "transformer_configuration:400"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "object_declaration": "load:4",
+          "phases": "BN",
+          "voltage_B": "-1200.889-2080.000j",
+          "constant_power_B": "+1800009.000+871779.789j",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    }
+  }
+}

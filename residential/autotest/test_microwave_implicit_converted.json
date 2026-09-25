@@ -1,0 +1,50 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id: test_microwave_implicit.glm 4738 2014-07-03 00:55:39Z dchassin $",
+      "// Test implicit microwave",
+      "//"
+    ]
+  },
+  "_directives": {
+    "#define": {
+      "stylesheet": "C:\\Project Files\\Gridlabd\\gridlab-d\\trunk\\VS2005\\gridlabd-2_0.xsl"
+    },
+    "#set": {
+      "suppress_repeat_messages": 0,
+      "randomseed": 10
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00 PST'",
+    "stoptime": "'2002-01-01 00:00:00 PST'"
+  },
+  "modules": {
+    "residential": {
+      "implicit_enduses": "MICROWAVE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "parent": "house_1",
+          "property": "panel.power,panel.energy",
+          "file": "test_microwave_energy.csv",
+          "interval": 3600,
+          "limit": 100
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1"
+        }
+      ]
+    }
+  }
+}

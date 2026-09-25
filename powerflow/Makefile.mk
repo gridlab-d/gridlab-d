@@ -2,7 +2,6 @@ pkglib_LTLIBRARIES += powerflow/powerflow.la
 
 powerflow_powerflow_la_CPPFLAGS =
 powerflow_powerflow_la_CPPFLAGS += -I$(top_srcdir)/third_party/superLU_MT
-powerflow_powerflow_la_CPPFLAGS += -I$(top_srcdir)/third_party/jsonCpp
 powerflow_powerflow_la_CPPFLAGS += $(AM_CPPFLAGS)
 
 powerflow_powerflow_la_LDFLAGS =
@@ -10,7 +9,6 @@ powerflow_powerflow_la_LDFLAGS += $(AM_LDFLAGS)
 powerflow_powerflow_la_LDFLAGS += -ldl
 
 powerflow_powerflow_la_LIBADD =
-powerflow_powerflow_la_LIBADD += third_party/jsonCpp/libjsoncpp.la
 powerflow_powerflow_la_LIBADD += third_party/superLU_MT/libsuperlu.la
 powerflow_powerflow_la_LIBADD += $(PTHREAD_CFLAGS)
 powerflow_powerflow_la_LIBADD += $(PTHREAD_LIBS)

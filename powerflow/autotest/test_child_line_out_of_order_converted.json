@@ -1,0 +1,110 @@
+{
+  "__preamble": {
+    "comments": [
+      "//File to make sure that lines attached to childed nodes get initialized right,",
+      "//especially if that child is after the line in the GLM.",
+      "// Set up so if it runs, it worked.  If it doesn't, it failed.",
+      "//#set profiler=1"
+    ]
+  },
+  "clock": {
+    "timezone": "\"UTC0\"",
+    "starttime": "'2019-10-11 21:18:12'",
+    "stoptime": "'2019-10-11 21:20:12'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    }
+  },
+  "objects": {
+    "fault_check": {
+      "instances": [
+        {
+          "name": "fault_check_object",
+          "check_mode": "ONCHANGE",
+          "strictly_radial": false,
+          "grid_association": true
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "sourcebus",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "nominal_voltage": 66395.28
+        },
+        {
+          "name": "sourcebus_meter",
+          "phases": "ABCN",
+          "nominal_voltage": 66395.28,
+          "parent": "sourcebus"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "bus_1",
+          "phases": "ABCN",
+          "nominal_voltage": 66395.28
+        },
+        {
+          "name": "bus_2",
+          "phases": "ABCN",
+          "nominal_voltage": 66395.28
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "line_hvmv_sub_hsb",
+          "from": "sourcebus_meter",
+          "to": "bus_1",
+          "phases": "ABC",
+          "length": 3.2809,
+          "configuration": "lcon_hvmv_sub_hsb_ABC"
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lcon_hvmv_sub_hsb_ABC",
+          "z11": "0.00000+14.7983j",
+          "c11": 0.0,
+          "z12": "0.00000+0.00000j",
+          "c12": 0.0,
+          "z13": "0.00000+0.00000j",
+          "c13": 0.0,
+          "z21": "0.00000+0.00000j",
+          "c21": 0.0,
+          "z22": "0.00000+14.7983j",
+          "c22": 0.0,
+          "z23": "0.00000+0.00000j",
+          "c23": 0.0,
+          "z31": "0.00000+0.00000j",
+          "c31": 0.0,
+          "z32": "0.00000+0.00000j",
+          "c32": 0.0,
+          "z33": "0.00000+14.7983j",
+          "c33": 0.0
+        }
+      ]
+    },
+    "switch": {
+      "instances": [
+        {
+          "name": "swt_hvmv115b1_sw",
+          "from": "bus_1",
+          "to": "bus_2",
+          "phases": "ABC",
+          "status": "CLOSED"
+        }
+      ]
+    }
+  }
+}

@@ -48,7 +48,7 @@ gui {
 					plot 'data.csv' using 1:2 with lines title 'House 1'
 				}
 			}
-			browse {
+			.rows()e {
 				source "data.csv";
 				height 32;
 				width 40;

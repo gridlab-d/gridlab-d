@@ -8,7 +8,11 @@
 #include <cmath>
 #include <cstdarg>
 #include <cstdlib>
-#include <pthread.h>
+
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
 
 #include "platform.h"
 #include "output.h"
@@ -103,7 +107,6 @@ int enduse_init(enduse *e)
 #endif
 
 	e->t_last = TS_ZERO;
-
 	return 0;
 }
 
@@ -118,7 +121,7 @@ int enduse_initall(void)
 	return SUCCESS;
 }
 
-TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
+static TIMESTAMP enduse_sync_impl(enduse *e, TIMESTAMP t1, PASSCONFIG pass)
 {
 #ifdef _DEBUG
 	if (e->magic!=enduse_magic)
@@ -193,9 +196,28 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 	return (e->shape && e->shape->type != MT_UNKNOWN) ? e->shape->t2 : TS_NEVER;
 }
 
+//#ifndef __APPLE__
+extern "C" MODULE_API TIMESTAMP enduse_sync(enduse *obj, TIMESTAMP t1, PASSCONFIG pass)
+{
+	return enduse_sync_impl(obj, t1, pass);
+}
+// #else
+// extern "C" MODULE_API TIMESTAMP enduse_sync(enduse *obj, ...)
+// {
+// 	va_list args;
+// 	va_start(args, obj);
+// 	TIMESTAMP t1 = va_arg(args, TIMESTAMP);
+// 	PASSCONFIG pass = va_arg(args, PASSCONFIG);
+// 	va_end(args);
+//
+// 	return enduse_sync_impl(obj, pass, t1);
+// }
+
+//#endif
+
 typedef struct s_endusesyncdata {
 	unsigned int n;
-	pthread_t pt;
+	std::thread worker;
 	bool ok;
 	enduse *e;
 	unsigned int ne;
@@ -203,193 +225,150 @@ typedef struct s_endusesyncdata {
 	unsigned int ran;
 } ENDUSESYNCDATA;
 
-static pthread_cond_t start_ed = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t startlock_ed = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t done_ed = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t donelock_ed = PTHREAD_MUTEX_INITIALIZER;
+// thread constructs with C++17
+static bool setED = true;
+static std::mutex startlock_ed;
+static std::condition_variable_any start_ed;
 static TIMESTAMP next_t1_ed, next_t2_ed;
-static unsigned int donecount_ed;
-static unsigned int run = 0;
-
 clock_t enduse_synctime = 0;
+static bool enduse_ready = false;
 
-void *enduse_syncproc(void *ptr)
-{
-	ENDUSESYNCDATA *data = (ENDUSESYNCDATA*)ptr;
-	enduse *e;
+void enduse_syncproc(ENDUSESYNCDATA* data) {
+	enduse* e;
 	unsigned int n;
 	TIMESTAMP t2;
 
-	// begin processing loop
-	while (data->ok) 
-	{
-		// lock access to start condition
-		pthread_mutex_lock(&startlock_ed);
+	// Begin processing loop
+	while (data->ok) {
+		// Lock access to start condition
+		std::unique_lock<std::mutex> start_lock(startlock_ed);
 
-		// wait for thread start condition
-		while (data->t0==next_t1_ed && data->ran==run) 
-			pthread_cond_wait(&start_ed,&startlock_ed);
-		
-		// unlock access to start count
-		pthread_mutex_unlock(&startlock_ed);
+		// Wait for thread start condition
+		while (!enduse_ready)
+			start_ed.wait(startlock_ed);
 
-		// process the list for this thread
+		// Process the list for this thread
 		t2 = TS_NEVER;
-		for ( e=data->e, n=0 ; e!=nullptr, n<data->ne ; e=e->next, n++ )
-		{
-			TIMESTAMP t = enduse_sync(e, PC_PRETOPDOWN, next_t1_ed);
-			if (t<t2) t2 = t;
+		for (e = data->e, n = 0; e != nullptr && n < data->ne; e = e->next, n++) {
+			TIMESTAMP t3 = enduse_sync(e, next_t1_ed, PC_PRETOPDOWN);
+			if (t3 < t2)
+				t2 = t3;
 		}
 
-		// signal completed condition
+		// Signal completed condition
 		data->t0 = next_t1_ed;
 		data->ran++;
 
-		// lock access to done condition
-		pthread_mutex_lock(&donelock_ed);
-
-		// signal thread is done for now
-		donecount_ed--;
-		if ( t2<next_t2_ed ) next_t2_ed = t2;
-
-		// signal change in done condition
-		pthread_cond_broadcast(&done_ed);
-
-		// unlock access to done count
-		pthread_mutex_unlock(&donelock_ed);
+		if (t2 < next_t2_ed) next_t2_ed = t2;
 	}
-	pthread_exit((void*)0);
-	return (void*)0;
 }
 
-TIMESTAMP enduse_syncall(TIMESTAMP t1)
-{
-	static unsigned int n_threads_ed=0;
-	static ENDUSESYNCDATA *thread_ed = nullptr;
+// Main synchronization function
+TIMESTAMP enduse_syncall(TIMESTAMP t1) {
+	static unsigned int n_threads_ed = 0;
+	static std::vector<ENDUSESYNCDATA> thread_ed;
+
 	TIMESTAMP t2 = TS_NEVER;
 	clock_t ts = (clock_t)exec_clock();
-	
-	// skip enduse_syncall if there's no enduse in the glm
-	if (n_enduses == 0)
-		return TS_NEVER;
 
-	// number of threads desired
-	if (n_threads_ed==0)
-	{
-		enduse *e;
+
+	// Skip processing if no enduses exist
+	if (n_enduses == 0) {
+		return TS_NEVER;
+	}
+
+	// Initialize thread configuration if this is the first call
+	if (n_threads_ed == 0) {
+		enduse* e;
 		int n_items, en = 0;
 
 		output_debug("enduse_syncall setting up for %d enduses", n_enduses);
 
-		// determine needed threads
+		// Determine thread count
 		n_threads_ed = global_threadcount;
-		if (n_threads_ed>1)
-		{
-			unsigned int n;
-			if (n_enduses<n_threads_ed*4)
-				n_threads_ed = n_enduses/4;
 
-			// only need 1 thread if n_enduses is less than 4
+		if (n_threads_ed > 1) {
+			// Adjust thread count based on workload
+			if (n_enduses < n_threads_ed * 4)
+				n_threads_ed = n_enduses / 4;
+
+			// Ensure at least one thread
 			if (n_threads_ed == 0)
 				n_threads_ed = 1;
 
-			// determine enduses per thread
-			n_items = n_enduses/n_threads_ed;
-			n_threads_ed = n_enduses/n_items;
-			if (n_threads_ed*n_items<n_enduses) // not enough slots yet
-				n_threads_ed++; // add one underused thread
+			// Calculate items per thread
+			n_items = n_enduses / n_threads_ed;
+			n_threads_ed = n_enduses / n_items;
 
-			output_debug("enduse_syncall is using %d of %d available threads", n_threads_ed,global_threadcount);
+			// Add extra thread if needed
+			if (n_threads_ed * n_items < n_enduses)
+				n_threads_ed++;
+
+			output_debug("enduse_syncall is using %d of %d available threads", n_threads_ed, global_threadcount);
 			output_debug("enduse_syncall is assigning %d enduses per thread", n_items);
 
-			// allocate thread list
-			thread_ed = (ENDUSESYNCDATA*)malloc(sizeof(ENDUSESYNCDATA)*n_threads_ed);
-			memset(thread_ed,0,sizeof(ENDUSESYNCDATA)*n_threads_ed);
+			// Initialize thread data
+			thread_ed.resize(n_threads_ed);
 
-			// assign starting enduse for each thread
-			for (e=enduse_list; e!=nullptr; e=e->next)
-			{
-				if (thread_ed[en].ne==n_items)
+			// Distribute enduses among threads
+			for (e = enduse_list; e != nullptr; e = e->next) {
+				if (en < thread_ed.size() && thread_ed[en].ne == n_items)
 					en++;
-				if (thread_ed[en].ne==0)
+
+				if (en < thread_ed.size() && thread_ed[en].ne == 0)
 					thread_ed[en].e = e;
-				thread_ed[en].ne++;
+
+				if (en < thread_ed.size())
+					thread_ed[en].ne++;
 			}
 
-			// create threads
-			for (n=0; n<n_threads_ed; n++)
-			{
+			// Create and start worker threads
+			for (unsigned int n = 0; n < n_threads_ed; n++) {
 				thread_ed[n].ok = true;
-				if (pthread_create(&(thread_ed[n].pt),nullptr,enduse_syncproc,&(thread_ed[n]))!=0)
-				{
-					output_fatal("enduse_sync thread creation failed");
-					thread_ed[n].ok = false;
-				}
-				else 
-					thread_ed[n].n = n;
+				thread_ed[n].n = n;
+				thread_ed[n].worker = std::thread(enduse_syncproc, &thread_ed[n]);
 			}
 		}
 	}
 
-	// no threading required
-	if (n_threads_ed<2)
-	{
-		// process list directly
-		enduse *e;
-		for (e=enduse_list; e!=nullptr; e=e->next)
-		{
-			TIMESTAMP t3 = enduse_sync(e, PC_PRETOPDOWN, t1);
-			if (t3<t2) t2 = t3;
+	// Single-threaded processing
+	if (n_threads_ed < 2) {
+		// Process list directly
+		for (enduse* e = enduse_list; e != nullptr; e = e->next) {
+			TIMESTAMP t3 = enduse_sync(e, t1, PC_PRETOPDOWN);
+			if (t3 < t2)
+				t2 = t3;
 		}
 		next_t2_ed = t2;
 	}
-	else 
-	{
-		// lock access to done count
-		pthread_mutex_lock(&donelock_ed);
+	// Multi-threaded processing
+	else {
+		// Use threads for processing
+		// Lock the start condition mutex
+		std::unique_lock<std::mutex> start_lock(startlock_ed);
 
-		// initialize wait count
-		donecount_ed = n_threads_ed;
-
-		// lock access to start condition
-		pthread_mutex_lock(&startlock_ed);
-
-		// update start condition
+		// Update start condition
+		enduse_ready = true;
 		next_t1_ed = t1;
 		next_t2_ed = TS_NEVER;
-		run++;
 
-		// signal all the threads
-		pthread_cond_broadcast(&start_ed);
+		// Signal all threads to start processing
+		start_ed.notify_all();
 
-		// unlock access to start count
-		pthread_mutex_unlock(&startlock_ed);
+		// Process results
+		if (next_t2_ed < t2)
+			t2 = next_t2_ed;
 
-		// begin wait 
-		while (donecount_ed>0)
-			pthread_cond_wait(&done_ed,&donelock_ed);
-		output_debug("passed donecount==0 condition");
-
-		// unclock done count
-		pthread_mutex_unlock(&donelock_ed);
-
-		// process results from all threads
-		if (next_t2_ed<t2) t2=next_t2_ed;
+		if (setED) {
+			for (unsigned int n = 0; n < n_threads_ed; n++) {
+				thread_ed[n].worker.detach();  // Let thread run independently
+			}
+			setED = false;
+		}
 	}
-
+	// Update processing time measurement
 	enduse_synctime += (clock_t)exec_clock() - ts;
 	return t2;
-
-	/*enduse *e;
-	TIMESTAMP t2 = TS_NEVER;
-	clock_t start = exec_clock();
-	for (e=enduse_list; e!=nullptr; e=e->next)
-	{
-		TIMESTAMP t3 = enduse_sync(e,PC_PRETOPDOWN,t1);
-		if (t3<t2) t2 = t3;
-	}
-	enduse_synctime += exec_clock() - start;
-	return t2;*/
 }
 
 int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
@@ -407,8 +386,8 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 */
 	enduse *e = (enduse*)data;
 	int len = 0;
-#define OUTPUT_NZ(X) if (e->X!=0) len+=sprintf(string+len,"%s" #X ": %f", len>0?"; ":"", e->X)
-#define OUTPUT(X) len+=sprintf(string+len,"%s"#X": %f", len>0?"; ":"", e->X);
+#define OUTPUT_NZ(X) if (e->X!=0) len+=snprintf(string+len, sizeof(string)-len, "%s" #X ": %f", len>0?"; ":"", e->X)
+#define OUTPUT(X) len+=snprintf(string+len, sizeof(string)-len, "%s"#X": %f", len>0?"; ":"", e->X);
 	OUTPUT_NZ(impedance_fraction);
 	OUTPUT_NZ(current_fraction);
 	OUTPUT_NZ(power_fraction);
@@ -436,7 +415,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
             {.type=PT_double, .name="heatgain[Btu/h]", .addr=(char*)PADDR_C(heatgain), .description="the heat transferred from the enduse to the parent"},
             {.type=PT_double, .name="cumulative_heatgain[Btu]", .addr=(char*)PADDR_C(cumulative_heatgain), .description="the cumulative heatgain from the enduse to the parent"},
             {.type=PT_double, .name="heatgain_fraction[pu]", .addr=(char*)PADDR_C(heatgain_fraction), .description="the fraction of the heat that goes to the parent"},
-            {.type=PT_double, .name="current_fraction[pu]", .addr=(char*)PADDR_C(current_fraction),"the fraction of total power that is constant current"},
+            {.type=PT_double, .name="current_fraction[pu]", .addr=(char*)PADDR_C(current_fraction),.description="the fraction of total power that is constant current"},
             {.type=PT_double, .name="impedance_fraction[pu]", .addr=(char*)PADDR_C(impedance_fraction), .description="the fraction of total power that is constant impedance"},
             {.type=PT_double, .name="power_fraction[pu]", .addr=(char*)PADDR_C(power_fraction), .description="the fraction of the total power that is constant power"},
             {.type=PT_double, .name="power_factor", .addr=(char*)PADDR_C(power_factor), .description="the power factor of the load"},
@@ -469,7 +448,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 			//strcpy(name,prefix);
 			//strcat(name, ".");
 			//strcat(name, p->name);
-			sprintf(name,"%s.%s",prefix,p->name);
+			snprintf(name, sizeof(name), "%s.%s", prefix, p->name);
 		}
 
 		if (p->type<_PT_LAST)
@@ -537,6 +516,29 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		strcpy(lastname,name);
 	}
 
+	/* Publish the internal accumulator timestamp so it survives a checkpoint.
+	 * energy and cumulative_heatgain are integrated over dt = t1 - t_last in
+	 * enduse_sync_impl(); if t_last is not restored it resets to TS_ZERO and the
+	 * first post-restore interval is skipped, leaving energy one step behind.
+	 * PA_HIDDEN keeps it out of --modhelp while still being saved/restored by the
+	 * checkpoint machinery (which writes all properties and allows PA_HIDDEN
+	 * writes on restore). */
+	{
+		char tlname[256];
+		if (prefix == nullptr || strcmp(prefix, "") == 0)
+			strcpy(tlname, "t_last");
+		else
+			sprintf(tlname, "%s.t_last", prefix);
+		PROPERTY *tlprop = property_malloc(
+			PT_timestamp, oclass, tlname,
+			(char *)PADDR_C(t_last) + (int64)struct_address, nullptr);
+		tlprop->access = PA_HIDDEN;
+		tlprop->description =
+			"CHECKPOINT_VAR: internal enduse energy-integration timestamp";
+		class_add_property(oclass, tlprop);
+		result++;
+	}
+
 	return result;
 }
 
@@ -590,9 +592,9 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 			e->power_fraction = atof(value);
 		else if (strcmp(param,"power_factor")==0)
 			e->power_factor = atof(value);
-		else if ( strcmp(param,"power.r")==0 )
+		else if ( strcmp(param,"power.r")==0 || strcmp(param,"power.Re()")==0 )
 			e->power.Re() = atof(value);
-		else if ( strcmp(param,"power.i")==0 )
+		else if ( strcmp(param,"power.i")==0 || strcmp(param,"power.Im()")==0 )
 			e->power.Im() = atof(value);
 		else if (strcmp(param,"loadshape")==0)
 		{

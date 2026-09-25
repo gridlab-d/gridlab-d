@@ -1,0 +1,223 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $id$",
+      "// Copyright (C) 2008 Battelle Memorial Institute",
+      "// An example case of IEEE 4 node system using Balanced step-up delta-grY.",
+      "//  Using one phase-B line at the end node,",
+      "//  Using static load at the node 4"
+    ]
+  },
+  "_directives": {
+    "#define": {
+      "stylesheet": "C:\\Documents and Settings\\D3Y074\\My Documents\\GridLab-D\\trunk\\VS2005\\gridlabd-2_0"
+    },
+    "#set": {
+      "relax_naming_rules": 1
+    }
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:01'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "object_declaration": "overhead_line_conductor:100",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306
+        },
+        {
+          "object_declaration": "overhead_line_conductor:101",
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "object_declaration": "line_spacing:200",
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        },
+        {
+          "object_declaration": "line_spacing:201",
+          "distance_BN": 4.272002
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "object_declaration": "line_configuration:300",
+          "conductor_A": "overhead_line_conductor:100",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_C": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:200"
+        },
+        {
+          "object_declaration": "line_configuration:301",
+          "conductor_B": "overhead_line_conductor:100",
+          "conductor_N": "overhead_line_conductor:101",
+          "spacing": "line_spacing:201"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "object_declaration": "transformer_configuration:400",
+          "connect_type": "DELTA_GWYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 24900,
+          "resistance": 0.01,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "object_declaration": "node:1",
+          "phases": "ABCD",
+          "bustype": "SWING",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "object_declaration": "node:2",
+          "phases": "ABCD",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "object_declaration": "node:3",
+          "phases": "ABCN",
+          "voltage_A": "+12450.764+7188.452j",
+          "voltage_B": "+0.000-14376.904j",
+          "voltage_C": "-12450.765+7188.452j",
+          "nominal_voltage": 14377
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "object_declaration": "overhead_line:12",
+          "phases": "ABCD",
+          "from": "node:1",
+          "to": "node:2",
+          "length": 2000,
+          "configuration": "line_configuration:300"
+        },
+        {
+          "object_declaration": "overhead_line:34",
+          "phases": "BN",
+          "from": "node:3",
+          "to": "load:4",
+          "length": 2500,
+          "configuration": "line_configuration:301"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "node:2",
+          "target": "voltage_AB",
+          "within": 5,
+          "value": "+12469.8+29.826d "
+        },
+        {
+          "parent": "node:2",
+          "target": "voltage_BC",
+          "within": 5,
+          "value": "+12396.5-90.2373d "
+        },
+        {
+          "parent": "node:2",
+          "target": "voltage_CA",
+          "within": 5,
+          "value": "+12421.4+150.087d "
+        },
+        {
+          "parent": "node:3",
+          "target": "voltage_AB",
+          "within": 5,
+          "value": "+24716+57.5888d"
+        },
+        {
+          "parent": "node:3",
+          "target": "voltage_BC",
+          "within": 5,
+          "value": "+23883.3-60.842d"
+        },
+        {
+          "parent": "node:3",
+          "target": "voltage_CA",
+          "within": 5,
+          "value": "+24884-179.979d"
+        },
+        {
+          "parent": "load:4",
+          "target": "voltage_AB",
+          "within": 5,
+          "value": "+13676.9+86.5482d"
+        },
+        {
+          "parent": "load:4",
+          "target": "voltage_BC",
+          "within": 5,
+          "value": "+13676.9-93.4518d"
+        },
+        {
+          "parent": "load:4",
+          "target": "voltage_CA",
+          "within": 5,
+          "value": "+0+0d"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "object_declaration": "transformer:23",
+          "phases": "ABCN",
+          "from": "node:2",
+          "to": "node:3",
+          "configuration": "transformer_configuration:400"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "object_declaration": "load:4",
+          "phases": "BN",
+          "voltage_B": "+0.000-14376.904j",
+          "constant_power_B": "+1800000.000+871779.789j",
+          "nominal_voltage": 14377
+        }
+      ]
+    }
+  }
+}

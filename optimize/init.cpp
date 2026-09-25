@@ -11,26 +11,22 @@
 #include "optimize.h"
 #include "simple.h"
 
-EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
-{
-	if (set_callback(fntable)==nullptr)
-	{
-		errno = EINVAL;
-		return nullptr;
-	}
+EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]) {
+  if (set_callback(fntable) == nullptr) {
+    errno = EINVAL;
+    return nullptr;
+  }
 
-	new simple(module);
+  new simple(module);
 
-	/*** DO NOT EDIT NEXT LINE ***/
-	//NEWCLASS
+  /*** DO NOT EDIT NEXT LINE ***/
+  // NEWCLASS
 
-	/* always return the first class registered */
-	return simple::oclass;
+  /* always return the first class registered */
+  return simple::oclass;
 }
 
-
-CDECL int do_kill()
-{
-	/* if global memory needs to be released, this is a good time to do it */
-	return 0;
+CDECL int do_kill() {
+  /* if global memory needs to be released, this is a good time to do it */
+  return 0;
 }

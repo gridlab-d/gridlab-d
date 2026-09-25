@@ -54,7 +54,7 @@ l = -u;
 for k = 1:om.lin.NS
     name = om.lin.order{k};
     N = om.lin.idx.N.(name);
-    if N                                %% non-zero number of rows to add
+    if N                                %% non-zero number of.rows() to add
         Ak = om.lin.data.A.(name);          %% A for kth linear constrain set
         i1 = om.lin.idx.i1.(name);          %% starting row index
         iN = om.lin.idx.iN.(name);          %% ending row index

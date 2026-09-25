@@ -1,5 +1,5 @@
 /* test.h
-	Copyright (C) 2008 Battelle Memorial Institute
+        Copyright (C) 2008 Battelle Memorial Institute
  *
  */
 
@@ -14,5 +14,5 @@ int test_request(char *name);
 int test_exec(void);
 
 int test_lock(void);
- 
+
 #endif

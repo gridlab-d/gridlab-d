@@ -3,9 +3,18 @@
 #define _ENDUSE_H
 
 #include "class.h"
-#include "object.h"
-#include "timestamp.h"
 #include "loadshape.h"
+#include "timestamp.h"
+
+#if defined(_WIN32)
+#define MODULE_API __declspec(dllexport) // always exporting from this module
+#else
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#define MODULE_API __attribute__((visibility("default")))
+#else
+#define MODULE_API
+#endif
+#endif
 
 //#define EUC_IS110 0x0000 ///< enduse flag to indicate that the voltage is line-to-neutral
 //#define EUC_IS220 0x0001 ///< enduse flag to indicate that the voltage is line-to-line
@@ -54,7 +63,7 @@ typedef struct s_enduse {
 	gld::complex energy;				/* total energy in kWh */
 	gld::complex demand;				/* maximum power in kW (can be reset) */
 
-	/* circuit configuration */	
+	/* circuit configuration */
 	gld::set config;					/* end-use configuration */
 	double breaker_amps;		/* breaker limit (if any) */
 
@@ -76,7 +85,7 @@ typedef struct s_enduse {
 
 	/* heat */
 	double heatgain;			/* internal heat from load (Btu/h) */
-	double cumulative_heatgain;  /* internal cumulative heat gain from load (Btu) */ 
+	double cumulative_heatgain;  /* internal cumulative heat gain from load (Btu) */
 	double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
 
 	/* misc info */
@@ -97,10 +106,19 @@ typedef struct s_enduse {
 int enduse_create(enduse *addr);
 int enduse_init(enduse *e);
 int enduse_initall(void);
-TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1);
+
+extern "C" {
+
+// #ifndef __APPLE__
+MODULE_API TIMESTAMP enduse_sync(enduse *e, TIMESTAMP t1, PASSCONFIG pass);
+// #else
+// 	MODULE_API TIMESTAMP enduse_sync(enduse *e, ...);
+// #endif
+}
+
 TIMESTAMP enduse_syncall(TIMESTAMP t1);
 int convert_to_enduse(char *string, void *data, PROPERTY *prop);
-int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop);
+int convert_from_enduse(char *string, int size, void *data, PROPERTY *prop);
 int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix);
 int enduse_test(void);
 

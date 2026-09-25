@@ -10,7 +10,7 @@ function mpc = toggle_iflims(mpc, on_off)
 %   MPC.if is a struct with the following fields:
 %       map     n x 2, defines each interface in terms of a set of 
 %               branch indices and directions. Interface I is defined
-%               by the set of rows whose 1st col is equal to I. The
+%               by the set of.rows() whose 1st col is equal to I. The
 %               2nd column is a branch index multiplied by 1 or -1
 %               respectively for lines whose orientation is the same
 %               as or opposite to that of the interface.

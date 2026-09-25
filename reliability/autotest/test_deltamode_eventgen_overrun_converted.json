@@ -1,0 +1,200 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Modified IEEE 4-node system",
+      "// Tries to run a deltamode event just past end time -- make sure this ends there",
+      "//If this hits an iteration limit, it has failed",
+      "//Deltamode declarations - global values",
+      "#set deltamode_maximumtime //2 minutes",
+      "#set deltamode_iteration_limit //Iteration limit"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "dateformat": "US",
+      "deltamode_maximumtime": 5000000000000,
+      "deltamode_iteration_limit": 10
+    }
+  },
+  "clock": {
+    "timezone": "\"PST+8PDT\"",
+    "starttime": "'2001-01-01 00:00:00 PST'",
+    "stoptime": "'2001-01-01 00:00:05 PST'"
+  },
+  "modules": {
+    "powerflow": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "0.5 ms",
+      "all_powerflow_delta": true,
+      "solver_method": "NR",
+      "enable_inrush": true,
+      "low_voltage_impedance_level": 0.95
+    },
+    "reliability": {
+      "enable_subsecond_models": true,
+      "maximum_event_length": 18000,
+      "report_event_log": true,
+      "inline_comments": {
+        "maximum_event_length": "//Maximum length of events in seconds (manual events are excluded from this limit)"
+      }
+    }
+  },
+  "objects": {
+    "fault_check": {
+      "instances": [
+        {
+          "name": "base_fault_check_object",
+          "flags": "DELTAMODE",
+          "check_mode": "ONCHANGE",
+          "strictly_radial": false,
+          "eventgen_object": "testgendev",
+          "output_filename": "testout.txt",
+          "outside_comments": [
+            "//Fault check stuff",
+            "//General fault_check object to remove things that aren't supported"
+          ],
+          "inline_comments": {
+            "eventgen_object": "//This needs to link to the eventgen object"
+          }
+        }
+      ]
+    },
+    "eventgen": {
+      "instances": [
+        {
+          "name": "testgendev",
+          "flags": "DELTAMODE",
+          "fault_type": "SW-ABC",
+          "manual_outages": "in_rush_switch,2001-01-01 00:00:00,2001-01-01 00:00:05.017",
+          "outside_comments": [
+            "//Manual object - needed to get fault_check to behave properly -- arbitrary item added"
+          ],
+          "inline_comments": {
+            "object eventgen {": "Closes in primary transformer and load",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_config_4_wire",
+          "z11": "0.4576+1.0780j",
+          "z12": "0.1559+0.5017j",
+          "z13": "0.1535+0.3849j",
+          "z21": "0.1559+0.5017j",
+          "z22": "0.4666+1.0482j",
+          "z23": "0.1580+0.4236j",
+          "z31": "0.1535+0.3849j",
+          "z32": "0.1580+0.4236j",
+          "z33": "0.4615+1.0651j"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "wye_wye_stepdown",
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "powerA_rating": 2000,
+          "powerB_rating": 2000,
+          "powerC_rating": 2000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 480.0,
+          "resistance": 0.007,
+          "reactance": 0.07
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node_1_swing",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "bustype": "SWING",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node_1",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node_2",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node_3",
+          "phases": "ABCN",
+          "nominal_voltage": 277.0
+        }
+      ]
+    },
+    "switch": {
+      "instances": [
+        {
+          "name": "in_rush_switch",
+          "phases": "ABCN",
+          "from": "node_1_swing",
+          "to": "node_1"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "line_12",
+          "phases": "ABCN",
+          "from": "node_1",
+          "to": "node_2",
+          "length": 2000,
+          "configuration": "line_config_4_wire"
+        },
+        {
+          "name": "line_34",
+          "phases": "ABCN",
+          "from": "node_3",
+          "to": "load_4",
+          "length": 2500,
+          "configuration": "line_config_4_wire"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "xform_23",
+          "phases": "ABCN",
+          "from": "node_2",
+          "to": "node_3",
+          "configuration": "wye_wye_stepdown"
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load_4",
+          "phases": "ABCN",
+          "constant_impedance_A": "11.7113+7.258012j",
+          "constant_impedance_B": "9.30015+4.504268j",
+          "constant_impedance_C": "7.85346+2.581307j",
+          "nominal_voltage": 277.0,
+          "inside_comments": [
+            "// nominal_voltage 2401.777;",
+            "// nominal_voltage 14376.0217028;"
+          ],
+          "inline_comments": {
+            "constant_impedance_A": "//Adjusted test values - not really 4-node values, just arbitrarily in here"
+          }
+        }
+      ]
+    }
+  }
+}

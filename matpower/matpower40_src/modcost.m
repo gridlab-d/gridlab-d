@@ -6,7 +6,7 @@ function gencost = modcost(gencost, alpha, modtype)
 %   For each generator cost F(X) (for real or reactive power) in
 %   GENCOST, this function modifies the cost by scaling or shifting
 %   the function by ALPHA, depending on the value of MODTYPE, and
-%   and returns the modified GENCOST. Rows of GENCOST can be a mix
+%   and returns the modified GENCOST..rows() of GENCOST can be a mix
 %   of polynomial or piecewise linear costs.
 %
 %   MODTYPE takes one of the 4 possible values (let F_alpha(X) denote the

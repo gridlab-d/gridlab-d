@@ -1,0 +1,13 @@
+GridLAB-D Version Info:
+	GridLAB-D 5.3.0-20714 (cd5128a5f:integrate/upstream-python-bindings:Mod) 64-bit WINDOWS RELEASE
+
+Autotest Failed Results:
+
+== FAIL:	C:\dev\gridlab-d_fork\generators\autotest\test_fqm_group_lf\test_fqm_group_lf.glm
+== OUT:	
+== ERROR:	TIMEOUT after 600s
+Command '['C:\\dev\\gridlab-d_fork\\build\\bin\\Release\\gridlabd.exe', 'test_fqm_group_lf.glm']' timed out after 600 seconds
+== FAIL:	C:\dev\gridlab-d_fork\generators\autotest\test_fqm_group_lf_converted\test_fqm_group_lf_converted.json
+== OUT:	
+== ERROR:	TIMEOUT after 600s
+Command '['C:\\dev\\gridlab-d_fork\\build\\bin\\Release\\gridlabd.exe', 'test_fqm_group_lf_converted.json']' timed out after 600 seconds
