@@ -1,7 +1,25 @@
 SET(GLD_MODULE_NAME mysql)
 
 if (GLD_USE_MYSQL)
-    find_package(MySQL REQUIRED HINTS ${GLD_MYSQL_DIR} ${MYSQL_DIR} $ENV{GLD_MYSQL_DIR} $ENV{MYSQL_DIR})
+    find_package(MySQL QUIET HINTS ${GLD_MYSQL_DIR} ${MYSQL_DIR} $ENV{GLD_MYSQL_DIR} $ENV{MYSQL_DIR})
+
+    if (NOT MYSQL_FOUND)
+        find_package(PkgConfig QUIET)
+        if (PkgConfig_FOUND)
+            pkg_search_module(MYSQL_PC QUIET IMPORTED_TARGET mysqlclient libmariadb mariadb)
+        endif ()
+    endif ()
+
+    if (NOT MYSQL_FOUND AND NOT MYSQL_PC_FOUND)
+        message(FATAL_ERROR
+            "MySQL not found via FindMySQL.cmake or pkg-config (mysqlclient/libmariadb/mariadb). "
+            "Set GLD_MYSQL_DIR, MYSQL_DIR, or the matching environment variables, "
+            "or install the MySQL/MariaDB client development package.")
+    endif ()
+
+    # Keep the module's existing feature guard independent of which discovery
+    # mechanism succeeded.
+    set(HAVE_MYSQL TRUE)
 endif ()
 
 add_library(${GLD_MODULE_NAME}
@@ -23,19 +41,18 @@ add_library(${GLD_MODULE_NAME}
         )
 
 if (HAVE_MYSQL)
-    include_directories(${MYSQL_INCLUDE_DIRECTORIES} ${MYSQL_INCLUDE_DIRECTORIES}/include)
-    target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${MYSQL_LIBRARY})
-endif ()
-
-if (HAVE_MYSQL)
-    target_include_directories(${GLD_MODULE_NAME} PRIVATE
-            ${MYSQL_INCLUDE_DIRECTORIES}
-            ${MYSQL_INCLUDE_DIRECTORIES}/include
-            )
-    target_link_libraries(${GLD_MODULE_NAME}
-            ${MYSQL_LIBRARY}
-            )
-    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_HELICS)
+    if (MYSQL_FOUND)
+        target_include_directories(${GLD_MODULE_NAME} PRIVATE
+                ${MYSQL_INCLUDE_DIRECTORIES}
+                ${MYSQL_INCLUDE_DIRECTORIES}/include
+                )
+        target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${MYSQL_LIBRARY})
+    else ()
+        # Imported pkg-config targets preserve include paths, library paths,
+        # transitive linker options, and platform-specific flags.
+        target_link_libraries(${GLD_MODULE_NAME} PRIVATE PkgConfig::MYSQL_PC)
+    endif ()
+    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_MYSQL)
 endif ()
 
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
