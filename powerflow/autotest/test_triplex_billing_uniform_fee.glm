@@ -21,16 +21,6 @@ module tape;
 module powerflow {
      solver_method FBS;
 }
-module market;
-
-
-object stubauction {
-     name STUB;
-     unit price;
-     period 3600;
-     next.P 1.2;
-}
-
 
 object node {
      bustype SWING;

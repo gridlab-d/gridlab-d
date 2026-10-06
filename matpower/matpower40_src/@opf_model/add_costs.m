@@ -107,22 +107,22 @@ if nx ~= nv
     end
 end
 if size(cp.Cw, 1) ~= nw
-    error('@opf_model/add_costs: number of rows of Cw (%d x %d) and N (%d x %d) must match\n', size(cp.Cw), nw, nx);
+    error('@opf_model/add_costs: number of.rows() of Cw (%d x %d) and N (%d x %d) must match\n', size(cp.Cw), nw, nx);
 end
 if isfield(cp, 'H') && (size(cp.H, 1) ~= nw || size(cp.H, 2) ~= nw)
-    error('@opf_model/add_costs: both dimensions of H (%d x %d) must match the number of rows in N (%d x %d)\n', size(cp.H), nw, nx);
+    error('@opf_model/add_costs: both dimensions of H (%d x %d) must match the number of.rows() in N (%d x %d)\n', size(cp.H), nw, nx);
 end
 if isfield(cp, 'dd') && size(cp.dd, 1) ~= nw
-    error('@opf_model/add_costs: number of rows of dd (%d x %d) and N (%d x %d) must match\n', size(cp.dd), nw, nx);
+    error('@opf_model/add_costs: number of.rows() of dd (%d x %d) and N (%d x %d) must match\n', size(cp.dd), nw, nx);
 end
 if isfield(cp, 'rh') && size(cp.rh, 1) ~= nw
-    error('@opf_model/add_costs: number of rows of rh (%d x %d) and N (%d x %d) must match\n', size(cp.rh), nw, nx);
+    error('@opf_model/add_costs: number of.rows() of rh (%d x %d) and N (%d x %d) must match\n', size(cp.rh), nw, nx);
 end
 if isfield(cp, 'kk') && size(cp.kk, 1) ~= nw
-    error('@opf_model/add_costs: number of rows of kk (%d x %d) and N (%d x %d) must match\n', size(cp.kk), nw, nx);
+    error('@opf_model/add_costs: number of.rows() of kk (%d x %d) and N (%d x %d) must match\n', size(cp.kk), nw, nx);
 end
 if isfield(cp, 'mm') && size(cp.mm, 1) ~= nw
-    error('@opf_model/add_costs: number of rows of mm (%d x %d) and N (%d x %d) must match\n', size(cp.mm), nw, nx);
+    error('@opf_model/add_costs: number of.rows() of mm (%d x %d) and N (%d x %d) must match\n', size(cp.mm), nw, nx);
 end
 
 %% add info about this user cost set

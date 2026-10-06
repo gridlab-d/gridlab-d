@@ -1,0 +1,124 @@
+{
+  "_directives": {
+    "#include": [
+      "../WA-Yakima.json"
+    ],
+    "#set": {
+      "tmp": "../test_solar_opt",
+      "force_compile": 1
+    }
+  },
+  "_legacy": {
+    "#setenv": [
+      "GRIDLABD=../../../core"
+    ]
+  },
+  "classes": {
+    "solar": [
+      {
+        "type": "object",
+        "name": "weather"
+      },
+      {
+        "type": "double",
+        "name": "power[kW]"
+      },
+      {
+        "type": "double",
+        "name": "energy[MWh]"
+      },
+      {
+        "type": "double",
+        "name": "efficiency[pu]"
+      },
+      {
+        "type": "double",
+        "name": "area[sf]"
+      },
+      {
+        "type": "enumeration",
+        "name": "{FIXED=0, TRACKING=1} type"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2009-01-01 0:00:00 PST'",
+    "stoptime": "'2010-01-01 0:00:00 PST'",
+    "outside_comments": [
+      "//#endif"
+    ]
+  },
+  "modules": {
+    "tape": {
+      "outside_comments": [
+        "//#define RECORD 1",
+        "//#ifdef RECORD"
+      ]
+    },
+    "assert": {}
+  },
+  "objects": {
+    "double_assert": {
+      "instances": [
+        {
+          "parent": "solar_1",
+          "in": "'2009-12-31 23:00:00 PST'",
+          "status": "ASSERT_TRUE",
+          "target": "energy",
+          "value": 135.2,
+          "within": 0.1
+        },
+        {
+          "parent": "solar_4",
+          "in": "'2009-12-31 23:00:00 PST'",
+          "status": "ASSERT_TRUE",
+          "target": "energy",
+          "value": 99.2,
+          "within": 0.1
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "solar_1",
+          "property": "power,energy",
+          "file": "`",
+          "interval": 3600
+        },
+        {
+          "parent": "solar_4",
+          "property": "power,energy",
+          "file": "`",
+          "interval": 3600
+        }
+      ]
+    },
+    "solar": {
+      "instances": [
+        {
+          "name": "solar_1",
+          "weather": "Yakima WA",
+          "area": 1000,
+          "type": "TRACKING",
+          "inside_comments": [
+            "//#ifdef RECORD",
+            "//#endif"
+          ]
+        },
+        {
+          "name": "solar_4",
+          "weather": "Yakima WA",
+          "area": 1000,
+          "type": "FIXED",
+          "orientation": "SOUTHWEST",
+          "inside_comments": [
+            "//#ifdef RECORD",
+            "//#endif"
+          ]
+        }
+      ]
+    }
+  }
+}

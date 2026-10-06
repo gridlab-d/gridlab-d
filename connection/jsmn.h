@@ -12,22 +12,22 @@
  *      o Other primitive: number, boolean (true/false) or null
  */
 typedef enum {
-		JSMN_INVALID = 0,
-        JSMN_PRIMITIVE = 1,
-        JSMN_OBJECT = 2,
-        JSMN_ARRAY = 3,
-        JSMN_STRING = 4
+  JSMN_INVALID = 0,
+  JSMN_PRIMITIVE = 1,
+  JSMN_OBJECT = 2,
+  JSMN_ARRAY = 3,
+  JSMN_STRING = 4
 } jsmntype_t;
 
 typedef enum {
-        /* Not enough tokens were provided */
-        JSMN_ERROR_NOMEM = -1,
-        /* Invalid character inside JSON string */
-        JSMN_ERROR_INVAL = -2,
-        /* The string is not a full JSON packet, more bytes expected */
-        JSMN_ERROR_PART = -3,
-        /* Everything was fine */
-        JSMN_SUCCESS = 0
+  /* Not enough tokens were provided */
+  JSMN_ERROR_NOMEM = -1,
+  /* Invalid character inside JSON string */
+  JSMN_ERROR_INVAL = -2,
+  /* The string is not a full JSON packet, more bytes expected */
+  JSMN_ERROR_PART = -3,
+  /* Everything was fine */
+  JSMN_SUCCESS = 0
 } jsmnerr_t;
 
 /**
@@ -37,12 +37,12 @@ typedef enum {
  * @param               end             end position in JSON data string
  */
 typedef struct {
-        jsmntype_t type;
-        int start;
-        int end;
-        int size;
+  jsmntype_t type;
+  int start;
+  int end;
+  int size;
 #ifdef JSMN_PARENT_LINKS
-        int parent;
+  int parent;
 #endif
 } jsmntok_t;
 
@@ -51,9 +51,9 @@ typedef struct {
  * the string being parsed now and current position in that string
  */
 typedef struct {
-        unsigned int pos; /* offset in the JSON string */
-        int toknext; /* next token to allocate */
-        int toksuper; /* superior token node, e.g parent object or array */
+  unsigned int pos; /* offset in the JSON string */
+  int toknext;      /* next token to allocate */
+  int toksuper;     /* superior token node, e.g parent object or array */
 } jsmn_parser;
 
 #ifdef __cplusplus
@@ -66,11 +66,11 @@ extern "C" {
 void jsmn_init(jsmn_parser *parser);
 
 /**
- * Run JSON parser. It parses a JSON data string into and array of tokens, each describing
- * a single JSON object.
+ * Run JSON parser. It parses a JSON data string into and array of tokens, each
+ * describing a single JSON object.
  */
-jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js, 
-                jsmntok_t *tokens, unsigned int num_tokens);
+jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js, jsmntok_t *tokens,
+                     unsigned int num_tokens);
 
 #ifdef __cplusplus
 }

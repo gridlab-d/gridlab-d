@@ -1,0 +1,164 @@
+{
+  "__preamble": {
+    "comments": [
+      "//This file tests the single phase induction motor model"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "suppress_repeat_messages": 1,
+      "randomseed": "10;",
+      "double_format": "%+.12lg",
+      "complex_format": "%+.12lg%+.12lg%c"
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2000-01-01 00:00:00'",
+    "stoptime": "'2000-01-01 00:00:30'"
+  },
+  "modules": {
+    "powerflow": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "0.2 ms",
+      "solver_method": "NR",
+      "all_powerflow_delta": true,
+      "inline_comments": {
+        "enable_subsecond_models": "//Enables deltamode",
+        "deltamode_timestep": "//Defines the expected timestep for deltamode",
+        "solver_method": "//Newton-Raphson is the only solver that supports deltamode",
+        "all_powerflow_delta": "//Set all of the powerflow objects to deltamode – instead of having to do “flags DELTAMODE;” everywhere"
+      }
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "parent": "complex_assert_2",
+          "property": "value",
+          "file": "../SPIM_power_assert.player",
+          "loop": 1,
+          "flags": "DELTAMODE"
+        },
+        {
+          "parent": "double_assert_5",
+          "property": "value",
+          "file": "../SPIM_wr_assert.player",
+          "loop": 1,
+          "flags": "DELTAMODE"
+        },
+        {
+          "parent": "double_assert_7",
+          "property": "value",
+          "file": "../SPIM_trip_assert.player",
+          "loop": 1,
+          "flags": "DELTAMODE"
+        },
+        {
+          "parent": "double_assert_9",
+          "property": "value",
+          "file": "../SPIM_reconnect_assert.player",
+          "loop": 1,
+          "flags": "DELTAMODE"
+        },
+        {
+          "parent": "enum_assert_11",
+          "property": "value",
+          "file": "../SPIM_status_assert.player",
+          "loop": 1,
+          "flags": "DELTAMODE"
+        },
+        {
+          "parent": "rooty",
+          "file": "../SPIM_voltage.player",
+          "property": "voltage_A",
+          "flags": "DELTAMODE"
+        },
+        {
+          "parent": "rooty",
+          "file": "../SPIM_frequency.player",
+          "property": "measured_frequency_A",
+          "flags": "DELTAMODE"
+        },
+        {
+          "parent": "induction_motor",
+          "file": "../SPIM_override.player",
+          "property": "desired_motor_state",
+          "flags": "DELTAMODE"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_2",
+          "parent": "rooty",
+          "target": "measured_power_A",
+          "within": 0.1,
+          "flags": "DELTAMODE"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "rooty",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 240
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_5",
+          "parent": "induction_motor",
+          "target": "rotor_speed",
+          "within": 0.1,
+          "flags": "DELTAMODE"
+        },
+        {
+          "name": "double_assert_7",
+          "parent": "induction_motor",
+          "target": "trip",
+          "within": 0.0001,
+          "flags": "DELTAMODE"
+        },
+        {
+          "name": "double_assert_9",
+          "parent": "induction_motor",
+          "target": "reconnect",
+          "within": 0.0001,
+          "flags": "DELTAMODE"
+        }
+      ]
+    },
+    "enum_assert": {
+      "instances": [
+        {
+          "name": "enum_assert_11",
+          "parent": "induction_motor",
+          "target": "motor_status",
+          "flags": "DELTAMODE"
+        }
+      ]
+    },
+    "motor": {
+      "instances": [
+        {
+          "name": "induction_motor",
+          "parent": "rooty",
+          "phases": "AN",
+          "nominal_voltage": 240,
+          "trip_time": 5,
+          "reconnect_time": 10,
+          "desired_motor_state": "ON"
+        }
+      ]
+    }
+  }
+}

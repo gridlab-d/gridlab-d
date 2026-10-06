@@ -1,8 +1,26 @@
+cmake_minimum_required(VERSION 3.13)
+project(gldcore LANGUAGES C CXX)
+
 SET(GLD_MODULE_NAME gridlabd)
 
-# Load and link C/C++ files for the executeable
+
+
+# ---------------------------------------------------------------------------
+# NOTE: We build the GridLAB-D core once as a SHARED library (gldapi),
+# and keep the host executable (gridlabd) thin (only main.cpp). This
+# avoids duplicate class registry/typeinfo across DSO boundaries and
+# fixes the macOS ARM64 plugin type-identity mismatch.
+# ---------------------------------------------------------------------------
+
+# If the top-level adds definitions/visiblity, we inherit them automatically.
+# (e.g., CMAKE_CXX_VISIBILITY_PRESET=default, VISIBILITY_INLINES_HIDDEN=OFF)
+
+# --- Core sources ------------------------------------------------------------
+# Load and link C/C++ files for the executable
 set(SOURCE_LIST
         gridlabd.h
+	    gldapi.h
+	    gldapi.cpp
         globals.cpp
         globals.h
         object.cpp
@@ -70,6 +88,8 @@ set(SOURCE_LIST
         list.h
         load.cpp
         load.h
+        loader.cpp
+        loader.h
         load_xml.cpp
         load_xml.h
         load_xml_handle.cpp
@@ -78,9 +98,7 @@ set(SOURCE_LIST
         loadshape.h
         local.cpp
         local.h
-        lock.cpp
-        lock.h
-        main.cpp
+        # main.cpp
         match.cpp
         match.h
         matlab.cpp
@@ -89,6 +107,8 @@ set(SOURCE_LIST
         module.h
         output.cpp
         output.h
+        parser.cpp
+        parser.h
         platform.h
         property.cpp
         property.h
@@ -112,8 +132,6 @@ set(SOURCE_LIST
         test_callbacks.h
         test_framework.cpp
         test_framework.h
-        threadpool.cpp
-        threadpool.h
         timestamp.cpp
         timestamp.h
         transform.cpp
@@ -129,44 +147,106 @@ set(SOURCE_LIST
         #        xcore.h
         )
 
-#if(NOT APPLE)
-add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
-#else()
-#    add_executable(${GLD_MODULE_NAME} MACOSX_BUNDLE ${SOURCE_LIST})
-#    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
-#            BUNDLE True
-#            MACOSX_BUNDLE_GUI_IDENTIFIER gov.pnnl.gridlabd
-#            MACOSX_BUNDLE_NAME ${GLD_MODULE_NAME}
-#            )
-#endif()
 
-target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${GL_MODULES})
-target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
-if (CURSES_FOUND)
-    target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CURSES_LIBRARIES})
+
+# Create library source list (exclude main.cpp)
+set(LIBRARY_SOURCE_LIST ${SOURCE_LIST})
+list(REMOVE_ITEM LIBRARY_SOURCE_LIST main.cpp)
+
+
+
+# Build the single shared core (SHARED library) from library sources
+add_library(gldapi SHARED ${LIBRARY_SOURCE_LIST})
+ 
+if (WIN32)
+  target_link_libraries(gldapi PRIVATE Ws2_32)
 endif ()
+
+
+
+if (MSVC)
+    # Completely eliminate shared compile-time PDB
+    target_compile_options(gldapi PRIVATE /Z7)
+
+    # Add /FS for safety (harmless with /Z7)
+    target_compile_options(gldapi PRIVATE /FS)
+
+    # Make sure PDB files have their own directory
+    set_target_properties(gldapi PROPERTIES
+        COMPILE_PDB_NAME gldapi
+        COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pdb/gldapi"
+        PDB_NAME gldapi
+        PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/pdb/gldapi"
+    )
+endif()
+
+
+# globals.cpp carries core singletons/registry; define only for this TU
+set_source_files_properties(globals.cpp PROPERTIES COMPILE_DEFINITIONS _MAIN_C)
+
+# Optional: PIC & visibility (MSVC ignores visibility)
+set_target_properties(gldapi PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+  CXX_VISIBILITY_PRESET default
+  VISIBILITY_INLINES_HIDDEN OFF
+)
+
+
+target_link_libraries(gldapi
+  PUBLIC nlohmann_json::nlohmann_json
+  PRIVATE ${CMAKE_DL_LIBS}
+)
+
+
+# If Xerces/Curses/etc. are found, link them here (keep existing blocks if you have them)
 if (XercesC_FOUND)
-    target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${XercesC_LIBRARIES})
+  target_link_libraries(gldapi PRIVATE ${XercesC_LIBRARIES})
+endif ()
+if (UNIX AND CURSES_FOUND)
+  target_link_libraries(gldapi PRIVATE ${CURSES_LIBRARIES})
 endif ()
 
-target_include_directories(${GLD_MODULE_NAME} PRIVATE
-        "${CMAKE_SOURCE_DIR}/third_party/jsonCpp"
-        )
-target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${JSONCPP_LIB})
-
-target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
-set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
-target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
-target_include_directories(${GLD_MODULE_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/headers)
-
-install(TARGETS ${GLD_MODULE_NAME}
-        ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        COMPONENT Runtime
-        )
-
-if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
-            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
-            )
+# Windows: export all symbols for DLL (preserve existing MSVC behavior)
+if (MSVC)
+  set_target_properties(gldapi PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif ()
+
+# --- Thin host executable ----------------------------------------------------
+# The host must compile only main.cpp and link to gldapi
+add_executable(gridlabd main.cpp)
+target_link_libraries(gridlabd PRIVATE gldapi Threads::Threads)
+
+
+set_source_files_properties(globals.cpp PROPERTIES COMPILE_DEFINITIONS _MAIN_C)
+
+# gldapi is the **provider** (exports symbols)
+target_compile_definitions(gldapi PRIVATE GLD_SHARED GLD_BUILD)
+
+# gridlabd is the **consumer** (imports symbols)
+target_compile_definitions(gridlabd PRIVATE GLD_SHARED)
+
+
+# Keep any platform-specific flags you already use
+if (MSVC)
+  # Example: stack size & debug flags (if you use them here)
+  target_link_options(gridlabd PRIVATE /STACK:16777216)
+  target_compile_options(gridlabd PRIVATE $<$<CONFIG:Debug>:/Zi /Od>)
+else()
+  target_compile_options(gridlabd PRIVATE $<$<CONFIG:Debug>:-g -O0>)
+endif()
+
+# --- Portable RPATH on UNIX (macOS/Linux) -----------------------------------
+# Use the helper function defined at the top-level CMakeLists.txt
+if (COMMAND set_portable_rpath)
+  set_portable_rpath(gldapi)
+  set_portable_rpath(gridlabd)
+endif()
+
+# --- Safety check (prevents future duplicate-core regression) ---------------
+# Fail if someone accidentally adds more sources to the executable
+get_target_property(_exe_srcs gridlabd SOURCES)
+list(LENGTH _exe_srcs _exe_count)
+if(_exe_count GREATER 1)
+  message(FATAL_ERROR "gridlabd must be a thin host (only main.cpp); core lives in gldapi.")
+endif()
+

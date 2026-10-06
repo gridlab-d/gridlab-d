@@ -112,9 +112,9 @@
 %   (2) 13  maximum angle difference, angle(Vf) - angle(Vt) (degrees)
 %
 % (+) Generator Cost Data Format
-%       NOTE: If gen has ng rows, then the first ng rows of gencost contain
+%       NOTE: If gen has ng.rows(), then the first ng.rows() of gencost contain
 %       the cost for active power produced by the corresponding generators.
-%       If gencost has 2*ng rows then rows ng+1 to 2*ng contain the reactive
+%       If gencost has 2*ng.rows() then.rows() ng+1 to 2*ng contain the reactive
 %       power costs in the same format.
 %       1   model, 1 - piecewise linear, 2 - polynomial
 %       2   startup, startup cost in US dollars

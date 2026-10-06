@@ -1,0 +1,159 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Tests transforms in deltamode",
+      "//Focuses on player and schedule transforms",
+      "//Checks issue stated in #1323",
+      "//Test schedule"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "profiler": 1,
+      "double_format": "%+.12lg",
+      "complex_format": "%+.12lg%+.12lg%c",
+      "complex_output_format": "RECT"
+    }
+  },
+  "classes": {
+    "player": [
+      {
+        "type": "double",
+        "name": "value"
+      }
+    ]
+  },
+  "clock": {
+    "timezone": "\"PST+8PDT\"",
+    "starttime": "'2001-08-01 12:00:00 PDT'",
+    "stoptime": "'2001-08-01 12:01:05 PDT'"
+  },
+  "modules": {
+    "powerflow": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "50 ms",
+      "solver_method": "NR",
+      "all_powerflow_delta": true
+    },
+    "tape": {
+      "outside_comments": [
+        "//#set pauseatexit=1"
+      ]
+    },
+    "assert": {}
+  },
+  "objects": {
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "olcABCN",
+          "z11": "1.1349574926666666+1.200063532333333j",
+          "z12": "0.2481072636666666+0.47157912833333315j",
+          "z13": "0.24810726366666663+0.4715791283333332j",
+          "z21": "0.24810726366666652+0.4715791283333331j",
+          "z22": "1.1349574926666666+1.2000635323333333j",
+          "z23": "0.24810726366666658+0.4715791283333332j",
+          "z31": "0.24810726366666636+0.4715791283333331j",
+          "z32": "0.2481072636666667+0.47157912833333326j",
+          "z33": "1.1349574926666666+1.2000635323333333j"
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "name": "player_ref",
+          "flags": "DELTAMODE",
+          "file": "../data_deltamode_transform.csv"
+        },
+        {
+          "parent": "complex_assert_9",
+          "flags": "DELTAMODE",
+          "property": "value",
+          "file": "../data_deltamode_transform_assertvals.csv"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "subtation_bus",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "feeder_head",
+          "nominal_voltage": 7200,
+          "phases": "ABCN"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "intermed_line",
+          "phases": "ABCN",
+          "from": "subtation_bus",
+          "to": "feeder_head",
+          "length": 100,
+          "configuration": "olcABCN"
+        },
+        {
+          "name": "next_intermed_line",
+          "phases": "ABCN",
+          "from": "feeder_head",
+          "to": "load_connection",
+          "length": 100,
+          "configuration": "olcABCN"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "load_connection",
+          "flags": "DELTAMODE",
+          "property": "constant_power_CN",
+          "interval": 1,
+          "file": "power_value_out.csv"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_9",
+          "parent": "load_connection",
+          "flags": "DELTAMODE",
+          "target": "constant_power_CN",
+          "within": 0.1
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load_connection",
+          "nominal_voltage": 7200,
+          "phases": "ABCN",
+          "constant_power_AN": "2400.0+1200.0j",
+          "constant_power_BN": "3400.0+1100.0j",
+          "constant_power_CN_real": "player_ref.value*500.0+2000.0",
+          "constant_power_CN_reac": "test_schedule*400.0+400.0"
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "test_schedule": [
+      {
+        "name": "",
+        "items": [
+          "0 * * * * 1.0",
+          "1 * * * * 2.0"
+        ]
+      }
+    ]
+  }
+}

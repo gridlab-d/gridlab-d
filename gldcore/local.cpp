@@ -6,61 +6,54 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "output.h"
 #include "local.h"
+#include "output.h"
 
 #ifdef _WIN32
 #define tzset _tzset
 #endif
 
-static LOCALE *stack=nullptr;
-void locale_push(void)
-{
-	char *tz = timestamp_current_timezone();
-	LOCALE *locale = (LOCALE*)malloc(sizeof(LOCALE));
-	if (locale==nullptr)
-	{
-		output_error("locale push failed; no memory");
-		return;
-	}
-	else
-	{
-		locale->next=stack;
-		stack=locale;
-		if (tz==nullptr)
-			output_warning("locale TZ is empty");
-			/* TROUBLESHOOT
-				This warning indicates that the TZ environment variable has not be set.  
-				This variable is used to specify the default timezone to use while
-				GridLAB-D is running.  Supported timezones are listed in the 
-				<a href="http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/tzinfo.txt?view=markup">tzinfo.txt</a>
-				file.
-			 */
-		strncpy(locale->tz,tz?tz:"",sizeof(locale->tz));
-		return;
-	}
+static LOCALE *stack = nullptr;
+void locale_push(void) {
+  char *tz = timestamp_current_timezone();
+  LOCALE *locale = (LOCALE *)malloc(sizeof(LOCALE));
+  if (locale == nullptr) {
+    output_error("locale push failed; no memory");
+    return;
+  } else {
+    locale->next = stack;
+    stack = locale;
+    if (tz == nullptr)
+      output_warning("locale TZ is empty");
+    /* TROUBLESHOOT
+            This warning indicates that the TZ environment variable has not be
+       set. This variable is used to specify the default timezone to use while
+            GridLAB-D is running.  Supported timezones are listed in the
+            <a
+       href="http://gridlab-d.svn.sourceforge.net/viewvc/gridlab-d/trunk/core/tzinfo.txt?view=markup">tzinfo.txt</a>
+            file.
+     */
+    strncpy(locale->tz, tz ? tz : "", sizeof(locale->tz));
+    return;
+  }
 }
 
-void locale_pop(void)
-{
-	if (stack==nullptr)
-	{
-		output_error("locale pop failed; stack empty");
-		return;
-	}
-	else
-	{
-		LOCALE *next = stack;
-		char tz[64];
-		stack = stack->next;
-		sprintf(tz,"TZ=%s",next->tz);
-		if (putenv(tz)!=0)
-			output_warning("locale pop failed");
-			/* TROUBLESHOOT
-				This is an internal error causes by a corrupt locale stack.  
-			 */
-		else
-			tzset();
-		free(next);
-	}
+void locale_pop(void) {
+  if (stack == nullptr) {
+    output_error("locale pop failed; stack empty");
+    return;
+  } else {
+    LOCALE *next = stack;
+    char tz[64];
+    stack = stack->next;
+    snprintf(tz, sizeof(tz), "TZ=%s", next->tz);
+    if (putenv(tz) != 0)
+      output_warning("locale pop failed");
+    /* TROUBLESHOOT
+            This is an internal error causes by a corrupt locale stack.
+     */
+    else
+      tzset();
+    free(next);
+  }
 }

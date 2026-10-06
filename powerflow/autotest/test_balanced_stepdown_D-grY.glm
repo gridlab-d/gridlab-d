@@ -70,7 +70,7 @@ object overhead_line:12 {
 		file "line12.csv";
 		interval 1;
 		limit 1000;
-		property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,flow_direction,length,configuration;
+		property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,length,configuration;
 	};
 	object complex_assert {
 		target current_in_A;
@@ -152,7 +152,7 @@ object overhead_line:34 {
 		file "line34.csv";
 		interval 1;
 		limit 1000;
-		property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,flow_direction,length,configuration;
+		property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,length,configuration;
 	};
 	object complex_assert {
 		target current_in_A;

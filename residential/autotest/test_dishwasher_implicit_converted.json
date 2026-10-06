@@ -1,0 +1,49 @@
+{
+  "__preamble": {
+    "comments": [
+      "// $Id: test_dishwasher_implicit.glm 4738 2014-07-03 00:55:39Z dchassin $",
+      "// Test implicit dishwasher",
+      "//"
+    ]
+  },
+  "_directives": {
+    "#define": {
+      "stylesheet": "C:\\Project Files\\Gridlabd\\gridlab-d\\trunk\\VS2005\\gridlabd-2_0.xsl"
+    },
+    "#set": {
+      "suppress_repeat_messages": 0
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-07-07 00:00:00 PST'",
+    "stoptime": "'2002-07-07 00:00:00 PST'"
+  },
+  "modules": {
+    "residential": {
+      "implicit_enduses": "DISHWASHER"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "recorder": {
+      "instances": [
+        {
+          "parent": "house_1",
+          "property": "panel.power,panel.energy",
+          "file": "test_dishwasher_energy.csv",
+          "interval": 3600,
+          "limit": 100
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1"
+        }
+      ]
+    }
+  }
+}

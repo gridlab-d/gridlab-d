@@ -1,0 +1,137 @@
+"""
+Unit tests for model execution (run and step).
+
+Tests:
+- Basic run() execution
+- Checking run success/failure
+- Step-by-step execution
+- Execution without loading model
+"""
+
+from datetime import datetime, timedelta
+
+import pytest
+import gridlabd
+
+
+def test_run_minimal_model(minimal_model):
+    """Test running a minimal model to completion."""
+    result = minimal_model.run()
+    assert result == 0  # 0 = success
+
+
+def test_run_without_loading(gld_instance):
+    """Test that running without loading a model fails."""
+    with pytest.raises(RuntimeError, match="no objects loaded"):
+        gld_instance.run()
+
+
+def test_step_minimal_model(minimal_model):
+    """Test stepping through a model."""
+    # First step initializes the simulation
+    status, timestamp = minimal_model.step()
+    assert status >= 0  # Non-negative status
+    assert isinstance(timestamp, str)
+    # Verify ISO 8601 format (contains 'T' separator)
+    assert "T" in timestamp
+    
+    # Should be able to step again
+    status2, timestamp2 = minimal_model.step()
+    assert status2 >= 0
+
+
+def test_step_until_completion(gld_instance, test_models_dir):
+    """Test stepping through entire simulation."""
+    model_path = test_models_dir / "minimal.glm"
+    assert gld_instance.load(str(model_path)) == 0
+    
+    step_count = 0
+    max_steps = 100  # Safety limit
+    
+    while step_count < max_steps:
+        status, timestamp = gld_instance.step()
+        if status < 0:  # Error
+            break
+        if status == 0:  # Simulation complete
+            break
+        step_count += 1
+    
+    # Should complete in reasonable number of steps
+    assert step_count >= 0
+    assert step_count < max_steps
+
+
+def test_step_without_loading(gld_instance):
+    """Test that stepping without loading a model fails."""
+    with pytest.raises(RuntimeError, match="no objects loaded"):
+        gld_instance.step()
+
+
+def test_stepped_fixture_is_initialized(stepped_model):
+    """Test that stepped_model fixture has already been stepped."""
+    # The fixture should have already called step() once
+    # So we should be able to get objects immediately
+    objects = stepped_model.get_objects_by_class("house")
+    assert isinstance(objects, list)
+    assert len(objects) > 0
+
+
+def test_run_returns_status_code(minimal_model):
+    """Test that run() returns integer status code."""
+    result = minimal_model.run()
+    assert isinstance(result, int)
+    assert result == 0  # Success
+
+
+def test_run_accepts_iso8601_bounds(gld_instance, test_models_dir):
+    """run() should accept ISO 8601 strings for start_time/stop_time bounds."""
+    model_path = test_models_dir / "minimal.glm"
+    assert gld_instance.load(str(model_path)) == 0
+
+    status0, start_iso = gld_instance.get_time()
+    assert status0 >= 0
+
+    start_dt = datetime.fromisoformat(start_iso)
+    stop_dt = start_dt + timedelta(hours=1)
+
+    result = gld_instance.run(start_time=start_dt.isoformat(), stop_time=stop_dt.isoformat())
+    assert result == 0
+
+    status1, final_iso = gld_instance.get_time()
+    assert status1 >= 0
+    assert datetime.fromisoformat(final_iso) == stop_dt
+
+
+def test_step_respects_fixed_timestep(gld_instance, test_models_dir):
+    """Test that step() advances by the configured fixed timestep."""
+    model_path = test_models_dir / "minimal.glm"
+    assert gld_instance.load(str(model_path)) == 0
+
+    assert gld_instance.set_time_step(900) == 0
+
+    status1, time1 = gld_instance.step()
+    assert status1 >= 0
+
+    status2, time2 = gld_instance.step()
+    assert status2 >= 0
+
+    dt1 = datetime.fromisoformat(time1)
+    dt2 = datetime.fromisoformat(time2)
+    assert (dt2 - dt1).total_seconds() == pytest.approx(900.0, abs=1e-6)
+
+
+def test_step_returns_error_when_worker_exits_during_step(gld_instance, monkeypatch):
+    """If worker exits during STEP, step() should return TIME_STEP_ERROR, not raise."""
+
+    def _fake_send_command(command, args):
+        raise RuntimeError("Worker process exited unexpectedly with code 255 while processing STEP")
+
+    monkeypatch.setattr(gld_instance, "get_object_count", lambda: 1)
+    monkeypatch.setattr(gld_instance, "get_time", lambda: (0, "2023-07-01T07:03:26-07:00"))
+    monkeypatch.setattr(gld_instance, "get_stoptime", lambda: None)
+    monkeypatch.setattr(gld_instance, "_send_command", _fake_send_command)
+
+    code, sim_time = gld_instance.step()
+
+    assert code == int(gridlabd.GLDErrorCode.TIME_STEP_ERROR.value)
+    assert sim_time == "2023-07-01T07:03:26-07:00"

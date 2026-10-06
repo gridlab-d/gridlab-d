@@ -1,0 +1,312 @@
+{
+  "__preamble": {
+    "comments": [
+      "//4-node-esque system to test multiple islands/solutions approach",
+      "//Makes sure that \"initially islanded node\" has zero voltage at beginning"
+    ]
+  },
+  "clock": {
+    "timezone": "EST+5EDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:05'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR",
+      "line_limits": false
+    },
+    "assert": {}
+  },
+  "objects": {
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "olc100",
+          "geometric_mean_radius": "0.0244 ft",
+          "resistance": "0.306 Ohm/mile"
+        },
+        {
+          "name": "olc101",
+          "geometric_mean_radius": "0.00814 ft",
+          "resistance": "0.592 Ohm/mile"
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls200",
+          "distance_AB": "2.5 ft",
+          "distance_BC": "4.5 ft",
+          "distance_AC": "7.0 ft",
+          "distance_AN": "5.656854 ft",
+          "distance_BN": "4.272002 ft",
+          "distance_CN": "5.0 ft"
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc300",
+          "conductor_A": "olc100",
+          "conductor_B": "olc100",
+          "conductor_C": "olc100",
+          "conductor_N": "olc101",
+          "spacing": "ls200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "tc400",
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "fault_check": {
+      "instances": [
+        {
+          "name": "base_fault_check_object",
+          "check_mode": "ONCHANGE",
+          "strictly_radial": false,
+          "grid_association": true,
+          "outside_comments": [
+            "//Fault check option"
+          ],
+          "inline_comments": {
+            "grid_association": "//Flag to ensure non-monolithic islands"
+          }
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "I_Should_Disconnect",
+          "target": "voltage_A",
+          "value": 0.0,
+          "within": 0.01,
+          "outside_comments": [
+            "//Added switch item - Open switch - tests the condition"
+          ]
+        },
+        {
+          "parent": "I_Should_Disconnect",
+          "target": "voltage_B",
+          "value": 0.0,
+          "within": 0.01
+        },
+        {
+          "parent": "I_Should_Disconnect",
+          "target": "voltage_C",
+          "value": 0.0,
+          "within": 0.01
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "I_Should_Disconnect",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "load4",
+          "phases": "ABCN",
+          "constant_power_A": "+12750.000+7901.031j",
+          "constant_power_B": "+18000.000+8717.789j",
+          "constant_power_C": "+23750.000+7806.750j",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "load4B",
+          "phases": "ABCN",
+          "constant_power_A": "+10750.000+7901.031j",
+          "constant_power_B": "+18005.000+8717.789j",
+          "constant_power_C": "+20750.000+7806.750j",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "load4C",
+          "phases": "ABCN",
+          "constant_power_A": "+8750.000+7901.031j",
+          "constant_power_B": "+8010.000+8717.789j",
+          "constant_power_C": "+16050.000+7806.750j",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    },
+    "switch": {
+      "instances": [
+        {
+          "name": "I_better_not_Fail",
+          "phases": "ABCN",
+          "from": "node2B",
+          "to": "I_Should_Disconnect",
+          "status": "OPEN"
+        },
+        {
+          "name": "switch3_3B",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "node3B",
+          "status": "CLOSED",
+          "outside_comments": [
+            "//Switches, that would presumably make this three systems, eventually"
+          ]
+        },
+        {
+          "name": "switch2B_2C",
+          "phases": "ABCN",
+          "from": "node2B",
+          "to": "node2C",
+          "status": "CLOSED"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node1",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 7199.558,
+          "outside_comments": [
+            "//First system"
+          ]
+        },
+        {
+          "name": "node2",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node3",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "node1B",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558,
+          "outside_comments": [
+            "//Duplicate B"
+          ]
+        },
+        {
+          "name": "node2B",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node3B",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        },
+        {
+          "name": "node1C",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558,
+          "outside_comments": [
+            "//Duplicate C"
+          ]
+        },
+        {
+          "name": "node2C",
+          "phases": "ABCN",
+          "nominal_voltage": 7199.558
+        },
+        {
+          "name": "node3C",
+          "phases": "ABCN",
+          "nominal_voltage": 2401.777
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "ol12",
+          "phases": "ABCN",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol34",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "load4",
+          "length": 2500,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol12B",
+          "phases": "ABCN",
+          "from": "node1B",
+          "to": "node2B",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol34B",
+          "phases": "ABCN",
+          "from": "node3B",
+          "to": "load4B",
+          "length": 2500,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol12C",
+          "phases": "ABCN",
+          "from": "node1C",
+          "to": "node2C",
+          "length": 2000,
+          "configuration": "lc300"
+        },
+        {
+          "name": "ol34C",
+          "phases": "ABCN",
+          "from": "node3C",
+          "to": "load4C",
+          "length": 2500,
+          "configuration": "lc300"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "tran23",
+          "phases": "ABCN",
+          "from": "node2",
+          "to": "node3",
+          "configuration": "tc400"
+        },
+        {
+          "name": "tran23B",
+          "phases": "ABCN",
+          "from": "node2B",
+          "to": "node3B",
+          "configuration": "tc400"
+        },
+        {
+          "name": "tran23C",
+          "phases": "ABCN",
+          "from": "node2C",
+          "to": "node3C",
+          "configuration": "tc400"
+        }
+      ]
+    }
+  }
+}

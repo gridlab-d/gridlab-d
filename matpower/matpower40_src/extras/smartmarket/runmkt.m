@@ -14,7 +14,7 @@ function [MVAbase, cq, cp, bus, gen, gencost, branch, f, dispatch, success, et] 
 %   period (for computing startup/shutdown costs), T is the time duration
 %   of the dispatch period in hours, and MPOPT is a MATPOWER options vector
 %   (see 'help mpoption' for details). Uses default options if MPOPT is not
-%   given. The rows in Q and P correspond to the rows in gen and gencost,
+%   given. The.rows() in Q and P correspond to the.rows() in gen and gencost,
 %   and each column corresponds to another block in the marginal offer or
 %   bid. The market codes are defined as the sum of the
 %   following numbers:

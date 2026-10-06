@@ -1,0 +1,128 @@
+{
+  "__preamble": {
+    "comments": [
+      "//This will test the accuracy of the HVAC energy use and temperature behavior",
+      "//This test is an example of a peak heating day",
+      "//test_HVAC_peak_heat.glm created by Andy Fisher"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "minimum_timestep": "1;"
+    }
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-05 05:00:00'",
+    "stoptime": "'2001-01-06 05:00:49'"
+  },
+  "modules": {
+    "climate": {},
+    "powerflow": {},
+    "residential": {
+      "implicit_enduses": "NONE"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "climate": {
+      "instances": [
+        {
+          "tmyfile": "../WA-Yakima.tmy2"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "house_3",
+          "property": "panel.energy",
+          "file": "test_HVAC_peak_heat.csv",
+          "interval": 1,
+          "limit": 86447
+        },
+        {
+          "parent": "triplex_meter_2",
+          "property": "measured_real_energy",
+          "file": "test_HVAC_peak_heat_energy.csv",
+          "interval": 1,
+          "limit": 86447
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "house_3",
+          "target": "panel.energy",
+          "in": "'2001-01-06 5:00:47'",
+          "once": "ONCE_TRUE",
+          "value": "100.155+0i",
+          "within": 0.500775,
+          "inline_comments": {
+            "within": "//asserting house_e within 0.5 percent of Rob's ETP result"
+          }
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_3",
+          "parent": "triplex_meter_2",
+          "system_mode": "OFF",
+          "auxiliary_strategy": "DEADBAND",
+          "heating_system_type": "HEAT_PUMP",
+          "cooling_system_type": "ELECTRIC",
+          "air_temperature": 60,
+          "mass_temperature": 60,
+          "heating_setpoint": "heatspt*1",
+          "cooling_setpoint": "coolspt*1"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "parent": "triplex_meter_2",
+          "target": "measured_real_energy",
+          "in": "'2001-01-06 5:00:47'",
+          "once": "ONCE_TRUE",
+          "value": 100155,
+          "within": 500.775,
+          "inline_comments": {
+            "within": "//asserting house_e within 0.5 percent of Rob's ETP result"
+          }
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "triplex_meter_2",
+          "nominal_voltage": 120,
+          "phases": "AS"
+        }
+      ]
+    }
+  },
+  "schedules": {
+    "heatspt": [
+      {
+        "name": "",
+        "items": [
+          "* * * * * 60"
+        ]
+      }
+    ],
+    "coolspt": [
+      {
+        "name": "",
+        "items": [
+          "* * * * * 75"
+        ]
+      }
+    ]
+  }
+}

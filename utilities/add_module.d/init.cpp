@@ -1,40 +1,37 @@
 // init.cpp
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "gridlabd.h"
 
 #include "MODULENAME.h"
-//NEWCLASSINC
+// NEWCLASSINC
 
-EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
-{
-	if (set_callback(fntable)==nullptr)
-	{
-		errno = EINVAL;
-		return nullptr;
-	}
+EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]) {
+  if (set_callback(fntable) == nullptr) {
+    errno = EINVAL;
+    return nullptr;
+  }
 
 #ifdef OPTIONAL
-	/* TODO: publish global variables (see class_define_map() for details) */
-	gl_global_create(char *name, ..., nullptr);
-	/* TODO: use gl_global_setvar, gl_global_getvar, and gl_global_find for access */
+  /* TODO: publish global variables (see class_define_map() for details) */
+  gl_global_create(char *name, ..., nullptr);
+  /* TODO: use gl_global_setvar, gl_global_getvar, and gl_global_find for access
+   */
 #endif
 
-	/*** DO NOT EDIT NEXT LINE ***/
-	//NEWCLASSDEF
-	
-	/* always return the first class registered */
-	/* TODO this module will not compile until a class has been defined */
-	return CLASSNAME::oclass;
+  /*** DO NOT EDIT NEXT LINE ***/
+  // NEWCLASSDEF
+
+  /* always return the first class registered */
+  /* TODO this module will not compile until a class has been defined */
+  return CLASSNAME::oclass;
 }
 
-
-CDECL int do_kill()
-{
-	/* if global memory needs to be released, this is a good time to do it */
-	return 0;
+CDECL int do_kill() {
+  /* if global memory needs to be released, this is a good time to do it */
+  return 0;
 }

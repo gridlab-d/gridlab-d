@@ -3,49 +3,44 @@
  *	glmjava module
  */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "holder.h"
 #include "gridlabd.h"
 #include "gridlabd_java.h"
+#include "holder.h"
 
-EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
-{
-	PROPERTYTYPE p;
+EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[]) {
+  PROPERTYTYPE p;
 
-	if(sizeof(void *) == sizeof(int32))
-		p = PT_int32;
-	if(sizeof(void *) == sizeof(int64))
-		p = PT_int64;
+  if (sizeof(void *) == sizeof(int32))
+    p = PT_int32;
+  if (sizeof(void *) == sizeof(int64))
+    p = PT_int64;
 
-	// set the GridLAB core API callback table
-	callback = fntable;
+  // set the GridLAB core API callback table
+  callback = fntable;
 
+  gl_global_create("glmjava::classpath", PT_char256, get_classpath(), nullptr);
+  gl_global_create("glmjava::libpath", PT_char256, get_libpath(), nullptr);
+  gl_global_create("glmjava::jcallback", p, get_jcb(), PT_ACCESS, PA_REFERENCE,
+                   nullptr);
+  //	default values
+  strcpy(get_classpath(), "Win32/Debug/");
+  strcpy(get_libpath(), "Win32/Debug/");
 
-	gl_global_create("glmjava::classpath",PT_char256,get_classpath(),nullptr);
-	gl_global_create("glmjava::libpath",PT_char256,get_libpath(),nullptr);
-	gl_global_create("glmjava::jcallback",p,get_jcb(),PT_ACCESS,PA_REFERENCE,nullptr);
-	//	default values
-	strcpy(get_classpath(), "Win32/Debug/");
-	strcpy(get_libpath(), "Win32/Debug/");
+  //	if(get_jvm() == nullptr){
+  //		gl_error("Unable to initialize JVM in java->init()");
+  //		return nullptr;
+  //	}
 
-
-//	if(get_jvm() == nullptr){
-//		gl_error("Unable to initialize JVM in java->init()");
-//		return nullptr;
-//	}
-
-	// very nonstandard.
-	return new_holder(module);
+  // very nonstandard.
+  return new_holder(module);
 }
 
-EXPORT int check(){
-	return 0;
-}
+EXPORT int check() { return 0; }
 
-//static CALLBACKS *callback = nullptr;
-
+// static CALLBACKS *callback = nullptr;
 
 /* EOF */

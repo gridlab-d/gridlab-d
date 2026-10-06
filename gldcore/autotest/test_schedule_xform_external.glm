@@ -1,14 +1,22 @@
 // test schedule transforms
 
 #set randomseed=17
-#set module_compiler_flags=VERBOSE|DEBUG|KEEPWORK|CLEAN
+#set module_compiler_flags=VERBOSE|DEBUG|KEEPWORK|CLEAN|_WIN32
 #set force_compile=1
+
 
 extern "C" test_schedule_xform_external : myfunction2@1 // inline code follows
 {
-	int myfunction2(int nlhs, GLXDATA *plhs, int nrhs, GLXDATA *prhs)
+
+#ifdef _WIN32
+    #define DLLEXPORT	__declspec(dllexport) 
+#else
+    #define DLLEXPORT
+#endif
+
+	DLLEXPORT int myfunction2(int nlhs, GLXDATA *plhs, int nrhs, GLXDATA *prhs)
 	{	/* make sure the correct number of args are passed in */
-		if ( nlhs!=1 || nlhs!=1 ) return -1;
+		if ( nlhs!=1 || nrhs!=1 ) return -1;
 		/* subtract 5 from arg */
 		GLXdouble(plhs[0]) = GLXdouble(prhs[0]) - 5;
 		return 0;

@@ -1,0 +1,330 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Tests single-phase versions of inverter_dyn",
+      "//Check for test that was failing due to indexing on single-phase",
+      "//#set pauseatexit=1"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "suppress_repeat_messages": 1,
+      "relax_naming_rules": "1;",
+      "profiler": 1,
+      "double_format": "%+.12lg",
+      "complex_format": "%+.12lg%+.12lg%c"
+    }
+  },
+  "clock": {
+    "timezone": "\"PST+8PDT\"",
+    "starttime": "'2001-08-01 12:00:00 PDT'",
+    "stoptime": "'2001-08-01 12:00:6 PDT'"
+  },
+  "modules": {
+    "generators": {
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "1 ms"
+    },
+    "powerflow": {
+      "lu_solver": "\"KLU\"",
+      "enable_subsecond_models": true,
+      "deltamode_timestep": "1 ms",
+      "solver_method": "NR",
+      "all_powerflow_delta": true,
+      "inside_comments": [
+        "//enable_inrush TRUE;"
+      ],
+      "inline_comments": {
+        "deltamode_timestep": "//10 ms"
+      }
+    },
+    "reliability": {
+      "enable_subsecond_models": true,
+      "maximum_event_length": 1800000,
+      "report_event_log": true,
+      "inline_comments": {
+        "maximum_event_length": "//Maximum length of events in seconds (manual events are excluded from this limit)"
+      }
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "parent": "subtation_bus",
+          "file": "../data_7200v_1s_delta_trigger.player",
+          "property": "nominal_voltage",
+          "flags": "DELTAMODE"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "subtation_bus",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 7200.0
+        },
+        {
+          "name": "feeder_head",
+          "nominal_voltage": 7200,
+          "phases": "ABCN"
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "intermed_line",
+          "phases": "ABCN",
+          "from": "subtation_bus",
+          "to": "feeder_head",
+          "length": 100,
+          "configuration": "olcABCN"
+        },
+        {
+          "name": "lA",
+          "phases": "AN",
+          "from": "feeder_head",
+          "to": "nA",
+          "length": 12,
+          "configuration": "olcAN"
+        },
+        {
+          "name": "lB",
+          "phases": "BN",
+          "from": "feeder_head",
+          "to": "nB",
+          "length": 12,
+          "configuration": "olcBN"
+        },
+        {
+          "name": "lC",
+          "phases": "CN",
+          "from": "feeder_head",
+          "to": "nC",
+          "length": 12,
+          "configuration": "olcCN"
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "nA",
+          "phases": "AN",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "nB",
+          "phases": "BN",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "nC",
+          "phases": "CN",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "olcABCN",
+          "z11": "1.1349574926666666+1.200063532333333j",
+          "z12": "0.2481072636666666+0.47157912833333315j",
+          "z13": "0.24810726366666663+0.4715791283333332j",
+          "z21": "0.24810726366666652+0.4715791283333331j",
+          "z22": "1.1349574926666666+1.2000635323333333j",
+          "z23": "0.24810726366666658+0.4715791283333332j",
+          "z31": "0.24810726366666636+0.4715791283333331j",
+          "z32": "0.2481072636666667+0.47157912833333326j",
+          "z33": "1.1349574926666666+1.2000635323333333j"
+        },
+        {
+          "name": "olcAN",
+          "z11": "1.0720488106666666+1.198216400333333j"
+        },
+        {
+          "name": "olcBN",
+          "z22": "1.0819264616666666+1.2049023316666667j"
+        },
+        {
+          "name": "olcCN",
+          "z33": "0.704233556+1.1631187470000002j"
+        }
+      ]
+    },
+    "enum_assert": {
+      "instances": [
+        {
+          "parent": "inverterA",
+          "flags": "DELTAMODE",
+          "target": "IEEE_1547_trip_method",
+          "value": 0
+        },
+        {
+          "parent": "inverterB",
+          "flags": "DELTAMODE",
+          "target": "IEEE_1547_trip_method",
+          "value": 0
+        },
+        {
+          "parent": "inverterC",
+          "flags": "DELTAMODE",
+          "target": "IEEE_1547_trip_method",
+          "value": 0
+        }
+      ]
+    },
+    "inverter_dyn": {
+      "instances": [
+        {
+          "name": "inverterA",
+          "parent": "nA",
+          "rated_power": 9000.0,
+          "flags": "DELTAMODE",
+          "control_mode": "GFL_CURRENT_SOURCE",
+          "grid_following_mode": "POSITIVE_SEQUENCE",
+          "frequency_watt": false,
+          "volt_var": false,
+          "Pref_max": 1,
+          "Pref": 6000.0,
+          "Qref": 0.0,
+          "kpPLL": 50,
+          "kiPLL": 900,
+          "Tpf": 0.25,
+          "Tff": 0.01,
+          "Rp": 0.05,
+          "Rq": 0.05,
+          "Tqf": 0.2,
+          "Tvf": 0.05,
+          "enable_1547_checks": true,
+          "over_freq_high_cutout": 62.0,
+          "over_freq_high_disconnect_time": 0.16,
+          "over_freq_low_cutout": 60.5,
+          "over_freq_low_disconnect_time": 2.0,
+          "under_freq_high_cutout": 59.5,
+          "under_freq_high_disconnect_time": 0.15,
+          "under_freq_low_cutout": 57.0,
+          "under_freq_low_disconnect_time": 0.16,
+          "under_voltage_low_cutout": 0.45,
+          "under_voltage_middle_cutout": 0.6,
+          "under_voltage_high_cutout": 0.88,
+          "over_voltage_low_cutout": 1.1,
+          "over_voltage_high_cutout": 1.2,
+          "under_voltage_low_disconnect_time": 0.16,
+          "under_voltage_middle_disconnect_time": 1.0,
+          "under_voltage_high_disconnect_time": 2.0,
+          "over_voltage_low_disconnect_time": 1.0,
+          "over_voltage_high_disconnect_time": 0.16
+        },
+        {
+          "name": "inverterB",
+          "parent": "nB",
+          "rated_power": 9000.0,
+          "flags": "DELTAMODE",
+          "control_mode": "GFL_CURRENT_SOURCE",
+          "grid_following_mode": "POSITIVE_SEQUENCE",
+          "frequency_watt": false,
+          "volt_var": false,
+          "Pref_max": 1,
+          "Pref": 6000.0,
+          "Qref": 0.0,
+          "kpPLL": 50,
+          "kiPLL": 900,
+          "Tpf": 0.25,
+          "Tff": 0.01,
+          "Rp": 0.05,
+          "Rq": 0.05,
+          "Tqf": 0.2,
+          "Tvf": 0.05,
+          "enable_1547_checks": true,
+          "over_freq_high_cutout": 62.0,
+          "over_freq_high_disconnect_time": 0.16,
+          "over_freq_low_cutout": 60.5,
+          "over_freq_low_disconnect_time": 2.0,
+          "under_freq_high_cutout": 59.5,
+          "under_freq_high_disconnect_time": 0.15,
+          "under_freq_low_cutout": 57.0,
+          "under_freq_low_disconnect_time": 0.16,
+          "under_voltage_low_cutout": 0.45,
+          "under_voltage_middle_cutout": 0.6,
+          "under_voltage_high_cutout": 0.88,
+          "over_voltage_low_cutout": 1.1,
+          "over_voltage_high_cutout": 1.2,
+          "under_voltage_low_disconnect_time": 0.16,
+          "under_voltage_middle_disconnect_time": 1.0,
+          "under_voltage_high_disconnect_time": 2.0,
+          "over_voltage_low_disconnect_time": 1.0,
+          "over_voltage_high_disconnect_time": 0.16
+        },
+        {
+          "name": "inverterC",
+          "parent": "nC",
+          "rated_power": 9000.0,
+          "flags": "DELTAMODE",
+          "control_mode": "GFL_CURRENT_SOURCE",
+          "grid_following_mode": "POSITIVE_SEQUENCE",
+          "frequency_watt": false,
+          "volt_var": false,
+          "Pref_max": 1,
+          "Pref": 6000.0,
+          "Qref": 0.0,
+          "kpPLL": 50,
+          "kiPLL": 900,
+          "Tpf": 0.25,
+          "Tff": 0.01,
+          "Rp": 0.05,
+          "Rq": 0.05,
+          "Tqf": 0.2,
+          "Tvf": 0.05,
+          "enable_1547_checks": true,
+          "over_freq_high_cutout": 62.0,
+          "over_freq_high_disconnect_time": 0.16,
+          "over_freq_low_cutout": 60.5,
+          "over_freq_low_disconnect_time": 2.0,
+          "under_freq_high_cutout": 59.5,
+          "under_freq_high_disconnect_time": 0.15,
+          "under_freq_low_cutout": 57.0,
+          "under_freq_low_disconnect_time": 0.16,
+          "under_voltage_low_cutout": 0.45,
+          "under_voltage_middle_cutout": 0.6,
+          "under_voltage_high_cutout": 0.88,
+          "over_voltage_low_cutout": 1.1,
+          "over_voltage_high_cutout": 1.2,
+          "under_voltage_low_disconnect_time": 0.16,
+          "under_voltage_middle_disconnect_time": 1.0,
+          "under_voltage_high_disconnect_time": 2.0,
+          "over_voltage_low_disconnect_time": 1.0,
+          "over_voltage_high_disconnect_time": 0.16
+        }
+      ]
+    },
+    "group_recorder": {
+      "instances": [
+        {
+          "name": "inverter_reason",
+          "flags": "DELTAMODE",
+          "group": "class=inverter_dyn",
+          "file": "inver_reason.csv",
+          "interval": 1,
+          "property": "IEEE_1547_trip_method",
+          "outside_comments": [
+            "// object group_recorder {",
+            "// flags DELTAMODE;",
+            "// name inverter_status;",
+            "// group \"class=inverter_dyn\";",
+            "// file inver_status.csv;",
+            "// interval 1;",
+            "// property inverter_1547_status;",
+            "// }"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -133,7 +133,7 @@ object line_spacing {
 }
 // ID-520 an
 object line_spacing {
-	name line_spacing_7;
+	name line_spacing_07;
 	 distance_AB 0.000000;
 	 distance_BC 0.000000;
 	 distance_AC 0.000000;

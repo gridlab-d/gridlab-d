@@ -1,0 +1,508 @@
+{
+  "__preamble": {
+    "comments": [
+      "// This is a 4 node system containing 3 phase lines.",
+      "// This will test all fault types supported."
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2001-01-01 00:00:00'",
+    "stoptime": "'2001-01-01 00:00:22'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "reliability": {
+      "maximum_event_length": 1800,
+      "report_event_log": true
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "fault_check": {
+      "instances": [
+        {
+          "name": "test_fault",
+          "check_mode": "ONCHANGE",
+          "eventgen_object": "SLG_A",
+          "output_filename": "testout.txt",
+          "outside_comments": [
+            "//setup reliability"
+          ],
+          "inline_comments": {
+            "object fault_check {": "Fault check object - required to make powerflow properly handle faults",
+            "check_mode": "//Fault check mode - should be in ONCHANGE - reliability will change it",
+            "eventgen_object": "//Link to eventgen object - used to handle \"unscheduled\" events - fuses and switch openings",
+            "output_filename": "//\"unsupported node\" dump file"
+          }
+        }
+      ]
+    },
+    "metrics": {
+      "instances": [
+        {
+          "name": "testmetrics",
+          "report_file": "testmetrics.txt",
+          "module_metrics_object": "pwrmetrics",
+          "metrics_of_interest": "SAIFI,SAIDI,CAIDI,ASAI,MAIFI",
+          "customer_group": "groupid=METERTEST",
+          "metric_interval": "5 h",
+          "report_interval": "5 h",
+          "inside_comments": [
+            "//customer_group \"class=meter\";      //\"Customers\" are only 3-phase meters on the system",
+            "//customer_group \"class=triplex_meter\";    //\"Customers\" are only triplex meters on the system"
+          ],
+          "inline_comments": {
+            "report_file": "//Name of the output file",
+            "module_metrics_object": "//Module-specific \"metrics\" object - a powerflow metrics object is specified here",
+            "metrics_of_interest": "//Metrics to output into the report file",
+            "customer_group": "//Search criteria for determining \"customers\" of the system - similar to collectors - this group is both three-phase and triplex meters",
+            "metric_interval": "//Interval to run metrics - (separate from \"simulation-long\" metrics) - set to 0 for no metric updates (defaults to no interval updates)",
+            "report_interval": "//Interval to dump metric updates to the output file."
+          }
+        }
+      ]
+    },
+    "eventgen": {
+      "instances": [
+        {
+          "name": "SLG_A",
+          "parent": "testmetrics",
+          "fault_type": "SLG-A",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:01,2001-01-01 00:00:02",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "SLG_B",
+          "parent": "testmetrics",
+          "fault_type": "SLG-B",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:03,2001-01-01 00:00:04",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "SLG_C",
+          "parent": "testmetrics",
+          "fault_type": "SLG-C",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:05,2001-01-01 00:00:06",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "DLG_AB",
+          "parent": "testmetrics",
+          "fault_type": "DLG-AB",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:07,2001-01-01 00:00:08",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "DLG_BC",
+          "parent": "testmetrics",
+          "fault_type": "DLG-BC",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:09,2001-01-01 00:00:10",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "DLG_CA",
+          "parent": "testmetrics",
+          "fault_type": "DLG-CA",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:11,2001-01-01 00:00:12",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "LL_AB",
+          "parent": "testmetrics",
+          "fault_type": "LL-AB",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:13,2001-01-01 00:00:14",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "LL_BC",
+          "parent": "testmetrics",
+          "fault_type": "LL-BC",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:15,2001-01-01 00:00:16",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "LL_CA",
+          "parent": "testmetrics",
+          "fault_type": "LL-CA",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:17,2001-01-01 00:00:18",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "TLG",
+          "parent": "testmetrics",
+          "fault_type": "TLG",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:19,2001-01-01 00:00:20",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        },
+        {
+          "name": "TLL",
+          "parent": "testmetrics",
+          "fault_type": "TLL",
+          "manual_outages": "overhead_line_34,2001-01-01 0:00:21,2001-01-01 00:00:22",
+          "inline_comments": {
+            "object eventgen {": "Event generation object - induces actual faults on the system - this one is a manual object",
+            "parent": "//Parent it to the reliability metrics object",
+            "fault_type": "//Type of fault for the object to induce"
+          }
+        }
+      ]
+    },
+    "power_metrics": {
+      "instances": [
+        {
+          "name": "pwrmetrics",
+          "base_time_value": "1 h",
+          "inline_comments": {
+            "object power_metrics {": "Powerflow metrics object - performs 1366 metric calculations",
+            "base_time_value": "//Base time value for 1366-metrics.  Defaults to 1 minute"
+          }
+        }
+      ]
+    },
+    "overhead_line_conductor": {
+      "instances": [
+        {
+          "name": "overhead_line_conductor_100",
+          "geometric_mean_radius": 0.0244,
+          "resistance": 0.306,
+          "outside_comments": [
+            "//setup powerflow system"
+          ]
+        },
+        {
+          "name": "overhead_line_conductor_101",
+          "geometric_mean_radius": 0.00814,
+          "resistance": 0.592
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "line_spacing_200",
+          "object_declaration": "line_spacing:200",
+          "distance_AB": 2.5,
+          "distance_BC": 4.5,
+          "distance_AC": 7.0,
+          "distance_AN": 5.656854,
+          "distance_BN": 4.272002,
+          "distance_CN": 5.0
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "line_configuration_300",
+          "conductor_A": "overhead_line_conductor_100",
+          "conductor_B": "overhead_line_conductor_100",
+          "conductor_C": "overhead_line_conductor_100",
+          "conductor_N": "overhead_line_conductor_101",
+          "spacing": "line_spacing_200"
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "transformer_configuration_400",
+          "connect_type": "WYE_WYE",
+          "power_rating": 6000,
+          "powerA_rating": 2000,
+          "powerB_rating": 2000,
+          "powerC_rating": 2000,
+          "primary_voltage": 12470,
+          "secondary_voltage": 4160,
+          "resistance": 0.01,
+          "reactance": 0.06
+        }
+      ]
+    },
+    "node": {
+      "instances": [
+        {
+          "name": "node1",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node2",
+          "phases": "ABCN",
+          "voltage_A": "+7199.558+0.000j",
+          "voltage_B": "-3599.779-6235.000j",
+          "voltage_C": "-3599.779+6235.000j",
+          "nominal_voltage": 7200
+        },
+        {
+          "name": "node3",
+          "phases": "ABCN",
+          "voltage_A": "+2401.777+0.000j",
+          "voltage_B": "-1200.889-2080.000j",
+          "voltage_C": "-1200.889+2080.000j",
+          "nominal_voltage": 2400
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "overhead_line_12",
+          "property": "fault_current_in_A,fault_current_in_B,fault_current_in_C",
+          "file": "swing_bus_fault_current.csv",
+          "interval": 1,
+          "limit": 23
+        },
+        {
+          "parent": "overhead_line_34",
+          "property": "fault_current_in_A,fault_current_in_B,fault_current_in_C",
+          "file": "fault_bus_fault_current.csv",
+          "interval": 1,
+          "limit": 23
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "complex_assert_23",
+          "property": "value",
+          "file": "../swing_bus_fault_current_A.player",
+          "loop": 0
+        },
+        {
+          "parent": "complex_assert_23",
+          "property": "within",
+          "file": "../swing_bus_A_within.player",
+          "loop": 0,
+          "inline_comments": {
+            "file": "//asserted to within 1% of the largest fault current component"
+          }
+        },
+        {
+          "parent": "complex_assert_26",
+          "property": "value",
+          "file": "../swing_bus_fault_current_B.player",
+          "loop": 0
+        },
+        {
+          "parent": "complex_assert_26",
+          "property": "within",
+          "file": "../swing_bus_B_within.player",
+          "loop": 0,
+          "inline_comments": {
+            "file": "//asserted to within 1% of the largest fault current component"
+          }
+        },
+        {
+          "parent": "complex_assert_29",
+          "property": "value",
+          "file": "../swing_bus_fault_current_C.player",
+          "loop": 0
+        },
+        {
+          "parent": "complex_assert_29",
+          "property": "within",
+          "file": "../swing_bus_C_within.player",
+          "loop": 0,
+          "inline_comments": {
+            "file": "//asserted to within 1% of the largest fault current component"
+          }
+        },
+        {
+          "parent": "complex_assert_37",
+          "property": "value",
+          "file": "../fault_bus_fault_current_A.player",
+          "loop": 0
+        },
+        {
+          "parent": "complex_assert_37",
+          "property": "within",
+          "file": "../fault_bus_A_within.player",
+          "loop": 0,
+          "inline_comments": {
+            "file": "//asserted to within 1% of the largest fault current component"
+          }
+        },
+        {
+          "parent": "complex_assert_40",
+          "property": "value",
+          "file": "../fault_bus_fault_current_B.player",
+          "loop": 0
+        },
+        {
+          "parent": "complex_assert_40",
+          "property": "within",
+          "file": "../fault_bus_B_within.player",
+          "loop": 0,
+          "inline_comments": {
+            "file": "//asserted to within 1% of the largest fault current component"
+          }
+        },
+        {
+          "parent": "complex_assert_43",
+          "property": "value",
+          "file": "../fault_bus_fault_current_C.player",
+          "loop": 0
+        },
+        {
+          "parent": "complex_assert_43",
+          "property": "within",
+          "file": "../fault_bus_C_within.player",
+          "loop": 0,
+          "inline_comments": {
+            "file": "//asserted to within 1% of the largest fault current component"
+          }
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_23",
+          "parent": "overhead_line_12",
+          "status": "ASSERT_TRUE",
+          "target": "fault_current_in_A",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_26",
+          "parent": "overhead_line_12",
+          "target": "fault_current_in_B",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_29",
+          "parent": "overhead_line_12",
+          "target": "fault_current_in_C",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_37",
+          "parent": "overhead_line_34",
+          "status": "ASSERT_TRUE",
+          "target": "fault_current_in_A",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_40",
+          "parent": "overhead_line_34",
+          "target": "fault_current_in_B",
+          "within": 0.1
+        },
+        {
+          "name": "complex_assert_43",
+          "parent": "overhead_line_34",
+          "target": "fault_current_in_C",
+          "within": 0.1
+        }
+      ]
+    },
+    "overhead_line": {
+      "instances": [
+        {
+          "name": "overhead_line_12",
+          "phases": "ABCN",
+          "from": "node1",
+          "to": "node2",
+          "length": 2000,
+          "configuration": "line_configuration_300"
+        },
+        {
+          "name": "overhead_line_34",
+          "phases": "ABCN",
+          "from": "node3",
+          "to": "load4",
+          "length": 2500,
+          "configuration": "line_configuration_300"
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "transformer_23",
+          "phases": "ABCN",
+          "from": "node2",
+          "to": "node3",
+          "configuration": "transformer_configuration_400"
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "load4",
+          "phases": "ABCN",
+          "voltage_A": "+2401.777+0.000j",
+          "voltage_B": "-1200.889-2080.000j",
+          "voltage_C": "-1200.889+2080.000j",
+          "groupid": "METERTEST",
+          "nominal_voltage": 2400
+        }
+      ]
+    },
+    "load": {
+      "instances": [
+        {
+          "name": "load4a",
+          "parent": "load4",
+          "phases": "ABCN",
+          "voltage_A": "+2401.777+0.000j",
+          "voltage_B": "-1200.889-2080.000j",
+          "voltage_C": "-1200.889+2080.000j",
+          "constant_power_A": "+1800000.000+871779.789j",
+          "constant_power_B": "+1800000.000+871779.789j",
+          "nominal_voltage": 2400
+        }
+      ]
+    }
+  }
+}

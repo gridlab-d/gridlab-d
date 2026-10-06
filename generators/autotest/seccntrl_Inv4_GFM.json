@@ -1,0 +1,32 @@
+{
+  "objects": {
+    "inverter_dyn": {
+      "instances": [
+        {
+          "name": "Inv4",
+          "parent": "node_108",
+          "flags": "DELTAMODE",
+          "rated_power": "${inv4rate} kW",
+          "control_mode": "GRID_FORMING",
+          "Pref": 0,
+          "Qref": 0,
+          "Rfilter": 0.0025,
+          "Xfilter": 0.05,
+          "mp": 3.77,
+          "kppmax": 20,
+          "kipmax": 60,
+          "Pmax": 1.2,
+          "Pmin": 0,
+          "mq": 0.05,
+          "inline_comments": {
+            "control_mode": "//FL_CURRENT_SOURCE;",
+            "Pref": "//165000;",
+            "Qref": "//94000;",
+            "mp": "// 3.77 represents 1% droop.",
+            "mq": "// 0.05 represents 5% droop"
+          }
+        }
+      ]
+    }
+  }
+}

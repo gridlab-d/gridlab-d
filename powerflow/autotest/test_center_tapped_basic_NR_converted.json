@@ -1,0 +1,210 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Validation test for example 11.1 in Kersting, chapter 11",
+      "// <Tests the functionality of a center-tapped transformer, as well as",
+      "// the calculation of power and accumulation of energy in a triplex_meter>",
+      "// sets up a single three-phase node at 7200 V and connects it to a triplex meter",
+      "// at 240v12 via a 50 kVA center-tapped transformer. On the triplex side of the",
+      "// system, there are loads between line 1 and neutral, line 2 and neutral, and line 1 - line 2",
+      "// this test validates the voltages across those loads; triplex meter includes validation",
+      "// tests for measured_current, measured_voltage, measured power, and measured_real_energy using NR",
+      "// player files used: center_tapped_basic_energy.player",
+      "// created by: alek332"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "relax_naming_rules": 1
+    }
+  },
+  "clock": {
+    "timezone": "CST+6CDT",
+    "starttime": "'2006-01-01 00:00:00 CST'",
+    "stoptime": "'2006-01-01 09:00:00 CST'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR"
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "node": {
+      "instances": [
+        {
+          "name": "three-phase",
+          "phases": "ABCN",
+          "bustype": "SWING",
+          "nominal_voltage": 7200
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "default_transformer",
+          "connect_type": "SINGLE_PHASE_CENTER_TAPPED",
+          "install_type": "PADMOUNT",
+          "primary_voltage": "7200 V",
+          "secondary_voltage": "120 V",
+          "power_rating": 50.0,
+          "powerA_rating": 50.0,
+          "resistance": 0.011,
+          "reactance": 0.018,
+          "outside_comments": [
+            "// transformer from example 11.1"
+          ]
+        }
+      ]
+    },
+    "transformer": {
+      "instances": [
+        {
+          "name": "center_tap_transformer_A",
+          "phases": "AS",
+          "from": "three-phase",
+          "to": "load_node",
+          "configuration": "default_transformer"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "load_node",
+          "target": "measured_current_N",
+          "value": "-40.94+147.0d",
+          "within": 1,
+          "outside_comments": [
+            "// load node - as a meter and a load"
+          ],
+          "inline_comments": {
+            "object complex_assert {": "doesn't work yet",
+            "value": "//"
+          }
+        },
+        {
+          "parent": "load_node",
+          "target": "measured_current_1",
+          "value": "179.6-26.6d",
+          "within": 0.11
+        },
+        {
+          "parent": "load_node",
+          "target": "measured_current_2",
+          "value": "220.4+152.2d",
+          "within": 0.11
+        },
+        {
+          "parent": "load_node",
+          "target": "measured_voltage_N",
+          "value": 0,
+          "within": 0.11
+        },
+        {
+          "parent": "load_node",
+          "target": "measured_voltage_1",
+          "value": "118-0.6131d",
+          "within": 0.11
+        },
+        {
+          "parent": "load_node",
+          "target": "measured_voltage_2",
+          "value": "117.9-0.61421d",
+          "within": 0.11
+        },
+        {
+          "parent": "load_node",
+          "target": "voltage_1",
+          "value": "118-0.6131d",
+          "within": 0.11
+        },
+        {
+          "parent": "load_node",
+          "target": "voltage_2",
+          "value": "117.9-0.61421d",
+          "within": 0.11
+        },
+        {
+          "parent": "load_node",
+          "target": "voltage_12",
+          "value": "235.9-0.6147d",
+          "within": 0.11
+        },
+        {
+          "parent": "load_node",
+          "target": "indiv_measured_power_1",
+          "value": "21199+25.9925d",
+          "within": 28
+        },
+        {
+          "parent": "load_node",
+          "target": "indiv_measured_power_2",
+          "value": "+23106.6+11859.2j",
+          "within": 28
+        },
+        {
+          "parent": "load_node",
+          "target": "measured_power",
+          "value": "47168.7+26.64d",
+          "within": 4
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "double_assert_17",
+          "property": "value",
+          "file": "../center_tapped_basic_energy.player"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_17",
+          "parent": "load_node",
+          "target": "measured_real_energy",
+          "within": 7
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "load_node",
+          "interval": 3600,
+          "limit": 30,
+          "file": "meter_energy.csv",
+          "property": "measured_real_energy"
+        }
+      ]
+    },
+    "triplex_meter": {
+      "instances": [
+        {
+          "name": "load_node",
+          "phases": "AS",
+          "nominal_voltage": 120.0,
+          "bill_mode": "UNIFORM"
+        }
+      ]
+    },
+    "triplex_load": {
+      "instances": [
+        {
+          "name": "load_node_actual_load_part",
+          "parent": "load_node",
+          "constant_impedance_1": "1.4+0.5j",
+          "constant_impedance_2": " 0.9+0.4j",
+          "constant_impedance_12": "2.0+1.2j",
+          "phases": "AS",
+          "nominal_voltage": 120.0
+        }
+      ]
+    }
+  }
+}

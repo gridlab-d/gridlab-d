@@ -6,6 +6,3 @@
 #include <cstdlib>
 
 #include "gridlabd.h"
-
-
-

@@ -4,49 +4,50 @@
 #ifndef _LINE_H
 #define _LINE_H
 
-#define hasphase(ph) (SET_HAS(phase,PHASE##ph) | (phase_orig & PHASE_##ph))
-#define set_hasphase(set,ph) (SET_HAS(set,ph))
-#define PERMITIVITTY_AIR 0.014240	//microF/mile
-#define PERMITIVITTY_FREE 0.01420	//microF/mile
-#define EARTH_RESISTIVITY 100		//Ohm-meter
+#define hasphase(ph) (SET_HAS(phase, PHASE##ph) | (phase_orig & PHASE_##ph))
+#define set_hasphase(set, ph) (SET_HAS(set, ph))
+#define PERMITIVITTY_AIR 0.014240 // microF/mile
+#define PERMITIVITTY_FREE 0.01420 // microF/mile
+#define EARTH_RESISTIVITY 100     // Ohm-meter
 
 typedef struct {
-	double continuous;
-	double emergency;
+  double continuous;
+  double emergency;
 } LINERATINGS;
 
 extern bool show_matrix_values;
 
-#include "powerflow.h"
-#include "link.h"
-#include "line_spacing.h"
-#include "overhead_line_conductor.h"
-#include "underground_line_conductor.h"
 #include "line_configuration.h"
-#include "triplex_line_configuration.h"
+#include "line_spacing.h"
+#include "link.h"
+#include "overhead_line_conductor.h"
+#include "powerflow.h"
 #include "triplex_line_conductor.h"
+#include "triplex_line_configuration.h"
+#include "underground_line_conductor.h"
 
-class line : public link_object
-{
+class line : public link_object {
 public:
-	static CLASS *oclass;
-	static CLASS *pclass;
-	
-	OBJECT *configuration;
-	double length;     // length of line in feet
-	line(MODULE *mod);
-	inline line(CLASS *cl=oclass):link_object(cl){};
-	int init(OBJECT *parent);
-	int isa(char *classname);
-    int create(void);
+  static CLASS *oclass;
+  static CLASS *pclass;
+
+  OBJECT *configuration;
+  double length; // length of line in feet
+  line(MODULE *mod);
+  inline line(CLASS *cl = oclass) : link_object(cl) {};
+  int init(OBJECT *parent);
+  int isa(char *classname);
+  int create(void);
 
 protected:
-	void load_matrix_based_configuration(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3]);
-	void recalc_line_matricies(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3]);
+  void load_matrix_based_configuration(gld::complex Zabc_mat[3][3],
+                                       gld::complex Yabc_mat[3][3]);
+  void recalc_line_matricies(gld::complex Zabc_mat[3][3],
+                             gld::complex Yabc_mat[3][3]);
 };
 
-#include "triplex_line.h"
 #include "overhead_line.h"
+#include "triplex_line.h"
 #include "underground_line.h"
 
 #endif // _LINE_H

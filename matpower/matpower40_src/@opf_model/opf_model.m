@@ -21,7 +21,7 @@ function om = opf_model(mpc)
 %       add_vars
 %
 %   Return the number of linear constraints, nonlinear constraints,
-%   variables or cost rows, optionally for a single named block:
+%   variables or cost.rows(), optionally for a single named block:
 %       getN
 %
 %   Return the intial values and bounds for optimization variables:
@@ -102,8 +102,8 @@ function om = opf_model(mpc)
 %           .idx
 %               .i1 - starting row index within full N matrix
 %               .iN - ending row index within full N matrix
-%               .N  - number of rows in this cost block in full N matrix
-%           .N      - total number of rows in full N matrix
+%               .N  - number of.rows() in this cost block in full N matrix
+%           .N      - total number of.rows() in full N matrix
 %           .NS     - number of cost blocks
 %           .data   - data for each user-defined cost block
 %               .N  - see help for ADD_COSTS for details
@@ -116,7 +116,7 @@ function om = opf_model(mpc)
 %               .vs - cell array of variable sets that define xx for this
 %                     cost block, where the N for this block multiplies xx
 %           .order  - cell array of names for cost blocks in the order they
-%                     appear in the rows of the full N matrix
+%                     appear in the.rows() of the full N matrix
 %       .mpc        - MATPOWER case struct used to create this model object
 %           .baseMVA
 %           .bus

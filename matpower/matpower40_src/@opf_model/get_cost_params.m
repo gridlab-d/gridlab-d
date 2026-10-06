@@ -7,7 +7,7 @@ function cp = get_cost_params(om, name)
 %   parameters. Returns the full cost parameter struct for all user-defined
 %   costs that incorporates all of the named cost sets added via ADD_COSTS,
 %   or, if a name is provided it returns the cost struct corresponding to
-%   the named set of cost rows (N still has full number of columns).
+%   the named set of cost.rows() (N still has full number of columns).
 %
 %   The cost parameters are returned in a struct with the following fields:
 %       N      - nw x nx sparse matrix

@@ -1,0 +1,44 @@
+// $Id: test_deltamode.glm 4738 2014-07-03 00:55:39Z dchassin $
+// Basic deltamode test - just see if it executes for now
+
+#set suppress_repeat_messages=0
+#set profiler=1
+#set dateformat=US
+
+
+#set deltamode_timestep=100000000
+#set deltamode_maximumtime=6000000000
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-01 00:00:45 PST';
+}
+
+module powerflow;
+module generators {
+	enable_subsecond_models TRUE;
+	deltamode_timestep 300000000;
+}
+module tape;
+
+object meter {
+	phases ABC;
+	nominal_voltage 240;
+	object player {
+		//in 2001-01-01 00:00:01;
+		file ../test_deltamode_house_player.csv;
+		property voltage_A;
+		flags DELTAMODE;
+	};
+	object recorder {
+		file test_deltamode_diesel_dg_recorder.csv;
+		property voltage_A,voltage_B,voltage_C;
+		flags DELTAMODE;
+	};
+	object recorder {
+		file test_diesel_dg_recorder.csv;
+		property voltage_A,voltage_B,voltage_C;
+		interval -1;
+	};
+}

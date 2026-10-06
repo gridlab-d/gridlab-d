@@ -1,0 +1,70 @@
+{
+  "__preamble": {
+    "comments": [
+      "//Microwave Energy Accumulation",
+      "//test_microwave_energy_accumulation.glm",
+      "//The purpose of this simulation is to make sure the energy is accumulating when the demand it set to zero"
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "starttime": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-01 0:00:10'"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "house": {
+      "instances": [
+        {
+          "object_declaration": "house:1"
+        }
+      ]
+    },
+    "microwave": {
+      "instances": [
+        {
+          "object_declaration": "microwave:2",
+          "parent": "house:1",
+          "installed_power": "1000 W",
+          "standby_power": "200 W",
+          "cycle_length": 600
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "object_declaration": "recorder:3",
+          "parent": "microwave:2",
+          "property": "constant_power,energy",
+          "file": "test_microwave_energy_accumulation.csv",
+          "interval": 1,
+          "limit": 10
+        }
+      ]
+    },
+    "player": {
+      "instances": [
+        {
+          "parent": "complex_assert:4",
+          "property": "value",
+          "file": "../test_microwave_energy_accumulation.player"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "object_declaration": "complex_assert:4",
+          "parent": "microwave:2",
+          "target": "energy",
+          "within": 0.02
+        }
+      ]
+    }
+  }
+}

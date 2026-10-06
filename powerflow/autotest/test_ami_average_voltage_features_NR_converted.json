@@ -1,0 +1,126 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Tests \"average reporting\" for AMI systems",
+      "// Checks the voltage values",
+      "//#set profiler=1"
+    ]
+  },
+  "_directives": {
+    "#set": {
+      "double_format": "%+.12lg"
+    }
+  },
+  "clock": {
+    "timezone": "UTC0",
+    "starttime": "'2012-01-01 00:00:00'",
+    "stoptime": "'2012-01-01 01:01:00'"
+  },
+  "modules": {
+    "powerflow": {
+      "solver_method": "NR",
+      "maximum_voltage_error": 1e-12
+    },
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "parent": "THREE_PHASE_ROOT",
+          "property": "voltage_A",
+          "file": "../data_voltage_values_AMI_average_test_A.player",
+          "outside_comments": [
+            "//Three-phase system"
+          ]
+        },
+        {
+          "parent": "THREE_PHASE_ROOT",
+          "property": "voltage_B",
+          "file": "../data_voltage_values_AMI_average_test_B.player"
+        },
+        {
+          "parent": "THREE_PHASE_ROOT",
+          "property": "voltage_C",
+          "file": "../data_voltage_values_AMI_average_test_C.player"
+        },
+        {
+          "parent": "double_assert_5",
+          "property": "value",
+          "file": "../data_AMI_average_test_15_min_avg_voltage_mag_A.csv"
+        },
+        {
+          "parent": "double_assert_7",
+          "property": "value",
+          "file": "../data_AMI_average_test_15_min_avg_voltage_mag_B.csv"
+        },
+        {
+          "parent": "double_assert_9",
+          "property": "value",
+          "file": "../data_AMI_average_test_15_min_avg_voltage_mag_C.csv"
+        }
+      ]
+    },
+    "double_assert": {
+      "instances": [
+        {
+          "name": "double_assert_5",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_voltage_A_mag_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_7",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_voltage_B_mag_in_interval",
+          "within": 0.01
+        },
+        {
+          "name": "double_assert_9",
+          "parent": "THREE_PHASE_ROOT",
+          "target": "measured_avg_voltage_C_mag_in_interval",
+          "within": 0.01
+        }
+      ]
+    },
+    "meter": {
+      "instances": [
+        {
+          "name": "THREE_PHASE_ROOT",
+          "bustype": "SWING",
+          "phases": "ABCN",
+          "measured_stats_interval": 900,
+          "nominal_voltage": 7200.0,
+          "voltage_A": "8167.05135671602+0j",
+          "voltage_B": "-3416.7849446180494+5918.045122614877j",
+          "voltage_C": "-3616.065987332662-6263.21001358189j",
+          "inside_comments": [
+            "// 15 minutes:",
+            "// Initialize voltages to the first value in the player files.",
+            "// Play in voltages over time.",
+            "// Test the average voltage magnitudes:",
+            "// A:",
+            "// B:",
+            "// C:",
+            "//object recorder {",
+            "//    name voltage_recorder;",
+            "//    property \"voltage_A,voltage_B,voltage_C\";",
+            "//    interval 60;",
+            "//    file voltage.csv;",
+            "//    limit -1;",
+            "//};",
+            "//",
+            "//object recorder {",
+            "//    name avg_recorder;",
+            "//    property \"measured_avg_voltage_A_mag_in_interval,measured_avg_voltage_B_mag_in_interval,measured_avg_voltage_C_mag_in_interval\";",
+            "//    interval 60;",
+            "//    file v_avg.csv;",
+            "//    limit -1;",
+            "//};"
+          ]
+        }
+      ]
+    }
+  }
+}

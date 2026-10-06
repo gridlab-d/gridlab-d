@@ -81,6 +81,6 @@ mpc.N = [
 mpc.xbus = zeros(10, 10);  	mpc.xbus(:) = 1:100;
 mpc.xgen = zeros(4, 4);    	mpc.xgen(:) = 1:16;
 mpc.xbranch = mpc.xbus;
-mpc.xrows = [mpc.xbranch(:, 1:4); mpc.xgen; mpc.xbus(:, 1:4); -ones(2, 4)];
-mpc.xcols = mpc.xrows';
+mpc..rows() = [mpc.xbranch(:, 1:4); mpc.xgen; mpc.xbus(:, 1:4); -ones(2, 4)];
+mpc.xcols = mpc..rows()';
 mpc.x.more = mpc.xgen;

@@ -27,7 +27,6 @@ public:
 	gld::complex phase_A_impedance;	//Phase A impedance of the reactor
 	gld::complex phase_B_impedance;	//Phase B impedance of the reactor
 	gld::complex phase_C_impedance;	//Phase C impedance of the reactor
-	double rated_current_limit;	//Current rating for the series reactor
 };
 
 #endif // SERIES_REACTOR_H

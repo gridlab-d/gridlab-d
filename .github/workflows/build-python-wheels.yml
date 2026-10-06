@@ -1,0 +1,183 @@
+name: Build Python Wheels
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+      - feature/1478
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: Platforms to build
+        type: choice
+        default: all
+        options: [all, unix]
+      publish:
+        description: Publish to PyPI after all wheel tests pass
+        type: choice
+        default: none
+        options: [none, pypi]
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.platforms == 'unix' && '[{"os":"ubuntu-24.04","platform":"linux"},{"os":"macos-15","platform":"macos"}]' || '[{"os":"ubuntu-24.04","platform":"linux"},{"os":"macos-15","platform":"macos"},{"os":"windows-2022","platform":"windows"}]') }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up MSVC x64 environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==3.3.0
+
+      - name: Install delvewheel
+        if: runner.os == 'Windows'
+        run: python -m pip install delvewheel
+
+      - name: Build GridLAB-D core on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake -S . -B out/build/ci-windows -G "Visual Studio 17 2022" -A x64
+          cmake --build out/build/ci-windows --config Release --parallel 4
+      
+      - name: Build wheels on Linux and macOS
+        if: runner.os != 'Windows'
+        run: python -m cibuildwheel python_bindings --output-dir wheelhouse
+        env:
+          CIBW_SKIP: "*-manylinux_i686 *-musllinux_* *-win32"
+          CIBW_TEST_COMMAND: python -c "import gridlabd; print(gridlabd.version()); print(gridlabd.hello()); g = gridlabd.GridLabD(); print(g.get_clock())"
+          CIBW_TEST_REQUIRES: numpy
+
+      - name: Build wheels on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $workspace = $env:GITHUB_WORKSPACE.Replace('\', '/')
+          $repairPython = (Get-Command python).Source.Replace('\', '/')
+          $env:CIBW_CONFIG_SETTINGS = "cmake.define.GRIDLABD_BUILD_DIR=$workspace/out/build/ci-windows"
+          $env:CIBW_REPAIR_WHEEL_COMMAND_WINDOWS = "`"$repairPython`" -m delvewheel repair --add-path `"$workspace/out/build/ci-windows/bin/Release`" -w {dest_dir} {wheel}"
+          python -m cibuildwheel python_bindings --output-dir wheelhouse
+        env:
+          CIBW_SKIP: "*-win32"
+          CIBW_TEST_COMMAND: python -c "import gridlabd; print(gridlabd.version()); print(gridlabd.hello()); g = gridlabd.GridLabD(); print(g.get_clock())"
+          CIBW_TEST_REQUIRES: numpy
+
+      - name: Verify both macOS architectures are present
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          shopt -s nullglob
+          wheels=(wheelhouse/*-cp310-abi3-macosx_11_0_universal2.whl)
+          if [[ ${#wheels[@]} -ne 1 ]]; then
+            echo "Expected exactly one macOS universal2 ABI3 wheel"
+            exit 1
+          fi
+          rm -rf "$RUNNER_TEMP/macos-wheel"
+          python -m zipfile -e "${wheels[0]}" "$RUNNER_TEMP/macos-wheel"
+          found=0
+          while IFS= read -r -d '' binary; do
+            if file "$binary" | grep -q 'Mach-O'; then
+              lipo "$binary" -verify_arch x86_64 arm64
+              found=$((found + 1))
+            fi
+          done < <(find "$RUNNER_TEMP/macos-wheel" -type f -print0)
+          if [[ $found -eq 0 ]]; then
+            echo "No Mach-O binaries found in macOS wheel"
+            exit 1
+          fi
+      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.platform }}
+          path: ./wheelhouse/*.whl
+
+  test_abi3:
+    if: inputs.platforms != 'unix'
+    name: Test ${{ matrix.platform }} ABI3 on Python ${{ matrix.python }}
+    needs: [build_wheels]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux, macos-arm64, macos-x64, windows]
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        include:
+          - platform: linux
+            os: ubuntu-24.04
+            artifact: linux
+          - platform: macos-arm64
+            os: macos-15
+            artifact: macos
+          - platform: macos-x64
+            os: macos-15-intel
+            artifact: macos
+          - platform: windows
+            os: windows-2022
+            artifact: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels-${{ matrix.artifact }}
+          path: wheelhouse
+      - name: Install and test the same stable-ABI wheel
+        shell: pwsh
+        run: |
+          $wheels = @(Get-ChildItem wheelhouse/*-cp310-abi3-*.whl)
+          if ($wheels.Count -ne 1) { throw "Expected exactly one ${{ matrix.platform }} ABI3 wheel" }
+          python -m pip install $wheels[0].FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -c "import gridlabd; print(gridlabd.version()); print(gridlabd.hello()); g = gridlabd.GridLabD(); print(g.get_clock())"
+
+  upload_pypi:
+    name: Upload to PyPI
+    needs: [build_wheels, test_abi3]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.publish == 'pypi' &&
+      (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')) ||
+      (github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' ||
+      github.ref == 'refs/heads/feature/1478'))
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          print-hash: true
