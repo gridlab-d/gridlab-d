@@ -55,7 +55,7 @@ through the `-j#` flag (`-j8` in the included example).
 ```powershell
 # Run the build system and install the application
 cmake --build . -j8 --config Release
-cmake --install . -j8 --config Release
+cmake --install . --config Release
 ```
 
 ### Linux and MacOS
