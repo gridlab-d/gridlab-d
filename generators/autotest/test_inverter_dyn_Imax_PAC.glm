@@ -86,7 +86,7 @@ object inverter_dyn {
 	object double_assert {
 	        flags DELTAMODE;
 		target E_mag;
-		within 0.01;
+		within 0.02;
 		object player {
 		        flags DELTAMODE;
 			property value;

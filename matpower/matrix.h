@@ -59,22 +59,19 @@
  */
 
 #if defined(_MSC_VER)
-# pragma once
+#pragma once
 #endif
 #if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 3))
-# pragma once
+#pragma once
 #endif
 
 #ifndef matrix_h
 #define matrix_h
 
-
 /*
  * Copyright 1984-2003 The MathWorks, Inc.
  * All Rights Reserved.
  */
-
-
 
 /* Copyright 2003-2006 The MathWorks, Inc. */
 
@@ -84,18 +81,15 @@
 #ifndef EXTERN_C
 
 #ifdef __cplusplus
-  #define EXTERN_C extern "C"
+#define EXTERN_C extern "C"
 #else
-  #define EXTERN_C extern
+#define EXTERN_C extern
 #endif
 
 #endif
-
 
 /* Version 7.4.0 */
 #define MX_API_VER 0x07040000
-
-
 
 #ifndef matrix_symver_h
 
@@ -112,157 +106,157 @@
 #if !defined(__linux__) || defined(MX_INTERNAL_730)
 
 #ifndef mxSetProperty
-# define mxSetProperty mxSetProperty_730
+#define mxSetProperty mxSetProperty_730
 #endif
 
 #ifndef mxGetProperty
-# define mxGetProperty mxGetProperty_730
+#define mxGetProperty mxGetProperty_730
 #endif
 
 #ifndef mxSetField
-# define mxSetField mxSetField_730
+#define mxSetField mxSetField_730
 #endif
 
 #ifndef mxSetFieldByNumber
-# define mxSetFieldByNumber mxSetFieldByNumber_730
+#define mxSetFieldByNumber mxSetFieldByNumber_730
 #endif
 
 #ifndef mxGetFieldByNumber
-# define mxGetFieldByNumber mxGetFieldByNumber_730
+#define mxGetFieldByNumber mxGetFieldByNumber_730
 #endif
 
 #ifndef mxGetField
-# define mxGetField mxGetField_730
+#define mxGetField mxGetField_730
 #endif
 
 #ifndef mxCreateStructMatrix
-# define mxCreateStructMatrix mxCreateStructMatrix_730
+#define mxCreateStructMatrix mxCreateStructMatrix_730
 #endif
 
 #ifndef mxCreateCellMatrix
-# define mxCreateCellMatrix mxCreateCellMatrix_730
+#define mxCreateCellMatrix mxCreateCellMatrix_730
 #endif
 
 #ifndef mxCreateCharMatrixFromStrings
-# define mxCreateCharMatrixFromStrings mxCreateCharMatrixFromStrings_730
+#define mxCreateCharMatrixFromStrings mxCreateCharMatrixFromStrings_730
 #endif
 
 #ifndef mxGetString
-# define mxGetString mxGetString_730
+#define mxGetString mxGetString_730
 #endif
 
 #ifndef mxGetNumberOfDimensions
-# define mxGetNumberOfDimensions mxGetNumberOfDimensions_730
+#define mxGetNumberOfDimensions mxGetNumberOfDimensions_730
 #endif
 
 #ifndef mxGetDimensions
-# define mxGetDimensions mxGetDimensions_730
+#define mxGetDimensions mxGetDimensions_730
 #endif
 
 #ifndef mxSetDimensions
-# define mxSetDimensions mxSetDimensions_730
+#define mxSetDimensions mxSetDimensions_730
 #endif
 
 #ifndef mxSetIr
-# define mxSetIr mxSetIr_730
+#define mxSetIr mxSetIr_730
 #endif
 
 #ifndef mxGetIr
-# define mxGetIr mxGetIr_730
+#define mxGetIr mxGetIr_730
 #endif
 
 #ifndef mxSetJc
-# define mxSetJc mxSetJc_730
+#define mxSetJc mxSetJc_730
 #endif
 
 #ifndef mxGetJc
-# define mxGetJc mxGetJc_730
+#define mxGetJc mxGetJc_730
 #endif
 
 #ifndef mxCreateStructArray
-# define mxCreateStructArray mxCreateStructArray_730
+#define mxCreateStructArray mxCreateStructArray_730
 #endif
 
 #ifndef mxCreateCharArray
-# define mxCreateCharArray mxCreateCharArray_730
+#define mxCreateCharArray mxCreateCharArray_730
 #endif
 
 #ifndef mxCreateNumericArray
-# define mxCreateNumericArray mxCreateNumericArray_730
+#define mxCreateNumericArray mxCreateNumericArray_730
 #endif
 
 #ifndef mxCreateCellArray
-# define mxCreateCellArray mxCreateCellArray_730
+#define mxCreateCellArray mxCreateCellArray_730
 #endif
 
 #ifndef mxCreateLogicalArray
-# define mxCreateLogicalArray mxCreateLogicalArray_730
+#define mxCreateLogicalArray mxCreateLogicalArray_730
 #endif
 
 #ifndef mxGetCell
-# define mxGetCell mxGetCell_730
+#define mxGetCell mxGetCell_730
 #endif
 
 #ifndef mxSetCell
-# define mxSetCell mxSetCell_730
+#define mxSetCell mxSetCell_730
 #endif
 
 #ifndef mxSetNzmax
-# define mxSetNzmax mxSetNzmax_730
+#define mxSetNzmax mxSetNzmax_730
 #endif
 
 #ifndef mxSetN
-# define mxSetN mxSetN_730
+#define mxSetN mxSetN_730
 #endif
 
 #ifndef mxSetM
-# define mxSetM mxSetM_730
+#define mxSetM mxSetM_730
 #endif
 
 #ifndef mxGetNzmax
-# define mxGetNzmax mxGetNzmax_730
+#define mxGetNzmax mxGetNzmax_730
 #endif
 
 #ifndef mxCreateDoubleMatrix
-# define mxCreateDoubleMatrix mxCreateDoubleMatrix_730
+#define mxCreateDoubleMatrix mxCreateDoubleMatrix_730
 #endif
 
 #ifndef mxCreateNumericMatrix
-# define mxCreateNumericMatrix mxCreateNumericMatrix_730
+#define mxCreateNumericMatrix mxCreateNumericMatrix_730
 #endif
 
 #ifndef mxCreateLogicalMatrix
-# define mxCreateLogicalMatrix mxCreateLogicalMatrix_730
+#define mxCreateLogicalMatrix mxCreateLogicalMatrix_730
 #endif
 
 #ifndef mxCreateSparse
-# define mxCreateSparse mxCreateSparse_730
+#define mxCreateSparse mxCreateSparse_730
 #endif
 
 #ifndef mxCreateSparseLogicalMatrix
-# define mxCreateSparseLogicalMatrix mxCreateSparseLogicalMatrix_730
+#define mxCreateSparseLogicalMatrix mxCreateSparseLogicalMatrix_730
 #endif
 
 #ifndef mxGetNChars
-# define mxGetNChars mxGetNChars_730
+#define mxGetNChars mxGetNChars_730
 #endif
 
 #ifndef mxCreateStringFromNChars
-# define mxCreateStringFromNChars mxCreateStringFromNChars_730
+#define mxCreateStringFromNChars mxCreateStringFromNChars_730
 #endif
 
 #ifndef mxCalcSingleSubscript
-# define mxCalcSingleSubscript mxCalcSingleSubscript_730
+#define mxCalcSingleSubscript mxCalcSingleSubscript_730
 #endif
 
 #ifndef mxGetDimensions_fcn
-# define mxGetDimensions_fcn mxGetDimensions_730
+#define mxGetDimensions_fcn mxGetDimensions_730
 #endif
 
 #else
 
 #ifndef mxGetDimensions_fcn
-# define mxGetDimensions_fcn mxGetDimensions
+#define mxGetDimensions_fcn mxGetDimensions
 #endif
 
 #endif /* !__linux__ || MX_INTERNAL_730 */
@@ -270,14 +264,12 @@
 #else
 
 #ifndef mxGetDimensions_fcn
-# define mxGetDimensions_fcn mxGetDimensions_700
+#define mxGetDimensions_fcn mxGetDimensions_700
 #endif
 
 #endif /* !MX_COMPAT_32 || MX_INTERNAL_730 */
 
 #endif /* matrix_symver_h */
-
-
 
 /* Copyright 2008-2010 The MathWorks, Inc. */
 
@@ -300,7 +292,8 @@ typedef struct mxArray_tag mxArray;
 /**
  * Type representing the signature for MEX functions.
  */
-typedef void (*mxFunctionPtr) (int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[]);
+typedef void (*mxFunctionPtr)(int nlhs, mxArray *plhs[], int nrhs,
+                              mxArray *prhs[]);
 
 /**
  * Maximum mxArray name length
@@ -316,528 +309,441 @@ typedef bool mxLogical;
  * UTF-16 character type
  */
 #ifndef __STDC_UTF_16__
-#    ifndef CHAR16_T
-#        if defined(_WIN32) && defined(_MSC_VER)
-#            define CHAR16_T wchar_t
-#        else
-#            define CHAR16_T UINT16_T
-#        endif
-#        if !defined(_MSC_VER) || _MSC_VER < 1600
-             typedef CHAR16_T char16_t;
-#        endif
-#    endif
+#ifndef CHAR16_T
+#if defined(_WIN32) && defined(_MSC_VER)
+#define CHAR16_T wchar_t
+#else
+#define CHAR16_T UINT16_T
+#endif
+#if !defined(_MSC_VER) || _MSC_VER < 1600
+typedef CHAR16_T char16_t;
+#endif
+#endif
 #endif
 
 /**
  * Typedef required for Unicode support in MATLAB
  */
 #if !defined(_MSC_VER) || _MSC_VER < 1600
-    typedef char16_t mxChar;
+typedef char16_t mxChar;
 #else
-   typedef CHAR16_T mxChar;
+typedef CHAR16_T mxChar;
 #endif
-
 
 /**
  * Enumeration corresponding to all the valid mxArray types.
  */
-typedef enum
-{
-    mxUNKNOWN_CLASS = 0,
-    mxCELL_CLASS,
-    mxSTRUCT_CLASS,
-    mxLOGICAL_CLASS,
-    mxCHAR_CLASS,
-    mxVOID_CLASS,
-    mxDOUBLE_CLASS,
-    mxSINGLE_CLASS,
-    mxINT8_CLASS,
-    mxUINT8_CLASS,
-    mxINT16_CLASS,
-    mxUINT16_CLASS,
-    mxINT32_CLASS,
-    mxUINT32_CLASS,
-    mxINT64_CLASS,
-    mxUINT64_CLASS,
-    mxFUNCTION_CLASS,
-    mxOPAQUE_CLASS,
-    mxOBJECT_CLASS, /* keep the last real item in the list */
+typedef enum {
+  mxUNKNOWN_CLASS = 0,
+  mxCELL_CLASS,
+  mxSTRUCT_CLASS,
+  mxLOGICAL_CLASS,
+  mxCHAR_CLASS,
+  mxVOID_CLASS,
+  mxDOUBLE_CLASS,
+  mxSINGLE_CLASS,
+  mxINT8_CLASS,
+  mxUINT8_CLASS,
+  mxINT16_CLASS,
+  mxUINT16_CLASS,
+  mxINT32_CLASS,
+  mxUINT32_CLASS,
+  mxINT64_CLASS,
+  mxUINT64_CLASS,
+  mxFUNCTION_CLASS,
+  mxOPAQUE_CLASS,
+  mxOBJECT_CLASS, /* keep the last real item in the list */
 #if defined(_LP64) || defined(_WIN64)
-    mxINDEX_CLASS = mxUINT64_CLASS,
+  mxINDEX_CLASS = mxUINT64_CLASS,
 #else
-    mxINDEX_CLASS = mxUINT32_CLASS,
+  mxINDEX_CLASS = mxUINT32_CLASS,
 #endif
-    /* TEMPORARY AND NASTY HACK UNTIL mxSPARSE_CLASS IS COMPLETELY ELIMINATED */
-    mxSPARSE_CLASS = mxVOID_CLASS /* OBSOLETE! DO NOT USE */
-}
-mxClassID;
+  /* TEMPORARY AND NASTY HACK UNTIL mxSPARSE_CLASS IS COMPLETELY ELIMINATED */
+  mxSPARSE_CLASS = mxVOID_CLASS /* OBSOLETE! DO NOT USE */
+} mxClassID;
 
 /**
  * Indicates whether floating-point mxArrays are real or complex.
  */
-typedef enum
-{
-    mxREAL,
-    mxCOMPLEX
-}
-mxComplexity;
+typedef enum { mxREAL, mxCOMPLEX } mxComplexity;
 
 #endif /* MATHWORKS_MATRIX_DETAIL_PUBLISHED_FWD_DECLS_HPP */
 
-
-#include <stddef.h>	/* size_t */
-
+#include <stddef.h> /* size_t */
 
 /*
  * allocate memory, notifying registered listener
  */
-EXTERN_C void *mxMalloc(
-    size_t	n		/* number of bytes */
-    );
-
+EXTERN_C void *mxMalloc(size_t n /* number of bytes */
+);
 
 /*
  * allocate cleared memory, notifying registered listener.
  */
-EXTERN_C void *mxCalloc(
-    size_t	n,	/* number of objects */
-    size_t	size	/* size of objects */
-    );
-
+EXTERN_C void *mxCalloc(size_t n,   /* number of objects */
+                        size_t size /* size of objects */
+);
 
 /*
  * free memory, notifying registered listener.
  */
-EXTERN_C void mxFree(void *ptr)	/* pointer to memory to be freed */;
-
+EXTERN_C void mxFree(void *ptr) /* pointer to memory to be freed */;
 
 /*
  * reallocate memory, notifying registered listener.
  */
 EXTERN_C void *mxRealloc(void *ptr, size_t size);
 
- 
 /*
  * Return the class (catergory) of data that the array holds.
  */
 EXTERN_C mxClassID mxGetClassID(const mxArray *pa);
 
-
 /*
  * Get pointer to data
  */
-EXTERN_C void *mxGetData(
-    const mxArray *pa		/* pointer to array */
-    );
-
+EXTERN_C void *mxGetData(const mxArray *pa /* pointer to array */
+);
 
 /*
  * Set pointer to data
  */
-EXTERN_C void mxSetData(
-    mxArray *pa,		/* pointer to array */
-    void  *newdata		/* pointer to data */
-    );
+EXTERN_C void mxSetData(mxArray *pa,  /* pointer to array */
+                        void *newdata /* pointer to data */
+);
 
-
-/* 
- * Determine whether the specified array contains numeric (as opposed 
+/*
+ * Determine whether the specified array contains numeric (as opposed
  * to cell or struct) data.
  */
 EXTERN_C bool mxIsNumeric(const mxArray *pa);
 
-
-/* 
+/*
  * Determine whether the given array is a cell array.
  */
 EXTERN_C bool mxIsCell(const mxArray *pa);
 
-
 /*
  * Determine whether the given array's logical flag is on.
- */ 
+ */
 EXTERN_C bool mxIsLogical(const mxArray *pa);
 
-
-/*  
- * Determine whether the given array contains character data. 
+/*
+ * Determine whether the given array contains character data.
  */
 EXTERN_C bool mxIsChar(const mxArray *pa);
-
 
 /*
  * Determine whether the given array is a structure array.
  */
 EXTERN_C bool mxIsStruct(const mxArray *pa);
 
-
 /*
  * Determine whether the given array is an opaque array.
  */
 EXTERN_C bool mxIsOpaque(const mxArray *pa);
-
 
 /*
  * Returns true if specified array is a function object.
  */
 EXTERN_C bool mxIsFunctionHandle(const mxArray *pa);
 
-
 /*
  * This function is deprecated and is preserved only for backward compatibility.
  * DO NOT USE if possible.
  * Is array user defined MATLAB v5 object
  */
-EXTERN_C bool mxIsObject(
-    const mxArray *pa		/* pointer to array */
-    );
-
+EXTERN_C bool mxIsObject(const mxArray *pa /* pointer to array */
+);
 
 /*
  * Get imaginary data pointer for numeric array
  */
-EXTERN_C void *mxGetImagData(
-    const mxArray *pa		/* pointer to array */
-    );
-
+EXTERN_C void *mxGetImagData(const mxArray *pa /* pointer to array */
+);
 
 /*
  * Set imaginary data pointer for numeric array
  */
-EXTERN_C void mxSetImagData(
-    mxArray *pa,		/* pointer to array */
-    void    *newdata		/* imaginary data array pointer */
-    );
-
+EXTERN_C void mxSetImagData(mxArray *pa,  /* pointer to array */
+                            void *newdata /* imaginary data array pointer */
+);
 
 /*
  * Determine whether the given array contains complex data.
  */
 EXTERN_C bool mxIsComplex(const mxArray *pa);
 
-
 /*
- * Determine whether the given array is a sparse (as opposed to full). 
+ * Determine whether the given array is a sparse (as opposed to full).
  */
 EXTERN_C bool mxIsSparse(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * double-precision floating-point numbers.
  */
 EXTERN_C bool mxIsDouble(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * single-precision floating-point numbers.
  */
 EXTERN_C bool mxIsSingle(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * signed 8-bit integers.
  */
 EXTERN_C bool mxIsInt8(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * unsigned 8-bit integers.
  */
 EXTERN_C bool mxIsUint8(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * signed 16-bit integers.
  */
 EXTERN_C bool mxIsInt16(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * unsigned 16-bit integers.
  */
 EXTERN_C bool mxIsUint16(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * signed 32-bit integers.
  */
 EXTERN_C bool mxIsInt32(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * unsigned 32-bit integers.
  */
 EXTERN_C bool mxIsUint32(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * signed 64-bit integers.
  */
 EXTERN_C bool mxIsInt64(const mxArray *pa);
 
-
 /*
- * Determine whether the specified array represents its data as 
+ * Determine whether the specified array represents its data as
  * unsigned 64-bit integers.
  */
 EXTERN_C bool mxIsUint64(const mxArray *pa);
-
 
 /*
  * Get number of dimensions in array
  */
 EXTERN_C mwSize mxGetNumberOfDimensions(const mxArray *pa);
 
-
 /*
  * Get pointer to dimension array
  */
 EXTERN_C const mwSize *mxGetDimensions(const mxArray *pa);
 
-
-/* 
+/*
  * Get number of elements in array
  */
-EXTERN_C size_t mxGetNumberOfElements(	
-    const mxArray *pa		/* pointer to array */
-    );
-
+EXTERN_C size_t mxGetNumberOfElements(const mxArray *pa /* pointer to array */
+);
 
 /*
  * Get real data pointer for numeric array
  */
-EXTERN_C double *mxGetPr(
-    const mxArray *pa		/* pointer to array */
-    );
-
+EXTERN_C double *mxGetPr(const mxArray *pa /* pointer to array */
+);
 
 /*
  * Set real data pointer for numeric array
  */
-EXTERN_C void mxSetPr(
-    mxArray *pa,		/* pointer to array */
-    double  *pr			/* real data array pointer */
-    );
-
+EXTERN_C void mxSetPr(mxArray *pa, /* pointer to array */
+                      double *pr   /* real data array pointer */
+);
 
 /*
  * Get imaginary data pointer for numeric array
  */
-EXTERN_C double *mxGetPi(
-    const mxArray *pa		/* pointer to array */
-    );
-
+EXTERN_C double *mxGetPi(const mxArray *pa /* pointer to array */
+);
 
 /*
  * Set imaginary data pointer for numeric array
  */
-EXTERN_C void mxSetPi(
-    mxArray *pa,		/* pointer to array */
-    double  *pi			/* imaginary data array pointer */
-    );
-
+EXTERN_C void mxSetPi(mxArray *pa, /* pointer to array */
+                      double *pi   /* imaginary data array pointer */
+);
 
 /*
  * Get string array data
  */
-EXTERN_C mxChar *mxGetChars(
-    const mxArray *pa		/* pointer to array */
-    );
-
+EXTERN_C mxChar *mxGetChars(const mxArray *pa /* pointer to array */
+);
 
 /*
  * Get 8 bits of user data stored in the mxArray header.  NOTE: This state
  * of these bits are not guaranteed to be preserved after API function
  * calls.
  */
-EXTERN_C int mxGetUserBits(
-    const mxArray	*pa		/* pointer to array */
-    );
-
+EXTERN_C int mxGetUserBits(const mxArray *pa /* pointer to array */
+);
 
 /*
  * Set 8 bits of user data stored in the mxArray header. NOTE: This state
  * of these bits are not guaranteed to be preserved after API function
  * calls.
- */ 
-EXTERN_C void mxSetUserBits(
-	mxArray	*pa,		/* pointer to array */
-	int	value
-    );
-
+ */
+EXTERN_C void mxSetUserBits(mxArray *pa, /* pointer to array */
+                            int value);
 
 /*
  * Get the real component of the specified array's first data element.
  */
 EXTERN_C double mxGetScalar(const mxArray *pa);
 
-
 /*
  * Inform Watcom compilers that scalar double return values
  * will be in the FPU register.
  */
 #ifdef __WATCOMC__
-#pragma aux mxGetScalar value [8087];
+#pragma aux mxGetScalar value[8087];
 #endif
-
 
 /*
  * Is the isFromGlobalWorkspace bit set?
  */
 EXTERN_C bool mxIsFromGlobalWS(const mxArray *pa);
 
-
 /*
  * Set the isFromGlobalWorkspace bit.
  */
 EXTERN_C void mxSetFromGlobalWS(mxArray *pa, bool global);
 
-
-/* 
+/*
  * Get row dimension
  */
 EXTERN_C size_t mxGetM(const mxArray *pa);
 
-
-/* 
+/*
  * Set row dimension
  */
 EXTERN_C void mxSetM(mxArray *pa, mwSize m);
 
-
-/* 
+/*
  * Get column dimension
  */
 EXTERN_C size_t mxGetN(const mxArray *pa);
 
-
 /*
  * Is array empty
  */
-EXTERN_C bool mxIsEmpty(
-    const mxArray *pa		/* pointer to array */
-    );
-
+EXTERN_C bool mxIsEmpty(const mxArray *pa /* pointer to array */
+);
 
 /*
  * Get row data pointer for sparse numeric array
  */
 EXTERN_C mwIndex *mxGetIr(const mxArray *pa);
 
-
 /*
  * Set row data pointer for numeric array
  */
 EXTERN_C void mxSetIr(mxArray *pa, mwIndex *newir);
-
 
 /*
  * Get column data pointer for sparse numeric array
  */
 EXTERN_C mwIndex *mxGetJc(const mxArray *pa);
 
-
 /*
  * Set column data pointer for numeric array
  */
 EXTERN_C void mxSetJc(mxArray *pa, mwIndex *newjc);
-
 
 /*
  * Get maximum nonzero elements for sparse numeric array
  */
 EXTERN_C mwSize mxGetNzmax(const mxArray *pa);
 
-
 /*
  * Set maximum nonzero elements for numeric array
  */
 EXTERN_C void mxSetNzmax(mxArray *pa, mwSize nzmax);
-
 
 /*
  * Get array data element size
  */
 EXTERN_C size_t mxGetElementSize(const mxArray *pa);
 
-
-/* 
- * Return the offset (in number of elements) from the beginning of 
- * the array to a given subscript.  
+/*
+ * Return the offset (in number of elements) from the beginning of
+ * the array to a given subscript.
  */
-EXTERN_C mwIndex mxCalcSingleSubscript(const mxArray *pa, mwSize nsubs, const mwIndex *subs);
-
+EXTERN_C mwIndex mxCalcSingleSubscript(const mxArray *pa, mwSize nsubs,
+                                       const mwIndex *subs);
 
 /*
  * Get number of structure fields in array
  * Returns 0 if mxArray is non-struct.
  */
-EXTERN_C int mxGetNumberOfFields(
-    const mxArray *pa		/* pointer to array */
-    );
-
+EXTERN_C int mxGetNumberOfFields(const mxArray *pa /* pointer to array */
+);
 
 /*
- * Get a pointer to the specified cell element. 
- */ 
+ * Get a pointer to the specified cell element.
+ */
 EXTERN_C mxArray *mxGetCell(const mxArray *pa, mwIndex i);
-
 
 /*
  * Set an element in a cell array to the specified value.
  */
 EXTERN_C void mxSetCell(mxArray *pa, mwIndex i, mxArray *value);
 
-
 /*
  * Return pointer to the nth field name
  */
 EXTERN_C const char *mxGetFieldNameByNumber(const mxArray *pa, int n);
 
-
 /*
  * Get the index to the named field.
- */ 
+ */
 EXTERN_C int mxGetFieldNumber(const mxArray *pa, const char *name);
 
-
 /*
- * Return a pointer to the contents of the named field for 
+ * Return a pointer to the contents of the named field for
  * the ith element (zero based).
- */ 
-EXTERN_C mxArray *mxGetFieldByNumber(const mxArray *pa, mwIndex i, int fieldnum);
-
-
-/*
- * Set pa[i][fieldnum] = value 
  */
-EXTERN_C void mxSetFieldByNumber(mxArray *pa, mwIndex i, int fieldnum, mxArray *value);
-
+EXTERN_C mxArray *mxGetFieldByNumber(const mxArray *pa, mwIndex i,
+                                     int fieldnum);
 
 /*
- * Return a pointer to the contents of the named field for the ith 
+ * Set pa[i][fieldnum] = value
+ */
+EXTERN_C void mxSetFieldByNumber(mxArray *pa, mwIndex i, int fieldnum,
+                                 mxArray *value);
+
+/*
+ * Return a pointer to the contents of the named field for the ith
  * element (zero based).  Returns NULL on no such field or if the
  * field itself is NULL
  */
-EXTERN_C mxArray *mxGetField(const mxArray *pa, mwIndex i, const char *fieldname);
-
+EXTERN_C mxArray *mxGetField(const mxArray *pa, mwIndex i,
+                             const char *fieldname);
 
 /*
- * Sets the contents of the named field for the ith element (zero based).  
+ * Sets the contents of the named field for the ith element (zero based).
  * The input 'value' is stored in the input array 'pa' - no copy is made.
  */
-EXTERN_C void mxSetField(mxArray *pa, mwIndex i, const char *fieldname, mxArray *value);
+EXTERN_C void mxSetField(mxArray *pa, mwIndex i, const char *fieldname,
+                         mxArray *value);
 
- 
 /*
  * mxGetProperty returns the value of a property for a given object and index.
  * The property must be public.
@@ -845,49 +751,43 @@ EXTERN_C void mxSetField(mxArray *pa, mwIndex i, const char *fieldname, mxArray 
  * If the given property name doesn't exist, isn't public, or the object isn't
  * the right type, then mxGetProperty returns NULL.
  */
-EXTERN_C mxArray *mxGetProperty(const mxArray *pa, const mwIndex i, const char *propname);
+EXTERN_C mxArray *mxGetProperty(const mxArray *pa, const mwIndex i,
+                                const char *propname);
 
- 
 /*
  * mxSetProperty sets the value of a property for a given object and index.
  * The property must be public.
  *
  */
-EXTERN_C void mxSetProperty(mxArray *pa, mwIndex i, const char *propname, const mxArray *value);
+EXTERN_C void mxSetProperty(mxArray *pa, mwIndex i, const char *propname,
+                            const mxArray *value);
 
- 
-/* 
- * Return the name of an array's class.  
+/*
+ * Return the name of an array's class.
  */
 EXTERN_C const char *mxGetClassName(const mxArray *pa);
 
-
 /*
- * Determine whether an array is a member of the specified class. 
+ * Determine whether an array is a member of the specified class.
  */
 EXTERN_C bool mxIsClass(const mxArray *pa, const char *name);
 
-
 #include <stdlib.h>
 
-
 #if !defined(MX_COMPAT_32) || defined(MX_INTERNAL_730)
-
 
 /*
  * Create a numeric matrix and initialize all its data elements to 0.
  */
-EXTERN_C mxArray *mxCreateNumericMatrix(mwSize m, mwSize n, mxClassID classid, mxComplexity flag);
-
+EXTERN_C mxArray *mxCreateNumericMatrix(mwSize m, mwSize n, mxClassID classid,
+                                        mxComplexity flag);
 
 #endif
 
- 
-/* 
+/*
  * Set column dimension
  */
 EXTERN_C void mxSetN(mxArray *pa, mwSize n);
-
 
 /*
  * Set dimension array and number of dimensions.  Returns 0 on success and 1
@@ -895,21 +795,19 @@ EXTERN_C void mxSetN(mxArray *pa, mwSize n);
  */
 EXTERN_C int mxSetDimensions(mxArray *pa, const mwSize *size, mwSize ndims);
 
-
 /*
  * mxArray destructor
  */
 EXTERN_C void mxDestroyArray(mxArray *pa);
 
-
 /*
  * Create a numeric array and initialize all its data elements to 0.
  *
- * Similar to mxCreateNumericMatrix, in a standalone application, 
+ * Similar to mxCreateNumericMatrix, in a standalone application,
  * out-of-memory will mean a NULL pointer is returned.
  */
-EXTERN_C mxArray *mxCreateNumericArray(mwSize ndim, const mwSize *dims, mxClassID classid, mxComplexity flag);
-
+EXTERN_C mxArray *mxCreateNumericArray(mwSize ndim, const mwSize *dims,
+                                       mxClassID classid, mxComplexity flag);
 
 /*
  * Create an N-Dimensional array to hold string data;
@@ -917,28 +815,23 @@ EXTERN_C mxArray *mxCreateNumericArray(mwSize ndim, const mwSize *dims, mxClassI
  */
 EXTERN_C mxArray *mxCreateCharArray(mwSize ndim, const mwSize *dims);
 
-
 /*
  * Create a two-dimensional array to hold double-precision
  * floating-point data; initialize each data element to 0.
  */
 EXTERN_C mxArray *mxCreateDoubleMatrix(mwSize m, mwSize n, mxComplexity flag);
 
-
 /*
  * Get a properly typed pointer to the elements of a logical array.
  */
 EXTERN_C mxLogical *mxGetLogicals(const mxArray *pa);
-
 
 /*
  * Create a logical array and initialize its data elements to false.
  */
 EXTERN_C mxArray *mxCreateLogicalArray(mwSize ndim, const mwSize *dims);
 
-
 #if !defined(MX_COMPAT_32) || defined(MX_INTERNAL_730)
-
 
 /*
  * Create a two-dimensional array to hold logical data and
@@ -946,27 +839,22 @@ EXTERN_C mxArray *mxCreateLogicalArray(mwSize ndim, const mwSize *dims);
  */
 EXTERN_C mxArray *mxCreateLogicalMatrix(mwSize m, mwSize n);
 
-
 #endif
-
 
 /*
  * Create a logical scalar mxArray having the specified value.
  */
 EXTERN_C mxArray *mxCreateLogicalScalar(bool value);
 
-
 /*
  * Returns true if we have a valid logical scalar mxArray.
  */
 EXTERN_C bool mxIsLogicalScalar(const mxArray *pa);
 
-
 /*
  * Returns true if the logical scalar value is true.
  */
 EXTERN_C bool mxIsLogicalScalarTrue(const mxArray *pa);
-
 
 /*
  * Create a double-precision scalar mxArray initialized to the
@@ -974,18 +862,16 @@ EXTERN_C bool mxIsLogicalScalarTrue(const mxArray *pa);
  */
 EXTERN_C mxArray *mxCreateDoubleScalar(double value);
 
-
 /*
  * Create a 2-Dimensional sparse array.
  */
-EXTERN_C mxArray *mxCreateSparse(mwSize m, mwSize n, mwSize nzmax, mxComplexity flag);
-
+EXTERN_C mxArray *mxCreateSparse(mwSize m, mwSize n, mwSize nzmax,
+                                 mxComplexity flag);
 
 /*
  * Create a 2-D sparse logical array
  */
 EXTERN_C mxArray *mxCreateSparseLogicalMatrix(mwSize m, mwSize n, mwSize nzmax);
-
 
 /*
  * Copies characters from a MATLAB array to a char array
@@ -993,7 +879,6 @@ EXTERN_C mxArray *mxCreateSparseLogicalMatrix(mwSize m, mwSize n, mwSize nzmax);
  * nChars is the number of bytes in the output buffer
  */
 EXTERN_C void mxGetNChars(const mxArray *pa, char *buf, mwSize nChars);
-
 
 /*
  * Converts a string array to a C-style string. The C-style string is in the
@@ -1005,14 +890,12 @@ EXTERN_C void mxGetNChars(const mxArray *pa, char *buf, mwSize nChars);
  */
 EXTERN_C int mxGetString(const mxArray *pa, char *buf, mwSize buflen);
 
-
 /*
  * Create a NULL terminated C string from an mxArray of type mxCHAR_CLASS
  * Supports multibyte character sets.  The resulting string must be freed
  * with mxFree.  Returns NULL on out of memory or non-character arrays.
  */
 EXTERN_C char *mxArrayToString(const mxArray *pa);
-
 
 /*
  * Create a 1-by-n string array initialized to str. The supplied string is
@@ -1021,19 +904,16 @@ EXTERN_C char *mxArrayToString(const mxArray *pa);
  */
 EXTERN_C mxArray *mxCreateStringFromNChars(const char *str, mwSize n);
 
-
 /*
  * Create a 1-by-n string array initialized to null terminated string
  * where n is the length of the string.
  */
 EXTERN_C mxArray *mxCreateString(const char *str);
 
-
 /*
  * Create a string array initialized to the strings in str.
  */
 EXTERN_C mxArray *mxCreateCharMatrixFromStrings(mwSize m, const char **str);
-
 
 /*
  * Create a 2-Dimensional cell array, with each cell initialized
@@ -1041,34 +921,30 @@ EXTERN_C mxArray *mxCreateCharMatrixFromStrings(mwSize m, const char **str);
  */
 EXTERN_C mxArray *mxCreateCellMatrix(mwSize m, mwSize n);
 
-
 /*
  * Create an N-Dimensional cell array, with each cell initialized
  * to NULL.
  */
 EXTERN_C mxArray *mxCreateCellArray(mwSize ndim, const mwSize *dims);
 
-
 /*
  * Create a 2-Dimensional structure array having the specified fields;
  * initialize all values to NULL.
  */
-EXTERN_C mxArray *mxCreateStructMatrix(size_t m, size_t n, int nfields, const char **fieldnames);
-
+EXTERN_C mxArray *mxCreateStructMatrix(size_t m, size_t n, int nfields,
+                                       const char **fieldnames);
 
 /*
  * Create an N-Dimensional structure array having the specified fields;
  * initialize all values to NULL.
  */
-EXTERN_C mxArray *mxCreateStructArray(mwSize ndim, const mwSize *dims, int nfields,
-								const char **fieldnames);
-
+EXTERN_C mxArray *mxCreateStructArray(mwSize ndim, const mwSize *dims,
+                                      int nfields, const char **fieldnames);
 
 /*
  * Make a deep copy of an array, return a pointer to the copy.
  */
 EXTERN_C mxArray *mxDuplicateArray(const mxArray *in);
-
 
 /*
  * Set classname of an unvalidated object array.  It is illegal to
@@ -1077,74 +953,60 @@ EXTERN_C mxArray *mxDuplicateArray(const mxArray *in);
  */
 EXTERN_C int mxSetClassName(mxArray *pa, const char *classname);
 
-
-/* 
+/*
  * Add a field to a structure array. Returns field number on success or -1
  * if inputs are invalid or an out of memory condition occurs.
  */
 EXTERN_C int mxAddField(mxArray *pa, const char *fieldname);
 
-
 /*
  * Remove a field from a structure array.  Does nothing if no such field exists.
  * Does not destroy the field itself.
-*/
+ */
 EXTERN_C void mxRemoveField(mxArray *pa, int field);
-
 
 /*
  * Function for obtaining MATLAB's concept of EPS
  */
 EXTERN_C double mxGetEps(void);
 
-
 /*
  * Function for obtaining MATLAB's concept of INF (Used in MEX-File callback).
  */
 EXTERN_C double mxGetInf(void);
-
 
 /*
  * Function for obtaining MATLAB's concept of NaN (Used in MEX-File callback).
  */
 EXTERN_C double mxGetNaN(void);
 
-
 /*
  * Inform Watcom compilers that scalar double return values
  * will be in the FPU register.
  */
 #ifdef __WATCOMC__
-#pragma aux mxGetEps value [8087];
-#pragma aux mxGetInf value [8087];
-#pragma aux mxGetNaN value [8087];
+#pragma aux mxGetEps value[8087];
+#pragma aux mxGetInf value[8087];
+#pragma aux mxGetNaN value[8087];
 #endif
-
 
 /*
  * test for finiteness in a machine-independent manner
  */
-EXTERN_C bool mxIsFinite(
-    double x                  /* value to test */
-    );
-
+EXTERN_C bool mxIsFinite(double x /* value to test */
+);
 
 /*
  * test for infinity in a machine-independent manner
  */
-EXTERN_C bool mxIsInf(
-    double x                  /* value to test */
-    );
-
+EXTERN_C bool mxIsInf(double x /* value to test */
+);
 
 /*
  * test for NaN in a machine-independent manner
  */
-EXTERN_C bool mxIsNaN(
-    double x                  /* value to test */
-    );
-
-
+EXTERN_C bool mxIsNaN(double x /* value to test */
+);
 
 /*
 mxAssert(int expression, char *error_message)
@@ -1160,43 +1022,39 @@ mxAssert(int expression, char *error_message)
   allows the user to specify a more understandable description of why
   the assertion failed.  (Use an empty string if no extra description
   should follow the failed assertion message.)  After a failed
-  assertion, control returns to the MATLAB command line. 
+  assertion, control returns to the MATLAB command line.
 
-  mxAssertS, (the S for Simple), takes the same inputs as mxAssert.  It 
-  does not print the text of the failed assertion, only the file and 
+  mxAssertS, (the S for Simple), takes the same inputs as mxAssert.  It
+  does not print the text of the failed assertion, only the file and
   line where the assertion failed, and the explanatory error_message.
 
   Note that script MEX will turn off these assertions when building
-  optimized MEX-functions, so they should be used for debugging 
+  optimized MEX-functions, so they should be used for debugging
   purposes only.
 */
 
 #ifdef MATLAB_MEX_FILE
-#  ifndef NDEBUG
+#ifndef NDEBUG
 
-EXTERN_C void mexPrintAssertion(const char *test, 
-		       const char *fname, 
-		       int linenum, 
-		       const char *message);
+EXTERN_C void mexPrintAssertion(const char *test, const char *fname,
+                                int linenum, const char *message);
 
-
-#    define mxAssert(test, message) ( (test) ? (void) 0 : mexPrintAssertion(": " #test ",", __FILE__, __LINE__, message))
-#    define mxAssertS(test, message) ( (test) ? (void) 0 : mexPrintAssertion("", __FILE__, __LINE__, message))
-#  else
-#    define mxAssert(test, message) ((void) 0)
-#    define mxAssertS(test, message) ((void) 0)
-#  endif
+#define mxAssert(test, message)                                                \
+  ((test) ? (void)0                                                            \
+          : mexPrintAssertion(": " #test ",", __FILE__, __LINE__, message))
+#define mxAssertS(test, message)                                               \
+  ((test) ? (void)0 : mexPrintAssertion("", __FILE__, __LINE__, message))
 #else
-#  include <assert.h>
-#  define mxAssert(test, message) assert(test)
-#  define mxAssertS(test, message) assert(test)
+#define mxAssert(test, message) ((void)0)
+#define mxAssertS(test, message) ((void)0)
+#endif
+#else
+#include <assert.h>
+#define mxAssert(test, message) assert(test)
+#define mxAssertS(test, message) assert(test)
 #endif
 
-
-
 #include <stdlib.h>
-
-
 
 #ifdef MX_COMPAT_32
 /*
@@ -1409,6 +1267,5 @@ int mxCalcSingleSubscript_700(const mxArray *, int, const int *);
 #endif
 
 #endif /* #ifdef MX_COMPAT_32 */
-
 
 #endif /* matrix_h */

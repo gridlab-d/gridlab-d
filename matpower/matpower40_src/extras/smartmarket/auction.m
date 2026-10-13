@@ -239,7 +239,7 @@ blam = bids.lam;
 olam(olam(:) < delta) = NaN;
 blam(blam(:) < delta) = NaN;
 
-%% eliminate rows for 0 qty offers/bids
+%% eliminate.rows() for 0 qty offers/bids
 [nro, nco] = size(offers.qty);
 [nrb, ncb] = size(bids.qty);
 omask = ones(nro,nco);

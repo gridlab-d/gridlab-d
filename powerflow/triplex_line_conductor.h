@@ -6,21 +6,21 @@
 
 #include "line.h"
 
-class triplex_line_conductor : public powerflow_library
-{
+class triplex_line_conductor : public powerflow_library {
 public:
-	double resistance;
-	double geometric_mean_radius;
-	LINERATINGS winter, summer;
+  double resistance;
+  double geometric_mean_radius;
+  LINERATINGS winter, summer;
+
 public:
-	static CLASS *oclass;
-	static CLASS *pclass;
-	
-	triplex_line_conductor(MODULE *mod);
-	inline triplex_line_conductor(CLASS *cl=oclass):powerflow_library(cl){};
-	int isa(char *classname);
-	int init(OBJECT *parent);
-	int create(void);
+  static CLASS *oclass;
+  static CLASS *pclass;
+
+  triplex_line_conductor(MODULE *mod);
+  inline triplex_line_conductor(CLASS *cl = oclass) : powerflow_library(cl) {};
+  int isa(char *classname);
+  int init(OBJECT *parent);
+  int create(void);
 };
 
 #endif // _TRIPLEXLINECONDUCTOR_H

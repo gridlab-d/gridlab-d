@@ -1,20 +1,26 @@
 /** $Id: debug.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file debug.h
-	@version $Id: debug.h 4738 2014-07-03 00:55:39Z dchassin $
-	@addtogroup debug
-	@ingroup core
+        Copyright (C) 2008 Battelle Memorial Institute
+        @file debug.h
+        @version $Id: debug.h 4738 2014-07-03 00:55:39Z dchassin $
+        @addtogroup debug
+        @ingroup core
  @{
  **/
 
 #ifndef _DEBUG_H
 #define _DEBUG_H
 
+#include <memory>
+
+struct sync_data;
+typedef struct s_object_list OBJECT;
+
 void exec_sighandler(int sig);
-int exec_debug(struct sync_data *data, int pass, int index, OBJECT *obj);
-#ifdef WIN32
-const char *strsignal(int sig);
-#endif // WIN32
+int exec_debug(std::shared_ptr<struct sync_data> &data, int pass, int index,
+               OBJECT *obj);
+#ifdef _WIN32
+    const char *strsignal(int sig);
+#endif // _WIN32
 
 #endif
 /**@}*/

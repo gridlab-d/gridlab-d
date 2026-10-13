@@ -1,8 +1,8 @@
 /** $Id: loadshape.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2009 Battelle Memorial Institute
-	@file loadshape.h
-	@addtogroup loadshape
-	@ingroup tape
+        Copyright (C) 2009 Battelle Memorial Institute
+        @file loadshape.h
+        @addtogroup loadshape
+        @ingroup tape
 
  @{
  **/
@@ -11,8 +11,8 @@
 #ifndef _LOADSHAPE_H
 #define _LOADSHAPE_H
 
-#include "tape.h"
 #include "../tape/schedule.h" /* needed for parse_cron() */
+#include "tape.h"
 
 EXPORT void new_loadshape(MODULE *mod);
 

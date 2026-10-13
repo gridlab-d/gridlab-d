@@ -1,7 +1,7 @@
 function TorF = hasPQcap(gen, hilo)
 %HASPQCAP  Checks for P-Q capability curve constraints.
 %   TORF = HASPQCAP(GEN, HILO) returns a column vector of 1's and 0's. The 1's
-%   correspond to rows of the GEN matrix which correspond to generators which
+%   correspond to.rows() of the GEN matrix which correspond to generators which
 %   have defined a capability curve (with sloped upper and/or lower bound on
 %   Q) and require that additional linear constraints be added to the OPF.
 %
@@ -13,9 +13,9 @@ function TorF = hasPQcap(gen, hilo)
 %   connecting (Pc1, Qc1min) and (Pc2, Qc2min).
 %
 %   If the optional 2nd argument is 'U' this function returns true only for
-%   rows corresponding to generators that require the upper constraint on Q.
+%  .rows() corresponding to generators that require the upper constraint on Q.
 %   If it is 'L', only for those requiring the lower constraint. If the 2nd
-%   argument is not specified or has any other value it returns true for rows
+%   argument is not specified or has any other value it returns true for.rows()
 %   corresponding to gens that require either or both of the constraints.
 %
 %   It is smart enough to return true only if the corresponding linear

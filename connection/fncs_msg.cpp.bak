@@ -282,7 +282,7 @@ int fncs_msg::init(OBJECT *parent){
 	int n = 0;
 	int i = 0;
 	int d = 0;
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *obj = object_header(this);
 	OBJECT *vObj = NULL;
 	char buffer[1024] = "";
 	string simName = string(gl_name(obj, buffer, 1023));
@@ -1032,7 +1032,7 @@ extern "C" void outgoing_fncs_function(char *from, char *to, char *funcName, cha
 		//TODO: deliver message to fncs
 		stringstream payload;
 		char buffer[sizeof(len)];
-		sprintf(buffer, "%d", len);
+		snprintf(buffer, sizeof(buffer) "%d", len);
 		payload << "\"{\"from\":\"" << from << "\", " << "\"to\":\"" << to << "\", " << "\"function\":\"" << funcName << "\", " <<  "\"data\":\"" << message << "\", " << "\"data length\":\"" << buffer <<"\"}\"";
 		string key = string(relay->remotename);
 		if( relay->ctype == CT_PUBSUB){

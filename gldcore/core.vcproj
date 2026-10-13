@@ -684,10 +684,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\lock.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\main.c"
 				>
 			</File>
@@ -927,10 +923,6 @@
 			</File>
 			<File
 				RelativePath=".\local.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lock.h"
 				>
 			</File>
 			<File

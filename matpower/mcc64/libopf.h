@@ -2,17 +2,17 @@
 // MATLAB Compiler: 4.18 (R2012b)
 // Date: Thu Nov 29 11:11:10 2012
 // Arguments: "-B" "macro_default" "-B" "macro_default" "-W" "cpplib:libopf"
-// "-T" "link:lib" "../matpower40_src/opf.m" 
+// "-T" "link:lib" "../matpower40_src/opf.m"
 //
 
 #ifndef __libopf_h
 #define __libopf_h 1
 
 #if defined(__cplusplus) && !defined(mclmcrrt_h) && defined(__linux__)
-#  pragma implementation "mclmcrrt.h"
+#pragma implementation "mclmcrrt.h"
 #endif
-#include "mclmcrrt.h"
 #include "mclcppclass.h"
+#include "mclmcrrt.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,7 +43,6 @@ extern "C" {
 
 #define LIB_libopf_C_API PUBLIC_libopf_C_API
 
-
 #else
 
 #define LIB_libopf_C_API
@@ -51,31 +50,23 @@ extern "C" {
 #endif
 
 /* This symbol is defined in shared libraries. Define it here
- * (to nothing) in case this isn't a shared library. 
+ * (to nothing) in case this isn't a shared library.
  */
-#ifndef LIB_libopf_C_API 
+#ifndef LIB_libopf_C_API
 #define LIB_libopf_C_API /* No special import/export declaration */
 #endif
 
-extern LIB_libopf_C_API 
-bool MW_CALL_CONV libopfInitializeWithHandlers(
-       mclOutputHandlerFcn error_handler, 
-       mclOutputHandlerFcn print_handler);
+extern LIB_libopf_C_API bool MW_CALL_CONV libopfInitializeWithHandlers(
+    mclOutputHandlerFcn error_handler, mclOutputHandlerFcn print_handler);
 
-extern LIB_libopf_C_API 
-bool MW_CALL_CONV libopfInitialize(void);
+extern LIB_libopf_C_API bool MW_CALL_CONV libopfInitialize(void);
 
-extern LIB_libopf_C_API 
-void MW_CALL_CONV libopfTerminate(void);
+extern LIB_libopf_C_API void MW_CALL_CONV libopfTerminate(void);
 
+extern LIB_libopf_C_API void MW_CALL_CONV libopfPrintStackTrace(void);
 
-
-extern LIB_libopf_C_API 
-void MW_CALL_CONV libopfPrintStackTrace(void);
-
-extern LIB_libopf_C_API 
-bool MW_CALL_CONV mlxOpf(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[]);
-
+extern LIB_libopf_C_API bool MW_CALL_CONV mlxOpf(int nlhs, mxArray *plhs[],
+                                                 int nrhs, mxArray *prhs[]);
 
 #ifdef __cplusplus
 }
@@ -100,15 +91,22 @@ bool MW_CALL_CONV mlxOpf(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[]);
 #if defined(LIB_libopf_C_API)
 #define LIB_libopf_CPP_API LIB_libopf_C_API
 #else
-#define LIB_libopf_CPP_API /* empty! */ 
+#define LIB_libopf_CPP_API /* empty! */
 #endif
 #endif
 
 #endif
 
-extern LIB_libopf_CPP_API void MW_CALL_CONV opf(int nargout, mwArray& busout, mwArray& genout, mwArray& branchout, mwArray& f, mwArray& success, mwArray& info, mwArray& et, mwArray& g, mwArray& jac, mwArray& xr, mwArray& pimul, const mwArray& varargin);
+extern LIB_libopf_CPP_API void
+    MW_CALL_CONV opf(int nargout, mwArray &busout, mwArray &genout,
+                     mwArray &branchout, mwArray &f, mwArray &success,
+                     mwArray &info, mwArray &et, mwArray &g, mwArray &jac,
+                     mwArray &xr, mwArray &pimul, const mwArray &varargin);
 
-extern LIB_libopf_CPP_API void MW_CALL_CONV opf(int nargout, mwArray& busout, mwArray& genout, mwArray& branchout, mwArray& f, mwArray& success, mwArray& info, mwArray& et, mwArray& g, mwArray& jac, mwArray& xr, mwArray& pimul);
+extern LIB_libopf_CPP_API void MW_CALL_CONV
+opf(int nargout, mwArray &busout, mwArray &genout, mwArray &branchout,
+    mwArray &f, mwArray &success, mwArray &info, mwArray &et, mwArray &g,
+    mwArray &jac, mwArray &xr, mwArray &pimul);
 
 #endif
 #endif

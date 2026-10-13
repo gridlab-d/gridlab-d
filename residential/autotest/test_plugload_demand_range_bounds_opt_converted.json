@@ -1,0 +1,82 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Test purpose: validate demand resetting function to make sure it resets demand to the appropriate",
+      "// values when input demand is outside the range of 0<=demand<=1; demand should be reset to 1 for values",
+      "// greater than 1 and 0 for values less than 0; tape runs for 24 hours; assert compares enduse-load",
+      "// because demand is not instantly reset when it is out of range",
+      "//",
+      "// Payroll:d3y332"
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-01-02 0:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "residential": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "parent": "plugload_2",
+          "property": "demand",
+          "file": "test_generic_limit_demand(range0-1).glt"
+        },
+        {
+          "parent": "complex_assert_4",
+          "property": "value",
+          "file": "plugload_demand_range_bounds.player"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_4",
+          "parent": "plugload_2",
+          "target": "power",
+          "within": 0.0001,
+          "once": "ONCE_TRUE"
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "plugload_2",
+          "file": "plugload_load_usage3600.csv",
+          "interval": 3600,
+          "limit": 24,
+          "property": "power"
+        }
+      ]
+    },
+    "plugload": {
+      "instances": [
+        {
+          "name": "plugload_2",
+          "parent": "house_1",
+          "installed_power": 1
+        }
+      ]
+    },
+    "house": {
+      "instances": [
+        {
+          "name": "house_1",
+          "floor_area": "1500 sf",
+          "cooling_setpoint": 100,
+          "heating_setpoint": 1,
+          "inline_comments": {
+            "cooling_setpoint": "// turns off HVAC"
+          }
+        }
+      ]
+    }
+  }
+}

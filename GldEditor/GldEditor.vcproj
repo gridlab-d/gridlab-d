@@ -417,10 +417,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\core\lock.h"
-					>
-				</File>
-				<File
 					RelativePath="..\core\match.h"
 					>
 				</File>

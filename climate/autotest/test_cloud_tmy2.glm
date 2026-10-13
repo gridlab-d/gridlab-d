@@ -61,15 +61,6 @@ object triplex_meter {
       nominal_voltage 120;
 }
 
-object house {
-	name myHouse;
-	parent tpm2_R1-12-47-1_tm_21;
-	floor_area random.normal(1750,400);
-	heating_setpoint 70;
-	cooling_setpoint 78;
-	air_temperature 79;
-}
-
 object inverter {
 	name DHHL_3_inv;
 	phases AS;

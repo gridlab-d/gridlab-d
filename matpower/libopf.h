@@ -5,17 +5,17 @@
 // "-d" "/root/MatPowerGLD/src" "-w" "enable:specified_file_mismatch" "-w"
 // "enable:repeated_file" "-w" "enable:switch_ignored" "-w"
 // "enable:missing_lib_sentinel" "-w" "enable:demo_license" "-v"
-// "/root/gridlab/trunk/matpower/matpower40_src/opf.m" 
+// "/root/gridlab/trunk/matpower/matpower40_src/opf.m"
 //
 
 #ifndef __MatPowerGLD_h
 #define __MatPowerGLD_h 1
 
 #if defined(__cplusplus) && !defined(mclmcrrt_h) && defined(__linux__)
-#  pragma implementation "mclmcrrt.h"
+#pragma implementation "mclmcrrt.h"
 #endif
-#include "mclmcrrt.h"
 #include "mclcppclass.h"
+#include "mclmcrrt.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,7 +46,6 @@ extern "C" {
 
 #define LIB_MatPowerGLD_C_API PUBLIC_MatPowerGLD_C_API
 
-
 #else
 
 #define LIB_MatPowerGLD_C_API
@@ -54,31 +53,25 @@ extern "C" {
 #endif
 
 /* This symbol is defined in shared libraries. Define it here
- * (to nothing) in case this isn't a shared library. 
+ * (to nothing) in case this isn't a shared library.
  */
-#ifndef LIB_MatPowerGLD_C_API 
+#ifndef LIB_MatPowerGLD_C_API
 #define LIB_MatPowerGLD_C_API /* No special import/export declaration */
 #endif
 
-extern LIB_MatPowerGLD_C_API 
-bool MW_CALL_CONV MatPowerGLDInitializeWithHandlers(
-       mclOutputHandlerFcn error_handler, 
-       mclOutputHandlerFcn print_handler);
+extern LIB_MatPowerGLD_C_API bool MW_CALL_CONV
+MatPowerGLDInitializeWithHandlers(mclOutputHandlerFcn error_handler,
+                                  mclOutputHandlerFcn print_handler);
 
-extern LIB_MatPowerGLD_C_API 
-bool MW_CALL_CONV MatPowerGLDInitialize(void);
+extern LIB_MatPowerGLD_C_API bool MW_CALL_CONV MatPowerGLDInitialize(void);
 
-extern LIB_MatPowerGLD_C_API 
-void MW_CALL_CONV MatPowerGLDTerminate(void);
+extern LIB_MatPowerGLD_C_API void MW_CALL_CONV MatPowerGLDTerminate(void);
 
+extern LIB_MatPowerGLD_C_API void MW_CALL_CONV MatPowerGLDPrintStackTrace(void);
 
-
-extern LIB_MatPowerGLD_C_API 
-void MW_CALL_CONV MatPowerGLDPrintStackTrace(void);
-
-extern LIB_MatPowerGLD_C_API 
-bool MW_CALL_CONV mlxOpf(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[]);
-
+extern LIB_MatPowerGLD_C_API bool MW_CALL_CONV mlxOpf(int nlhs, mxArray *plhs[],
+                                                      int nrhs,
+                                                      mxArray *prhs[]);
 
 #ifdef __cplusplus
 }
@@ -103,15 +96,22 @@ bool MW_CALL_CONV mlxOpf(int nlhs, mxArray *plhs[], int nrhs, mxArray *prhs[]);
 #if defined(LIB_MatPowerGLD_C_API)
 #define LIB_MatPowerGLD_CPP_API LIB_MatPowerGLD_C_API
 #else
-#define LIB_MatPowerGLD_CPP_API /* empty! */ 
+#define LIB_MatPowerGLD_CPP_API /* empty! */
 #endif
 #endif
 
 #endif
 
-extern LIB_MatPowerGLD_CPP_API void MW_CALL_CONV opf(int nargout, mwArray& busout, mwArray& genout, mwArray& branchout, mwArray& f, mwArray& success, mwArray& info, mwArray& et, mwArray& g, mwArray& jac, mwArray& xr, mwArray& pimul, const mwArray& varargin);
+extern LIB_MatPowerGLD_CPP_API void
+    MW_CALL_CONV opf(int nargout, mwArray &busout, mwArray &genout,
+                     mwArray &branchout, mwArray &f, mwArray &success,
+                     mwArray &info, mwArray &et, mwArray &g, mwArray &jac,
+                     mwArray &xr, mwArray &pimul, const mwArray &varargin);
 
-extern LIB_MatPowerGLD_CPP_API void MW_CALL_CONV opf(int nargout, mwArray& busout, mwArray& genout, mwArray& branchout, mwArray& f, mwArray& success, mwArray& info, mwArray& et, mwArray& g, mwArray& jac, mwArray& xr, mwArray& pimul);
+extern LIB_MatPowerGLD_CPP_API void MW_CALL_CONV
+opf(int nargout, mwArray &busout, mwArray &genout, mwArray &branchout,
+    mwArray &f, mwArray &success, mwArray &info, mwArray &et, mwArray &g,
+    mwArray &jac, mwArray &xr, mwArray &pimul);
 
 #endif
 #endif

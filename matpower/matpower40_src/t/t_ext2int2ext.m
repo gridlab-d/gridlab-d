@@ -140,7 +140,7 @@ got = int2ext(mpc, ex, tmp, 'branch', 2);
 t_is(got, mpce.xbranch, 12, t);
 
 t = 'val = ext2int(mpc, val, {''branch'', ''gen'', ''bus''})';
-got = ext2int(mpc, mpce.xrows, {'branch', 'gen', 'bus'});
+got = ext2int(mpc, mpce..rows(), {'branch', 'gen', 'bus'});
 ex = [mpce.xbranch([1:6, 8:10], 1:4); mpce.xgen([4 2 1], :); mpce.xbus([1:5, 7:10], 1:4); -ones(2, 4)];
 t_is(got, ex, 12, t);
 t = 'val = int2ext(mpc, val, oldval, {''branch'', ''gen'', ''bus''})';
@@ -152,7 +152,7 @@ tmp3 = ones(size(mpce.xbus(:, 1:4)));
 tmp3(6, 1:4) = mpce.xbus(6, 1:4);
 tmp = [tmp1; tmp2; tmp3];
 got = int2ext(mpc, ex, tmp, {'branch', 'gen', 'bus'});
-t_is(got, mpce.xrows, 12, t);
+t_is(got, mpce..rows(), 12, t);
 
 t = 'val = ext2int(mpc, val, {''branch'', ''gen'', ''bus''}, 2)';
 got = ext2int(mpc, mpce.xcols, {'branch', 'gen', 'bus'}, 2);
@@ -225,11 +225,11 @@ t_is(got.xbranch, mpce.xbranch, 12, t);
 
 t = 'mpc = ext2int(mpc, field, {''branch'', ''gen'', ''bus''})';
 ex = [mpce.xbranch([1:6, 8:10], 1:4); mpce.xgen([4 2 1], :); mpce.xbus([1:5, 7:10], 1:4); -ones(2, 4)];
-got = ext2int(mpc, 'xrows', {'branch', 'gen', 'bus'});
-t_is(got.xrows, ex, 12, t);
+got = ext2int(mpc, '.rows()', {'branch', 'gen', 'bus'});
+t_is(got..rows(), ex, 12, t);
 t = 'mpc = int2ext(mpc, field, {''branch'', ''gen'', ''bus''})';
-got = int2ext(got, 'xrows', {'branch', 'gen', 'bus'});
-t_is(got.xrows, mpce.xrows, 12, t);
+got = int2ext(got, '.rows()', {'branch', 'gen', 'bus'});
+t_is(got..rows(), mpce..rows(), 12, t);
 
 t = 'mpc = ext2int(mpc, field, {''branch'', ''gen'', ''bus''}, 2)';
 ex = [mpce.xbranch([1:6, 8:10], 1:4); mpce.xgen([4 2 1], :); mpce.xbus([1:5, 7:10], 1:4); -ones(2, 4)]';

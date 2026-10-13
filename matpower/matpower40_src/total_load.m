@@ -5,12 +5,12 @@ function [Pd, Qd] = total_load(bus, gen, load_zone, which_type)
 %   [PD, QD] = TOTAL_LOAD(...) returns both active and reative power
 %   demand for each zone.
 %
-%   BUS - standard BUS matrix with nb rows, where the fixed active
+%   BUS - standard BUS matrix with nb.rows(), where the fixed active
 %       and reactive loads are specified in columns PD and QD
 %
-%   GEN - (optional) standard GEN matrix with ng rows, where the
+%   GEN - (optional) standard GEN matrix with ng.rows(), where the
 %       dispatchable loads are specified by columns PG, QG, PMIN,
-%       QMIN and QMAX (in rows for which ISLOAD(GEN) returns true).
+%       QMIN and QMAX (in.rows() for which ISLOAD(GEN) returns true).
 %       If GEN is empty, it assumes there are no dispatchable loads.
 %
 %   LOAD_ZONE - (optional) nb element vector where the value of

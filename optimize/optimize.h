@@ -1,5 +1,5 @@
 /* $Id: optimize.h 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute */
+        Copyright (C) 2008 Battelle Memorial Institute */
 
 #ifndef _OPTIMIZE_H
 #define _OPTIMIZE_H
@@ -9,7 +9,7 @@
 #include "gridlabd.h"
 
 /*** DO NOT DELETE THE NEXT LINE ***/
-//NEWCLASS
+// NEWCLASS
 
 /* optional exports */
 #ifdef OPTIONAL

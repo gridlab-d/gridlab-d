@@ -52,7 +52,7 @@ function [Ay, by]  = makeAy(baseMVA, ng, gencost, pgbas, qgbas, ybas)
 
 [PW_LINEAR, POLYNOMIAL, MODEL, STARTUP, SHUTDOWN, NCOST, COST] = idx_cost;
 
-% find all pwl cost rows in gencost, either real or reactive
+% find all pwl cost.rows() in gencost, either real or reactive
 iycost = find(gencost(:, MODEL) == PW_LINEAR);
 
 % this is the number of extra "y" variables needed to model those costs

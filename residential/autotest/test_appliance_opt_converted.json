@@ -1,0 +1,53 @@
+{
+  "__preamble": {
+    "comments": [
+      "//#set debug=1",
+      "//#set suppress_repeat_messages=0"
+    ]
+  },
+  "modules": {
+    "residential": {},
+    "tape": {}
+  },
+  "objects": {
+    "appliance": {
+      "instances": [
+        {
+          "name": "washer",
+          "durations": "86400 60 300 60 300",
+          "transitions": "daily_run_probability 0.0 0.0 0.0 0.0",
+          "powers": "0 1+0.1j 1+0.2j 1+0.1j 2+0.2j",
+          "total": "1+0.1j",
+          "outside_comments": [
+            "// washer test uses linear state model"
+          ],
+          "inside_comments": [
+            "// daily start, fill, agitate, empty, spin"
+          ]
+        },
+        {
+          "name": "dryer",
+          "durations": "86400 240 120",
+          "transitions": "0.0 daily_run_probability 0.0 ; 0 0 0.5 ; 0.5 0.5 0",
+          "powers": "0 1+0.1j 1+0.2j",
+          "inside_comments": [
+            "// daily start, tumble, heat"
+          ]
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "dryer",
+          "property": "load.demand",
+          "file": "test_appliance.csv",
+          "interval": -1,
+          "outside_comments": [
+            "// dryer test uses markov state model"
+          ]
+        }
+      ]
+    }
+  }
+}

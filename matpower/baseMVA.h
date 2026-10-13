@@ -1,7 +1,7 @@
 /** $Id: baseMVA.h 4738 2014-07-03 00:55:39Z dchassin $
-	@file baseMVA.h
-	@addtogroup baseMVA
-	@ingroup MODULENAME
+        @file baseMVA.h
+        @addtogroup baseMVA
+        @ingroup MODULENAME
 
  @{
  **/
@@ -15,28 +15,30 @@
 
 class baseMVA {
 private:
-	/* TODO: put private variables here */
+  /* TODO: put private variables here */
 protected:
-	/* TODO: put unpublished but inherited variables */
+  /* TODO: put unpublished but inherited variables */
 public:
-	/* TODO: put published variables here */
+  /* TODO: put published variables here */
 public:
-	/* required implementations */
-	baseMVA(MODULE *module);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-public:
-	static CLASS *oclass;
-	static baseMVA *defaults;
+  /* required implementations */
+  baseMVA(MODULE *module);
+  int create(void);
+  int init(OBJECT *parent);
+  TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
+  TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
+  TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
-	//variables
-	int BASEMVA;
+public:
+  static CLASS *oclass;
+  static baseMVA *defaults;
+
+  // variables
+  int BASEMVA;
 #ifdef OPTIONAL
-	static CLASS *pclass; /**< defines the parent class */
-	TIMESTAMP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
+  static CLASS *pclass; /**< defines the parent class */
+  TIMESTAMP plc(TIMESTAMP t0,
+                TIMESTAMP t1); /**< defines the default PLC code */
 #endif
 };
 

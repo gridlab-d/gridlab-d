@@ -127,15 +127,15 @@ object load_tracker
 	setpoint 145000;
 	deadband 1.0; // Ensure double_assert.within > 186000 * deadband (as a percent)
 	damping  0.0;
-	full_scale 186000; // Note: This is the sum of the base powers (219000 VA)
-	                   //       from the 2 downstream loads then reduced
-	                   //       to take account of the fact we are only
-	                   //       measuring real power not apparent based on an average
-	                   //       power factor of approximately 0.85. It does
-	                   //       not take account of line losses but
-	                   //       is the expected value users would enter
-	object double_assert
-	{
+	// Note: This is the sum of the base powers (219000 VA)
+	//       from the 2 downstream loads then reduced
+	//       to take account of the fact we are only
+	//       measuring real power not apparent based on an average
+	//       power factor of approximately 0.85. It does
+	//       not take account of line losses but
+	//       is the expected value users would enter
+	full_scale 186000; 
+	object double_assert {
 		target "setpoint";
 		value  RECLOSER_1_LOAD_TRACKER.feedback;
 		within 1861; // 1%+ of full scale

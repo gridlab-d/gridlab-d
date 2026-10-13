@@ -10,16 +10,15 @@
 #ifndef _CPP_THREADPOOL_H
 #define _CPP_THREADPOOL_H
 
-
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <queue>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <functional>
 #include <map>
+#include <mutex>
+#include <queue>
+#include <thread>
+#include <vector>
 
 class cpp_threadpool {
 private:
@@ -51,8 +50,8 @@ public:
         }
         return thread_map;
     }
-
 };
 
+int processor_count(void);
 
 #endif //_CPP_THREADPOOL_H

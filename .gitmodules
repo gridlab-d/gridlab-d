@@ -1,7 +1,3 @@
-[submodule "third_party/jsoncpp_lib"]
-	path = third_party/jsoncpp_lib
-	url = https://github.com/open-source-parsers/jsoncpp.git
-	ignore = dirty
 [submodule "third_party/SuperLU"]
 	path = third_party/SuperLU
 	url = https://github.com/xiaoyeli/superlu.git

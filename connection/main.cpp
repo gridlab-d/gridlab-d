@@ -4,4 +4,3 @@
 #define DLMAIN
 
 #include "gridlabd.h"
-

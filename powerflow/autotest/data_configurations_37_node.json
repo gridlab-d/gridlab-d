@@ -1,0 +1,157 @@
+{
+  "__preamble": {
+    "comments": [
+      "// Phase Conductor for 721: 1,000,000 AA,CN"
+    ]
+  },
+  "objects": {
+    "underground_line_conductor": {
+      "instances": [
+        {
+          "name": "ulc7210",
+          "outer_diameter": 1.98,
+          "conductor_gmr": 0.0368,
+          "conductor_diameter": 1.15,
+          "conductor_resistance": 0.105,
+          "neutral_gmr": 0.00331,
+          "neutral_resistance": 5.903,
+          "neutral_diameter": 0.102,
+          "neutral_strands": 20.0
+        },
+        {
+          "name": "ulc7220",
+          "outer_diameter": 1.56,
+          "conductor_gmr": 0.026,
+          "conductor_diameter": 0.813,
+          "conductor_resistance": 0.206,
+          "neutral_gmr": 0.00262,
+          "neutral_resistance": 9.375,
+          "neutral_diameter": 0.081,
+          "neutral_strands": 16.0,
+          "outside_comments": [
+            "// Phase Conductor for 722: 500,000 AA,CN"
+          ]
+        },
+        {
+          "name": "ulc7230",
+          "outer_diameter": 1.1,
+          "conductor_gmr": 0.0125,
+          "conductor_diameter": 0.414,
+          "conductor_resistance": 0.769,
+          "neutral_gmr": 0.00208,
+          "neutral_resistance": 14.872,
+          "neutral_diameter": 0.064,
+          "neutral_strands": 7.0,
+          "outside_comments": [
+            "// Phase Conductor for 723: 2/0 AA,CN"
+          ]
+        },
+        {
+          "name": "ulc7240",
+          "outer_diameter": 0.98,
+          "conductor_gmr": 0.00883,
+          "conductor_diameter": 0.292,
+          "conductor_resistance": 1.54,
+          "neutral_gmr": 0.00208,
+          "neutral_resistance": 14.872,
+          "neutral_diameter": 0.064,
+          "neutral_strands": 6.0,
+          "outside_comments": [
+            "// Phase Conductor for 724: //2 AA,CN"
+          ]
+        }
+      ]
+    },
+    "line_spacing": {
+      "instances": [
+        {
+          "name": "ls515",
+          "distance_AB": 0.5,
+          "distance_BC": 0.5,
+          "distance_AC": 1.0,
+          "outside_comments": [
+            "// underground line spacing: spacing id 515"
+          ]
+        }
+      ]
+    },
+    "line_configuration": {
+      "instances": [
+        {
+          "name": "lc721",
+          "conductor_A": "ulc7210",
+          "conductor_B": "ulc7210",
+          "conductor_C": "ulc7210",
+          "spacing": "ls515",
+          "outside_comments": [
+            "//line configurations:"
+          ]
+        },
+        {
+          "name": "lc722",
+          "conductor_A": "ulc7220",
+          "conductor_B": "ulc7220",
+          "conductor_C": "ulc7220",
+          "spacing": "ls515"
+        },
+        {
+          "name": "lc723",
+          "conductor_A": "ulc7230",
+          "conductor_B": "ulc7230",
+          "conductor_C": "ulc7230",
+          "spacing": "ls515"
+        },
+        {
+          "name": "lc724",
+          "conductor_A": "ulc7240",
+          "conductor_B": "ulc7240",
+          "conductor_C": "ulc7240",
+          "spacing": "ls515"
+        }
+      ]
+    },
+    "regulator_configuration": {
+      "instances": [
+        {
+          "name": "rc500",
+          "connect_type": 1,
+          "band_center": 122.0,
+          "band_width": 2.0,
+          "time_delay": 30.0,
+          "raise_taps": 16,
+          "lower_taps": 16,
+          "current_transducer_ratio": 350,
+          "power_transducer_ratio": 40,
+          "compensator_r_setting_A": 1.5,
+          "compensator_x_setting_A": 3.0,
+          "compensator_r_setting_B": 1.5,
+          "compensator_x_setting_B": 3.0,
+          "CT_phase": "ABC",
+          "PT_phase": "ABC",
+          "regulation": 0.1,
+          "Control": "MANUAL",
+          "Type": "A",
+          "tap_pos_A": 7,
+          "tap_pos_B": 4,
+          "inline_comments": {
+            "connect_type": "//Should be 2, but NR balks, even if not being used"
+          }
+        }
+      ]
+    },
+    "transformer_configuration": {
+      "instances": [
+        {
+          "name": "tc400",
+          "connect_type": 2,
+          "install_type": "PADMOUNT",
+          "power_rating": 500,
+          "primary_voltage": 4800,
+          "secondary_voltage": 480,
+          "resistance": 0.0009,
+          "reactance": 0.0181
+        }
+      ]
+    }
+  }
+}

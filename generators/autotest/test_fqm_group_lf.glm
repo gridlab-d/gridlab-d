@@ -1,7 +1,7 @@
 
 clock {
-	timezone US/CA/Los Angeles;
-	starttime '2014-01-01 00:01:30';
+	timezone PST+8PDT;
+	starttime '2014-01-01 00:00:00';
 	stoptime '2014-01-02 00:00:00';
 }
 
@@ -595,11 +595,7 @@ object meter {
 			property value;
 			file "../fqm_group_lf_batt633_power.player";
 		};
-		within 100;
-		object player {
-			property status;
-			file "../fqm_group_lf_status.player";
-		};
+		within 1;
 	 };
 }
 
@@ -621,8 +617,7 @@ object inverter {
 	  max_charge_rate 900 kW;
 	  group_rated_power 1200 kW;		//Group all-phase inverter power rating
 	  group_max_charge_rate 1200 kW;	//Group all-phase battery power rating	
-	  group_max_discharge_rate 1200
-	   kW; 
+	  group_max_discharge_rate 1200 kW; 
 	  pf_reg INCLUDED;
 	  pf_reg_activate 0.9;
 	  pf_reg_deactivate 0.95;
@@ -667,11 +662,7 @@ object meter {
 			property value;
 			file "../fqm_group_lf_batt684_power.player";
 		};
-	 	within 100;
-	 	object player {
-			property status;
-			file "../fqm_group_lf_status.player";
-		};
+	 	within 1;
 	 };
 }
 
@@ -722,8 +713,7 @@ object battery {
 object recorder {
           parent battery_meter_684;
           file battery_meter_684.csv;
-          interval 3600;
-          limit 20;
+          interval 1;
           property measured_real_power, measured_reactive_power;
 };
 

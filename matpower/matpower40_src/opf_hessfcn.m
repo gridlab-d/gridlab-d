@@ -20,7 +20,7 @@ function Lxx = opf_hessfcn(x, lambda, cost_mult, om, Ybus, Yf, Yt, mpopt, il)
 %     IL : (optional) vector of branch indices corresponding to
 %          branches with flow limits (all others are assumed to be
 %          unconstrained). The default is [1:nl] (all branches).
-%          YF and YT contain only the rows corresponding to IL.
+%          YF and YT contain only the.rows() corresponding to IL.
 %
 %   Outputs:
 %     LXX : Hessian of the Lagrangian.
@@ -137,9 +137,9 @@ if ~isempty(N)
     iLT = find(r < -kk);            %% below dead zone
     iEQ = find(r == 0 & kk == 0);   %% dead zone doesn't exist
     iGT = find(r > kk);             %% above dead zone
-    iND = [iLT; iEQ; iGT];          %% rows that are Not in the Dead region
-    iL = find(dd == 1);             %% rows using linear function
-    iQ = find(dd == 2);             %% rows using quadratic function
+    iND = [iLT; iEQ; iGT];          %%.rows() that are Not in the Dead region
+    iL = find(dd == 1);             %%.rows() using linear function
+    iQ = find(dd == 2);             %%.rows() using quadratic function
     LL = sparse(iL, iL, 1, nw, nw);
     QQ = sparse(iQ, iQ, 1, nw, nw);
     kbar = sparse(iND, iND, [   ones(length(iLT), 1);
@@ -149,7 +149,7 @@ if ~isempty(N)
     M = sparse(iND, iND, mm(iND), nw, nw);  %% dead zone or scale
     diagrr = sparse(1:nw, 1:nw, rr, nw, nw);
     
-    %% linear rows multiplied by rr(i), quadratic rows by rr(i)^2
+    %% linear.rows() multiplied by rr(i), quadratic.rows() by rr(i)^2
     w = M * (LL + QQ * diagrr) * rr;
     HwC = H * w + Cw;
     AA = N' * M * (LL + 2 * QQ * diagrr);

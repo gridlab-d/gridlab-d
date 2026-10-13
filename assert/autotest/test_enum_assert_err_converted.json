@@ -1,0 +1,30 @@
+{
+  "__preamble": {
+    "comments": [
+      "// test_enum_assert_err"
+    ]
+  },
+  "modules": {
+    "climate": {},
+    "assert": {}
+  },
+  "objects": {
+    "enum_assert": {
+      "instances": [
+        {
+          "parent": "climate_1",
+          "target": "interpolate",
+          "value": 1
+        }
+      ]
+    },
+    "climate": {
+      "instances": [
+        {
+          "name": "climate_1",
+          "interpolate": "NONE"
+        }
+      ]
+    }
+  }
+}

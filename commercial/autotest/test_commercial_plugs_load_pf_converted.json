@@ -1,0 +1,75 @@
+{
+  "__preamble": {
+    "comments": [
+      "// validates proper calculation of plugs.load property with a variable power factor;",
+      "// tape input file is generic_demand_pf.glt;",
+      "// plugs.fraction set to 1; based on the following equation:",
+      "// (complex, based on power factor) plugs.fraction*plugs.capacity",
+      "// payroll: d3y332"
+    ]
+  },
+  "clock": {
+    "timezone": "PST+8PDT",
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-02-01 0:00:00'"
+  },
+  "modules": {
+    "commercial": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "player": {
+      "instances": [
+        {
+          "parent": "office_1",
+          "file": "../generic_demand_pf.glt",
+          "property": "plugs.power_factor"
+        },
+        {
+          "parent": "complex_assert_3",
+          "property": "value",
+          "file": "../load_pf.player"
+        }
+      ]
+    },
+    "complex_assert": {
+      "instances": [
+        {
+          "name": "complex_assert_3",
+          "parent": "office_1",
+          "target": "plugs.load",
+          "within": 0.1
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "office_1",
+          "file": "commercial_lights_usage.csv",
+          "interval": 3600,
+          "limit": 24,
+          "property": "plugs.fraction,plugs.load"
+        }
+      ]
+    },
+    "office": {
+      "instances": [
+        {
+          "name": "office_1",
+          "floor_area": "4000 sf",
+          "floor_height": "9 ft",
+          "exterior_ua": 2.0,
+          "interior_ua": 2.0,
+          "interior_mass": 2000,
+          "heating_setpoint": 70,
+          "cooling_setpoint": 89,
+          "thermostat_deadband": 4,
+          "plugs.capacity": 1000,
+          "plugs.fraction": 1
+        }
+      ]
+    }
+  }
+}

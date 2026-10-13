@@ -1,0 +1,25 @@
+// Model for testing stepping and time management
+// Runs for 24 hours with 1-hour intervals
+
+clock {
+    timezone PST+8PDT;
+    starttime '2020-01-01 00:00:00';
+    stoptime '2020-01-02 00:00:00';
+}
+
+module tape;
+module residential;
+
+object house {
+    name stepping_house;
+    floor_area 1500 sf;
+    heating_setpoint 68 degF;
+    cooling_setpoint 76 degF;
+}
+
+object recorder {
+    parent stepping_house;
+    property air_temperature;
+    file output.csv;
+    interval 3600;
+}

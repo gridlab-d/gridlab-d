@@ -4,21 +4,21 @@
 #define _matpower_H
 
 #include <stdarg.h>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "gridlabd.h"
 #include "matrix.h"
 #include "mcc64/libopf.h"
 
-using std::vector;
 using std::string;
+using std::vector;
 
 #ifndef ATTR_NUM
 #define BUS_ATTR 13
-#define	BUS_ATTR_FULL 17
+#define BUS_ATTR_FULL 17
 #define GEN_ATTR 21
-#define	GEN_ATTR_FULL 25
+#define GEN_ATTR_FULL 25
 #define BRANCH_ATTR 13
 #define BRANCH_ATTR_FULL 21
 #define GENCOST_ATTR 4
@@ -27,23 +27,29 @@ using std::string;
 #endif
 
 /*** DO NOT DELETE THE NEXT LINE ***/
-//NEWCLASSINC
-inline mxArray* initArray(double rdata[], int nRow, int nColumn);
-inline double*	getArray(mxArray* X);
+// NEWCLASSINC
+inline mxArray *initArray(double rdata[], int nRow, int nColumn);
+inline double *getArray(mxArray *X);
 
-int solver_matpower(vector<unsigned int> bus_BUS_I, vector<unsigned int> branch_F_BUS, vector<unsigned int> branch_T_BUS, vector<unsigned int> gen_GEN_BUS, vector<unsigned int> gen_NCOST,unsigned int BASEMVA);
+int solver_matpower(vector<unsigned int> bus_BUS_I,
+                    vector<unsigned int> branch_F_BUS,
+                    vector<unsigned int> branch_T_BUS,
+                    vector<unsigned int> gen_GEN_BUS,
+                    vector<unsigned int> gen_NCOST, unsigned int BASEMVA);
 
 inline vector<string> split(const string s, char c);
 
-void setObjectValue_Double(OBJECT* obj, char* Property, double value);
+void setObjectValue_Double(OBJECT *obj, char *Property, double value);
 
-void setObjectValue_Double2Complex_inDegree(OBJECT* obj, char* Property, double Mag, double Ang);
+void setObjectValue_Double2Complex_inDegree(OBJECT *obj, char *Property,
+                                            double Mag, double Ang);
 
-void setObjectValue_Double2Complex(OBJECT* obj, char* Property, double Re, double Im);
+void setObjectValue_Double2Complex(OBJECT *obj, char *Property, double Re,
+                                   double Im);
 
-void setObjectValue_Complex(OBJECT* obj, char* Property, complex val);
+void setObjectValue_Complex(OBJECT *obj, char *Property, complex val);
 
-void setObjectValue_Char(OBJECT* obj, char* Property, char* value);
+void setObjectValue_Char(OBJECT *obj, char *Property, char *value);
 
 /* optional exports */
 #ifdef OPTIONAL

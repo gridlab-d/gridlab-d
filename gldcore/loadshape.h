@@ -41,7 +41,7 @@ typedef enum {
 struct s_loadshape {
 	/* the output value must be first for transform to stream */
 	double load;		/**< the actual load magnitude */
-	
+
 	/* machine specification */
 	SCHEDULE *schedule;	/**< the schedule driving this machine */
 	MACHINETYPE type;	/**< the type of this machine */
@@ -83,7 +83,7 @@ struct s_loadshape {
 
 	/* internal machine parameters */
 	double r;			/**< the state rate */
-	double re[2];		/**< the state rate stdevs (not used yet) */ 
+	double re[2];		/**< the state rate stdevs (not used yet) */
 	double d[2];		/**< the state transition thresholds */
 	double de[2];		/**< the state transition threshold stdevs (not used yet) */
 	double dPdV;		/**< the voltage sensitivity of the load */
@@ -91,9 +91,9 @@ struct s_loadshape {
 	/* state variables */
 	double q;			/**< the internal state of the machine */
 	MACHINESTATE s;		/**< the current state of the machine (0 or 1) */
-	TIMESTAMP t0;	/**< time of last update (in seconds since epoch) */
-	TIMESTAMP t2;	/**< time of next update (in seconds since epoch) */
-	unsigned int rng_state; /**< state of the random number generator */
+	TIMESTAMP t0;   	/**< time of last update (in seconds since epoch) */
+	TIMESTAMP t2;   	/**< time of next update (in seconds since epoch) */
+	unsigned int *obj_rng_state_ptr; /**< state of the parent object random number generator */
 
 	struct s_loadshape *next;	/* next loadshape in list */
 };

@@ -5,13 +5,9 @@
 #define DLMAIN
 #include "gridlabd.h"
 
-EXPORT int do_kill(void*)
-{
-	return 0;
-}
+EXPORT int do_kill(void *) { return 0; }
 
-EXPORT int init_solvers(CALLBACKS* fntable)
-{
-	callback = fntable;
-	return 1;
+EXPORT int init_solvers(CALLBACKS *fntable) {
+  callback = fntable;
+  return 1;
 }

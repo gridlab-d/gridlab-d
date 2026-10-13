@@ -18,7 +18,7 @@ module residential {
 
 //Schedule
 schedule retail_lights {
-     // Weekday {
+     // Weekday
      * 0 * * 0-6 0.27;
      * 1 * * 0-6 0.27;
      * 2 * * 0-6 0.27;
@@ -44,7 +44,7 @@ schedule retail_lights {
      * 22 * * 0-6 0.5;
      * 23 * * 0-6 0.27;
 
-     // Weekend {
+     // Weekend
      * 0 * * 7 0.27;
      * 1 * * 7 0.27;
      * 2 * * 7 0.27;

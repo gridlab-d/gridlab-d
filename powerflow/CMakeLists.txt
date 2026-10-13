@@ -1,5 +1,6 @@
 SET(GLD_MODULE_NAME powerflow)
 
+
 if (GLD_USE_EIGEN)
     SET(NR_SOLVER solver_nr_eigen.cpp solver_nr_eigen.h)
 else ()
@@ -116,6 +117,8 @@ add_library(${GLD_MODULE_NAME}
         ${NR_SOLVER}
         )
 
+
+
 if (GLD_USE_EIGEN)
     find_package(KLU)
     target_compile_definitions(${GLD_MODULE_NAME} PRIVATE GLD_USE_EIGEN)
@@ -137,13 +140,8 @@ else ()
             )
 endif ()
 
-target_include_directories(${GLD_MODULE_NAME} PRIVATE
-        "${CMAKE_SOURCE_DIR}/third_party/jsoncpp/include"
-        )
 
-target_link_libraries(${GLD_MODULE_NAME} PRIVATE
-        ${JSONCPP_LIB}
-        )
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE nlohmann_json::nlohmann_json)
 
 target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")

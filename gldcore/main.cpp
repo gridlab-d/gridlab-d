@@ -1,29 +1,26 @@
 /** $Id: main.c 4738 2014-07-03 00:55:39Z dchassin $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file main.c
-	@author David P. Chassin
+    Copyright (C) 2008 Battelle Memorial Institute
+    @file main.c
+    @author David P. Chassin
 
  @{
  **/
-#define _MAIN_C
+// #define _MAIN_C
 
-//#define USE_MPI
 
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
-
-#include "globals.h"
+#include <iostream>
+#include <thread>
+#include <chrono>
 
 #ifdef _WIN32
-
-#include <direct.h>
-#include <process.h>
-
+    #include <windows.h> // Required for GetCurrentProcessId on Windows
+    #include <direct.h>
+    #include <process.h>
 #else
-
-#include <unistd.h>
-
+    #include <unistd.h> // Required for getpid() on non-Windows systems
 #endif
 
 #include "globals.h"
@@ -40,29 +37,57 @@
 #include "exec.h"
 #include "kml.h"
 #include "kill.h"
-#include "threadpool.h"
 #include "cpp_threadpool.h"
 
-#if defined WIN32 && _DEBUG
-/** Implements a pause on exit capability for Windows consoles
- **/
-void pause_at_exit(void) 
-{
-    if (global_pauseatexit)
-        system("pause");
-}
-#endif
+// #if defined(_WIN32) && defined(_DEBUG)
+// #include <crtdbg.h>
+// /** Implements a pause on exit capability for Windows consoles
+//  **/
+// void pause_at_exit(void)
+// {
+//     if (global_pauseatexit)
+//         system("pause");
+// }
+// #endif
 
 namespace fs = std::filesystem;
 
-void delete_pidfile(void) {
+static fs::path infer_install_root(const fs::path &exec_path)
+{
+    fs::path bin_dir = exec_path.parent_path();
+    fs::path root_path = bin_dir.parent_path();
+    std::string leaf = bin_dir.filename().string();
+
+    if ((leaf == "Debug" || leaf == "Release" || leaf == "RelWithDebInfo" ||
+         leaf == "MinSizeRel") &&
+        bin_dir.parent_path().filename() == "bin")
+    {
+        root_path = bin_dir.parent_path().parent_path();
+    }
+    else if (leaf == "bin")
+    {
+        root_path = bin_dir.parent_path();
+    }
+
+    if (root_path.empty())
+    {
+        root_path = bin_dir;
+    }
+
+    return root_path;
+}
+
+void delete_pidfile(void)
+{
     unlink(global_pidfile);
 }
 
-std::vector<std::string> split_path(const std::string& path, char sep){
+std::vector<std::string> split_path(const std::string &path, char sep)
+{
     std::vector<std::string> tokens;
     std::size_t start = 0, end;
-    while ((end = path.find(sep, start)) != std::string::npos) {
+    while ((end = path.find(sep, start)) != std::string::npos)
+    {
         tokens.push_back(path.substr(start, end - start));
         start = end + 1;
     }
@@ -71,21 +96,31 @@ std::vector<std::string> split_path(const std::string& path, char sep){
 }
 
 fs::path
-findExecutable(const std::string &name, const std::string &execName, const std::string &pathString) {
+findExecutable(const std::string &name, const std::string &execName, const std::string &pathString)
+{
     fs::path execPath(execName);
-    if (execPath.is_absolute()) {
+    if (execPath.is_absolute())
+    {
         return execPath;
-    } else if (execPath.is_relative() && execName.front() == '.') {
+    }
+    else if (execPath.is_relative() && execName.front() == '.')
+    {
         return fs::absolute(execPath);
-    } else {
+    }
+    else
+    {
         auto sys_path = pathString;
         size_t pos;
         std::string path_token;
 
-        auto check_exists = [](fs::path gldpath, fs::path gldpath_exe) {
-            if (fs::exists(gldpath)) {
+        auto check_exists = [](fs::path gldpath, fs::path gldpath_exe)
+        {
+            if (fs::exists(gldpath))
+            {
                 return gldpath;
-            } else if (fs::exists(gldpath_exe)) {
+            }
+            else if (fs::exists(gldpath_exe))
+            {
                 return gldpath_exe;
             }
             return fs::path();
@@ -93,11 +128,13 @@ findExecutable(const std::string &name, const std::string &execName, const std::
 
         auto splitPath = split_path(sys_path, env_delim_char);
 
-        for(const auto& path : splitPath){
+        for (const auto &path : splitPath)
+        {
             auto gldpath = fs::path(path) / name;
             auto gldpath_exe = fs::path(path) / (name + ".exe");
             auto check_path = check_exists(gldpath, gldpath_exe);
-            if (!check_path.empty()) {
+            if (!check_path.empty())
+            {
                 return check_path;
             }
         }
@@ -108,14 +145,15 @@ findExecutable(const std::string &name, const std::string &execName, const std::
 /** The main entry point of GridLAB-D
     @returns Exit codes XC_SUCCESS, etc. (see gridlabd.h)
  **/
-int main(int argc, /**< the number entries on command-line argument list \p argv */
+int main(int argc,     /**< the number entries on command-line argument list \p argv */
          char *argv[]) /**< a list of pointers to the command-line arguments */
 {
+
     char *pd1, *pd2;
     int i, pos = 0;
 
     global_gl_executable = findExecutable("gridlabd", argv[0], getenv("PATH"));
-    auto root_path = global_gl_executable.parent_path().parent_path();
+    auto root_path = infer_install_root(global_gl_executable);
     global_gl_share = root_path / "share";
     global_gl_include = root_path / "include";
     global_gl_lib = root_path / "lib";
@@ -132,7 +170,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     /* set the default timezone */
     timestamp_set_tz(nullptr);
 
-    exec_clock(); /* initialize the wall clock */
+    exec_clock();         /* initialize the wall clock */
     realtime_starttime(); /* mark start */
 
     /* set the process info */
@@ -142,34 +180,37 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     if (browser != nullptr)
         strncpy(global_browser, browser, sizeof(global_browser) - 1);
 
-#if defined WIN32 && _DEBUG
-    atexit(pause_at_exit);
-#endif
+    // #if defined(_WIN32) && _DEBUG
+    //     atexit(pause_at_exit);
+    // #endif
 
-#ifdef _WIN32
-    kill_starthandler();
-    atexit(kill_stophandler);
-#endif
+    // #ifdef _WIN32
+    //     kill_starthandler();
+    //     atexit(kill_stophandler);
+    // #endif
 
     /* capture the execdir */
     strcpy(global_execname, argv[0]);
     strcpy(global_execdir, argv[0]);
     pd1 = strrchr(global_execdir, '/');
     pd2 = strrchr(global_execdir, '\\');
-    if (pd1 > pd2) *pd1 = '\0';
-    else if (pd2 > pd1) *pd2 = '\0';
+    if (pd1 > pd2)
+        *pd1 = '\0';
+    else if (pd2 > pd1)
+        *pd2 = '\0';
 
     /* determine current working directory */
     char *result = getcwd(global_workdir, 1024);
 
     /* capture the command line */
-    for (i = 0; i < argc; i++) {
-        if (pos < (int) (sizeof(global_command_line) - strlen(argv[i])))
-            pos += sprintf(global_command_line + pos, "%s%s", pos > 0 ? " " : "", argv[i]);
+    for (i = 0; i < argc; i++)
+    {
+        if (pos < (int)(sizeof(global_command_line) - strlen(argv[i])))
+            pos += snprintf(global_command_line + pos, sizeof(global_command_line) - pos, "%s%s", pos > 0 ? " " : "", argv[i]);
     }
 
     /* main initialization */
-    if (!output_init(argc, argv) || !exec_init())
+    if (!output_init() || !exec_init())
         exit(XC_INIERR);
 
     /* set thread count equal to processor count if not passed on command-line */
@@ -179,7 +220,8 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     output_verbose("using %d helper thread(s)", global_threadcount);
 
     /* process command line arguments */
-    if (cmdarg_load(argc, argv) == FAILED) {
+    if (cmdarg_load(argc, argv) == FAILED)
+    {
         output_fatal("shutdown after command line rejected");
         /*	TROUBLESHOOT
             The command line is not valid and the system did not
@@ -193,7 +235,8 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     global_clock = global_starttime;
 
     /* Check to see if stoptime is set - if not, set to 1-year later */
-    if (global_stoptime == TS_NEVER) {
+    if (global_stoptime == TS_NEVER)
+    {
         global_stoptime = global_starttime + 31536000;
     }
 
@@ -201,7 +244,8 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     sched_init(0);
 
     /* recheck threadcount in case user set it 0 */
-    if (global_threadcount == 0) {
+    if (global_threadcount == 0)
+    {
         global_threadcount = processor_count();
         output_verbose("using %d helper thread(s)", global_threadcount);
     }
@@ -214,9 +258,11 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     random_init();
 
     /* pidfile */
-    if (strcmp(global_pidfile, "") != 0) {
+    if (strcmp(global_pidfile, "") != 0)
+    {
         FILE *fp = fopen(global_pidfile, "w");
-        if (fp == nullptr) {
+        if (fp == nullptr)
+        {
             output_fatal("unable to create pidfile '%s'", global_pidfile);
             /*	TROUBLESHOOT
                 The system must allow creation of the process id file at
@@ -236,14 +282,15 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 
     /* do legal stuff */
 #ifdef LEGAL_NOTICE
-    if (strcmp(global_pidfile,"")==0 && legal_notice()==FAILED)
+    if (strcmp(global_pidfile, "") == 0 && legal_notice() == FAILED)
         exit(XC_USRERR);
 #endif
 
     /* start the processing environment */
     output_verbose("load time: %d sec", realtime_runtime());
     output_verbose("starting up %s environment", global_environment);
-    if (environment_start(argc, argv) == FAILED) {
+    if (environment_start(argc, argv) == FAILED)
+    {
         output_fatal("environment startup failed: %s", strerror(errno));
         /*	TROUBLESHOOT
             The requested environment could not be started.  This usually
@@ -255,13 +302,15 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     }
 
     /* save the model */
-    if (strcmp(global_savefile, "") != 0) {
+    if (strcmp(global_savefile, "") != 0)
+    {
         if (saveall(global_savefile) == FAILED)
             output_error("save to '%s' failed", global_savefile);
     }
 
     /* do module dumps */
-    if (global_dumpall != false) {
+    if (global_dumpall != false)
+    {
         output_verbose("dumping module data");
         module_dumpall();
     }
@@ -277,7 +326,8 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     output_verbose("shutdown complete");
 
     /* profile results */
-    if (global_profiler) {
+    if (global_profiler)
+    {
         class_profiles();
         module_profiles();
     }
@@ -293,7 +343,8 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     /* if pause enabled */
 #ifndef WIN32
 #ifdef _DEBUG
-    if (global_pauseatexit) {
+    if (global_pauseatexit)
+    {
         output_verbose("pausing at exit");
 
         /* Replicate "pause" on Windows */
@@ -306,6 +357,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     /* compute elapsed runtime */
     output_verbose("elapsed runtime %d seconds", realtime_runtime());
     output_verbose("exit code %d", exec_getexitcode());
+
     exit(exec_getexitcode());
 }
 

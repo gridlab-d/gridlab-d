@@ -113,10 +113,10 @@ ngr = length(igr);              %% number of gens available to provide reserves
 
 %% check data for consistent dimensions
 if size(r.zones, 1) ~= nrz
-    error('userfcn_reserves_ext2int: the number of rows in mpc.reserves.req (%d) and mpc.reserves.zones (%d) must match', nrz, size(r.zones, 1));
+    error('userfcn_reserves_ext2int: the number of.rows() in mpc.reserves.req (%d) and mpc.reserves.zones (%d) must match', nrz, size(r.zones, 1));
 end
 if size(r.cost, 1) ~= ng0 && size(r.cost, 1) ~= ngr
-    error('userfcn_reserves_ext2int: the number of rows in mpc.reserves.cost (%d) must equal the total number of generators (%d) or the number of generators able to provide reserves (%d)', size(r.cost, 1), ng0, ngr);
+    error('userfcn_reserves_ext2int: the number of.rows() in mpc.reserves.cost (%d) must equal the total number of generators (%d) or the number of generators able to provide reserves (%d)', size(r.cost, 1), ng0, ngr);
 end
 if isfield(r, 'qty') && size(r.qty, 1) ~= size(r.cost, 1)
     error('userfcn_reserves_ext2int: mpc.reserves.cost (%d x 1) and mpc.reserves.qty (%d x 1) must be the same dimension', size(r.cost, 1), size(r.qty, 1));

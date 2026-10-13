@@ -1,10 +1,10 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <errno.h>
 #include <jni.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "gridlabd.h"
-//#include "myclass.h"
+// #include "myclass.h"
 
 #define MODULENAME "JavaModule"
 #define MAJOR 1
@@ -12,55 +12,56 @@
 
 static JNIEnv *jnienv = nullptr;
 
-EXPORT CLASS *javainit(CALLBACKS *fntable, MODULE *module, int argc, char *argv[], JNIEnv *env)
-{
-	// set the GridLAB core API callback table
-	callback = fntable;
+EXPORT CLASS *javainit(CALLBACKS *fntable, MODULE *module, int argc,
+                       char *argv[], JNIEnv *env) {
+  // set the GridLAB core API callback table
+  callback = fntable;
 
-	// set the JNI Environment pointer
-	jnienv = env;
+  // set the JNI Environment pointer
+  jnienv = env;
 
-	jclass cls = jnienv->FindClass(MODULENAME);
+  jclass cls = jnienv->FindClass(MODULENAME);
 
-	// init is int (*)(long, int, String[])
-	jmethodID init_mid = env->GetStaticMethodID(cls, "init", "(JI[Ljava/lang/String;)I");
+  // init is int (*)(long, int, String[])
+  jmethodID init_mid =
+      env->GetStaticMethodID(cls, "init", "(JI[Ljava/lang/String;)I");
 
-	if(cls == nullptr)
-		return nullptr;
+  if (cls == nullptr)
+    return nullptr;
 
-	if(init_mid == nullptr)
-		return nullptr;
+  if (init_mid == nullptr)
+    return nullptr;
 
-	jobjectArray args = env->NewObjectArray(argc, jnienv->FindClass("[Ljava/lang/String;"), nullptr);
-	if(args == nullptr)
-		return nullptr;
+  jobjectArray args = env->NewObjectArray(
+      argc, jnienv->FindClass("[Ljava/lang/String;"), nullptr);
+  if (args == nullptr)
+    return nullptr;
 
-	jstring jargv[argc];
-	for(int i = 0; i < argc; ++i){
-		jargv[i] = env->NewStringUTF(argv[i]);
-		jnienv->SetObjectArrayElement(jargv[i], i, args);
-	}
+  jstring jargv[argc];
+  for (int i = 0; i < argc; ++i) {
+    jargv[i] = env->NewStringUTF(argv[i]);
+    jnienv->SetObjectArrayElement(jargv[i], i, args);
+  }
 
-	jnienv->CallStaticIntMethod(cls, init_mid, (long long)module, argc, jargv);
+  jnienv->CallStaticIntMethod(cls, init_mid, (long long)module, argc, jargv);
 
-	// TODO: register each object class by creating its first instance
-	//new myclass(module);
+  // TODO: register each object class by creating its first instance
+  // new myclass(module);
 
-	// always return the first class registered
-	//return myclass::oclass;
+  // always return the first class registered
+  // return myclass::oclass;
 
-	// JNI cleanup
-	jnienv->DeleteLocalRef(jobjectArray);
-	for(int i = 0; i < argc; ++i)
-		; /* delete the strings */
+  // JNI cleanup
+  jnienv->DeleteLocalRef(jobjectArray);
+  for (int i = 0; i < argc; ++i)
+    ; /* delete the strings */
 
-	return nullptr;
+  return nullptr;
 }
 
-CDECL int do_kill()
-{
-	// if anything needs to be deleted or freed, this is a good time to do it
-	return 0;
+CDECL int do_kill() {
+  // if anything needs to be deleted or freed, this is a good time to do it
+  return 0;
 }
 
 #if 0

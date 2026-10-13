@@ -6,30 +6,27 @@
 
 #include "powerflow.h"
 
-typedef enum {
-	CDM_RECT,
-	CDM_POLAR
-} CDMODE;
+typedef enum { CDM_RECT, CDM_POLAR } CDMODE;
 
-class currdump : public gld_object
-{
+class currdump : public gld_object {
 public:
-	TIMESTAMP runtime;
-	char32 group;
-	char256 filename;
-	int32 runcount;
-	enumeration mode;
-public:
-	static CLASS *oclass;
-public:
-	currdump(MODULE *mod);
-	int create(void);
-	int init(OBJECT *parent);
-	TIMESTAMP commit(TIMESTAMP t);
-	int isa(char *classname);
+  TIMESTAMP runtime;
+  char32 group;
+  char256 filename;
+  int32 runcount;
+  enumeration mode;
 
-	void dump(TIMESTAMP t);
+public:
+  static CLASS *oclass;
+
+public:
+  currdump(MODULE *mod);
+  int create(void);
+  int init(OBJECT *parent);
+  TIMESTAMP commit(TIMESTAMP t);
+  int isa(char *classname);
+
+  void dump(TIMESTAMP t);
 };
 
 #endif // _currdump_H
-

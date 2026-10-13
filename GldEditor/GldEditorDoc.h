@@ -3,43 +3,39 @@
 
 #pragma once
 
-class CGldEditorDoc : public CDocument
-{
+class CGldEditorDoc : public CDocument {
 protected: // create from serialization only
-	CGldEditorDoc();
-	DECLARE_DYNCREATE(CGldEditorDoc)
+  CGldEditorDoc();
+  DECLARE_DYNCREATE(CGldEditorDoc)
 
-// Attributes
+  // Attributes
 public:
-	CStringList m_OutputBuffer;
-	POSITION m_OutputGroup;
+  CStringList m_OutputBuffer;
+  POSITION m_OutputGroup;
 
-// Operations
+  // Operations
 public:
-	void OutputStdout(LPCTSTR format, ...);
-	void OutputStderr(LPCTSTR format, ...);
-	void StartGroup(LPCTSTR format, ...);
-	void EndGroup(BOOL status);
+  void OutputStdout(LPCTSTR format, ...);
+  void OutputStderr(LPCTSTR format, ...);
+  void StartGroup(LPCTSTR format, ...);
+  void EndGroup(BOOL status);
 
-// Overrides
+  // Overrides
 public:
-	virtual BOOL OnNewDocument();
-	virtual void Serialize(CArchive& ar);
-	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+  virtual BOOL OnNewDocument();
+  virtual void Serialize(CArchive &ar);
+  virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
 
-// Implementation
+  // Implementation
 public:
-	virtual ~CGldEditorDoc();
+  virtual ~CGldEditorDoc();
 #ifdef _DEBUG
-	virtual void AssertValid() const;
-	virtual void Dump(CDumpContext& dc) const;
+  virtual void AssertValid() const;
+  virtual void Dump(CDumpContext &dc) const;
 #endif
 
 protected:
-
-// Generated message map functions
+  // Generated message map functions
 protected:
-	DECLARE_MESSAGE_MAP()
+  DECLARE_MESSAGE_MAP()
 };
-
-

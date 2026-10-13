@@ -1,0 +1,75 @@
+{
+  "__preamble": {
+    "comments": [
+      "// validates commercial HVAC OFF load usage and mode; air temperature matches outside temp(59degF),",
+      "// with heating/cooling deadbands set around the (unchanging) interior and exterior temperature",
+      "// occupancy set to 0 for all seven days of the week; OCCUPANCY IS BASED ON OLD SCHEDULING SYSTEM",
+      "// (which doesn't take in the correct input); MAY NEED TO BE UPDATED ONCE THE SWITCH TO",
+      "// THE NEW SCHEDULING SYSTEM IS MADE; BASED ON OUTSIDE OFFICE TEMP OF 59degF",
+      "// payroll: d3y332"
+    ]
+  },
+  "clock": {
+    "timestamp": "'2000-01-01 0:00:00'",
+    "stoptime": "'2000-02-01 0:00:00'",
+    "timezone": "PST+8PDT"
+  },
+  "modules": {
+    "commercial": {},
+    "tape": {},
+    "assert": {}
+  },
+  "objects": {
+    "complex_assert": {
+      "instances": [
+        {
+          "parent": "office_1",
+          "target": "hvac.load",
+          "value": 0,
+          "within": 1e-07
+        }
+      ]
+    },
+    "enum_assert": {
+      "instances": [
+        {
+          "parent": "office_1",
+          "target": "hvac_mode",
+          "value": 0,
+          "inline_comments": {
+            "value": "// HC_OFF"
+          }
+        }
+      ]
+    },
+    "recorder": {
+      "instances": [
+        {
+          "parent": "office_1",
+          "file": "commercial_hvac_usage2.csv",
+          "interval": 3600,
+          "limit": 100,
+          "property": "outdoor_temperature,occupancy,control.ventilation_fraction,air_temperature,mass_temperature,hvac_mode,hvac.load"
+        }
+      ]
+    },
+    "office": {
+      "instances": [
+        {
+          "name": "office_1",
+          "floor_area": "4000 sf",
+          "floor_height": "9 ft",
+          "exterior_ua": 2.0,
+          "interior_ua": 2.0,
+          "interior_mass": 2000,
+          "heating_setpoint": 58,
+          "cooling_setpoint": 76,
+          "thermostat_deadband": 0.25,
+          "air_temperature": 59,
+          "control.ventilation_fraction": 0,
+          "schedule": "0-6 0-0"
+        }
+      ]
+    }
+  }
+}
