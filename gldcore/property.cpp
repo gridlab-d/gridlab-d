@@ -37,7 +37,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 				void *,
 				PROPERTY *)>(stream_double),                                                                                                        {TCOPS(double)},},
 		{"complex",       "string",  sizeof(gld::complex),  48,                 convert_from_complex,        convert_to_complex,        nullptr, nullptr, {TCOPS(double)}, complex_get_part},
-		{"enumeration",   "string",  sizeof(int32),         32,                 convert_from_enumeration,    convert_to_enumeration,    nullptr, nullptr, {TCOPS(uint64)},},
+		{"enumeration",   "string",  sizeof(int32),         32,                 convert_from_enumeration,    convert_to_enumeration,    nullptr, nullptr, {TCOPS(uint32)},},
 		{"set",           "string",  sizeof(int64),         32,                 convert_from_set,            convert_to_set,            nullptr, nullptr, {TCOPS(uint64)},},
 		{"int16",         "integer", sizeof(int16),         6,                  convert_from_int16,          convert_to_int16,          nullptr, nullptr, {TCOPS(uint16)},},
 		{"int32",         "integer", sizeof(int32),         12,                 convert_from_int32,          convert_to_int32,          nullptr, nullptr, {TCOPS(uint32)},},
