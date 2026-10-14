@@ -79,7 +79,7 @@ void query_engine::build_table_references(bool print_units) {
 	stringstream query;
 	vector<string*>* table_headers;
 	vector<char*>* table_units;
-	int local_header_count;
+	int local_header_count = 0;
 
 	query << "INSERT INTO `" << table_references.get_string() << "` (`table_name`, `header`" <<
 			(print_units ? ",`units`" : "") << ") VALUES";
