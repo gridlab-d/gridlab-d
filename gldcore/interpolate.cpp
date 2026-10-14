@@ -12,9 +12,13 @@ double interpolate_quadratic(double t, double x0, double y0, double x1, double y
 		return 0.0;
 	}
 	h = x1 - x0;
+	if (h == 0.0){
+		output_error("interpolate_quadratic: x coordinates must be distinct");
+		return 0.0;
+	}
 	c = y0;
 	b = (y1 - y0)/h;
-	a = (y2 - 2*y1 + y0) / 2*h*h;
+	a = (y2 - 2*y1 + y0) / (2*h*h);
 	v = a * (t - x0) * (t - x1) + b * (t - x0) + c;
 	return v;
 }
