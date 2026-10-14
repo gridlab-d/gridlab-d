@@ -50,7 +50,8 @@ int udp::option(char *command)
 	char param[256], value[1024];
 	while ( command!=nullptr && *command!='\0' )
 	{
-		switch ( sscanf(command,"%256[^ =]%*[ =]%[^,;]",param,value) ) {
+		// scanf widths exclude the terminating NUL; both fields must fit.
+		switch ( sscanf(command,"%255[^ =]%*[ =]%1023[^,;]",param,value) ) {
 		case 1:
 			// TODO
 			error("option \"transport:%s\" not recognized", command);
