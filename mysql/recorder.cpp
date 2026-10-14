@@ -102,7 +102,10 @@ int recorder::init(OBJECT *parent) {
 	query_engine* rc = recorder_connection;
 	rc->set_table_root(get_table());
 	rc->init_tables(recordid_fieldname, datetime_fieldname, true);
-	rc->get_table_path()->set_custom_sql(string(custom_sql));
+	if (!rc->get_table_path()->set_custom_sql(string(custom_sql))) {
+		gl_error("mysql recorder: invalid custom_sql definition");
+		return 0;
+	}
 
 	group_mode = (0 != strcmp(group, ""));
 	tag_mode = !(recorder_name == "");

@@ -92,7 +92,7 @@ class table_manager : public gld_object, public query_engine {
 		std::vector<std::string*>* get_table_headers();
 		std::vector<char*>* get_table_units();
 		int add_insert_values(query_engine*, std::string*, std::string);
-		void set_custom_sql(std::string sql);
+		bool set_custom_sql(std::string sql);
 		std::string get_custom_sql_columns();
 
 	private:

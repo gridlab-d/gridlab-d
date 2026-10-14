@@ -137,39 +137,79 @@ int table_manager::add_insert_values(query_engine* parent, string* column_name, 
 	return 1; // Success
 }
 
-// Sadly C++ lacks a slice() or split() function, so this mess was necessary.
-void table_manager::set_custom_sql(std::string sql) {
-	if(sql.length() == 0) return;
+// A custom field is specified as "name SQL_TYPE SQL_VALUE", separated by
+// top-level commas. Commas inside SQL function calls, types or quotes are data.
+// Reject malformed fields before updating the stored configuration.
+bool table_manager::set_custom_sql(std::string sql) {
 	std::vector<std::string> header, datatype, value;
-	std::string delimiter = ", ";
-	size_t pos = 0;
-	bool last_run = false;
-	std::string token, inner_token;
-	while ((pos = sql.find(delimiter)) != std::string::npos || !last_run) {
-		last_run = (sql.find(delimiter) == std::string::npos);
-		bool inner_last_run = false;
-		token = sql.substr(0, pos);
-
-		std::string inner_delimiter = " ";
-		size_t inner_pos = 0;
-		std::vector<std::string> buffer;
-
-		while ((inner_pos = token.find(inner_delimiter)) != std::string::npos || !inner_last_run) {
-			inner_last_run = (token.find(inner_delimiter) == std::string::npos);
-			inner_token = token.substr(0, inner_pos);
-			buffer.push_back(inner_token);
-			token.erase(0, inner_pos + inner_delimiter.length());
-		}
-		header.push_back(buffer[0]);
-		datatype.push_back(buffer[1]);
-		value.push_back(buffer[2]);
-
-		sql.erase(0, pos + delimiter.length());
+	if (sql.empty()) {
+		custom_sql_headers.clear();
+		custom_sql_datatypes.clear();
+		custom_sql_values.clear();
+		return true;
 	}
 
-	custom_sql_headers = header;
-	custom_sql_datatypes = datatype;
-	custom_sql_values = value;
+	size_t begin = 0;
+	while (begin < sql.size()) {
+		size_t end = begin;
+		int depth = 0;
+		char quote = '\0';
+		for (; end < sql.size(); ++end) {
+			char ch = sql[end];
+			if (quote != '\0') {
+				if (ch == '\\' && end+1 < sql.size()) { ++end; continue; }
+				if (ch == quote) {
+					if (end+1 < sql.size() && sql[end+1] == quote) { ++end; continue; }
+					quote = '\0';
+				}
+			} else if (ch == '\'' || ch == '"' || ch == '`') {
+				quote = ch;
+			} else if (ch == '(') {
+				++depth;
+			} else if (ch == ')') {
+				if (depth == 0) return false;
+				--depth;
+			} else if (ch == ',' && depth == 0) {
+				break;
+			}
+		}
+		if (quote != '\0' || depth != 0) return false;
+
+		std::istringstream entry(sql.substr(begin, end-begin));
+		std::string column;
+		if (!(entry >> column)) return false;
+		std::string remainder;
+		std::getline(entry, remainder);
+		size_t pos = remainder.find_first_not_of(" \t\r\n");
+		if (pos == std::string::npos) return false;
+		// The SQL type may include whitespace inside parentheses, e.g. DECIMAL(10, 2).
+		size_t type_start = pos;
+		int type_depth = 0;
+		for (; pos < remainder.size(); ++pos) {
+			char ch = remainder[pos];
+			if (ch == '(') ++type_depth;
+			else if (ch == ')') {
+				if (type_depth == 0) return false;
+				--type_depth;
+			} else if ((ch == ' ' || ch == '\t') && type_depth == 0) break;
+		}
+		if (type_depth != 0) return false;
+		std::string type = remainder.substr(type_start, pos-type_start);
+		pos = remainder.find_first_not_of(" \t\r\n", pos);
+		if (type.empty() || pos == std::string::npos) return false;
+		std::string expression = remainder.substr(pos);
+		if (expression.find_first_not_of(" \t\r\n") == std::string::npos) return false;
+		header.push_back(column);
+		datatype.push_back(type);
+		value.push_back(expression);
+		if (end == sql.size()) break;
+		begin = end + 1;
+		if (begin == sql.size()) return false;
+	}
+	custom_sql_headers.swap(header);
+	custom_sql_datatypes.swap(datatype);
+	custom_sql_values.swap(value);
+	return true;
 }
 
 void table_manager::flush_value_row(TIMESTAMP* timestamp) {
