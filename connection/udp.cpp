@@ -188,10 +188,10 @@ size_t udp::send(const char *msg, size_t len)
 		msg = output;
 		len = position;
 	}
-	// format outbound message header
+	// format outbound message header (whole seconds, limited to one digit)
 	char temp[256];
-	int tlim = (int)ceil((double)timeout.tv_usec/1000.0) + (int)timeout.tv_sec;
-	if ( tlim>0 ) tlim=9; else if ( tlim<1 ) tlim=1;
+	int tlim = (int)ceil((double)timeout.tv_usec/1000000.0) + (int)timeout.tv_sec;
+	if ( tlim>9 ) tlim=9; else if ( tlim<1 ) tlim=1;
 	sprintf(temp,"%-1d %-3d %-7lu %-5.5s %-3.1f %-1d %-3d   ",
 		header_version, header_size, len, message_format, message_version, tlim, 0);
 	if ( len>1500-strlen(temp) )
@@ -309,7 +309,7 @@ int udp::call_setsockopt(SOCKET s, int level, int optname, timeval *optval, int 
 {
 #ifdef _WIN32
 	int time_out;
-	time_out = (int)optval->tv_usec + (int)(optval->tv_sec*1000);
+	time_out = (int)(optval->tv_usec / 1000) + (int)(optval->tv_sec*1000);
 	return setsockopt(s, level, optname, (const char*)&time_out, sizeof(time_out));
 #else
 	return setsockopt(s, level, optname, optval, optlen);
@@ -384,13 +384,9 @@ void udp::set_message_version(double x)
 }
 void udp::set_timeout(unsigned int n)
 {
-	if(n > 1000){
-		timeout.tv_sec = n/1000;
-		timeout.tv_usec = n % 1000;
-	} else {
-		timeout.tv_sec = 0;
-		timeout.tv_usec = n;
-	}
+	// Transport timeouts are configured in milliseconds; timeval uses microseconds.
+	timeout.tv_sec = n / 1000;
+	timeout.tv_usec = (n % 1000) * 1000;
 }
 void udp::set_hostname(const char *s)
 {
