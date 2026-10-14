@@ -161,6 +161,10 @@ int server::init(OBJECT *parent)
 			nullptr
 		};
 		ctx = mg_start(options, &event_handler, nullptr);
+		if (ctx == nullptr) {
+			gl_error("REST server: unable to start listener on port %d", port);
+			return 0;
+		}
 		return 1; /* return 1 on success, 0 on failure */
 	}
 	return 0;
