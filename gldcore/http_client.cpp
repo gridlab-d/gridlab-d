@@ -53,6 +53,7 @@ HTTP* hopen(const char *url, int maxlen)
 	http->buf = nullptr;
 	http->len = 0;
 	http->pos = 0;
+	http->sd = INVALID_SOCKET;
 
 	/* setup socket */
 	http->sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -84,7 +85,12 @@ HTTP* hopen(const char *url, int maxlen)
 	}
 
 	/* format/send request */
-	len = sprintf(request,"GET %s HTTP/1.1\r\nHost: %s:80\r\nUser-Agent: GridLAB-D/%d.%d\r\nConnection: close\r\n\r\n",filespec,hostname,REV_MAJOR,REV_MINOR);
+	len = snprintf(request,sizeof(request),"GET %s HTTP/1.1\r\nHost: %s:80\r\nUser-Agent: GridLAB-D/%d.%d\r\nConnection: close\r\n\r\n",filespec,hostname,REV_MAJOR,REV_MINOR);
+	if ( len<0 || (size_t)len>=sizeof(request) )
+	{
+		output_error("hopen: HTTP request is too long for the request buffer");
+		goto Error;
+	}
 	output_debug("sending HTTP message \n%s", request);
 	if ( send(http->sd,request,len,0)<len )
 	{
@@ -122,13 +128,14 @@ Error:
 #ifdef _WIN32
 		output_error("hopen(char *url='%s', int maxlen=%d): WSA error code %d", url, maxlen, WSAGetLastError());
 #endif
+	hclose(http);
 	return nullptr;
 }
 int hclose(HTTP*http)
 {
 	if ( http )
 	{
-		if ( http->sd ) 
+		if ( http->sd!=INVALID_SOCKET )
 #ifdef _WIN32
 			closesocket(http->sd);
 #else
