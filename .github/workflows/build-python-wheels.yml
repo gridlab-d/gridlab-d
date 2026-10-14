@@ -3,14 +3,10 @@ name: Build Python Wheels
 on:
   push:
     branches:
-      - master
-      - main
-      - develop
-      - feature/1478
+      - "release/*"
   pull_request:
     branches:
-      - master
-      - main
+      - develop
   workflow_dispatch:
     inputs:
       platforms:
@@ -38,18 +34,18 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Set up MSVC x64 environment
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
-      
+
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel==3.3.0
 
@@ -63,7 +59,7 @@ jobs:
         run: |
           cmake -S . -B out/build/ci-windows -G "Visual Studio 17 2022" -A x64
           cmake --build out/build/ci-windows --config Release --parallel 4
-      
+
       - name: Build wheels on Linux and macOS
         if: runner.os != 'Windows'
         run: python -m cibuildwheel python_bindings --output-dir wheelhouse
@@ -109,7 +105,7 @@ jobs:
             echo "No Mach-O binaries found in macOS wheel"
             exit 1
           fi
-      
+
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.platform }}
@@ -124,7 +120,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [linux, macos-arm64, macos-x64, windows]
-        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         include:
           - platform: linux
             os: ubuntu-24.04
