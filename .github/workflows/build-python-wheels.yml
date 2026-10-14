@@ -163,7 +163,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && inputs.publish == 'pypi' &&
       (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')) ||
       (github.event_name == 'push' &&
-      (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release/*'))
+      (github.ref == 'refs/heads/develop' || startsWith(github.ref_name, 'release/')))
 
     steps:
       - uses: actions/download-artifact@v4
