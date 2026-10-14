@@ -150,9 +150,9 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "fault_current_out_B[A]", PADDR(If_out[1]),PT_DESCRIPTION,"fault current flowing out, phase B",
 			PT_complex, "fault_current_out_C[A]", PADDR(If_out[2]),PT_DESCRIPTION,"fault current flowing out, phase C",
 
-			PT_complex, "fault_voltage_A[A]", PADDR(Vf_out[0]),PT_DESCRIPTION,"fault voltage, phase A",
-			PT_complex, "fault_voltage_B[A]", PADDR(Vf_out[1]),PT_DESCRIPTION,"fault voltage, phase B",
-			PT_complex, "fault_voltage_C[A]", PADDR(Vf_out[2]),PT_DESCRIPTION,"fault voltage, phase C",
+			PT_complex, "fault_voltage_A[V]", PADDR(Vf_out[0]),PT_DESCRIPTION,"fault voltage, phase A",
+			PT_complex, "fault_voltage_B[V]", PADDR(Vf_out[1]),PT_DESCRIPTION,"fault voltage, phase B",
+			PT_complex, "fault_voltage_C[V]", PADDR(Vf_out[2]),PT_DESCRIPTION,"fault voltage, phase C",
 
 			PT_bool, "overloaded_status", PADDR(overloaded_status),PT_DESCRIPTION,"overloaded status (true/false)",
 				
