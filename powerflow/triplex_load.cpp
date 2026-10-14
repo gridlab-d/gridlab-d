@@ -332,6 +332,7 @@ void triplex_load::triplex_load_update_fxn(void)
 			ZIP_constant_current[0] = true;
 		} else {
 			constant_current[0] = gld::complex(0, 0);
+			ZIP_constant_current[0] = false;
 		}
 		// Put in the constant impedance portion
 		if(impedance_fraction[0] != 0.0){
@@ -364,6 +365,7 @@ void triplex_load::triplex_load_update_fxn(void)
 		constant_power[0] = gld::complex(0.0,0.0);
 		constant_current[0] = gld::complex(0.0,0.0);
 		constant_impedance[0] = gld::complex(0.0,0.0);
+		ZIP_constant_current[0] = false;
 
 		//Deflag us
 		base_load_val_was_nonzero[0] = false;
@@ -433,6 +435,7 @@ void triplex_load::triplex_load_update_fxn(void)
 			ZIP_constant_current[1] = true;
 		} else {
 			constant_current[1] = gld::complex(0, 0);
+			ZIP_constant_current[1] = false;
 		}
 		// Put in the constant impedance portion
 		if(impedance_fraction[1] != 0.0){
@@ -465,6 +468,7 @@ void triplex_load::triplex_load_update_fxn(void)
 		constant_power[1] = gld::complex(0.0,0.0);
 		constant_current[1] = gld::complex(0.0,0.0);
 		constant_impedance[1] = gld::complex(0.0,0.0);
+		ZIP_constant_current[1] = false;
 
 		//Deflag us
 		base_load_val_was_nonzero[1] = false;
@@ -535,6 +539,7 @@ void triplex_load::triplex_load_update_fxn(void)
 			ZIP_constant_current[2] = true;
 		} else {
 			constant_current[2] = gld::complex(0, 0);
+			ZIP_constant_current[2] = false;
 		}
 		// Put in the constant impedance portion
 		if(impedance_fraction[2] != 0.0){
@@ -568,6 +573,7 @@ void triplex_load::triplex_load_update_fxn(void)
 		constant_power[2] = gld::complex(0.0,0.0);
 		constant_current[2] = gld::complex(0.0,0.0);
 		constant_impedance[2] = gld::complex(0.0,0.0);
+		ZIP_constant_current[2] = false;
 
 		//Deflag us
 		base_load_val_was_nonzero[2] = false;
