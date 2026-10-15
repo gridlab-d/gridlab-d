@@ -3,6 +3,8 @@
 
 #include <cctype>
 #include <cstdio>
+#include <cerrno>
+#include <cstdlib>
 
 
 #include "output.h"
@@ -386,6 +388,23 @@ time_t http_read_datetime(const char *timestamp)
 		return mktime(&dt);
 }
 
+// Validate Content-Length from the response that will actually be saved.
+// If the header is missing, the old transport provides no length guarantee;
+// that case remains best-effort (e.g. connection-close-delimited responses).
+static bool http_body_is_complete(HTTPRESULT *result)
+{
+	const char *declared = http_get_header_data(result,"Content-Length");
+	if ( result->body.size<0 ) return false;
+	if ( declared==nullptr ) return true;
+	if ( *declared=='-' || !isdigit((unsigned char)*declared) ) return false;
+	errno = 0;
+	char *end = nullptr;
+	unsigned long long expected = strtoull(declared,&end,10);
+	if ( errno==ERANGE || end==declared ) return false;
+	while ( isspace((unsigned char)*end) ) ++end;
+	return *end=='\0' && expected <= (unsigned long long)result->body.size;
+}
+
 int http_saveas(char *url, char *file)
 {
 	HTTPRESULT *result;
@@ -426,7 +445,8 @@ int http_saveas(char *url, char *file)
 		http_delete_result(result);
 		result = static_cast<HTTPRESULT *>(http_read(url, wget_maxsize));
 		if ( result==nullptr || result->header.data==nullptr ||
-			http_get_status(result)!=200 || (result->body.size>0 && result->body.data==nullptr) )
+			http_get_status(result)!=200 || (result->body.size>0 && result->body.data==nullptr) ||
+			!http_body_is_complete(result) )
 		{
 			output_error("unable to download URL '%s'", url);
 			if ( result!=nullptr ) http_delete_result(result);
