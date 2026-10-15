@@ -190,6 +190,8 @@ size_t udp::send(const char *msg, size_t len)
 	}
 	// format outbound message header (whole seconds, limited to one digit)
 	char temp[256];
+	// A configured 0 ms disables the socket timeout on supported platforms,
+	// but the one-digit wire header retains the legacy minimum of 1 second.
 	int tlim = (int)ceil((double)timeout.tv_usec/1000000.0) + (int)timeout.tv_sec;
 	if ( tlim>9 ) tlim=9; else if ( tlim<1 ) tlim=1;
 	sprintf(temp,"%-1d %-3d %-7lu %-5.5s %-3.1f %-1d %-3d   ",
