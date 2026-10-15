@@ -10,6 +10,7 @@
 
 #include <sstream>
 #include <vector>
+#include <cctype>
 
 #include "query_engine.h"
 using namespace std;
@@ -140,6 +141,10 @@ int table_manager::add_insert_values(query_engine* parent, string* column_name, 
 // A custom field is specified as "name SQL_TYPE SQL_VALUE", separated by
 // top-level commas. Commas inside SQL function calls, types or quotes are data.
 // Reject malformed fields before updating the stored configuration.
+// This is trusted model configuration, not a SQL injection sanitizer.
+// Empty input clears the stored fields; a failed parse leaves them unchanged.
+// SQL_TYPE is one token (parenthesized whitespace is allowed), except the
+// explicitly recognized DOUBLE PRECISION and CHARACTER VARYING forms.
 bool table_manager::set_custom_sql(std::string sql) {
 	std::vector<std::string> header, datatype, value;
 	if (sql.empty()) {
@@ -197,6 +202,25 @@ bool table_manager::set_custom_sql(std::string sql) {
 		std::string type = remainder.substr(type_start, pos-type_start);
 		pos = remainder.find_first_not_of(" \t\r\n", pos);
 		if (type.empty() || pos == std::string::npos) return false;
+		// These common SQL types contain a space outside parentheses.
+		// Do not silently misinterpret their second word as a SQL value.
+		if (type == "DOUBLE" && remainder.compare(pos, 9, "PRECISION") == 0 &&
+			(pos+9 == remainder.size() || isspace((unsigned char)remainder[pos+9]))) {
+			type += " PRECISION";
+			pos = remainder.find_first_not_of(" \t\r\n", pos+9);
+		} else if (type == "CHARACTER" && remainder.compare(pos, 7, "VARYING") == 0 &&
+			(pos+7 == remainder.size() || isspace((unsigned char)remainder[pos+7]) || remainder[pos+7]=='(')) {
+			// VARYING(n) may be attached to the second type word.
+			size_t word_end = pos+7;
+			if (word_end<remainder.size() && remainder[word_end]=='(') {
+				size_t closing = remainder.find(')', word_end);
+				if (closing==std::string::npos) return false;
+				word_end = closing+1;
+			}
+			type += " " + remainder.substr(pos, word_end-pos);
+			pos = remainder.find_first_not_of(" \t\r\n", word_end);
+		}
+		if (pos == std::string::npos) return false;
 		std::string expression = remainder.substr(pos);
 		if (expression.find_first_not_of(" \t\r\n") == std::string::npos) return false;
 		header.push_back(column);
