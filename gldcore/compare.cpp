@@ -22,6 +22,19 @@
 #define COMPARE_INI(T) int compare_tc_##T##_in(void* x,void* a,void* b) { return b!=nullptr && COMPARE_SIGNED(T,a)<=COMPARE_SIGNED(T,x) && COMPARE_SIGNED(T,x)<=COMPARE_SIGNED(T,b); }
 #define COMPARE_NII(T) int compare_tc_##T##_ni(void* x,void* a,void* b) { return b==nullptr || !(COMPARE_SIGNED(T,a)<=COMPARE_SIGNED(T,x) && COMPARE_SIGNED(T,x)<=COMPARE_SIGNED(T,b)); }
 
+// PT_set stores an unsigned bitmask. Its comparisons must not reinterpret the
+// highest set bit as a negative number. Signed PT_int* and PT_timestamp keep
+// their existing signed-ordering semantics.
+#define COMPAREOPU(T,U) \
+int compare_tc_##T##_eq(void* x,void* a,void*) { return *(U*)x==*(U*)a; } \
+int compare_tc_##T##_le(void* x,void* a,void*) { return *(U*)x<=*(U*)a; } \
+int compare_tc_##T##_ge(void* x,void* a,void*) { return *(U*)x>=*(U*)a; } \
+int compare_tc_##T##_ne(void* x,void* a,void*) { return *(U*)x!=*(U*)a; } \
+int compare_tc_##T##_lt(void* x,void* a,void*) { return *(U*)x<*(U*)a; } \
+int compare_tc_##T##_gt(void* x,void* a,void*) { return *(U*)x>*(U*)a; } \
+int compare_tc_##T##_in(void* x,void* a,void* b) { return b!=nullptr && *(U*)a<=*(U*)x && *(U*)x<=*(U*)b; } \
+int compare_tc_##T##_ni(void* x,void* a,void* b) { return b==nullptr || !(*(U*)a<=*(U*)x && *(U*)x<=*(U*)b); }
+
 #define COMPAREOPB(T) COMPARE_EQB(T) COMPARE_NEB(T)
 #define COMPARE_EQB(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return *(T*)x==*(T*)a; }
 #define COMPARE_NEB(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return *(T*)x!=*(T*)a; }
@@ -56,6 +69,7 @@ COMPAREOPF(float)
 COMPAREOPI(uint16)
 COMPAREOPI(uint32)
 COMPAREOPI(uint64)
+COMPAREOPU(set,uint64)
 COMPAREOPB(bool)
 COMPAREOPS(string)
 COMPAREOPO(object)
