@@ -89,18 +89,17 @@ void query_engine::build_table_references(bool print_units) {
 		table_units = table_path->get_table_units();
 		int header_count = table_headers->size();
 		if (header_count > 0) {
-			local_header_count += header_count;
 			char1024 table_name = table_path->get_table_name();
-			for (int j = 0; j < header_count - 1; j++) {
+			// A table may have no headers; separate emitted rows rather than
+			// table positions to avoid a trailing comma before the semicolon.
+			for (int j = 0; j < header_count; j++) {
+				if (local_header_count != 0) query << ",";
 				query << "('" << table_name.get_string() << "','" << *((*table_headers)[j]);
 				if (print_units)
 					query << "', '" << (*table_units)[j];
-				query << "'),";
+				query << "')";
+				++local_header_count;
 			}
-			query << "('" << table_name.get_string() << "','" << *((*table_headers)[header_count - 1]);
-			if (print_units)
-				query << "', '" << (*table_units)[header_count - 1];
-			query << "')" << ((i == table_count - 1) ? " " : ",");
 		}
 		next_table();
 	}
