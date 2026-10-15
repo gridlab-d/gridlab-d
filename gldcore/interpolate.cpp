@@ -5,6 +5,9 @@ double interpolate_linear(double t, double x0, double y0, double x1, double y1){
 	return y0 + (t - x0) * (y1 - y0) / (x1 - x0);
 }
 
+// Requires equally spaced x coordinates; the spacing check below is exact.
+// Invalid or repeated sample coordinates are logged and return 0.0, which is
+// also a valid interpolation result. Callers should validate input separately.
 double interpolate_quadratic(double t, double x0, double y0, double x1, double y1, double x2, double y2){
 	double a, b, c, h, v;
 	if(x1-x0 != x2-x1){
