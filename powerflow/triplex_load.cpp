@@ -674,6 +674,9 @@ void triplex_load::triplex_load_update_fxn(void)
 	//Start adjustments - loop them
 	for (index_var=0; index_var<3; index_var++)
 	{
+		// true means ZIP produced constant_current; do not apply the manual
+		// current's voltage-angle adjustment a second time. Reset this flag
+		// whenever ZIP current is disabled so manual current remains distinct.
 		if ((constant_current[index_var] != 0.0) && (adjust_temp_voltage_mag[index_var] != 0.0) && !ZIP_constant_current[index_var])
 		{
 			//calculate new value
