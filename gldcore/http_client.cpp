@@ -61,10 +61,11 @@ HTTP *hopen(const char *url, int maxlen) {
   http->buf = nullptr;
   http->len = 0;
   http->pos = 0;
+  http->sd = INVALID_SOCKET;
 
   /* setup socket */
   http->sd = socket(AF_INET, SOCK_STREAM, 0);
-  if (http->sd < 0) {
+  if (http->sd == INVALID_SOCKET) {
     output_error(
         "hopen(char *url='%s', int maxlen=%d): unable to create socket", url,
         maxlen);
@@ -99,6 +100,11 @@ HTTP *hopen(const char *url, int maxlen) {
                 "GET %s HTTP/1.1\r\nHost: %s:80\r\nUser-Agent: "
                 "GridLAB-D/%d.%d\r\nConnection: close\r\n\r\n",
                 filespec, hostname, REV_MAJOR, REV_MINOR);
+  // Request components can each fit individually but exceed the buffer together.
+  if (len < 0 || (size_t)len >= sizeof(request)) {
+    output_error("hopen: HTTP request exceeds the request buffer");
+    goto Error;
+  }
   output_debug("sending HTTP message \n%s", request);
   if (send(http->sd, request, len, 0) < len) {
     output_error("hopen(char *url='%s', maxlen=%d): unable to send request",
@@ -135,11 +141,12 @@ Error:
   output_error("hopen(char *url='%s', int maxlen=%d): WSA error code %d", url,
                maxlen, WSAGetLastError());
 #endif
+  hclose(http);
   return nullptr;
 }
 int hclose(HTTP *http) {
   if (http) {
-    if (http->sd)
+    if (http->sd != INVALID_SOCKET)
 #ifdef _WIN32
       closesocket(http->sd);
 #else
