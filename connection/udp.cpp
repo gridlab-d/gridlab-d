@@ -50,6 +50,21 @@ int udp::option(char *command)
 	char param[256], value[1024];
 	while ( command!=nullptr && *command!='\0' )
 	{
+		// Check complete token lengths before applying this option. scanf
+		// widths alone would silently accept a truncated name or value.
+		size_t name_length = strcspn(command," =");
+		if ( name_length>=sizeof(param) )
+		{
+			error("transport option name exceeds 255 bytes");
+			return 0;
+		}
+		const char *value_start = command + name_length;
+		value_start += strspn(value_start," =");
+		if ( strcspn(value_start,",;")>=sizeof(value) )
+		{
+			error("transport option value exceeds 1023 bytes");
+			return 0;
+		}
 		// scanf widths exclude the terminating NUL; both fields must fit.
 		switch ( sscanf(command,"%255[^ =]%*[ =]%1023[^,;]",param,value) ) {
 		case 1:
