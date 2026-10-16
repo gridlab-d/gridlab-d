@@ -172,8 +172,9 @@ size_t udp::send(const char *msg, size_t len) {
   }
   // format outbound message header
   char temp[256];
-  int tlim = (int)ceil((double)timeout.tv_usec / 1000.0) + (int)timeout.tv_sec;
-  if (tlim > 0)
+  int tlim = (int)ceil((double)timeout.tv_usec / 1000000.0) + (int)timeout.tv_sec;
+  // A configured 0 ms socket timeout does not fit on the one-digit wire header.
+  if (tlim > 9)
     tlim = 9;
   else if (tlim < 1)
     tlim = 1;
@@ -305,7 +306,7 @@ int udp::call_setsockopt(SOCKET s, int level, int optname, timeval *optval,
                          int optlen) {
 #ifdef _WIN32
   int time_out;
-  time_out = (int)optval->tv_usec + (int)(optval->tv_sec * 1000);
+  time_out = (int)(optval->tv_usec / 1000) + (int)(optval->tv_sec * 1000);
   return setsockopt(s, level, optname, (const char *)&time_out,
                     sizeof(time_out));
 #else
@@ -335,13 +336,9 @@ void udp::set_header_size(unsigned int n) { header_size = n; }
 void udp::set_message_format(const char *s) { strcpy(message_format, s); }
 void udp::set_message_version(double x) { message_version = x; }
 void udp::set_timeout(unsigned int n) {
-  if (n > 1000) {
-    timeout.tv_sec = n / 1000;
-    timeout.tv_usec = n % 1000;
-  } else {
-    timeout.tv_sec = 0;
-    timeout.tv_usec = n;
-  }
+  // Configured milliseconds; timeval takes seconds and microseconds.
+  timeout.tv_sec = n / 1000;
+  timeout.tv_usec = (n % 1000) * 1000;
 }
 void udp::set_hostname(const char *s) { strcpy(hostname, s); }
 void udp::set_portnum(unsigned int n) { portnum = n; }
