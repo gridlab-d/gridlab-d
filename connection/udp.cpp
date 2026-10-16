@@ -280,11 +280,12 @@ Retry:
     exception("unexpected message version {msg='%s'}, expected version=%.1f",
               msg, get_message_version());
 
-  // get body
-  if (size >= rcvlen - 1)
-    exception("response too long for buffer (content-length=%d, "
-              "buffer-size=%d)--truncating message",
-              size, len);
+  // Verify both the datagram's declared bounds and the caller buffer.
+  // Reserve one extra byte for the trailing NUL terminator.
+  if (offset<0 || size<0 || (size_t)offset>rcvlen ||
+      (size_t)size>rcvlen-(size_t)offset || (size_t)size>=len)
+    exception("invalid UDP response length (offset=%d, content-length=%d, datagram=%lu, buffer=%lu)",
+              offset, size, (unsigned long)rcvlen, (unsigned long)len);
 
   // check code
   if (status != 200)
