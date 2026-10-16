@@ -3,6 +3,9 @@
 
 #include <cctype>
 #include <cstdio>
+#include <cerrno>
+#include <cstdlib>
+#include <limits>
 
 #include "http_client.h"
 #include "output.h"
@@ -271,9 +274,12 @@ const char *http_get_header_data(HTTPRESULT *result, const char *param) {
   return buffer;
 }
 
-unsigned int http_get_status(HTTPRESULT *result) {
-  output_debug("http_get_status(): '%s'", result->header.data + 9);
-  return atoi(result->header.data + 9);
+unsigned int http_get_status(HTTPRESULT *result)
+{
+	if ( result==nullptr || result->header.data==nullptr || result->header.size<12 )
+		return 0;
+	output_debug("http_get_status(): '%s'", result->header.data+9);
+	return atoi(result->header.data+9);
 }
 
 static unsigned int64 wget_maxsize = 100000000;
@@ -372,58 +378,123 @@ time_t http_read_datetime(const char *timestamp) {
     return mktime(&dt);
 }
 
-int http_saveas(char *url, char *file) {
-  HTTPRESULT *result;
-  unsigned int status;
-  // TODO finish update test
-  //	struct stat st;
-  time_t modtime;
+static bool http_body_is_complete(HTTPRESULT *result)
+{
+	if ( result==nullptr || result->header.data==nullptr ||
+		result->header.size<0 || result->body.size<0 ) return false;
+	const char *line = result->header.data;
+	const char *header_end = line + result->header.size;
+	bool found = false;
+	unsigned long long expected = 0;
+	while ( line<header_end )
+	{
+		const char *end = line;
+		while ( end<header_end && *end!='\r' && *end!='\n' ) ++end;
+		if ( end==line ) break;
+		const char *colon = line;
+		while ( colon<end && *colon!=':' ) ++colon;
+		const char field[] = "content-length";
+		bool matches = colon<end && colon-line==sizeof(field)-1;
+		for ( size_t i=0; matches && i<sizeof(field)-1; ++i )
+			matches = tolower((unsigned char)line[i])==field[i];
+		if ( matches )
+		{
+			// HTTP field names are case-insensitive; only SP/HTAB are OWS.
+			const char *value = colon+1;
+			while ( value<end && (*value==' ' || *value=='\t') ) ++value;
+			if ( value==end || *value<'0' || *value>'9' ) return false;
+			unsigned long long length = 0;
+			while ( value<end && *value>='0' && *value<='9' )
+			{
+				unsigned int digit = *value++ - '0';
+				if ( length>(std::numeric_limits<unsigned long long>::max()-digit)/10 )
+					return false;
+				length = length*10 + digit;
+			}
+			while ( value<end && (*value==' ' || *value=='\t') ) ++value;
+			if ( value!=end || (found && length!=expected) ) return false;
+			expected = length;
+			found = true;
+		}
+		line = end;
+		if ( line<header_end && *line=='\r' ) ++line;
+		if ( line<header_end && *line=='\n' ) ++line;
+	}
+	return !found || expected <= (unsigned long long)result->body.size;
+}
 
-  http_get_options();
+int http_saveas(char *url, char *file)
+{
+	HTTPRESULT *result;
+	unsigned int status;
+// TODO finish update test
+//	struct stat st;
+	time_t modtime;
 
-  // TODO finish update test
-  //	if ( wget_update==WU_NEVER && stat(file,&st)==0 )
-  //		return 1;
+	http_get_options();
 
-  result = static_cast<HTTPRESULT *>(
-      http_read(url, 0x4000)); /* read only enough to get header */
-  if (result == nullptr) {
-    output_error("http_saveas(char *url='%s', char *file='%s'): hopen failed",
-                 url, file);
-    return 0;
-  } else if ((status = http_get_status(result)) == 200) {
-    const char *cl = http_get_header_data(result, "Content-Length");
-    size_t len = (cl ? atoi(cl) : 0);
-    FILE *fp;
+// TODO finish update test
+//	if ( wget_update==WU_NEVER && stat(file,&st)==0 )
+//		return 1;
 
-    output_debug("URL '%s' save as '%s'...", url, file);
-    output_debug("  result status: %d", status);
-    output_debug("  result length: %d", len);
-    output_debug("  result last modified: %s", ctime(&modtime));
+	result = static_cast<HTTPRESULT *>(http_read(url, 0x4000)); /* read only enough to get header */
+	if ( result==nullptr || result->header.data==nullptr )
+	{
+		output_error("http_saveas(char *url='%s', char *file='%s'): hopen failed", url, file);
+		if ( result!=nullptr ) http_delete_result(result);
+		return 0;
+	}
+	else if ( (status=http_get_status(result))==200 )
+	{
+		const char *cl = http_get_header_data(result,"Content-Length");
+		size_t len = (cl?atoi(cl):0);
+		FILE *fp;
 
-    modtime = http_read_datetime(http_get_header_data(result, "Last-Modified"));
-    // TODO finish update test
-    //		output_debug("  file mtime: %s", ctime(&st.st_mtime));
-    //		if ( wget_update==WU_NEVER && st.st_mtime>0 &&
-    //st.st_mtime>modtime ) 			return 1;
+		modtime = http_read_datetime(http_get_header_data(result,"Last-Modified"));
+		output_debug("URL '%s' save as '%s'...", url, file);
+		output_debug("  result status: %d", status);
+		output_debug("  result length: %d", len);
+		if ( modtime!=0 ) output_debug("  result last modified: %s", ctime(&modtime));
+// TODO finish update test
+//		output_debug("  file mtime: %s", ctime(&st.st_mtime));
+//		if ( wget_update==WU_NEVER && st.st_mtime>0 && st.st_mtime>modtime )
+//			return 1;
 
-    result = static_cast<HTTPRESULT *>(http_read(url, wget_maxsize));
-    fp = fopen(file, "w");
+		http_delete_result(result);
+		result = static_cast<HTTPRESULT *>(http_read(url, wget_maxsize));
+		if ( result==nullptr || result->header.data==nullptr ||
+			http_get_status(result)!=200 || (result->body.size>0 && result->body.data==nullptr) ||
+			!http_body_is_complete(result) )
+		{
+			output_error("unable to download URL '%s'", url);
+			if ( result!=nullptr ) http_delete_result(result);
+			return 0;
+		}
+		fp = fopen(file,"wb");
 
-    if (fp == nullptr) {
-      output_error("unable to write file '%s': %s", file, strerror(errno));
-      return 0;
-    } else {
-      if (result->header.size + result->body.size < len)
-        output_warning("URL '%s' is larger than maxsize %d", url, wget_maxsize);
-      else
-        output_verbose("URL '%s' saved to '%s' ok", url, file);
-      fwrite(result->body.data, 1, result->body.size, fp);
-      fclose(fp);
-      return 1;
-    }
-  } else {
-    output_error("URL '%s' return code %d", url, status);
-    return 0;
-  }
+		if ( fp==nullptr )
+		{
+			output_error("unable to write file '%s': %s", file, strerror(errno));
+			http_delete_result(result);
+			return 0;
+		}
+		else
+		{
+			if ( result->header.size+result->body.size<len )
+				output_warning("URL '%s' is larger than maxsize %d", url, wget_maxsize);
+			else
+				output_verbose("URL '%s' saved to '%s' ok", url,file);
+			bool ok = fwrite(result->body.data,1,result->body.size,fp)==(size_t)result->body.size;
+			if ( fclose(fp)!=0 ) ok = false;
+			http_delete_result(result);
+			if ( !ok ) output_error("unable to complete file '%s'", file);
+			return ok ? 1 : 0;
+		}
+	}
+	else
+	{
+		output_error("URL '%s' return code %d", url, status);
+		http_delete_result(result);
+		return 0;
+	}
 }
