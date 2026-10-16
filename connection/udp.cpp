@@ -41,7 +41,20 @@ udp::~udp() { flush(); }
 int udp::option(char *command) {
   char param[256], value[1024];
   while (command != nullptr && *command != '\0') {
-    switch (sscanf(command, "%256[^ =]%*[ =]%[^,;]", param, value)) {
+    // Do not silently truncate options; validate complete tokens first.
+    size_t keylen = strcspn(command, " =");
+    if (keylen>=sizeof(param)) {
+      error("transport option name exceeds 255 bytes");
+      return 0;
+    }
+    const char *value_start = command + keylen;
+    value_start += strspn(value_start, " =");
+    if (strcspn(value_start, ",;")>=sizeof(value)) {
+      error("transport option value exceeds 1023 bytes");
+      return 0;
+    }
+    // scanf field width excludes the NUL terminator.
+    switch (sscanf(command, "%255[^ =]%*[ =]%1023[^,;]", param, value)) {
     case 1:
       // TODO
       error("option \"transport:%s\" not recognized", command);
