@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cerrno>
 #include <cstdlib>
+#include <limits>
 
 
 #include "output.h"
@@ -393,16 +394,47 @@ time_t http_read_datetime(const char *timestamp)
 // that case remains best-effort (e.g. connection-close-delimited responses).
 static bool http_body_is_complete(HTTPRESULT *result)
 {
-	const char *declared = http_get_header_data(result,"Content-Length");
-	if ( result->body.size<0 ) return false;
-	if ( declared==nullptr ) return true;
-	if ( *declared=='-' || !isdigit((unsigned char)*declared) ) return false;
-	errno = 0;
-	char *end = nullptr;
-	unsigned long long expected = strtoull(declared,&end,10);
-	if ( errno==ERANGE || end==declared ) return false;
-	while ( isspace((unsigned char)*end) ) ++end;
-	return *end=='\0' && expected <= (unsigned long long)result->body.size;
+	if ( result==nullptr || result->header.data==nullptr ||
+		result->header.size<0 || result->body.size<0 ) return false;
+	const char *line = result->header.data;
+	const char *header_end = line + result->header.size;
+	bool found = false;
+	unsigned long long expected = 0;
+	while ( line<header_end )
+	{
+		const char *end = line;
+		while ( end<header_end && *end!='\r' && *end!='\n' ) ++end;
+		if ( end==line ) break;
+		const char *colon = line;
+		while ( colon<end && *colon!=':' ) ++colon;
+		const char field[] = "content-length";
+		bool matches = colon<end && colon-line==sizeof(field)-1;
+		for ( size_t i=0; matches && i<sizeof(field)-1; ++i )
+			matches = tolower((unsigned char)line[i])==field[i];
+		if ( matches )
+		{
+			// HTTP field names are case-insensitive; only SP/HTAB are OWS.
+			const char *value = colon+1;
+			while ( value<end && (*value==' ' || *value=='\t') ) ++value;
+			if ( value==end || *value<'0' || *value>'9' ) return false;
+			unsigned long long length = 0;
+			while ( value<end && *value>='0' && *value<='9' )
+			{
+				unsigned int digit = *value++ - '0';
+				if ( length>(std::numeric_limits<unsigned long long>::max()-digit)/10 )
+					return false;
+				length = length*10 + digit;
+			}
+			while ( value<end && (*value==' ' || *value=='\t') ) ++value;
+			if ( value!=end || (found && length!=expected) ) return false;
+			expected = length;
+			found = true;
+		}
+		line = end;
+		if ( line<header_end && *line=='\r' ) ++line;
+		if ( line<header_end && *line=='\n' ) ++line;
+	}
+	return !found || expected <= (unsigned long long)result->body.size;
 }
 
 int http_saveas(char *url, char *file)
