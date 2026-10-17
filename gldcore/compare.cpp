@@ -10,9 +10,11 @@
 #include "timestamp.h"
 
 #define COMPAREOPI(T) COMPARE_EQI(T) COMPARE_LEI(T) COMPARE_GEI(T) COMPARE_NEI(T) COMPARE_LTI(T) COMPARE_GTI(T) COMPARE_INI(T) COMPARE_NII(T)
-// Integer property storage is unsigned in this table, including signed PT_int*.
-// Interpret its bits as a signed integer of the SAME width (not just `signed int`).
-#define COMPARE_SIGNED(T,X) (static_cast<typename std::make_signed<T>::type>(*(T*)(X)))
+// The signed property types are stored as their native signed values.  The
+// table's uint* comparator names are also used for signed integer properties;
+// read the corresponding signed type rather than converting a high-bit unsigned
+// value to signed (which is implementation-defined before C++20).
+#define COMPARE_SIGNED(T,X) (*static_cast<typename std::make_signed<T>::type*>(X))
 #define COMPARE_EQI(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return COMPARE_SIGNED(T,x)==COMPARE_SIGNED(T,a); }
 #define COMPARE_LEI(T) int compare_tc_##T##_le(void* x,void* a,void* b) { return COMPARE_SIGNED(T,x)<=COMPARE_SIGNED(T,a); }
 #define COMPARE_GEI(T) int compare_tc_##T##_ge(void* x,void* a,void* b) { return COMPARE_SIGNED(T,x)>=COMPARE_SIGNED(T,a); }
