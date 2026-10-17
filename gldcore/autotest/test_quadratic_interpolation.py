@@ -41,6 +41,7 @@ class QuadraticInterpolationTests(unittest.TestCase):
         p = dedent('''\
             #include <cassert>
             #include <cmath>
+            #include <limits>
             void output_error(const char *, ...) {}
         ''')
         t = dedent('''\
@@ -48,6 +49,9 @@ class QuadraticInterpolationTests(unittest.TestCase):
               assert(std::abs(interpolate_quadratic(3,0,0,2,4,4,16)-9.0) < 1e-12);
               assert(std::abs(interpolate_quadratic(1.5,0,0,1,1,2,4)-2.25) < 1e-12);
               assert(interpolate_quadratic(1,0,1,0,2,0,3)==0.0);
+              const double x0=0.1, x1=0.2, x2=0.3;
+              assert(std::abs(interpolate_quadratic(0.25,x0,x0*x0,x1,x1*x1,x2,x2*x2)-0.0625) < 1e-12);
+              assert(interpolate_quadratic(0.5,0,0,1,1,2.1,4.41)==0.0);
             }
         ''')
         check_cpp(p+body+t)
