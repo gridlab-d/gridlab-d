@@ -1,6 +1,6 @@
 """Focused regression checks for GridLAB-D PR #1805.
 
-Run from repository root: python3 -m unittest discover -s tests/pr_fixes -p 'test_pr_*.py'
+Run from repository root: python3 -m unittest connection.autotest.test_pr_1805 -v
 These targeted tests do not replace build or full model integration tests.
 """
 import pathlib
@@ -34,4 +34,49 @@ class PRRegression(unittest.TestCase):
         src = read('connection/udp.cpp')
         self.assertIn('timeout.tv_usec = (n % 1000) * 1000', src)
         self.assertIn('A configured 0 ms', src)
-        self.assertIn('tv_usec / 1000', src)
+        self.assertIn('static_cast<unsigned long long>(optval->tv_usec) / 1000ULL', src)
+
+    def test_windows_socket_timeout_limits(self):
+        src = read('connection/udp.cpp')
+        # Compile the production WinSock-specific function with minimal mocks
+        # so this test can run on Linux without Windows headers.
+        begin = src.index('int udp::call_setsockopt(')
+        end = src.index('void udp::flush(', begin)
+        function = src[begin:end]
+        prefix = '''#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <limits>
+#define _WIN32 1
+using DWORD = uint32_t;
+using SOCKET = int;
+constexpr int SOCKET_ERROR = -1;
+constexpr int WSAEINVAL = 10022;
+struct timeval { long tv_sec, tv_usec; };
+static int last_error = 0;
+static DWORD last_timeout = 0;
+void WSASetLastError(int error) { last_error = error; }
+int setsockopt(SOCKET,int,int,const char *data,int len) {
+    assert(len == (int)sizeof(DWORD));
+    std::memcpy(&last_timeout, data, sizeof(last_timeout));
+    return 0;
+}
+class udp { public: static int call_setsockopt(SOCKET,int,int,timeval*,int); };
+'''
+        tests = '''int main() {
+    timeval normal{2,500000};
+    assert(udp::call_setsockopt(0,0,0,&normal,sizeof(normal)) == 0);
+    assert(last_timeout == 2500u);
+    timeval max_allowed{4294967,295000};
+    assert(udp::call_setsockopt(0,0,0,&max_allowed,sizeof(max_allowed)) == 0);
+    assert(last_timeout == std::numeric_limits<DWORD>::max());
+    timeval too_large{4294968,0};
+    assert(udp::call_setsockopt(0,0,0,&too_large,sizeof(too_large)) == SOCKET_ERROR);
+    assert(last_error == WSAEINVAL);
+    timeval negative{-1,0};
+    assert(udp::call_setsockopt(0,0,0,&negative,sizeof(negative)) == SOCKET_ERROR);
+    timeval bad_usec{0,1000000};
+    assert(udp::call_setsockopt(0,0,0,&bad_usec,sizeof(bad_usec)) == SOCKET_ERROR);
+}
+'''
+        check_cpp(prefix + function + tests)

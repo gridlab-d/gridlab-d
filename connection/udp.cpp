@@ -3,6 +3,7 @@
 // Implements the datagram transport mechanism
 //
 #include "udp.h"
+#include <limits>
 
 udp::udp()
     : // default defaults for non-strings
@@ -305,8 +306,19 @@ Retry:
 int udp::call_setsockopt(SOCKET s, int level, int optname, timeval *optval,
                          int optlen) {
 #ifdef _WIN32
-  int time_out;
-  time_out = (int)(optval->tv_usec / 1000) + (int)(optval->tv_sec * 1000);
+  if (optval == nullptr || optval->tv_sec < 0 || optval->tv_usec < 0 ||
+      optval->tv_usec >= 1000000) {
+    WSASetLastError(WSAEINVAL);
+    return SOCKET_ERROR;
+  }
+  const unsigned long long timeout_ms =
+      static_cast<unsigned long long>(optval->tv_sec) * 1000ULL +
+      static_cast<unsigned long long>(optval->tv_usec) / 1000ULL;
+  if (timeout_ms > std::numeric_limits<DWORD>::max()) {
+    WSASetLastError(WSAEINVAL);
+    return SOCKET_ERROR;
+  }
+  const DWORD time_out = static_cast<DWORD>(timeout_ms);
   return setsockopt(s, level, optname, (const char *)&time_out,
                     sizeof(time_out));
 #else
