@@ -1,6 +1,6 @@
 """Focused regression checks for GridLAB-D PR #1801.
 
-Run from repository root: python3 -m unittest discover -s tests/pr_fixes -p 'test_pr_*.py'
+Run from repository root: python3 -m unittest connection.autotest.test_pr_1801 -v
 These targeted tests do not replace build or full model integration tests.
 """
 import pathlib
