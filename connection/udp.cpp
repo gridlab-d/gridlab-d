@@ -3,6 +3,7 @@
 // Implements the datagram transport mechanism
 //
 #include "udp.h"
+#include <limits>
 
 udp::udp()
     : // default defaults for non-strings
@@ -172,11 +173,15 @@ size_t udp::send(const char *msg, size_t len) {
   }
   // format outbound message header
   char temp[256];
-  int tlim = (int)ceil((double)timeout.tv_usec / 1000.0) + (int)timeout.tv_sec;
-  if (tlim > 0)
+  // Clamp before narrowing the (possibly 64-bit) timeval seconds field.
+  int tlim = 1;
+  if (timeout.tv_sec >= 9) {
     tlim = 9;
-  else if (tlim < 1)
-    tlim = 1;
+  } else if (timeout.tv_sec >= 0) {
+    const int seconds = static_cast<int>(timeout.tv_sec);
+    tlim = seconds + (timeout.tv_usec > 0 ? 1 : 0);
+    if (tlim < 1) tlim = 1;
+  }
   snprintf(temp, sizeof(temp), "%-1d %-3d %-7zu %-5.5s %-3.1f %-1d %-3d   ", header_version,
           header_size, len, message_format, message_version, tlim, 0);
   if (len > 1500 - strlen(temp)) {
@@ -304,8 +309,24 @@ Retry:
 int udp::call_setsockopt(SOCKET s, int level, int optname, timeval *optval,
                          int optlen) {
 #ifdef _WIN32
-  int time_out;
-  time_out = (int)optval->tv_usec + (int)(optval->tv_sec * 1000);
+  if (optval == nullptr || optval->tv_sec < 0 || optval->tv_usec < 0 ||
+      optval->tv_usec >= 1000000) {
+    WSASetLastError(WSAEINVAL);
+    return SOCKET_ERROR;
+  }
+  const unsigned long long seconds =
+      static_cast<unsigned long long>(optval->tv_sec);
+  const unsigned long long millis =
+      static_cast<unsigned long long>(optval->tv_usec) / 1000ULL;
+  const unsigned long long limit = std::numeric_limits<DWORD>::max();
+  // Validate before multiplying: an arbitrary timeval may exceed uint64.
+  if (seconds > limit / 1000ULL ||
+      (seconds == limit / 1000ULL && millis > limit % 1000ULL)) {
+    WSASetLastError(WSAEINVAL);
+    return SOCKET_ERROR;
+  }
+  const unsigned long long timeout_ms = seconds * 1000ULL + millis;
+  const DWORD time_out = static_cast<DWORD>(timeout_ms);
   return setsockopt(s, level, optname, (const char *)&time_out,
                     sizeof(time_out));
 #else
@@ -335,13 +356,9 @@ void udp::set_header_size(unsigned int n) { header_size = n; }
 void udp::set_message_format(const char *s) { strcpy(message_format, s); }
 void udp::set_message_version(double x) { message_version = x; }
 void udp::set_timeout(unsigned int n) {
-  if (n > 1000) {
-    timeout.tv_sec = n / 1000;
-    timeout.tv_usec = n % 1000;
-  } else {
-    timeout.tv_sec = 0;
-    timeout.tv_usec = n;
-  }
+  // Configured milliseconds; timeval takes seconds and microseconds.
+  timeout.tv_sec = n / 1000;
+  timeout.tv_usec = (n % 1000) * 1000;
 }
 void udp::set_hostname(const char *s) { strcpy(hostname, s); }
 void udp::set_portnum(unsigned int n) { portnum = n; }
