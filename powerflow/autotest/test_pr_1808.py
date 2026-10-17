@@ -1,6 +1,6 @@
 """Focused regression checks for GridLAB-D PR #1808.
 
-Run from repository root: python3 -m unittest discover -s tests/pr_fixes -p 'test_pr_*.py'
+Run from repository root: python3 -m unittest powerflow.autotest.test_pr_1808 -v
 These targeted tests do not replace build or full model integration tests.
 """
 import pathlib
