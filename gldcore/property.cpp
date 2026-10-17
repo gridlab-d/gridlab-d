@@ -63,7 +63,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
         convert_to_enumeration,
         nullptr,
         nullptr,
-        {TCOPS(uint64)},
+        {TCOPS(uint32)},
     },
     {
         "set",
@@ -74,7 +74,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
         convert_to_set,
         nullptr,
         nullptr,
-        {TCOPS(uint64)},
+        {TCOPS(set)},
     },
     {
         "int16",
@@ -107,7 +107,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
         convert_to_uint32,
         nullptr,
         nullptr,
-        {TCOPS(uint32)},
+        {TCOPS(u32)},
     },
     {
         "int64",

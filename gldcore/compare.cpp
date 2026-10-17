@@ -2,50 +2,46 @@
  **/
 
 #include <cmath>
+#include <cstring>
+#include <type_traits>
 
 #include "compare.h"
 #include "object.h"
 #include "property.h"
 #include "timestamp.h"
 
-#define COMPAREOPI(T)                                                          \
-  COMPARE_EQI(T)                                                               \
-  COMPARE_LEI(T) COMPARE_GEI(T) COMPARE_NEI(T) COMPARE_LTI(T) COMPARE_GTI(T)   \
-      COMPARE_INI(T) COMPARE_NII(T)
-#define COMPARE_EQI(T)                                                         \
-  int compare_tc_##T##_eq(void *x, void *a, void *b) {                         \
-    return (signed)*(T *)x == (signed)*(T *)a;                                 \
-  }
-#define COMPARE_LEI(T)                                                         \
-  int compare_tc_##T##_le(void *x, void *a, void *b) {                         \
-    return (signed)*(T *)x <= (signed)*(T *)a;                                 \
-  }
-#define COMPARE_GEI(T)                                                         \
-  int compare_tc_##T##_ge(void *x, void *a, void *b) {                         \
-    return (signed)*(T *)x >= (signed)*(T *)a;                                 \
-  }
-#define COMPARE_NEI(T)                                                         \
-  int compare_tc_##T##_ne(void *x, void *a, void *b) {                         \
-    return (signed)*(T *)x != (signed)*(T *)a;                                 \
-  }
-#define COMPARE_LTI(T)                                                         \
-  int compare_tc_##T##_lt(void *x, void *a, void *b) {                         \
-    return (signed)*(T *)x < (signed)*(T *)a;                                  \
-  }
-#define COMPARE_GTI(T)                                                         \
-  int compare_tc_##T##_gt(void *x, void *a, void *b) {                         \
-    return (signed)*(T *)x > (signed)*(T *)a;                                  \
-  }
-#define COMPARE_INI(T)                                                         \
-  int compare_tc_##T##_in(void *x, void *a, void *b) {                         \
-    return (signed)*(T *)a <= (signed)*(T *)x && b != nullptr &&               \
-           (signed)*(T *)x <= (signed)*(T *)b;                                 \
-  }
-#define COMPARE_NII(T)                                                         \
-  int compare_tc_##T##_ni(void *x, void *a, void *b) {                         \
-    return !((signed)*(T *)a <= (signed)*(T *)x && b != nullptr &&             \
-             (signed)*(T *)x <= (signed)*(T *)b);                              \
-  }
+#define COMPAREOPI(T) COMPARE_EQI(T) COMPARE_LEI(T) COMPARE_GEI(T) COMPARE_NEI(T) COMPARE_LTI(T) COMPARE_GTI(T) COMPARE_INI(T) COMPARE_NII(T)
+// The signed property types are stored as their native signed values.  The
+// table's uint* comparator names are also used for signed integer properties;
+// read the corresponding signed type rather than converting a high-bit unsigned
+// value to signed (which is implementation-defined before C++20).
+#define COMPARE_SIGNED(T,X) (*static_cast<typename std::make_signed<T>::type*>(X))
+#define COMPARE_EQI(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return COMPARE_SIGNED(T,x)==COMPARE_SIGNED(T,a); }
+#define COMPARE_LEI(T) int compare_tc_##T##_le(void* x,void* a,void* b) { return COMPARE_SIGNED(T,x)<=COMPARE_SIGNED(T,a); }
+#define COMPARE_GEI(T) int compare_tc_##T##_ge(void* x,void* a,void* b) { return COMPARE_SIGNED(T,x)>=COMPARE_SIGNED(T,a); }
+#define COMPARE_NEI(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return COMPARE_SIGNED(T,x)!=COMPARE_SIGNED(T,a); }
+#define COMPARE_LTI(T) int compare_tc_##T##_lt(void* x,void* a,void* b) { return COMPARE_SIGNED(T,x)<COMPARE_SIGNED(T,a); }
+#define COMPARE_GTI(T) int compare_tc_##T##_gt(void* x,void* a,void* b) { return COMPARE_SIGNED(T,x)>COMPARE_SIGNED(T,a); }
+#define COMPARE_INI(T) int compare_tc_##T##_in(void* x,void* a,void* b) { return b!=nullptr && COMPARE_SIGNED(T,a)<=COMPARE_SIGNED(T,x) && COMPARE_SIGNED(T,x)<=COMPARE_SIGNED(T,b); }
+#define COMPARE_NII(T) int compare_tc_##T##_ni(void* x,void* a,void* b) { return b==nullptr || !(COMPARE_SIGNED(T,a)<=COMPARE_SIGNED(T,x) && COMPARE_SIGNED(T,x)<=COMPARE_SIGNED(T,b)); }
+
+// PT_set is stored in an int64-sized property but compared as an unsigned
+// bitmask. memcpy preserves the bit representation without violating C++
+// strict-aliasing rules when the storage's declared type is signed.
+template <typename U> static U compare_unsigned_bits(const void *ptr) {
+  U value;
+  std::memcpy(&value, ptr, sizeof(value));
+  return value;
+}
+#define COMPAREOPU(T,U) \
+int compare_tc_##T##_eq(void* x,void* a,void*) { return compare_unsigned_bits<U>(x)==compare_unsigned_bits<U>(a); } \
+int compare_tc_##T##_le(void* x,void* a,void*) { return compare_unsigned_bits<U>(x)<=compare_unsigned_bits<U>(a); } \
+int compare_tc_##T##_ge(void* x,void* a,void*) { return compare_unsigned_bits<U>(x)>=compare_unsigned_bits<U>(a); } \
+int compare_tc_##T##_ne(void* x,void* a,void*) { return compare_unsigned_bits<U>(x)!=compare_unsigned_bits<U>(a); } \
+int compare_tc_##T##_lt(void* x,void* a,void*) { return compare_unsigned_bits<U>(x)<compare_unsigned_bits<U>(a); } \
+int compare_tc_##T##_gt(void* x,void* a,void*) { return compare_unsigned_bits<U>(x)>compare_unsigned_bits<U>(a); } \
+int compare_tc_##T##_in(void* x,void* a,void* b) { return b!=nullptr && compare_unsigned_bits<U>(a)<=compare_unsigned_bits<U>(x) && compare_unsigned_bits<U>(x)<=compare_unsigned_bits<U>(b); } \
+int compare_tc_##T##_ni(void* x,void* a,void* b) { return b==nullptr || !(compare_unsigned_bits<U>(a)<=compare_unsigned_bits<U>(x) && compare_unsigned_bits<U>(x)<=compare_unsigned_bits<U>(b)); }
 
 #define COMPAREOPB(T) COMPARE_EQB(T) COMPARE_NEB(T)
 #define COMPARE_EQB(T)                                                         \
@@ -155,6 +151,8 @@ COMPAREOPF(float)
 COMPAREOPI(uint16)
 COMPAREOPI(uint32)
 COMPAREOPI(uint64)
+COMPAREOPU(set,uint64)
+COMPAREOPU(u32,uint32)
 COMPAREOPB(bool)
 COMPAREOPS(string)
 COMPAREOPO(object)

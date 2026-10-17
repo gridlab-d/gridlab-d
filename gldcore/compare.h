@@ -37,6 +37,8 @@ TCOPD(float);
 TCOPD(uint16);
 TCOPD(uint32);
 TCOPD(uint64);
+TCOPD(set);
+TCOPD(u32);
 TCOPD(string);
 TCOPD(bool);
 TCOPD(timestamp);
