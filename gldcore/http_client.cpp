@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cerrno>
+#include <climits>
 #include <cstdlib>
 #include <limits>
 
@@ -170,6 +171,8 @@ size_t hread(char *buffer, size_t size, HTTP *http) {
 /* URL access */
 HTTPRESULT *http_new_result(void) {
   HTTPRESULT *result = (HTTPRESULT *)malloc(sizeof(HTTPRESULT));
+  if (result == nullptr)
+    return nullptr;
   result->body.data = nullptr;
   result->body.size = 0;
   result->header.data = nullptr;
@@ -180,10 +183,11 @@ HTTPRESULT *http_new_result(void) {
 
 void http_delete_result(void *result_in) {
   HTTPRESULT *result = reinterpret_cast<HTTPRESULT *>(result_in);
-  if (result->body.size > 0)
-    free(result->body.data);
-  if (result->header.size > 0)
-    free(result->header.data);
+  if (result == nullptr)
+    return;
+  // Free allocations even when their logical content length is zero.
+  free(result->body.data);
+  free(result->header.data);
   free(result);
 }
 
@@ -202,74 +206,113 @@ static size_t http_body_offset(const char *buffer, size_t len) {
 
 void *http_read(const char *url, int maxlen) {
   HTTPRESULT *result = http_new_result();
+  if (result == nullptr)
+    return nullptr;
+  if (url == nullptr) {
+    result->status = EINVAL;
+    return result;
+  }
 
   if (strncmp(url, "http://", 7) == 0) {
     HTTP *fp = hopen(url, maxlen);
     if (fp == nullptr) {
       output_error("http_read('%s'): unable to access url", url);
+      result->status = EIO;
+      return result;
+    }
+    const size_t len = hfilelength(fp);
+    // A capped response may be truncated even without Content-Length.
+    const size_t body_offset = http_body_offset(fp->buf, len);
+    if (maxlen <= 0 || len >= static_cast<size_t>(maxlen) ||
+        body_offset == 0 || len > static_cast<size_t>(INT_MAX)) {
+      output_error("http_read('%s'): truncated or malformed HTTP response", url);
+      result->status = EINVAL;
+      hclose(fp);
+      return result;
+    }
+    const size_t header_len = body_offset - 4;
+    const size_t body_len = len - body_offset;
+    result->header.data = (char *)malloc(header_len + 1);
+    result->body.data = (char *)malloc(body_len + 1);
+    if (result->header.data == nullptr || result->body.data == nullptr) {
+      result->status = ENOMEM;
+      hclose(fp);
+      return result;
+    }
+    memcpy(result->header.data, fp->buf, header_len);
+    result->header.data[header_len] = '\0';
+    memcpy(result->body.data, fp->buf + body_offset, body_len);
+    result->body.data[body_len] = '\0';
+    result->header.size = static_cast<int>(header_len);
+    result->body.size = static_cast<int>(body_len);
+    result->status = 0;
+    hclose(fp);
+  } else if (strncmp(url, "file://", 7) == 0) {
+    FILE *fp = fopen(url + 7, "rb");
+    if (fp == nullptr) {
       result->status = errno;
+      return result;
+    }
+    if (fseek(fp, 0, SEEK_END) != 0) {
+      result->status = EIO;
     } else {
-      size_t len = (int)hfilelength(fp);
-      size_t hlen = len;
-      char *buffer = (char *)malloc(len + 1);
-      if (hread(buffer, len, fp) <= 0) {
-        output_error("http_read('%s'): unable to read file", url);
-        result->status = errno;
+      const long n = ftell(fp);
+      if (n < 0 || n > INT_MAX || fseek(fp, 0, SEEK_SET) != 0) {
+        result->status = EINVAL;
       } else {
-        buffer[len] = '\0';
-        const size_t body_offset = http_body_offset(buffer, len);
-        if (body_offset != 0) {
-          hlen = body_offset - 4;
-          buffer[hlen] = '\0';
-          // Preserve every body byte, including leading CR, LF, SP, HTAB and NUL.
-          result->body.size = static_cast<int>(len - body_offset);
-          result->body.data = (char *)malloc(result->body.size + 1);
-          memcpy(result->body.data, buffer + body_offset, result->body.size);
-          result->body.data[result->body.size] = '\0';
+        const size_t size = static_cast<size_t>(n);
+        result->body.data = (char *)malloc(size + 1);
+        if (result->body.data == nullptr) {
+          result->status = ENOMEM;
+        } else if (fread(result->body.data, 1, size, fp) != size) {
+          result->status = EIO;
         } else {
-          result->body.data = const_cast<char *>("");
-          result->body.size = 0;
+          result->body.data[size] = '\0';
+          result->body.size = static_cast<int>(size);
+          result->status = 0;
         }
-        result->header.size = (int)hlen;
-        result->header.data = (char *)malloc(hlen + 1);
-        strcpy(result->header.data, buffer);
-        result->status = 0;
       }
     }
-    hclose(fp);
-  }
-
-  else if (strncmp(url, "file://", 7) == 0) {
-    FILE *fp = fopen(url + 7, "rt");
-    if (fp == nullptr) {
-      output_error("http_read('%s'): unable to access file", url);
-      result->status = errno;
-    } else {
-      result->body.size = filelength(fileno(fp)) + 1;
-      result->body.data = (char *)malloc(result->body.size);
-      memset(result->body.data, 0, result->body.size);
-      if (fread(result->body.data, 1, result->body.size, fp) <= 0) {
-        output_error("http_read('%s'): unable to read file", url);
-        result->status = errno;
-      } else
-        result->status = 0;
-    }
     fclose(fp);
+  } else {
+    result->status = EINVAL;
   }
-  return static_cast<void *>(result);
+  return result;
 }
 const char *http_get_header_data(HTTPRESULT *result, const char *param) {
-  static char buffer[1024] = "";
-  char target[256];
-  char *ptr;
+  if (result == nullptr || result->header.data == nullptr || result->header.size < 0)
+    return nullptr;
   if (param == nullptr)
     return result->header.data;
-  snprintf(target, sizeof(target), "\n%s: ", param);
-  ptr = strstr(result->header.data, target);
-  if (ptr == nullptr)
-    return nullptr;
-  sscanf(ptr + strlen(param) + 3, "%1023[^\r\n]", buffer);
-  return buffer;
+  // Per-thread scratch storage; do not share response values across threads.
+  static thread_local char buffer[1024];
+  const size_t wanted = strlen(param);
+  const char *line = result->header.data;
+  const char *limit = line + result->header.size;
+  while (line < limit) {
+    const char *end = line;
+    while (end < limit && *end != '\r' && *end != '\n') ++end;
+    const char *colon = line;
+    while (colon < end && *colon != ':') ++colon;
+    bool matches = colon < end && static_cast<size_t>(colon - line) == wanted;
+    for (size_t i = 0; matches && i < wanted; ++i)
+      matches = std::tolower(static_cast<unsigned char>(line[i])) ==
+                std::tolower(static_cast<unsigned char>(param[i]));
+    if (matches) {
+      const char *value = colon + 1;
+      while (value < end && (*value == ' ' || *value == '\t')) ++value;
+      while (end > value && (end[-1] == ' ' || end[-1] == '\t')) --end;
+      const size_t size = static_cast<size_t>(end - value);
+      if (size >= sizeof(buffer)) return nullptr;
+      memcpy(buffer, value, size);
+      buffer[size] = '\0';
+      return buffer;
+    }
+    line = end;
+    if (line < limit && *line == '\r') ++line;
+    if (line < limit && *line == '\n') ++line;
+  }
+  return nullptr;
 }
 
 unsigned int http_get_status(HTTPRESULT *result)
@@ -291,27 +334,41 @@ void http_get_options(void) {
            ((option == nullptr) ? global_wget_options.get_string() : nullptr),
            ";", &last)) != nullptr) {
     char name[1024], value[1024];
-    int n = sscanf(option, "%[^:]:%[^\n\r]", name, value);
+    const char *colon = strchr(option, ':');
+    if (colon == nullptr) {
+      output_error("wget_options: expected name:value option");
+      continue;
+    }
+    const size_t name_len = static_cast<size_t>(colon - option);
+    const size_t value_len = strlen(colon + 1);
+    if (name_len == 0 || name_len >= sizeof(name) ||
+        value_len == 0 || value_len >= sizeof(value) ||
+        strpbrk(colon + 1, "\r\n") != nullptr) {
+      output_error("wget_options: invalid or oversized option");
+      continue;
+    }
+    memcpy(name, option, name_len);
+    name[name_len] = '\0';
+    memcpy(value, colon + 1, value_len + 1);
+    const int n = 2;
     if (n > 0) {
       if (strcmp(name, "maxsize") == 0) {
         if (n > 1) {
-          char unit[1024] = "";
-          int m = sscanf(value, "%llu%[A-Za-z]", &wget_maxsize, unit);
-          if (m == 2) {
-            if (strcmp(unit, "kB") == 0)
-              wget_maxsize *= 1000;
-            else if (strcmp(unit, "MB") == 0)
-              wget_maxsize *= 1000000;
-            else if (strcmp(unit, "GB") == 0)
-              wget_maxsize *= 1000000000;
-            else if (strcmp(unit, "TB") == 0)
-              wget_maxsize *= 1000000000000;
-            else
-              output_error("wget_options: unit '%s' of maxsize are not valid",
-                           unit);
-          } else if (m == 0)
-            output_error("wget_options: unable to read maxsize value '%s'",
-                         value);
+          errno = 0;
+          char *end = nullptr;
+          const unsigned long long amount = strtoull(value, &end, 10);
+          unsigned long long factor = 1;
+          if (strcmp(end, "kB") == 0) factor = 1000ULL;
+          else if (strcmp(end, "MB") == 0) factor = 1000000ULL;
+          else if (strcmp(end, "GB") == 0) factor = 1000000000ULL;
+          else if (strcmp(end, "TB") == 0) factor = 1000000000000ULL;
+          else if (*end != '\0') factor = 0;
+          if (end == value || value[0] == '-' || errno == ERANGE || factor == 0 ||
+              amount > std::numeric_limits<unsigned int64>::max() / factor) {
+            output_error("wget_options: invalid or overflowing maxsize '%s'", value);
+          } else {
+            wget_maxsize = static_cast<unsigned int64>(amount * factor);
+          }
         } else
           output_error("wget_options: option '%s' requires a value", name);
       } else if (strcmp(name, "update") == 0) {
@@ -340,7 +397,8 @@ void http_get_options(void) {
   }
   if (strcmp(wget_cachedir, "-") == 0)
     strcpy(wget_cachedir, global_workdir);
-  output_debug("wget_option maxsize = %d", wget_maxsize);
+  output_debug("wget_option maxsize = %llu",
+               static_cast<unsigned long long>(wget_maxsize));
   output_debug("wget_option update = %d", wget_update);
   output_debug("wget_option cachedir = '%s'", wget_cachedir);
   /** @todo read options from global_wget_options */
@@ -391,6 +449,12 @@ static bool http_body_is_complete(HTTPRESULT *result)
 		if ( end==line ) break;
 		const char *colon = line;
 		while ( colon<end && *colon!=':' ) ++colon;
+		// The downloader does not implement chunked transfer decoding.
+		const char transfer[] = "transfer-encoding";
+		bool chunked = colon<end && colon-line==sizeof(transfer)-1;
+		for ( size_t i=0; chunked && i<sizeof(transfer)-1; ++i )
+			chunked = tolower((unsigned char)line[i])==transfer[i];
+		if ( chunked ) return false;
 		const char field[] = "content-length";
 		bool matches = colon<end && colon-line==sizeof(field)-1;
 		for ( size_t i=0; matches && i<sizeof(field)-1; ++i )
@@ -423,76 +487,36 @@ static bool http_body_is_complete(HTTPRESULT *result)
 
 int http_saveas(char *url, char *file)
 {
-	HTTPRESULT *result;
-	unsigned int status;
-// TODO finish update test
-//	struct stat st;
-	time_t modtime;
-
-	http_get_options();
-
-// TODO finish update test
-//	if ( wget_update==WU_NEVER && stat(file,&st)==0 )
-//		return 1;
-
-	result = static_cast<HTTPRESULT *>(http_read(url, 0x4000)); /* read only enough to get header */
-	if ( result==nullptr || result->header.data==nullptr )
-	{
-		output_error("http_saveas(char *url='%s', char *file='%s'): hopen failed", url, file);
-		if ( result!=nullptr ) http_delete_result(result);
-		return 0;
-	}
-	else if ( (status=http_get_status(result))==200 )
-	{
-		const char *cl = http_get_header_data(result,"Content-Length");
-		size_t len = (cl?atoi(cl):0);
-		FILE *fp;
-
-		modtime = http_read_datetime(http_get_header_data(result,"Last-Modified"));
-		output_debug("URL '%s' save as '%s'...", url, file);
-		output_debug("  result status: %d", status);
-		output_debug("  result length: %d", len);
-		if ( modtime!=0 ) output_debug("  result last modified: %s", ctime(&modtime));
-// TODO finish update test
-//		output_debug("  file mtime: %s", ctime(&st.st_mtime));
-//		if ( wget_update==WU_NEVER && st.st_mtime>0 && st.st_mtime>modtime )
-//			return 1;
-
-		http_delete_result(result);
-		result = static_cast<HTTPRESULT *>(http_read(url, wget_maxsize));
-		if ( result==nullptr || result->header.data==nullptr ||
-			http_get_status(result)!=200 || (result->body.size>0 && result->body.data==nullptr) ||
-			!http_body_is_complete(result) )
-		{
-			output_error("unable to download URL '%s'", url);
-			if ( result!=nullptr ) http_delete_result(result);
-			return 0;
-		}
-		fp = fopen(file,"wb");
-
-		if ( fp==nullptr )
-		{
-			output_error("unable to write file '%s': %s", file, strerror(errno));
-			http_delete_result(result);
-			return 0;
-		}
-		else
-		{
-			if ( result->header.size+result->body.size<len )
-				output_warning("URL '%s' is larger than maxsize %d", url, wget_maxsize);
-			else
-				output_verbose("URL '%s' saved to '%s' ok", url,file);
-			bool ok = fwrite(result->body.data,1,result->body.size,fp)==(size_t)result->body.size;
-			if ( fclose(fp)!=0 ) ok = false;
-			http_delete_result(result);
-			if ( !ok ) output_error("unable to complete file '%s'", file);
-			return ok ? 1 : 0;
-		}
-	}
-	else
-	{
-		output_error("URL '%s' return code %d", url, status);
-		http_delete_result(result);
-		return 0;
-	}
+  if (url == nullptr || file == nullptr)
+    return 0;
+  http_get_options();
+  // http_read accepts int maxlen; never narrow the configured 64-bit limit.
+  const int maxlen = wget_maxsize > static_cast<unsigned int64>(INT_MAX)
+                         ? INT_MAX : static_cast<int>(wget_maxsize);
+  HTTPRESULT *result = static_cast<HTTPRESULT *>(http_read(url, maxlen));
+  if (result == nullptr || result->status != 0 ||
+      result->header.data == nullptr || http_get_status(result) != 200 ||
+      result->body.data == nullptr || !http_body_is_complete(result)) {
+    output_error("http_saveas: invalid or incomplete response for '%s'", url);
+    http_delete_result(result);
+    return 0;
+  }
+  FILE *fp = fopen(file, "wb");
+  if (fp == nullptr) {
+    output_error("http_saveas: cannot open '%s': %s", file, strerror(errno));
+    http_delete_result(result);
+    return 0;
+  }
+  const size_t body_len = static_cast<size_t>(result->body.size);
+  bool ok = fwrite(result->body.data, 1, body_len, fp) == body_len;
+  if (fclose(fp) != 0) ok = false;
+  http_delete_result(result);
+  if (!ok) {
+    // Never leave a partially written download looking successful.
+    remove(file);
+    output_error("http_saveas: failed to write complete file '%s'", file);
+    return 0;
+  }
+  output_verbose("URL '%s' saved to '%s' ok", url, file);
+  return 1;
 }
