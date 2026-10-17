@@ -1,6 +1,6 @@
-"""Focused regression checks for GridLAB-D PR #1802.
+"""Focused regression checks for integer comparator widths and unsigned ordering.
 
-Run from repository root: python3 -m unittest gldcore.autotest.test_pr_1802 -v
+Run from repository root: python3 -m unittest gldcore.autotest.test_integer_comparators -v
 These targeted tests do not replace build or full model integration tests.
 """
 import pathlib
@@ -8,7 +8,6 @@ import unittest
 import shutil
 import subprocess
 import tempfile
-from textwrap import dedent
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 
@@ -29,20 +28,20 @@ def check_cpp(body):
         if run_result.returncode != 0:
             raise AssertionError(run_result.stderr + run_result.stdout)
 
-class PRRegression(unittest.TestCase):
-    def test_source_invariants_0(self):
+class IntegerComparatorTests(unittest.TestCase):
+    def test_unsigned_comparator_macros_are_defined(self):
         src = read('gldcore/compare.cpp')
         self.assertIn('COMPAREOPU(set,uint64)', src)
         self.assertIn('COMPAREOPU(u32,uint32)', src)
         self.assertIn('COMPARE_SIGNED', src)
 
-    def test_source_invariants_1(self):
+    def test_property_dispatch_includes_unsigned_types(self):
         src = read('gldcore/property.cpp')
         self.assertIn('{TCOPS(set)}', src)
         self.assertIn('{TCOPS(uint32)}', src)
         self.assertIn('{TCOPS(u32)}', src)
 
-    def test_source_invariants_2(self):
+    def test_unsigned_comparator_declarations_exist(self):
         src = read('gldcore/compare.h')
         self.assertIn('TCOPD(set);', src)
         self.assertIn('TCOPD(u32);', src)
