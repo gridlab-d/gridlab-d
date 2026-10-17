@@ -1,6 +1,6 @@
-"""Focused regression checks for GridLAB-D PR #1804.
+"""Focused regression checks for quadratic interpolation with non-unit spacing.
 
-Run from repository root: python3 -m unittest gldcore.autotest.test_pr_1804 -v
+Run from repository root: python3 -m unittest gldcore.autotest.test_quadratic_interpolation -v
 These targeted tests do not replace build or full model integration tests.
 """
 import pathlib
@@ -29,13 +29,13 @@ def check_cpp(body):
         if run_result.returncode != 0:
             raise AssertionError(run_result.stderr + run_result.stdout)
 
-class PRRegression(unittest.TestCase):
-    def test_source_invariants_0(self):
+class QuadraticInterpolationTests(unittest.TestCase):
+    def test_quadratic_coefficient_uses_sample_spacing(self):
         src = read('gldcore/interpolate.cpp')
         self.assertIn('(2*h*h)', src)
         self.assertIn('Requires equally spaced', src)
 
-    def test_actual_quadratic_function(self):
+    def test_interpolates_equally_spaced_quadratic_samples(self):
         src = read('gldcore/interpolate.cpp')
         body = src[src.index('double interpolate_quadratic('):src.index('// EOF')]
         p = dedent('''\
