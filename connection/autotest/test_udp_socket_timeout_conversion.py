@@ -32,7 +32,8 @@ class UDPSocketTimeoutConversionTests(unittest.TestCase):
     def test_milliseconds_convert_to_timeval_microseconds(self):
         src = read('connection/udp.cpp')
         self.assertIn('timeout.tv_usec = (n % 1000) * 1000', src)
-        self.assertIn('A configured 0 ms', src)
+        self.assertIn('Clamp before narrowing', src)
+        self.assertIn('seconds > limit / 1000ULL', src)
         self.assertIn('static_cast<unsigned long long>(optval->tv_usec) / 1000ULL', src)
 
     def test_windows_socket_timeout_limits(self):

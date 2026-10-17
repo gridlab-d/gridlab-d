@@ -173,12 +173,15 @@ size_t udp::send(const char *msg, size_t len) {
   }
   // format outbound message header
   char temp[256];
-  int tlim = (int)ceil((double)timeout.tv_usec / 1000000.0) + (int)timeout.tv_sec;
-  // A configured 0 ms socket timeout does not fit on the one-digit wire header.
-  if (tlim > 9)
+  // Clamp before narrowing the (possibly 64-bit) timeval seconds field.
+  int tlim = 1;
+  if (timeout.tv_sec >= 9) {
     tlim = 9;
-  else if (tlim < 1)
-    tlim = 1;
+  } else if (timeout.tv_sec >= 0) {
+    const int seconds = static_cast<int>(timeout.tv_sec);
+    tlim = seconds + (timeout.tv_usec > 0 ? 1 : 0);
+    if (tlim < 1) tlim = 1;
+  }
   snprintf(temp, sizeof(temp), "%-1d %-3d %-7zu %-5.5s %-3.1f %-1d %-3d   ", header_version,
           header_size, len, message_format, message_version, tlim, 0);
   if (len > 1500 - strlen(temp)) {
@@ -311,13 +314,18 @@ int udp::call_setsockopt(SOCKET s, int level, int optname, timeval *optval,
     WSASetLastError(WSAEINVAL);
     return SOCKET_ERROR;
   }
-  const unsigned long long timeout_ms =
-      static_cast<unsigned long long>(optval->tv_sec) * 1000ULL +
+  const unsigned long long seconds =
+      static_cast<unsigned long long>(optval->tv_sec);
+  const unsigned long long millis =
       static_cast<unsigned long long>(optval->tv_usec) / 1000ULL;
-  if (timeout_ms > std::numeric_limits<DWORD>::max()) {
+  const unsigned long long limit = std::numeric_limits<DWORD>::max();
+  // Validate before multiplying: an arbitrary timeval may exceed uint64.
+  if (seconds > limit / 1000ULL ||
+      (seconds == limit / 1000ULL && millis > limit % 1000ULL)) {
     WSASetLastError(WSAEINVAL);
     return SOCKET_ERROR;
   }
+  const unsigned long long timeout_ms = seconds * 1000ULL + millis;
   const DWORD time_out = static_cast<DWORD>(timeout_ms);
   return setsockopt(s, level, optname, (const char *)&time_out,
                     sizeof(time_out));
