@@ -19,6 +19,10 @@
 #endif
 
 HTTP *hopen(const char *url, int maxlen) {
+  if (url == nullptr || maxlen <= 0) {
+    output_error("hopen: invalid URL or maximum response size");
+    return nullptr;
+  }
   struct sockaddr_in serv_addr;
   struct hostent *server;
   char protocol[64];
@@ -27,18 +31,6 @@ HTTP *hopen(const char *url, int maxlen) {
   HTTP *http;
   char request[1024];
   int len;
-
-#ifdef _WIN32
-  /* init sockets */
-  WORD wsaVersion = MAKEWORD(2, 2);
-  WSADATA wsaData;
-  if (WSAStartup(wsaVersion, &wsaData) != 0) {
-    output_error("hopen(char *url='%s', int maxlen=%d): unable to initialize "
-                 "Windows sockets",
-                 url, maxlen);
-    return nullptr;
-  }
-#endif
 
   /* extract URL parts */
   if (sscanf(url, "%63[^:]://%1023[^/]%1023s", protocol, hostname, filespec) !=
@@ -62,6 +54,16 @@ HTTP *hopen(const char *url, int maxlen) {
   http->len = 0;
   http->pos = 0;
   http->sd = INVALID_SOCKET;
+
+#ifdef _WIN32
+  // Every successful startup is balanced by hclose(), including error paths.
+  WSADATA wsaData;
+  if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+    output_error("hopen: unable to initialize Windows sockets");
+    free(http);
+    return nullptr;
+  }
+#endif
 
   /* setup socket */
   http->sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -106,18 +108,33 @@ HTTP *hopen(const char *url, int maxlen) {
     goto Error;
   }
   output_debug("sending HTTP message \n%s", request);
-  if (send(http->sd, request, len, 0) < len) {
-    output_error("hopen(char *url='%s', maxlen=%d): unable to send request",
-                 url, maxlen);
-    goto Error;
+  {
+    int sent = 0;
+    while (sent < len) {
+      const int n = send(http->sd, request + sent, len - sent, 0);
+      if (n <= 0) {
+        output_error("hopen: unable to send complete HTTP request");
+        goto Error;
+      }
+      sent += n;
+    }
   }
 
   /* read response header */
-  http->buf = (char *)malloc(maxlen + 1);
+  http->buf = (char *)malloc(static_cast<size_t>(maxlen) + 1);
+  if (http->buf == nullptr) {
+    output_error("hopen: unable to allocate HTTP response buffer");
+    goto Error;
+  }
   http->len = 0;
   do {
-    len =
-        recv(http->sd, http->buf + http->len, (int)(maxlen - http->len), 0x00);
+    // A response at the cap cannot be proven complete without another read.
+    if (http->len >= static_cast<size_t>(maxlen)) {
+      output_error("hopen: HTTP response reached configured maximum size");
+      goto Error;
+    }
+    len = recv(http->sd, http->buf + http->len,
+               static_cast<int>(static_cast<size_t>(maxlen) - http->len), 0);
     if (len == 0) {
       output_debug("hopen(char *url='%s', maxlen=%d): connection closed", url,
                    maxlen);
@@ -155,6 +172,9 @@ int hclose(HTTP *http) {
     if (http->buf != nullptr)
       free(http->buf);
     free(http);
+#ifdef _WIN32
+    WSACleanup();
+#endif
   }
   return 1;
 }

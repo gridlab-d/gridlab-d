@@ -11,3 +11,7 @@ class HTTPRequestBoundsTests(unittest.TestCase):
         self.assertIn('http->sd = INVALID_SOCKET;',src)
         self.assertIn('if (http->sd != INVALID_SOCKET)',src)
         self.assertIn('hclose(http);',src)
+        self.assertIn('WSACleanup();',src)
+        self.assertIn('HTTP response reached configured maximum size',src)
+        self.assertIn('while (sent < len)',src)
+        self.assertIn('unable to allocate HTTP response buffer',src)
