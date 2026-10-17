@@ -187,6 +187,19 @@ void http_delete_result(void *result_in) {
   free(result);
 }
 
+// Return the first body byte, or 0 when no complete HTTP header is present.
+// Scan by length so binary response bodies can contain NUL and whitespace.
+static size_t http_body_offset(const char *buffer, size_t len) {
+  if (buffer == nullptr || len < 4)
+    return 0;
+  for (size_t i = 0; i <= len - 4; ++i) {
+    if (buffer[i] == '\r' && buffer[i + 1] == '\n' &&
+        buffer[i + 2] == '\r' && buffer[i + 3] == '\n')
+      return i + 4;
+  }
+  return 0;
+}
+
 void *http_read(const char *url, int maxlen) {
   HTTPRESULT *result = http_new_result();
 
@@ -199,34 +212,19 @@ void *http_read(const char *url, int maxlen) {
       size_t len = (int)hfilelength(fp);
       size_t hlen = len;
       char *buffer = (char *)malloc(len + 1);
-      char *data = nullptr;
       if (hread(buffer, len, fp) <= 0) {
         output_error("http_read('%s'): unable to read file", url);
         result->status = errno;
       } else {
         buffer[len] = '\0';
-        data = strstr(buffer, "\r\n\r\n");
-        if (data != nullptr) {
-          hlen = data - buffer;
-          *data++ = '\0';
-          result->body.size = (int)(len - hlen - 1);
-          while (isspace(*data)) {
-            data++;
-            result->body.size--;
-          }
-          //					if ( sscanf(data,"%x",&dlen)==1
-          //)
-          //					{
-          //						data =
-          //strchr(data,'\n'); 						while ( isspace(*data) ) {data++;}
-          //						result->body.size =
-          //dlen; 						result->body.data = malloc(dlen+1);
-          //					}
-          //					else
-          //					{
+        const size_t body_offset = http_body_offset(buffer, len);
+        if (body_offset != 0) {
+          hlen = body_offset - 4;
+          buffer[hlen] = '\0';
+          // Preserve every body byte, including leading CR, LF, SP, HTAB and NUL.
+          result->body.size = static_cast<int>(len - body_offset);
           result->body.data = (char *)malloc(result->body.size + 1);
-          //					}
-          memcpy(result->body.data, data, result->body.size);
+          memcpy(result->body.data, buffer + body_offset, result->body.size);
           result->body.data[result->body.size] = '\0';
         } else {
           result->body.data = const_cast<char *>("");
@@ -420,7 +418,7 @@ static bool http_body_is_complete(HTTPRESULT *result)
 		if ( line<header_end && *line=='\r' ) ++line;
 		if ( line<header_end && *line=='\n' ) ++line;
 	}
-	return !found || expected <= (unsigned long long)result->body.size;
+	return !found || expected == (unsigned long long)result->body.size;
 }
 
 int http_saveas(char *url, char *file)
