@@ -3,6 +3,11 @@
 // Implements the datagram transport mechanism
 //
 #include "udp.h"
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+#include <limits>
 
 udp::udp()
     : // default defaults for non-strings
@@ -37,96 +42,77 @@ udp::udp()
 
 udp::~udp() { flush(); }
 
+// Parse an unsigned decimal option, rejecting signs, junk and overflow.
+static bool udp_parse_uint(const char *text, unsigned int &number) {
+  if (text == nullptr || *text < '0' || *text > '9') return false;
+  errno = 0;
+  char *end = nullptr;
+  const unsigned long long value = strtoull(text, &end, 10);
+  if (errno == ERANGE || end == text || *end != '\0' ||
+      value > std::numeric_limits<unsigned int>::max()) return false;
+  number = static_cast<unsigned int>(value);
+  return true;
+}
+
 /// udp pseudo-property handler
 int udp::option(char *command) {
-  char param[256], value[1024];
   while (command != nullptr && *command != '\0') {
-    // Do not silently truncate options; validate complete tokens first.
-    size_t keylen = strcspn(command, " =");
-    if (keylen>=sizeof(param)) {
-      error("transport option name exceeds 255 bytes");
+    while (*command == ',' || *command == ';' ||
+           isspace(static_cast<unsigned char>(*command))) ++command;
+    if (*command == '\0') break;
+    const char *end = command + strcspn(command, ",;");
+    const char *key_end = command;
+    while (key_end < end && *key_end != '=' &&
+           !isspace(static_cast<unsigned char>(*key_end))) ++key_end;
+    const size_t key_len = static_cast<size_t>(key_end - command);
+    const char *start = key_end;
+    while (start < end && (*start == '=' ||
+           isspace(static_cast<unsigned char>(*start)))) ++start;
+    while (end > start && isspace(static_cast<unsigned char>(end[-1]))) --end;
+    const size_t value_len = static_cast<size_t>(end - start);
+    if (key_len == 0 || key_len >= 256 || value_len == 0 ||
+        value_len >= 1024) {
+      error("transport option has empty or oversized name/value");
       return 0;
     }
-    const char *value_start = command + keylen;
-    value_start += strspn(value_start, " =");
-    if (strcspn(value_start, ",;")>=sizeof(value)) {
-      error("transport option value exceeds 1023 bytes");
-      return 0;
-    }
-    // scanf field width excludes the NUL terminator.
-    switch (sscanf(command, "%255[^ =]%*[ =]%1023[^,;]", param, value)) {
-    case 1:
-      // TODO
-      error("option \"transport:%s\" not recognized", command);
-      return 0;
-    case 2:
-      if (strcmp(param, "port") == 0)
-        set_portnum(atoi(value));
-      else if (strcmp(param, "header_version") == 0)
-        set_header_version(atoi(value));
-      else if (strcmp(param, "timeout") == 0)
-        set_timeout(atoi(value));
-      else if (strcmp(param, "hostname") == 0)
-        set_hostname(value);
-      else if (strcmp(param, "uri") == 0)
-        set_uri("%s", value);
-      else if (strcmp(param, "de"
-                             "bug_level") == 0)
-        set_debug_level(atoi(value));
-      else if (strcmp(param, "on_error") == 0) {
-        if (strcmp(value, "abort") == 0)
-          onerror_abort();
-        else if (strcmp(value, "retry") == 0)
-          onerror_retry();
-        else if (strcmp(value, "ignore") == 0)
-          onerror_ignore();
-        else {
-          error("option \"transport:%s\" not a valid on_error command",
-                command);
+    char param[256], value[1024];
+    memcpy(param, command, key_len); param[key_len] = '\0';
+    memcpy(value, start, value_len); value[value_len] = '\0';
+    unsigned int number = 0;
+    if (strcmp(param, "port") == 0) {
+      if (!udp_parse_uint(value, number) || number == 0 || number > 65535) return 0;
+      set_portnum(number);
+    } else if (strcmp(param, "header_version") == 0) {
+      if (!udp_parse_uint(value, number)) return 0;
+      set_header_version(number);
+    } else if (strcmp(param, "timeout") == 0) {
+      if (!udp_parse_uint(value, number)) return 0;
+      set_timeout(number);
+    } else if (strcmp(param, "hostname") == 0) {
+      set_hostname(value);
+    } else if (strcmp(param, "uri") == 0) {
+      set_uri("%s", value);
+    } else if (strcmp(param, "debug_level") == 0) {
+      if (!udp_parse_uint(value, number)) return 0;
+      set_debug_level(number);
+    } else if (strcmp(param, "on_error") == 0) {
+      if (strcmp(value, "abort") == 0) onerror_abort();
+      else if (strcmp(value, "retry") == 0) onerror_retry();
+      else if (strcmp(value, "ignore") == 0) onerror_ignore();
+      else return 0;
+    } else if (strcmp(param, "maxretry") == 0) {
+      if (strcmp(value, "none") == 0) set_maxretry();
+      else {
+        if (!udp_parse_uint(value, number) || number == 0 || number > INT_MAX)
           return 0;
-        }
-      } else if (strcmp(param, "maxretry") == 0) {
-        int n = atoi(value);
-        if (strcmp(value, "none") == 0)
-          set_maxretry();
-        else {
-          if (n > 0)
-            set_maxretry(n);
-          else {
-            error("option \"transport:%s\" not a valid maxretry command",
-                  command);
-            return 0;
-          }
-        }
-      } else {
-        error("option \"transport:%s\" not recognized", command);
-        return 0;
+        set_maxretry(static_cast<int>(number));
       }
-      break;
-    default:
-      error("option \"transport:%s\" cannot be parsed", command);
+    } else {
+      error("unknown transport option '%s'", param);
       return 0;
     }
-    char *comma = strchr(command, ',');
-    char *semic = strchr(command, ';');
-    if (comma && semic)
-      if ((comma - command) > (semic - command)) {
-        command = semic;
-      } else {
-        command = comma;
-      }
-    // original intent was:
-    // command = min(comma, semic);
-    else if (comma)
-      command = comma;
-    else if (semic)
-      command = semic;
-    else
-      command = nullptr;
-    if (command) {
-      while (isspace(*command) || *command == ',' || *command == ';')
-        command++;
-    }
+    command = const_cast<char *>(command + strcspn(command, ",;"));
+    if (*command != '\0') ++command;
   }
   return 1;
 }
@@ -356,7 +342,9 @@ void udp::set_timeout(unsigned int n) {
     timeout.tv_usec = n;
   }
 }
-void udp::set_hostname(const char *s) { strcpy(hostname, s); }
+void udp::set_hostname(const char *s) {
+  snprintf(hostname, sizeof(hostname), "%s", s != nullptr ? s : "");
+}
 void udp::set_portnum(unsigned int n) { portnum = n; }
 void udp::set_uri(const char *fmt, ...) {
   va_list ptr;
