@@ -49,11 +49,11 @@ class IntegerComparatorTests(unittest.TestCase):
     def test_signed_and_unsigned_comparisons(self):
         src = read('gldcore/compare.cpp')
         # Compile the comparator definitions from production source, not copies.
-        begin = src.index('#define COMPAREOPU(')
-        end = src.index('\n\n', begin)
+        begin = src.index('template <typename U> static U compare_unsigned_bits(')
+        end = src.index('#define COMPAREOPB(', begin)
         macro = src[begin:end]
         prefix = src[src.index('#define COMPARE_SIGNED('):src.index('\n',src.index('#define COMPARE_SIGNED('))]
-        code = '#include <cassert>\n#include <cstdint>\n#include <type_traits>\nusing uint64=uint64_t;\n' + prefix + '\n' + macro + '''\nCOMPAREOPU(set,uint64)\nint main(){uint64 z=0,h=(1ULL<<63); assert(compare_tc_set_lt(&z,&h,nullptr)); assert(compare_tc_set_gt(&h,&z,nullptr)); assert(compare_tc_set_in(&h,&z,&h));}\n'''
+        code = '#include <cassert>\n#include <cstdint>\n#include <cstring>\n#include <type_traits>\nusing uint64=uint64_t;\n' + prefix + '\n' + macro + '''\nCOMPAREOPU(set,uint64)\nint main(){uint64 z=0,h=(1ULL<<63); assert(compare_tc_set_lt(&z,&h,nullptr)); assert(compare_tc_set_gt(&h,&z,nullptr)); assert(compare_tc_set_in(&h,&z,&h));}\n'''
         check_cpp(code)
 
     def test_signed_widths_and_unsigned_high_bits(self):
@@ -63,6 +63,7 @@ class IntegerComparatorTests(unittest.TestCase):
         macros = src[src.index('#define COMPAREOPI('):src.index('#define COMPAREOPB(')]
         code = ('''#include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <type_traits>
 #include <limits>
 using uint16 = uint16_t;
