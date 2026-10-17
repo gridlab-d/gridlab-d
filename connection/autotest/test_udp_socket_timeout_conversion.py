@@ -1,6 +1,6 @@
-"""Focused regression checks for GridLAB-D PR #1805.
+"""Focused regression checks for UDP socket timeout unit conversion and bounds.
 
-Run from repository root: python3 -m unittest connection.autotest.test_pr_1805 -v
+Run from repository root: python3 -m unittest connection.autotest.test_udp_socket_timeout_conversion -v
 These targeted tests do not replace build or full model integration tests.
 """
 import pathlib
@@ -8,7 +8,6 @@ import unittest
 import shutil
 import subprocess
 import tempfile
-from textwrap import dedent
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 
@@ -29,8 +28,8 @@ def check_cpp(body):
         if run_result.returncode != 0:
             raise AssertionError(run_result.stderr + run_result.stdout)
 
-class PRRegression(unittest.TestCase):
-    def test_source_invariants_0(self):
+class UDPSocketTimeoutConversionTests(unittest.TestCase):
+    def test_milliseconds_convert_to_timeval_microseconds(self):
         src = read('connection/udp.cpp')
         self.assertIn('timeout.tv_usec = (n % 1000) * 1000', src)
         self.assertIn('A configured 0 ms', src)
