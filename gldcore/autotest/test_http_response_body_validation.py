@@ -1,14 +1,15 @@
-"""Focused HTTP Content-Length regression checks. Run explicitly with Python unittest.
+"""Focused HTTP response body and Content-Length regression checks.
+Run from repository root: python3 -m unittest gldcore.autotest.test_http_response_body_validation -v
 These do not replace gridlabd --validate or full module integration.
 """
 import pathlib, subprocess, shutil, tempfile, unittest
 REPO=pathlib.Path(__file__).resolve().parents[2]
-class HTTPChecks(unittest.TestCase):
-    def test_handler_checks(self):
+class HTTPResponseBodyValidationTests(unittest.TestCase):
+    def test_download_status_length_and_cleanup_guards(self):
         s=(REPO/'gldcore/http_client.cpp').read_text()
         for x in ['http_body_is_complete(result)','std::numeric_limits<unsigned long long>','fopen(file,"wb")','http_delete_result(result)']:
             self.assertIn(x,s)
-    def test_compiled_body_length_validator(self):
+    def test_rejects_invalid_content_length_headers_and_body_sizes(self):
         s=(REPO/'gldcore/http_client.cpp').read_text()
         begin=s.index('static bool http_body_is_complete(')
         end=s.index('int http_saveas(',begin)
@@ -25,7 +26,7 @@ class HTTPChecks(unittest.TestCase):
             res=subprocess.run([str(exe)],capture_output=True,text=True)
             self.assertEqual(res.returncode,0,res.stderr)
 
-    def test_binary_body_offset_from_production_helper(self):
+    def test_preserves_binary_response_body_prefix(self):
         s=(REPO/'gldcore/http_client.cpp').read_text()
         begin=s.index('static size_t http_body_offset(')
         end=s.index('void *http_read(',begin)
