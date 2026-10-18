@@ -2,6 +2,7 @@
  */
 
 #include <cctype>
+#include <cerrno>
 #include <cstdio>
 
 #include "http_client.h"
@@ -19,6 +20,10 @@
 #endif
 
 HTTP *hopen(const char *url, int maxlen) {
+  if (url == nullptr || maxlen <= 0) {
+    output_error("hopen: invalid URL or maximum response size");
+    return nullptr;
+  }
   struct sockaddr_in serv_addr;
   struct hostent *server;
   char protocol[64];
@@ -27,18 +32,6 @@ HTTP *hopen(const char *url, int maxlen) {
   HTTP *http;
   char request[1024];
   int len;
-
-#ifdef _WIN32
-  /* init sockets */
-  WORD wsaVersion = MAKEWORD(2, 2);
-  WSADATA wsaData;
-  if (WSAStartup(wsaVersion, &wsaData) != 0) {
-    output_error("hopen(char *url='%s', int maxlen=%d): unable to initialize "
-                 "Windows sockets",
-                 url, maxlen);
-    return nullptr;
-  }
-#endif
 
   /* extract URL parts */
   if (sscanf(url, "%63[^:]://%1023[^/]%1023s", protocol, hostname, filespec) !=
@@ -61,15 +54,38 @@ HTTP *hopen(const char *url, int maxlen) {
   http->buf = nullptr;
   http->len = 0;
   http->pos = 0;
+  http->sd = INVALID_SOCKET;
+
+#ifdef _WIN32
+  // Every successful startup is balanced by hclose(), including error paths.
+  WSADATA wsaData;
+  if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+    output_error("hopen: unable to initialize Windows sockets");
+    free(http);
+    return nullptr;
+  }
+#endif
 
   /* setup socket */
   http->sd = socket(AF_INET, SOCK_STREAM, 0);
-  if (http->sd < 0) {
+  if (http->sd == INVALID_SOCKET) {
     output_error(
         "hopen(char *url='%s', int maxlen=%d): unable to create socket", url,
         maxlen);
     goto Error;
   }
+
+#if defined(SO_NOSIGPIPE) && !defined(MSG_NOSIGNAL)
+  // BSD/macOS use a per-socket option; Linux provides a per-send flag below.
+  {
+    const int enabled = 1;
+    if (setsockopt(http->sd, SOL_SOCKET, SO_NOSIGPIPE, &enabled,
+                   sizeof(enabled)) != 0) {
+      output_error("hopen: unable to suppress SIGPIPE on HTTP socket");
+      goto Error;
+    }
+  }
+#endif
 
   /* find server */
   server = gethostbyname(hostname);
@@ -99,23 +115,55 @@ HTTP *hopen(const char *url, int maxlen) {
                 "GET %s HTTP/1.1\r\nHost: %s:80\r\nUser-Agent: "
                 "GridLAB-D/%d.%d\r\nConnection: close\r\n\r\n",
                 filespec, hostname, REV_MAJOR, REV_MINOR);
-  output_debug("sending HTTP message \n%s", request);
-  if (send(http->sd, request, len, 0) < len) {
-    output_error("hopen(char *url='%s', maxlen=%d): unable to send request",
-                 url, maxlen);
+  // Request components can each fit individually but exceed the buffer together.
+  if (len < 0 || (size_t)len >= sizeof(request)) {
+    output_error("hopen: HTTP request exceeds the request buffer");
     goto Error;
+  }
+  output_debug("sending HTTP message \n%s", request);
+  {
+    int send_flags = 0;
+#ifdef MSG_NOSIGNAL
+    send_flags = MSG_NOSIGNAL;
+#endif
+    int sent = 0;
+    while (sent < len) {
+      const int n = send(http->sd, request + sent, len - sent, send_flags);
+#ifndef _WIN32
+      // A signal may interrupt a blocking send without transferring bytes.
+      if (n < 0 && errno == EINTR) continue;
+#endif
+      if (n <= 0) {
+        output_error("hopen: unable to send complete HTTP request");
+        goto Error;
+      }
+      sent += n;
+    }
   }
 
   /* read response header */
-  http->buf = (char *)malloc(maxlen + 1);
+  http->buf = (char *)malloc(static_cast<size_t>(maxlen) + 1);
+  if (http->buf == nullptr) {
+    output_error("hopen: unable to allocate HTTP response buffer");
+    goto Error;
+  }
   http->len = 0;
-  do {
-    len =
-        recv(http->sd, http->buf + http->len, (int)(maxlen - http->len), 0x00);
+  for (;;) {
+    // A response at the cap cannot be proven complete without another read.
+    if (http->len >= static_cast<size_t>(maxlen)) {
+      output_error("hopen: HTTP response reached configured maximum size");
+      goto Error;
+    }
+    len = recv(http->sd, http->buf + http->len,
+               static_cast<int>(static_cast<size_t>(maxlen) - http->len), 0);
     if (len == 0) {
       output_debug("hopen(char *url='%s', maxlen=%d): connection closed", url,
                    maxlen);
+      break;
     } else if (len < 0) {
+#ifndef _WIN32
+      if (errno == EINTR) continue;
+#endif
       output_error("hopen(char *url='%s', maxlen=%d): unable to read response",
                    url, maxlen);
       goto Error;
@@ -123,7 +171,7 @@ HTTP *hopen(const char *url, int maxlen) {
       http->len += len;
       http->buf[http->len] = '\0';
     }
-  } while (len > 0);
+  }
 
   if (http->len > 0)
     output_debug("received HTTP message \n%s", http->buf);
@@ -135,11 +183,12 @@ Error:
   output_error("hopen(char *url='%s', int maxlen=%d): WSA error code %d", url,
                maxlen, WSAGetLastError());
 #endif
+  hclose(http);
   return nullptr;
 }
 int hclose(HTTP *http) {
   if (http) {
-    if (http->sd)
+    if (http->sd != INVALID_SOCKET)
 #ifdef _WIN32
       closesocket(http->sd);
 #else
@@ -148,6 +197,9 @@ int hclose(HTTP *http) {
     if (http->buf != nullptr)
       free(http->buf);
     free(http);
+#ifdef _WIN32
+    WSACleanup();
+#endif
   }
   return 1;
 }
