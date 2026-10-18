@@ -3,6 +3,7 @@
 // Implements the datagram transport mechanism
 //
 #include "udp.h"
+#include <sstream>
 
 udp::udp()
     : // default defaults for non-strings
@@ -189,6 +190,12 @@ size_t udp::send(const char *msg, size_t len) {
     return 0;
   }
   const size_t header_len = static_cast<size_t>(header_chars);
+  // Field widths above are minimum widths. Reject expanded fields rather than
+  // advertising an offset that points into the header instead of the payload.
+  if (header_len != static_cast<size_t>(header_size)) {
+    error("udp::send: formatted header does not match advertised size");
+    return 0;
+  }
   char sendbuf[2048];
   if (msg == nullptr || header_len >= sizeof(sendbuf) ||
       len > 1500 - header_len || len >= sizeof(sendbuf) - header_len) {
@@ -228,9 +235,9 @@ size_t udp::recv(char *buf, size_t len) {
   int retry = maxretry;
 Retry:
   size_t rcvlen =
-      recvfrom(sd, msg, 2047, 0, (struct sockaddr *)&remote, &remote_len);
-  debug(9, "%d <= recvfrom(addr='%s',port=%d,msg='%s')", rcvlen,
-        inet_ntoa(serv_addr.sin_addr), ntohs(serv_addr.sin_port), msg);
+      recvfrom(sd, msg, sizeof(msg), 0, (struct sockaddr *)&remote, &remote_len);
+  debug(9, "%zu <= recvfrom(addr='%s',port=%d)", rcvlen,
+        inet_ntoa(serv_addr.sin_addr), ntohs(serv_addr.sin_port));
   if (rcvlen == SOCKET_ERROR) {
     switch (on_error) {
     case TE_RETRY:
@@ -253,24 +260,36 @@ Retry:
       exception("invalid on_error type");
     }
   }
-  msg[rcvlen] = '\0';
-  if (rcvlen > 0 && rcvlen < sizeof(msg))
-    debug(9, "incoming UDP message from %s:%d = '%s'\n\n",
-          inet_ntoa(remote.sin_addr), ntohs(remote.sin_port), msg);
-  else
+  // Read the whole array so an overlong datagram fills it and is rejected.
+  // Reserving the last byte in recvfrom could accept a truncated packet.
+  if (rcvlen == 0 || rcvlen >= sizeof(msg))
     exception("unexpected recvfrom return value: %lld", (int64)rcvlen);
+  msg[rcvlen] = '\0';
+  debug(9, "incoming UDP message from %s:%d = '%s'\n\n",
+        inet_ntoa(remote.sin_addr), ntohs(remote.sin_port), msg);
   // check response header
   int version;
   int offset;
   int size;
-  char type[256];
+  std::string type;
   int major, minor;
   int time_out;
   int status;
+  char decimal_point;
 
-  if (sscanf(msg, "%d %d %d %6s %d.%d %d %d", &version, &offset, &size, type,
-             &major, &minor, &time_out, &status) < 8)
+  // Parse only the advertised header, never payload bytes. Stream integer
+  // extraction rejects out-of-range values instead of overflowing scanf's %d.
+  const size_t header_length = get_header_size();
+  if (header_length == 0 || header_length > rcvlen)
+    exception("invalid UDP header length");
+  std::istringstream header(std::string(msg, header_length));
+  if (!(header >> version >> offset >> size >> type >> major >> decimal_point
+               >> minor >> time_out >> status) || decimal_point != '.' ||
+      major < 0 || minor < 0 || minor > 9)
     exception("incomplete or invalid message header {msg='%s'}", msg);
+  header >> std::ws;
+  if (!header.eof())
+    exception("unexpected data after UDP header fields");
 
   // check version
   if (version != get_header_version())
@@ -283,7 +302,7 @@ Retry:
               get_header_size());
 
   // check type
-  if (strcmp(type, get_message_format()) != 0)
+  if (type != get_message_format())
     exception("unexpected message format {msg='%s'}, expected format='%s'", msg,
               get_message_format());
 
