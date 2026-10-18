@@ -2,6 +2,7 @@
  */
 
 #include <cctype>
+#include <cerrno>
 #include <cstdio>
 
 #include "http_client.h"
@@ -74,6 +75,18 @@ HTTP *hopen(const char *url, int maxlen) {
     goto Error;
   }
 
+#if defined(SO_NOSIGPIPE) && !defined(MSG_NOSIGNAL)
+  // BSD/macOS use a per-socket option; Linux provides a per-send flag below.
+  {
+    const int enabled = 1;
+    if (setsockopt(http->sd, SOL_SOCKET, SO_NOSIGPIPE, &enabled,
+                   sizeof(enabled)) != 0) {
+      output_error("hopen: unable to suppress SIGPIPE on HTTP socket");
+      goto Error;
+    }
+  }
+#endif
+
   /* find server */
   server = gethostbyname(hostname);
   if (server == nullptr) {
@@ -109,9 +122,17 @@ HTTP *hopen(const char *url, int maxlen) {
   }
   output_debug("sending HTTP message \n%s", request);
   {
+    int send_flags = 0;
+#ifdef MSG_NOSIGNAL
+    send_flags = MSG_NOSIGNAL;
+#endif
     int sent = 0;
     while (sent < len) {
-      const int n = send(http->sd, request + sent, len - sent, 0);
+      const int n = send(http->sd, request + sent, len - sent, send_flags);
+#ifndef _WIN32
+      // A signal may interrupt a blocking send without transferring bytes.
+      if (n < 0 && errno == EINTR) continue;
+#endif
       if (n <= 0) {
         output_error("hopen: unable to send complete HTTP request");
         goto Error;
@@ -127,7 +148,7 @@ HTTP *hopen(const char *url, int maxlen) {
     goto Error;
   }
   http->len = 0;
-  do {
+  for (;;) {
     // A response at the cap cannot be proven complete without another read.
     if (http->len >= static_cast<size_t>(maxlen)) {
       output_error("hopen: HTTP response reached configured maximum size");
@@ -138,7 +159,11 @@ HTTP *hopen(const char *url, int maxlen) {
     if (len == 0) {
       output_debug("hopen(char *url='%s', maxlen=%d): connection closed", url,
                    maxlen);
+      break;
     } else if (len < 0) {
+#ifndef _WIN32
+      if (errno == EINTR) continue;
+#endif
       output_error("hopen(char *url='%s', maxlen=%d): unable to read response",
                    url, maxlen);
       goto Error;
@@ -146,7 +171,7 @@ HTTP *hopen(const char *url, int maxlen) {
       http->len += len;
       http->buf[http->len] = '\0';
     }
-  } while (len > 0);
+  }
 
   if (http->len > 0)
     output_debug("received HTTP message \n%s", http->buf);
