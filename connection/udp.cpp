@@ -81,31 +81,48 @@ int udp::option(char *command) {
     memcpy(value, start, value_len); value[value_len] = '\0';
     unsigned int number = 0;
     if (strcmp(param, "port") == 0) {
-      if (!udp_parse_uint(value, number) || number == 0 || number > 65535) return 0;
+      if (!udp_parse_uint(value, number) || number == 0 || number > 65535) {
+        error("invalid UDP port '%s' (expected 1..65535)", value);
+        return 0;
+      }
       set_portnum(number);
     } else if (strcmp(param, "header_version") == 0) {
-      if (!udp_parse_uint(value, number)) return 0;
+      if (!udp_parse_uint(value, number)) {
+        error("invalid UDP header_version '%s' (expected unsigned integer)", value);
+        return 0;
+      }
       set_header_version(number);
     } else if (strcmp(param, "timeout") == 0) {
-      if (!udp_parse_uint(value, number)) return 0;
+      if (!udp_parse_uint(value, number)) {
+        error("invalid UDP timeout '%s' (expected unsigned milliseconds)", value);
+        return 0;
+      }
       set_timeout(number);
     } else if (strcmp(param, "hostname") == 0) {
       set_hostname(value);
     } else if (strcmp(param, "uri") == 0) {
       set_uri("%s", value);
     } else if (strcmp(param, "debug_level") == 0) {
-      if (!udp_parse_uint(value, number)) return 0;
+      if (!udp_parse_uint(value, number)) {
+        error("invalid UDP debug_level '%s' (expected unsigned integer)", value);
+        return 0;
+      }
       set_debug_level(number);
     } else if (strcmp(param, "on_error") == 0) {
       if (strcmp(value, "abort") == 0) onerror_abort();
       else if (strcmp(value, "retry") == 0) onerror_retry();
       else if (strcmp(value, "ignore") == 0) onerror_ignore();
-      else return 0;
+      else {
+        error("invalid UDP on_error '%s' (expected abort, retry or ignore)", value);
+        return 0;
+      }
     } else if (strcmp(param, "maxretry") == 0) {
       if (strcmp(value, "none") == 0) set_maxretry();
       else {
-        if (!udp_parse_uint(value, number) || number == 0 || number > INT_MAX)
+        if (!udp_parse_uint(value, number) || number == 0 || number > INT_MAX) {
+          error("invalid UDP maxretry '%s' (expected positive integer or none)", value);
           return 0;
+        }
         set_maxretry(static_cast<int>(number));
       }
     } else {
