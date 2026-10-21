@@ -5,6 +5,11 @@ These do not replace gridlabd --validate or full module integration.
 import pathlib, subprocess, shutil, tempfile, unittest
 REPO=pathlib.Path(__file__).resolve().parents[2]
 class HTTPResponseBodyValidationTests(unittest.TestCase):
+    def test_rejects_nondigit_maxsize_prefix(self):
+        # C's strtoull accepts leading whitespace before '-' or '+'.
+        src = (REPO/'gldcore/http_client.cpp').read_text()
+        self.assertIn("value[0] < '0' || value[0] > '9'", src)
+
     def test_download_status_length_and_cleanup_guards(self):
         s=(REPO/'gldcore/http_client.cpp').read_text()
         for x in ['http_body_is_complete(result)','std::numeric_limits<unsigned long long>','fopen(file, "wb")','http_delete_result(result)']:

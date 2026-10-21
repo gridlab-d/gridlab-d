@@ -363,7 +363,9 @@ void http_get_options(void) {
           else if (strcmp(end, "GB") == 0) factor = 1000000000ULL;
           else if (strcmp(end, "TB") == 0) factor = 1000000000000ULL;
           else if (*end != '\0') factor = 0;
-          if (end == value || value[0] == '-' || errno == ERANGE || factor == 0 ||
+          // strtoull accepts leading spaces and signs; maxsize must begin with a digit.
+          if (end == value || value[0] < '0' || value[0] > '9' ||
+              errno == ERANGE || factor == 0 ||
               amount > std::numeric_limits<unsigned int64>::max() / factor) {
             output_error("wget_options: invalid or overflowing maxsize '%s'", value);
           } else {
