@@ -466,6 +466,7 @@ void triplex_load::triplex_load_update_fxn(void)
         else
         {
             constant_current[0] = gld::complex(0, 0);
+            ZIP_constant_current[0] = false;
         }
         // Put in the constant impedance portion
         if (impedance_fraction[0] != 0.0)
@@ -505,6 +506,7 @@ void triplex_load::triplex_load_update_fxn(void)
         constant_power[0] = gld::complex(0.0, 0.0);
         constant_current[0] = gld::complex(0.0, 0.0);
         constant_impedance[0] = gld::complex(0.0, 0.0);
+        ZIP_constant_current[0] = false;
 
         // Deflag us
         base_load_val_was_nonzero[0] = false;
@@ -597,6 +599,7 @@ void triplex_load::triplex_load_update_fxn(void)
         else
         {
             constant_current[1] = gld::complex(0, 0);
+            ZIP_constant_current[1] = false;
         }
         // Put in the constant impedance portion
         if (impedance_fraction[1] != 0.0)
@@ -636,6 +639,7 @@ void triplex_load::triplex_load_update_fxn(void)
         constant_power[1] = gld::complex(0.0, 0.0);
         constant_current[1] = gld::complex(0.0, 0.0);
         constant_impedance[1] = gld::complex(0.0, 0.0);
+        ZIP_constant_current[1] = false;
 
         // Deflag us
         base_load_val_was_nonzero[1] = false;
@@ -729,6 +733,7 @@ void triplex_load::triplex_load_update_fxn(void)
         else
         {
             constant_current[2] = gld::complex(0, 0);
+            ZIP_constant_current[2] = false;
         }
         // Put in the constant impedance portion
         if (impedance_fraction[2] != 0.0)
@@ -770,6 +775,7 @@ void triplex_load::triplex_load_update_fxn(void)
         constant_power[2] = gld::complex(0.0, 0.0);
         constant_current[2] = gld::complex(0.0, 0.0);
         constant_impedance[2] = gld::complex(0.0, 0.0);
+        ZIP_constant_current[2] = false;
 
         // Deflag us
         base_load_val_was_nonzero[2] = false;
@@ -876,6 +882,10 @@ void triplex_load::triplex_load_update_fxn(void)
     // Start adjustments - loop them
     for (index_var = 0; index_var < 3; index_var++)
     {
+        // true means ZIP produced the current; do not apply the manual
+        // current's voltage-angle adjustment a second time. The flag is
+        // cleared whenever ZIP current or the base load is disabled.
+
         if ((constant_current[index_var] != 0.0) &&
             (adjust_temp_voltage_mag[index_var] != 0.0) &&
             !ZIP_constant_current[index_var])
